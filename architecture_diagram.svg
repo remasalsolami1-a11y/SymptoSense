@@ -1,0 +1,82 @@
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="640" fill="#fafafa"/>
+
+  <text x="500" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1a2e">SymptoSense — System Architecture</text>
+
+  <!-- User -->
+  <rect x="410" y="60" width="180" height="56" rx="10" fill="#37474f"/>
+  <text x="500" y="94" text-anchor="middle" font-size="15" fill="white" font-weight="600">🧑 User (Telegram)</text>
+
+  <line x1="500" y1="116" x2="500" y2="150" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Bot core -->
+  <rect x="360" y="150" width="280" height="70" rx="10" fill="#2e7d32"/>
+  <text x="500" y="180" text-anchor="middle" font-size="15" fill="white" font-weight="700">🤖 SymptoSense Bot</text>
+  <text x="500" y="200" text-anchor="middle" font-size="11" fill="#e8f5e9">python-telegram-bot · bot.py</text>
+
+  <!-- Branch lines down to services -->
+  <line x1="500" y1="220" x2="500" y2="255" stroke="#555" stroke-width="2"/>
+  <line x1="150" y1="255" x2="850" y2="255" stroke="#555" stroke-width="2"/>
+  <line x1="150" y1="255" x2="150" y2="290" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="255" x2="360" y2="290" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="255" x2="640" y2="290" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="850" y1="255" x2="850" y2="290" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Groq LLM -->
+  <rect x="60" y="290" width="180" height="80" rx="10" fill="#6a1b9a"/>
+  <text x="150" y="320" text-anchor="middle" font-size="14" fill="white" font-weight="600">🧠 Groq LLM API</text>
+  <text x="150" y="340" text-anchor="middle" font-size="10.5" fill="#f3e5f5">llama-3.3-70b-versatile</text>
+  <text x="150" y="356" text-anchor="middle" font-size="10.5" fill="#f3e5f5">analysis + personality</text>
+
+  <!-- ML model -->
+  <rect x="270" y="290" width="180" height="80" rx="10" fill="#1565c0"/>
+  <text x="360" y="315" text-anchor="middle" font-size="14" fill="white" font-weight="600">📊 ML Classifier</text>
+  <text x="360" y="335" text-anchor="middle" font-size="10.5" fill="#e3f2fd">Bernoulli Naive Bayes</text>
+  <text x="360" y="350" text-anchor="middle" font-size="10.5" fill="#e3f2fd">ml_diagnosis.py (offline)</text>
+  <text x="360" y="364" text-anchor="middle" font-size="10.5" fill="#e3f2fd">63.5% test accuracy</text>
+
+  <!-- DB -->
+  <rect x="550" y="290" width="180" height="80" rx="10" fill="#ef6c00"/>
+  <text x="640" y="320" text-anchor="middle" font-size="14" fill="white" font-weight="600">🗄️ SQLite DB</text>
+  <text x="640" y="340" text-anchor="middle" font-size="10.5" fill="#fff3e0">records · visits</text>
+  <text x="640" y="356" text-anchor="middle" font-size="10.5" fill="#fff3e0">hashed user IDs</text>
+
+  <!-- Hospitals API -->
+  <rect x="760" y="290" width="180" height="80" rx="10" fill="#c62828"/>
+  <text x="850" y="315" text-anchor="middle" font-size="14" fill="white" font-weight="600">🏥 OpenStreetMap</text>
+  <text x="850" y="335" text-anchor="middle" font-size="10.5" fill="#ffebee">Overpass API</text>
+  <text x="850" y="350" text-anchor="middle" font-size="10.5" fill="#ffebee">geo_hospitals.py</text>
+  <text x="850" y="364" text-anchor="middle" font-size="10.5" fill="#ffebee">high-urgency only</text>
+
+  <!-- DB feeds trends chart -->
+  <line x1="640" y1="370" x2="640" y2="420" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="530" y="420" width="220" height="64" rx="10" fill="#00838f"/>
+  <text x="640" y="448" text-anchor="middle" font-size="13" fill="white" font-weight="600">📈 Community Trends</text>
+  <text x="640" y="466" text-anchor="middle" font-size="10.5" fill="#e0f7fa">matplotlib chart · /trends</text>
+
+  <!-- Admin tools branch -->
+  <line x1="150" y1="370" x2="150" y2="420" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="420" width="220" height="64" rx="10" fill="#455a64"/>
+  <text x="150" y="448" text-anchor="middle" font-size="13" fill="white" font-weight="600">🔒 Admin Tools</text>
+  <text x="150" y="466" text-anchor="middle" font-size="10.5" fill="#eceff1">/stats · /export (xlsx)</text>
+
+  <!-- All converge back to bot -->
+  <line x1="150" y1="484" x2="150" y2="520" stroke="#555" stroke-width="2"/>
+  <line x1="360" y1="370" x2="360" y2="520" stroke="#555" stroke-width="2"/>
+  <line x1="640" y1="484" x2="640" y2="520" stroke="#555" stroke-width="2"/>
+  <line x1="850" y1="370" x2="850" y2="520" stroke="#555" stroke-width="2"/>
+  <line x1="150" y1="520" x2="850" y2="520" stroke="#555" stroke-width="2"/>
+  <line x1="500" y1="520" x2="500" y2="550" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Combined reply -->
+  <rect x="330" y="550" width="340" height="56" rx="10" fill="#2e7d32"/>
+  <text x="500" y="583" text-anchor="middle" font-size="13.5" fill="white" font-weight="600">💬 Combined reply → back to User</text>
+
+  <line x1="500" y1="606" x2="500" y2="60" stroke="#bbb" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+</svg>
