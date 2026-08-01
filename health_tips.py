@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 TIPS = {
     "ar": [
@@ -37,7 +38,59 @@ TIPS = {
     ],
 }
 
+# Seasonal guidance for Saudi Arabia's two main seasons.
+SEASONAL_TIPS = {
+    "winter": {
+        "ar": [
+            "🦠 موسم نزلات البرد والإنفلونزا — غسلي يديك باستمرار، وادعمي مناعتك بالسوائل الدافئة وفيتامين C.",
+            "🧣 البرد يجفف البشرة — رطبيها بكريم مرطب يومي، واستمري بشرب الماء حتى لو ما تحسين بالعطش.",
+            "☀️ مع قصر النهار، احرصي على التعرض للشمس وقت الظهيرة أو ناقشي مع طبيبك فيتامين D.",
+            "🥘 السوائل الدافئة (شوربات، أعشاب) تخفف البرد وتهدئ الحلق وترطب الجسم.",
+            "🛌 لو حسيتي ببداية زكام، ابدئي براحة ونوم أطول — الجسد يشفى أثناء النوم.",
+        ],
+        "en": [
+            "🦠 It's cold and flu season — wash your hands often and support your immunity with warm fluids and vitamin C.",
+            "🧣 Cold weather dries out your skin — moisturize daily and keep drinking water even if you don't feel thirsty.",
+            "☀️ With shorter days, get midday sunlight or discuss vitamin D with your doctor.",
+            "🥘 Warm fluids (soups, herbal teas) ease cold symptoms, soothe your throat, and hydrate you.",
+            "🛌 If you feel a cold coming on, rest and sleep more early — your body heals during sleep.",
+        ],
+    },
+    "summer": {
+        "ar": [
+            "🥵 الحرارة مرتفعة — اشربي ماء كثير، وتجنبي الخروج وقت الظهيرة (11 صباحاً إلى 4 عصراً).",
+            "🧊 علامات ضربة الشمس: دوار، غثيان، صداع، بشرة حارة — لو حسيتي بيها ادخلي مكان بارد واشربي ماء.",
+            "🍔 في الصيف الأكل يفسد أسرع — انتبهي من التسمم الغذائي، خصوصاً الدجاج والأرز والسندويشات.",
+            "😴 اضبطي المكيف على حرارة مريحة (24-26) ونمي في مكان جيد التهوية.",
+            "☀️ بلّي نفسك أو ارتدي غطاء رأس لو اضطررت للخروج نهاراً — حماية من الجفاف وضربة الشمس.",
+        ],
+        "en": [
+            "🥵 Heat is intense — drink plenty of water and avoid going out at midday (11 AM to 4 PM).",
+            "🧊 Heat stroke signs: dizziness, nausea, headache, hot skin — if you feel them, go somewhere cool and drink water.",
+            "🍔 Food spoils faster in summer — watch out for food poisoning, especially chicken, rice and sandwiches.",
+            "😴 Set your AC to a comfortable 24-26°C and sleep in a well-ventilated place.",
+            "☀️ Wet your skin or wear a head cover if you must go out during the day — protection from dehydration and heat stroke.",
+        ],
+    },
+}
+
+
+def get_season(lang="ar"):
+    """Returns (season_code, season_label, [tips]) based on the current month."""
+    month = datetime.now().month
+    if 10 <= month or month <= 3:
+        code = "winter"
+    else:
+        code = "summer"
+    label = "🍂 الشتاء / Winter" if code == "winter" else "☀️ الصيف / Summer"
+    tips = SEASONAL_TIPS[code].get(lang, SEASONAL_TIPS[code]["ar"])
+    return code, label, tips
+
 
 def get_random_tip(lang="ar"):
-    tips = TIPS.get(lang, TIPS["ar"])
-    return random.choice(tips)
+    """Returns a random tip; ~60% of the time it's seasonal, otherwise general."""
+    general = TIPS.get(lang, TIPS["ar"])
+    if random.random() < 0.6:
+        _, _, seasonal = get_season(lang)
+        return random.choice(seasonal)
+    return random.choice(general)
