@@ -169,6 +169,57 @@ def _groq_client():
     return Groq(api_key=os.environ["GROQ_API_KEY"])
 
 
+def _fallback_result(d, lang):
+    ar = lang == "ar"
+    try:
+        sev = int(d.get("severity", 1) or 1)
+    except (TypeError, ValueError):
+        sev = 1
+    syms = ", ".join(d.get("symptoms", [])[:6]) or "الأعراض"
+    u = _rule_urgency(d.get("symptoms"), sev, d.get("age"))
+    if not u:
+        u = "high" if sev >= 5 else ("medium" if sev >= 3 else "low")
+    if ar:
+        ur_ar = {"high": "طوارئ", "medium": "يحتاج موعد طبيب", "low": "بسيط"}[u]
+        note = (f"بناءً على ما ذكرته ({syms}) مع شدّة {sev}/5، يُنصح بالحذر وعدم "
+                "التردد في مراجعة الطبيب. هذه معلومات توعوية وليست تشخيصاً نهائياً.")
+        conditions = ("قد تكون الأعراض ناتجة عن حالة بسيطة قابلة للعلاج، لكن يُفضل "
+                      "مراجعة الطبيب للتأكد خصوصاً مع شدة الأعراض الحالية.")
+        tips = [
+            {"tip": "احصل على قسط كافٍ من الراحة والنوم.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
+            {"tip": "اشرب سوائل بانتظام وتناول طعاماً خفيفاً.", "source": "NHS", "url": "https://www.nhs.uk/"},
+            {"tip": "راقب حرارتك وشدة الألم وسجّل أي تغيّر.", "source": "CDC", "url": "https://www.cdc.gov/"},
+            {"tip": "راجع الطبيب إذا لم تتحسن الأعراض خلال أيام.", "source": "WHO", "url": "https://www.who.int/"},
+        ]
+        return {
+            "personal_note": note, "urgency": u, "urgency_ar": ur_ar, "confidence": "low",
+            "possible_conditions": conditions, "recommendations": tips,
+            "danger_signs": "ضيق تنفس شديد، ألم في الصدر، تشوش، إغماء، أو تدهور مفاجئ.",
+            "when_to_seek_care": "راجع الطبيب فوراً أو الطوارئ إذا استمرت الأعراض أو ازدادت سوءاً.",
+            "home_care": "خذ قسطاً من الراحة، اشرب سوائل كافية، وراقب الأعراض.",
+            "medication_guidance": ("استمر بدوائك الموصوف كما وصفه الطبيب، وراجع الطبيب أو "
+                                    "الصيدلي قبل أي تغيير." if d.get("medications") else ""),
+            "questions_for_doctor": "متى يجب أن أقلق من هذه الأعراض؟ ما الفحوصات المطلوبة؟ متى أتحسن؟",
+        }
+    ur_en = {"high": "Emergency", "medium": "Needs appointment", "low": "Simple"}[u]
+    return {
+        "personal_note": f"Based on what you reported ({syms}) with severity {sev}/5, caution is advised; do not hesitate to see a doctor. This is awareness information, not a final diagnosis.",
+        "urgency": u, "urgency_text": ur_en, "confidence": "low",
+        "possible_conditions": "Symptoms may come from a simple treatable condition, but a doctor visit is recommended given the current severity.",
+        "recommendations": [
+            {"tip": "Get enough rest and sleep.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
+            {"tip": "Stay hydrated and eat light food.", "source": "NHS", "url": "https://www.nhs.uk/"},
+            {"tip": "Monitor temperature and pain and note any change.", "source": "CDC", "url": "https://www.cdc.gov/"},
+            {"tip": "See a doctor if symptoms do not improve in a few days.", "source": "WHO", "url": "https://www.who.int/"},
+        ],
+        "danger_signs": "Severe shortness of breath, chest pain, confusion, fainting, or sudden worsening.",
+        "when_to_seek_care": "See a doctor or emergency care immediately if symptoms persist or worsen.",
+        "home_care": "Rest, drink enough fluids, and monitor symptoms.",
+        "medication_guidance": "Continue your prescribed medication as directed and consult your doctor or pharmacist before any change." if d.get("medications") else "",
+        "questions_for_doctor": "When should I worry about these symptoms? What tests are needed? When will I improve?",
+    }
+
+
 def run_analysis(patient, lang="ar"):
     """
     patient: dict with keys age, gender, symptoms(list), duration, severity,
@@ -181,17 +232,20 @@ def run_analysis(patient, lang="ar"):
     user_id = d.get("user_id") or "web-anon"
 
     prompt = _build_prompt(d, lang)
-    client = _groq_client()
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=1024,
-        response_format={"type": "json_object"},
-        temperature=0.3,
-        timeout=45,
-    )
-    full_text = response.choices[0].message.content
-    result = _extract_json(full_text)
+    try:
+        client = _groq_client()
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            response_format={"type": "json_object"},
+            temperature=0.3,
+            timeout=45,
+        )
+        full_text = response.choices[0].message.content
+        result = _extract_json(full_text)
+    except Exception:
+        result = _fallback_result(d, lang)
 
     rule_flag = False
     if _rule_urgency(d.get("symptoms"), d.get("severity", 1), d.get("age")) == "high":
