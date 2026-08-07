@@ -465,10 +465,10 @@ def chat_page():
       addHtml('<div class="result">' + h + '</div>', 'result');
       addHtml('<div style="margin-top:10px;text-align:center;"><button class="opt" onclick="speakResult()">🔊 استمع للنتيجة</button></div>', 'result');
       addHtml('<div class="sec-title">⭐ هل أفادك التحليل؟</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">' +
-        '<button class="opt" onclick="fb(\'1\')">😍 ممتاز</button>' +
-        '<button class="opt" onclick="fb(\'2\')">🙂 جيد</button>' +
-        '<button class="opt" onclick="fb(\'3\')">😐 عادي</button>' +
-        '<button class="opt" onclick="fb(\'4\')">😞 لا</button></div>' +
+        '<button class="opt" data-v="1" onclick="fb(this.dataset.v)">😍 ممتاز</button>' +
+        '<button class="opt" data-v="2" onclick="fb(this.dataset.v)">🙂 جيد</button>' +
+        '<button class="opt" data-v="3" onclick="fb(this.dataset.v)">😐 عادي</button>' +
+        '<button class="opt" data-v="4" onclick="fb(this.dataset.v)">😞 لا</button></div>' +
         '<div id="fbMsg" style="margin-top:8px;text-align:center;font-weight:600;color:#0f766e;"></div>', 'result');
       showOpts([
         {label:'💬 اسأل عن حالتك', fn:askFollowup},
