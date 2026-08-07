@@ -38,6 +38,14 @@ SYNONYMS = {
     "ألم في البطن": "stomach pain", "stomach pain": "stomach pain",
     "قشعريرة": "chills", "chills": "chills",
     "احمرار العيون": "red eyes", "red eyes": "red eyes",
+    "ألم في الرجل": "leg pain", "leg pain": "leg pain",
+    "ألم في الساق": "leg pain", "ألم الساق": "leg pain",
+    "pain in the leg": "leg pain", "leg ache": "leg pain",
+    "ألم الحلق": "sore throat", "sore throat": "sore throat",
+    "التهاب الحلق": "sore throat", "throat pain": "sore throat",
+    "حكة": "itching", "حكّة": "itching", "itching": "itching",
+    "حكة جلدية": "itching", "حكة بالجلد": "itching",
+    "itchy": "itching", "itching skin": "itching",
 }
 
 

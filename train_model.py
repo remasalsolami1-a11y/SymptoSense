@@ -29,8 +29,8 @@ np.random.seed(42)
 # ---- 1. Knowledge base (condition -> ar/en names + typical symptom keywords) ----
 KNOWLEDGE_BASE = {
     "common_cold": ("نزلة برد", "Common Cold",
-        {"صداع", "سعال", "حمى", "تعب وإرهاق", "قشعريرة",
-         "headache", "cough", "fever", "fatigue", "chills"}),
+        {"صداع", "سعال", "حمى", "تعب وإرهاق", "قشعريرة", "ألم الحلق",
+         "headache", "cough", "fever", "fatigue", "chills", "sore throat"}),
     "flu": ("إنفلونزا", "Influenza",
         {"حمى", "صداع", "تعب وإرهاق", "ألم المفاصل", "قشعريرة", "سعال",
          "fever", "headache", "fatigue", "joint pain", "chills", "cough"}),
@@ -47,7 +47,8 @@ KNOWLEDGE_BASE = {
         {"سعال", "ضيق التنفس", "تعب وإرهاق", "ألم في الصدر",
          "cough", "shortness of breath", "fatigue", "chest pain"}),
     "pharyngitis": ("التهاب الحلق", "Pharyngitis",
-        {"حمى", "سعال", "تعب وإرهاق", "fever", "cough", "fatigue"}),
+        {"حمى", "سعال", "تعب وإرهاق", "ألم الحلق",
+         "fever", "cough", "fatigue", "sore throat"}),
     "food_poisoning": ("تسمم غذائي", "Food Poisoning",
         {"غثيان", "ألم في البطن", "قشعريرة", "حمى",
          "nausea", "stomach pain", "chills", "fever"}),
@@ -65,12 +66,20 @@ KNOWLEDGE_BASE = {
          "shortness of breath", "cough", "chest pain"}),
     "dehydration": ("جفاف", "Dehydration",
         {"دوار", "تعب وإرهاق", "غثيان", "dizziness", "fatigue", "nausea"}),
+    "tonsillitis": ("التهاب اللوزتين", "Tonsillitis",
+        {"ألم الحلق", "حمى", "صداع", "قشعريرة",
+         "sore throat", "fever", "headache", "chills"}),
+    "urticaria": ("حساسية جلدية (شرى)", "Skin Allergy (Hives)",
+        {"حكة", "احمرار العيون", "تعب وإرهاق",
+         "itching", "red eyes", "fatigue"}),
+    "leg_strain": ("إجهاد عضلي في الساق", "Leg Muscle Strain",
+        {"ألم في الرجل", "تعب وإرهاق", "leg pain", "fatigue"}),
 }
 
-# ---- Canonical 12-symptom vocabulary (matches the bot's fixed keyboard) ----
+# ---- Canonical symptom vocabulary (matches the bot's keyboard) ----
 VOCAB = ["headache", "fever", "cough", "chest pain", "nausea", "fatigue",
          "shortness of breath", "dizziness", "joint pain", "stomach pain",
-         "chills", "red eyes"]
+         "chills", "red eyes", "leg pain", "sore throat", "itching"]
 
 SYNONYMS = {
     "صداع": "headache", "headache": "headache",
@@ -85,6 +94,14 @@ SYNONYMS = {
     "ألم في البطن": "stomach pain", "stomach pain": "stomach pain",
     "قشعريرة": "chills", "chills": "chills",
     "احمرار العيون": "red eyes", "red eyes": "red eyes",
+    "ألم في الرجل": "leg pain", "leg pain": "leg pain",
+    "ألم في الساق": "leg pain", "ألم الساق": "leg pain",
+    "pain in the leg": "leg pain", "leg ache": "leg pain",
+    "ألم الحلق": "sore throat", "sore throat": "sore throat",
+    "التهاب الحلق": "sore throat", "throat pain": "sore throat",
+    "حكة": "itching", "حكّة": "itching", "itching": "itching",
+    "حكة جلدية": "itching", "حكة بالجلد": "itching",
+    "itchy": "itching", "itching skin": "itching",
 }
 
 def to_canonical(symptom_set):

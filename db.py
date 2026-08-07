@@ -96,6 +96,15 @@ def init_db():
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_fu_record ON followups(record_id)")
             c.execute("""
+                CREATE TABLE IF NOT EXISTS daily_checkins (
+                    id SERIAL PRIMARY KEY,
+                    user_hash TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    severity INTEGER
+                )
+            """)
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS med_reminders (
                     id SERIAL PRIMARY KEY,
                     user_id BIGINT,
@@ -179,6 +188,15 @@ def init_db():
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_fu_record ON followups(record_id)")
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS daily_checkins (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_hash TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    severity INTEGER
+                )
+            """)
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
             c.execute("""
                 CREATE TABLE IF NOT EXISTS med_reminders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -499,6 +517,44 @@ def _all_followups():
         return c.fetchall()
     finally:
         conn.close()
+
+
+def save_daily_checkin(user_id, severity):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f"INSERT INTO daily_checkins (user_hash, timestamp, severity) VALUES ({PH},{PH},{PH})",
+            (_hash_user(user_id), datetime.now(timezone.utc).isoformat(), int(severity)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_daily_checkins(user_id, days=7):
+    """Returns [(date_str, avg_severity), ...] for the last N days, newest last."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            f"SELECT timestamp, severity FROM daily_checkins "
+            f"WHERE user_hash={PH} AND timestamp >= {PH} ORDER BY timestamp",
+            (_hash_user(user_id), since),
+        )
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    by_day = {}
+    for ts, sev in rows:
+        day = ts[:10]
+        by_day.setdefault(day, []).append(sev)
+    out = []
+    for day in sorted(by_day):
+        vals = by_day[day]
+        out.append((day, round(sum(vals) / len(vals), 2)))
+    return out
 
 
 def add_med_reminder(user_id, med_name, time_utc, lang="ar"):
