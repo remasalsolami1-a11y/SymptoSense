@@ -93,56 +93,88 @@ _GENERIC_MARKERS = {
 # Symptom-specific padding tips (used when the model returns too few valid tips).
 SYMPTOM_TIPS = [
     (["صداع"], ["headache"],
+     "سجل الصداع وخصائصه",
      "سجّل متى يبدأ الصداع وشدته ومدته وما يخففه — وراجع الطبيب إذا تكرر أو رافقه زغللة أو تنميل أو تصلب في الرقبة.",
+     "Track the headache",
      "Note when the headache starts, its severity and what relieves it — see a doctor if it recurs or comes with blurred vision, numbness, or a stiff neck.",
      "Mayo Clinic"),
     (["حمى", "حرارة"], ["fever", "feverish", "temperature"],
+     "راقب حرارتك وترطيبك",
      "راقب درجة حرارتك، اشرب سوائل كافية على مدار اليوم، وخفف الملابس — وراجع الطبيب إذا استمرت الحمى أكثر من يومين.",
+     "Monitor fever and fluids",
      "Monitor your temperature, drink plenty of fluids through the day, and lighten clothing — see a doctor if the fever lasts more than two days.",
      "NHS"),
     (["سعال", "كحة"], ["cough", "coughing"],
+     "عناية لطيفة بالسعال",
      "اشرب سوائل دافئة وارتح، ومرّق حلقك بالعسل (للبالغين فقط) — وراجع الطبيب إذا استمر السعال أكثر من ثلاثة أسابيع أو خرج دم.",
+     "Soothe the cough gently",
      "Drink warm fluids, rest, and soothe your throat with honey (adults only) — see a doctor if the cough lasts over three weeks or you cough up blood.",
      "NHS"),
     (["حلق"], ["throat", "sore throat"],
+     "تخفيف تهيج الحلق",
      "تغرغر بماء دافئ وملح خفيف واشرب سوائل دافئة — وراجع الطبيب إذا صار البلع صعباً جداً أو ظهرت صعوبة تنفس.",
+     "Ease throat irritation",
      "Gargle with warm salty water and drink warm fluids — see a doctor if swallowing becomes very difficult or you get breathing trouble.",
      "MedlinePlus"),
     (["غثيان", "قيء", "استفراغ"], ["nausea", "vomiting", "throw up"],
+     "تعويض السوائل بلطف",
      "اشرب السوائل بكميات صغيرة ومتكررة لتعويض ما فقده الجسم ثم ابدأ بأكل خفيف — وراجع الطبيب إذا استمر التقيؤ أكثر من يوم أو ظهر جفاف.",
+     "Rehydrate gently",
      "Sip fluids little and often to replace losses, then start with light food — see a doctor if vomiting lasts more than a day or dehydration appears.",
      "CDC"),
     (["إسهال"], ["diarrhea"],
+     "تعويض السوائل وتجنب الدسم",
      "اشرب الكثير من السوائل لتعويض الجفاف وتجنّب الأطعمة الدسمة واللبن لفترة — وراجع الطبيب إذا صار هناك دم أو علامات جفاف شديد.",
+     "Replace fluids, avoid greasy food",
      "Drink plenty of fluids to replace losses and avoid greasy food and dairy for a while — see a doctor if there is blood or severe dehydration.",
      "WHO"),
     (["دوخة", "دوار", "دوران"], ["dizziness", "dizzy", "lightheaded"],
+     "تعامل آمن مع الدوخة",
      "اجلس أو استلقِ فوراً، قم ببطء عند الوقوف، واشرب الماء — وراجع الطبيب إذا تكررت الدوخة أو رافقها خفقان أو تشوش.",
+     "Handle dizziness safely",
      "Sit or lie down right away, stand up slowly, and drink water — see a doctor if dizziness repeats or comes with palpitations or confusion.",
      "Mayo Clinic"),
     (["تعب", "إرهاق", "ضعف"], ["fatigue", "tired", "exhaustion", "weakness"],
+     "تنظيم الراحة والطاقة",
      "خذ فترات راحة قصيرة ونم ساعات كافية وراقب طاقتك — وراجع الطبيب إذا استمر الإرهاق دون سبب واضح أكثر من أسبوع.",
+     "Manage rest and energy",
      "Take short breaks, get enough sleep and monitor your energy — see a doctor if exhaustion persists without a clear reason for over a week.",
      "NHS"),
     (["بطن", "معدة", "آلام معدة"], ["abdominal", "stomach", "belly"],
+     "حمية مريحة للمعدة",
      "تجنّب الأطعمة الدسمة والحارة والكافيين حتى تتحسن واشرب السوائل — وراجع الطبيب إذا كان الألم شديداً أو مستمراً أو رافقه حمى.",
+     "Gentle diet for the stomach",
      "Avoid greasy, spicy foods and caffeine until you improve, and stay hydrated — see a doctor if the pain is severe, persistent, or comes with fever.",
      "MedlinePlus"),
     (["ظهر", "عضلات", "المفاصل"], ["back", "muscle", "joint"],
+     "تخفيف ألم العضلات والظهر",
      "قلّل من الحركات المجهدة وضع كمادة دافئة على مكان الألم — وراجع الطبيب إذا امتد الألم إلى الساق أو رافقه ضعف أو تنميل.",
+     "Relieve muscle and back pain",
      "Reduce strenuous movements and apply a warm compress — see a doctor if pain radiates to the leg or comes with weakness or numbness.",
      "Mayo Clinic"),
     (["طفح", "حكة", "حساسية جلدية"], ["rash", "itching", "itchy", "hives"],
+     "تخفيف الطفح والحكة",
      "تجنّب الحكّ واستخدم كمادة باردة، ولاحظ أي طعام أو مادة أثارتها — وراجع الطبيب إذا انتشر أو رافقه صعوبة تنفس.",
+     "Soothe rash and itching",
      "Avoid scratching, use a cool compress, and note any food or substance that triggered it — see a doctor if it spreads or comes with breathing trouble.",
      "MedlinePlus"),
     (["رشح", "زكام", "برد"], ["runny nose", "cold", "congestion", "sneezing"],
+     "تخفيف احتقان الزكام",
      "اشرب سوائل دافئة وارتح، واستخدم بخار الماء لتخفيف الاحتقان — وراجع الطبيب إذا صار التنفس صعباً أو ارتفعت الحمى.",
+     "Ease cold congestion",
      "Drink warm fluids, rest, and use steam to ease congestion — see a doctor if breathing becomes difficult or fever rises.",
      "CDC"),
+    (["احمرار العيون", "احمرار العين", "حكة العين"], ["eye redness", "red eyes", "itchy eyes"],
+     "تجنب المهيجات ومسببات الحساسية",
+     "إذا كان الاحمرار مرتبطاً بالحساسية، تجنب الغبار والعطور والملوثات التي قد تزيد الأعراض، وتجنب فرك العين واغسل يديك قبل لمسها.",
+     "Avoid irritants and allergens",
+     "If the redness is allergy-related, avoid dust, perfumes, and pollutants that may worsen it; avoid rubbing your eyes and wash your hands before touching them.",
+     "Mayo Clinic"),
 ]
 _GENERAL_MONITOR = (
+    "راقب تطور الأعراض",
     "راقب تطور الأعراض وسجّل أي تغيّر حتى تزور طبيبك بملاحظات واضحة.",
+    "Monitor your symptoms",
     "Track how your symptoms change and note any shift so you can visit your doctor with clear observations.",
 )
 
@@ -188,6 +220,10 @@ def _sanitize_recommendations(recs, lang="ar"):
         tip = (r.get("tip") or r.get("text") or "").strip()
         if not tip or _is_generic_tip(tip, lang):
             continue
+        title = (r.get("title") or "").strip()
+        if not title:
+            words = tip.split()
+            title = " ".join(words[:6])
         canon = _canonical_source(r.get("source"))
         name, homepage = canon if canon else ("Mayo Clinic", "https://www.mayoclinic.org/")
         url = (r.get("source_url") or r.get("url") or "").strip()
@@ -197,7 +233,7 @@ def _sanitize_recommendations(recs, lang="ar"):
         if dedupe in seen:
             continue
         seen.add(dedupe)
-        out.append({"tip": tip, "source": name, "url": url})
+        out.append({"title": title, "tip": tip, "source": name, "url": url})
     return out
 
 
@@ -211,15 +247,17 @@ def _symptom_tips(symptoms, lang="ar"):
     joined = " " + " ".join(norm) + " "
     ar = lang == "ar"
     tips = []
-    for ar_keys, en_keys, tip_ar, tip_en, src in SYMPTOM_TIPS:
+    for ar_keys, en_keys, title_ar, tip_ar, title_en, tip_en, src in SYMPTOM_TIPS:
         keys = ar_keys if ar else en_keys
         if any(k.lower() in joined for k in keys):
-            tips.append({"tip": tip_ar if ar else tip_en,
+            tips.append({"title": title_ar if ar else title_en,
+                         "tip": tip_ar if ar else tip_en,
                          "source": src,
                          "url": TRUSTED_SOURCES[src.lower()][1]})
         if len(tips) >= 3:
             break
-    tips.append({"tip": _GENERAL_MONITOR[0] if ar else _GENERAL_MONITOR[1],
+    tips.append({"title": _GENERAL_MONITOR[0] if ar else _GENERAL_MONITOR[2],
+                 "tip": _GENERAL_MONITOR[1] if ar else _GENERAL_MONITOR[3],
                  "source": "WHO",
                  "url": TRUSTED_SOURCES["who"][1]})
     return tips
@@ -306,12 +344,14 @@ def _build_prompt(d, lang):
 قواعد التوصيات (recommendations) إلزامية:
 - كل توصية يجب أن تكون مرتبطة مباشرة بأعراض المريض ومدتها وشدته وعمره — ممنوع نصائح عامة فارغة مثل "اشرب الماء" أو "تناول طعاماً خفيفاً" أو "خذ قسطاً من الراحة" أو "راجع الطبيب لتحديد سبب الأعراض".
 - لا تكرر نصيحة "راجع الطبيب لتحديد السبب" في التوصيات، فهي تظهر في حقل when_to_seek_care.
+- title يجب أن يكون عنواناً قصيراً جداً (3-5 كلمات)، وtip شرح التوصية بجملة أو جملتين.
 - لا توصِ بأدوية محددة أو جرعات أو مسكنات أبداً.
+- عند الحديث عن مهيجات العين أو الأنف أو الحساسية لا تستخدم كلمة "اللقاحات" أبداً — استخدم "الملوثات" أو "المهيجات".
 - المصدر يجب أن يكون واحداً فقط من: Mayo Clinic أو NHS أو WHO أو CDC أو MedlinePlus.
 - source_url يجب أن يكون رابطاً حقيقياً يبدأ بـ https:// على نفس النطاق الموثوق (مثال: مقال عن الصداع على mayoclinic.org) وليس الصفحة الرئيسية للنطاق وليس رابطاً مخترعاً.
 - اكتب 4 توصيات مختلفة وكلها ذات صلة محددة بهذه الحالة.
 اجب بـ JSON فقط. كل النصوص يجب أن تكون باللغة العربية فقط، ممنوع استخدام أي لغة أخرى:
-{{"personal_note":"جملة أو جملتين متعاطفتين وشخصية تخاطب المريض مباشرة بناءً على حالته بالضبط (مو نص عام)","urgency":"low|medium|high","urgency_ar":"بسيط|يحتاج موعد طبيب|طوارئ","confidence":"high|medium|low","possible_conditions":"الاحتمالات بالعربية فقط (3 جمل، بدون تشخيص قطعي)","recommendations":[{{"tip":"نصيحة بالعربية","source":"اسم المصدر مثل Mayo Clinic","source_url":"رابط المصدر https://..."}},{{"tip":"نصيحة بالعربية","source":"اسم المصدر","source_url":"https://..."}},{{"tip":"نصيحة بالعربية","source":"اسم المصدر","source_url":"https://..."}},{{"tip":"نصيحة بالعربية","source":"اسم المصدر","source_url":"https://..."}}],"danger_signs":"علامات الخطر بالعربية فقط","when_to_seek_care":"متى تراجع الطبيب بالعربية فقط","home_care":"الرعاية المنزلية بالعربية فقط","medication_guidance":"إرشاد حذر عن الاستمرار بالدواء أو مراجعة الطبيب/الصيدلي، أو فارغ لو ما ذكر أدوية","questions_for_doctor":"3-4 أسئلة ذكية بالعربية يسألها المريض طبيبه بناءً على حالته"}}"""
+{{"personal_note":"جملة أو جملتين متعاطفتين وشخصية تخاطب المريض مباشرة بناءً على حالته بالضبط (مو نص عام)","urgency":"low|medium|high","urgency_ar":"بسيط|يحتاج موعد طبيب|طوارئ","confidence":"high|medium|low","possible_conditions":"الاحتمالات بالعربية فقط (3 جمل، بدون تشخيص قطعي)","recommendations":[{{"title":"عنوان قصير جداً (3-5 كلمات)","tip":"شرح التوصية بجملة أو جملتين مرتبطاً بالأعراض","source":"اسم المصدر مثل Mayo Clinic","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}}],"danger_signs":"علامات الخطر بالعربية فقط","when_to_seek_care":"متى تراجع الطبيب بالعربية فقط","home_care":"الرعاية المنزلية بالعربية كقائمة نقاط قصيرة (كل نقطة بجملة آمنة حذرة — ممنوع ذكر منتجات أو أدوية أو قطرات عينية محددة)","medication_guidance":"إرشاد حذر عن الاستمرار بالدواء أو مراجعة الطبيب/الصيدلي، أو فارغ لو ما ذكر أدوية","questions_for_doctor":"3-4 أسئلة ذكية بالعربية يسألها المريض طبيبه بناءً على حالته"}}"""
     return f"""You are a medical awareness assistant. Write your response in English ONLY. Do not use any other language.
 Reliability rules (mandatory):
 - Rely only on established medical knowledge from trusted sources: Mayo Clinic, NHS, WHO, CDC, MedlinePlus.
@@ -330,12 +370,14 @@ Important note about medications: never tell the patient to stop a doctor-prescr
 Recommendation rules (mandatory):
 - Each recommendation must be directly tied to the patient's specific symptoms, duration, severity, and age — no empty generic tips like "drink water", "eat light food", "get enough rest", or "see your doctor to determine the cause".
 - Do not repeat a "see your doctor to determine the cause" tip in recommendations; that belongs in when_to_seek_care.
+- title must be a very short heading (3-5 words), and tip is the explanation in one or two sentences.
 - Never recommend specific drugs, doses, or painkillers.
+- When talking about eye/nose irritants or allergies, never use the word "vaccines" — use "pollutants" or "irritants" instead.
 - Source must be one of: Mayo Clinic, NHS, WHO, CDC, or MedlinePlus only.
 - source_url must be a real https:// link on that same trusted domain (e.g., a Mayo Clinic article about the symptom) — not the domain homepage and never an invented URL.
 - Write 4 distinct recommendations, each specifically relevant to this case.
 Reply with JSON only. All text must be in English only:
-{{"personal_note":"one or two empathetic, personalized sentences addressing the patient directly based on their specific situation (not generic)","urgency":"low|medium|high","urgency_text":"Simple|Needs appointment|Emergency","confidence":"high|medium|low","possible_conditions":"Possible conditions in English only (3 sentences, no definitive diagnosis)","recommendations":[{{"tip":"tip in English","source":"source name like Mayo Clinic","source_url":"https://..."}},{{"tip":"tip in English","source":"source name","source_url":"https://..."}},{{"tip":"tip in English","source":"source name","source_url":"https://..."}},{{"tip":"tip in English","source":"source name","source_url":"https://..."}}],"danger_signs":"Danger signs in English only","when_to_seek_care":"When to see a doctor in English only","home_care":"Home care tips in English only","medication_guidance":"cautious guidance about continuing medication or consulting a doctor/pharmacist, or empty if no medications mentioned","questions_for_doctor":"3-4 smart questions in English the patient should ask their doctor based on their case"}}"""
+{{"personal_note":"one or two empathetic, personalized sentences addressing the patient directly based on their specific situation (not generic)","urgency":"low|medium|high","urgency_text":"Simple|Needs appointment|Emergency","confidence":"high|medium|low","possible_conditions":"Possible conditions in English only (3 sentences, no definitive diagnosis)","recommendations":[{{"title":"very short heading (3-5 words)","tip":"explanation in one or two sentences tied to the symptoms","source":"source name like Mayo Clinic","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}}],"danger_signs":"Danger signs in English only","when_to_seek_care":"When to see a doctor in English only","home_care":"Home care in English as a list of short safe cautious bullet points (never name specific products, drugs, or eye drops)","medication_guidance":"cautious guidance about continuing medication or consulting a doctor/pharmacist, or empty if no medications mentioned","questions_for_doctor":"3-4 smart questions in English the patient should ask their doctor based on their case"}}"""
 
 
 def _extract_json(text):
@@ -367,17 +409,17 @@ def _fallback_result(d, lang):
         conditions = ("قد تكون الأعراض ناتجة عن حالة بسيطة قابلة للعلاج، لكن يُفضل "
                       "مراجعة الطبيب للتأكد خصوصاً مع شدة الأعراض الحالية.")
         tips = [
-            {"tip": "احصل على قسط كافٍ من الراحة والنوم.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
-            {"tip": "اشرب سوائل بانتظام وتناول طعاماً خفيفاً.", "source": "NHS", "url": "https://www.nhs.uk/"},
-            {"tip": "راقب حرارتك وشدة الألم وسجّل أي تغيّر.", "source": "CDC", "url": "https://www.cdc.gov/"},
-            {"tip": "راجع الطبيب إذا لم تتحسن الأعراض خلال أيام.", "source": "WHO", "url": "https://www.who.int/"},
+            {"title": "الراحة والاسترخاء", "tip": "احصل على قسط كافٍ من الراحة والنوم.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
+            {"title": "الترطيب الجيد", "tip": "اشرب سوائل بانتظام على مدار اليوم.", "source": "NHS", "url": "https://www.nhs.uk/"},
+            {"title": "مراقبة الأعراض", "tip": "راقب حرارتك وشدة الألم وسجّل أي تغيّر.", "source": "CDC", "url": "https://www.cdc.gov/"},
+            {"title": "المتابعة الطبية", "tip": "راجع الطبيب إذا لم تتحسن الأعراض خلال أيام.", "source": "WHO", "url": "https://www.who.int/"},
         ]
         return {
             "personal_note": note, "urgency": u, "urgency_ar": ur_ar, "confidence": "low",
             "possible_conditions": conditions, "recommendations": tips,
             "danger_signs": "ضيق تنفس شديد، ألم في الصدر، تشوش، إغماء، أو تدهور مفاجئ.",
             "when_to_seek_care": "راجع الطبيب فوراً أو الطوارئ إذا استمرت الأعراض أو ازدادت سوءاً.",
-            "home_care": "خذ قسطاً من الراحة، اشرب سوائل كافية، وراقب الأعراض.",
+            "home_care": "• امنح نفسك قسطاً كافياً من الراحة.\n• اشرب سوائل كافية على مدار اليوم.\n• راقب الأعراض وسجّل أي تغيّر.\n• ارجع للطبيب إذا استمرت الأعراض أو ازدادت سوءاً.",
             "medication_guidance": ("استمر بدوائك الموصوف كما وصفه الطبيب، وراجع الطبيب أو "
                                     "الصيدلي قبل أي تغيير." if d.get("medications") else ""),
             "questions_for_doctor": "متى يجب أن أقلق من هذه الأعراض؟ ما الفحوصات المطلوبة؟ متى أتحسن؟",
@@ -388,14 +430,14 @@ def _fallback_result(d, lang):
         "urgency": u, "urgency_text": ur_en, "confidence": "low",
         "possible_conditions": "Symptoms may come from a simple treatable condition, but a doctor visit is recommended given the current severity.",
         "recommendations": [
-            {"tip": "Get enough rest and sleep.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
-            {"tip": "Stay hydrated and eat light food.", "source": "NHS", "url": "https://www.nhs.uk/"},
-            {"tip": "Monitor temperature and pain and note any change.", "source": "CDC", "url": "https://www.cdc.gov/"},
-            {"tip": "See a doctor if symptoms do not improve in a few days.", "source": "WHO", "url": "https://www.who.int/"},
+            {"title": "Rest and relax", "tip": "Get enough rest and sleep.", "source": "Mayo Clinic", "url": "https://www.mayoclinic.org/"},
+            {"title": "Stay hydrated", "tip": "Drink fluids regularly through the day.", "source": "NHS", "url": "https://www.nhs.uk/"},
+            {"title": "Monitor symptoms", "tip": "Monitor temperature and pain and note any change.", "source": "CDC", "url": "https://www.cdc.gov/"},
+            {"title": "Medical follow-up", "tip": "See a doctor if symptoms do not improve in a few days.", "source": "WHO", "url": "https://www.who.int/"},
         ],
         "danger_signs": "Severe shortness of breath, chest pain, confusion, fainting, or sudden worsening.",
         "when_to_seek_care": "See a doctor or emergency care immediately if symptoms persist or worsen.",
-        "home_care": "Rest, drink enough fluids, and monitor symptoms.",
+        "home_care": "• Get enough rest.\n• Drink enough fluids through the day.\n• Monitor symptoms and note any change.\n• See a doctor if symptoms persist or worsen.",
         "medication_guidance": "Continue your prescribed medication as directed and consult your doctor or pharmacist before any change." if d.get("medications") else "",
         "questions_for_doctor": "When should I worry about these symptoms? What tests are needed? When will I improve?",
     }
@@ -475,6 +517,7 @@ def run_analysis(patient, lang="ar"):
                     "possible_conditions": result.get("possible_conditions", ""),
                     "recommendations": [
                         {
+                            "title": (r.get("title") or ""),
                             "tip": (r.get("tip") or r.get("text") or ""),
                             "source": r.get("source") or "",
                             "url": r.get("source_url") or r.get("url") or "",
@@ -504,6 +547,7 @@ def run_analysis(patient, lang="ar"):
         "possible_conditions": _md_safe(result.get("possible_conditions", ""), lang),
         "recommendations": [
             {
+                "title": (r.get("title") or ""),
                 "tip": _md_safe((r.get("tip") or r.get("text") or ""), lang),
                 "source": r.get("source") or "",
                 "url": r.get("source_url") or r.get("url") or "",
