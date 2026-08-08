@@ -807,7 +807,7 @@ GREETINGS = [
 
 WELCOME_LANGS = [
     ("🇸🇦", "العربية", "ar", "واجهة عربية بالكامل"),
-    ("🇬🇧", "English", "en", "Full English interface"),
+    ('<span class="flag-badge">UK</span>', "English", "en", "Full English interface"),
 ]
 
 WELCOME_CSS = """
@@ -831,6 +831,11 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 .pulse-line { display: flex; align-items: center; gap: 10px; color: #1769E0; font-size: 20px; margin: 8px 0 14px; }
 .pulse-line .ln { flex: 0 0 74px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #1769E0, transparent); }
 .hero-sub { font-size: 18px; color: #17356D; opacity: .85; max-width: 520px; margin-bottom: 30px; line-height: 1.7; }
+.wmsg { display: grid; }
+.wmsg-item { grid-area: 1 / 1; opacity: 0; transform: translateY(10px); transition: opacity 1s ease, transform 1s ease; }
+.wmsg-item.active { opacity: 1; transform: translateY(0); }
+.wmsg-item .wflag { display: inline-block; vertical-align: middle; margin-right: 6px; font-size: 26px; line-height: 1; }
+.flag-badge.sm { width: 27px; height: 27px; border-radius: 50%; background: linear-gradient(135deg, #0F766E, #134E4A); color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: .5px; display: inline-flex; align-items: center; justify-content: center; margin: 0; vertical-align: middle; }
 .mini-features { display: grid; grid-template-columns: repeat(4, auto); gap: 22px; justify-content: start; }
 .mf { text-align: center; }
 .mf .ic { width: 54px; height: 54px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 26px; background: #DCEEFF; border-radius: 18px; }
@@ -857,6 +862,7 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 660px; margin: 0 auto; }
 .lang-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: center; background: #FFFFFF; border: 2px solid #CCFBF1; border-radius: 22px; padding: 30px 22px; font-family: inherit; cursor: pointer; box-shadow: 0 6px 18px rgba(15,118,110,.08); transition: transform .15s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease; }
 .lang-tile .fl { font-size: 46px; line-height: 1; margin-bottom: 4px; }
+.flag-badge { width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #0F766E, #134E4A); color: #FFFFFF; font-size: 17px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .lang-tile .lt { font-size: 23px; font-weight: 800; color: #134E4A; }
 .lang-tile .ld { font-size: 14px; color: #64748B; }
 .lang-tile .ck { position: absolute; top: 12px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: #0F766E; color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.5); transition: opacity .15s ease, transform .2s ease; }
@@ -883,12 +889,20 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
   .lang-grid { gap: 14px; }
   .lang-tile { padding: 22px 14px; }
   .lang-tile .fl { font-size: 36px; }
+  .flag-badge { width: 46px; height: 46px; font-size: 14px; }
   .lang-tile .lt { font-size: 19px; }
 }
 """
 
 
 def welcome_page():
+    cur = request.cookies.get("lang") or request.args.get("lang")
+    if cur == "en":
+        a0, a1, animate = "", " active", "false"
+    elif cur == "ar":
+        a0, a1, animate = " active", "", "false"
+    else:
+        a0, a1, animate = " active", "", "true"
     tiles = "".join(
         '<button class="lang-tile" onclick="ssGo(\'%s\',this)"><span class="ck">✓</span><span class="fl">%s</span><span class="lt">%s</span><span class="ld">%s</span></button>'
         % (code, flag, label, desc)
@@ -911,9 +925,18 @@ def welcome_page():
         <div class="hero-card">
           <div class="hero-left">
             <span class="badge">🔵 AI-Powered Health Assistant</span>
-            <h1>Welcome to <span class="brand-big">SymptoSense</span></h1>
-            <div class="pulse-line"><span class="ln"></span>❤️<span class="ln"></span></div>
-            <p class="hero-sub">Your smart guide to understanding your symptoms and improving your health.</p>
+            <div class="wmsg" id="wmsg">
+              <div class="wmsg-item__A0__">
+                <h1><span class="wflag">🇸🇦</span> مرحبًا بك في <span class="brand-big">SymptoSense</span> 🩺</h1>
+                <div class="pulse-line"><span class="ln"></span>❤️<span class="ln"></span></div>
+                <p class="hero-sub">مساعدك الذكي لفهم الأعراض الصحية</p>
+              </div>
+              <div class="wmsg-item__A1__">
+                <h1><span class="wflag"><span class="flag-badge sm">UK</span></span> Welcome to <span class="brand-big">SymptoSense</span> 🩺</h1>
+                <div class="pulse-line"><span class="ln"></span>❤️<span class="ln"></span></div>
+                <p class="hero-sub">Your smart assistant for understanding your symptoms</p>
+              </div>
+            </div>
             <div class="mini-features">
               <div class="mf"><div class="ic">🧠</div><span>Smart Analysis</span></div>
               <div class="mf"><div class="ic">🛡️</div><span>Reliable Information</span></div>
@@ -965,9 +988,27 @@ def welcome_page():
       document.getElementById('exitCurtain').classList.add('open');
       setTimeout(function(){ location.href = '/home'; }, 850);
     }
+    (function(){
+      var items = document.querySelectorAll('.wmsg-item');
+      if (items.length < 2) return;
+      var i = 0;
+      for (var k = 0; k < items.length; k++) {
+        if (items[k].classList.contains('active')) i = k;
+      }
+      if (!__ANIM__) return;
+      setInterval(function(){
+        items[i].classList.remove('active');
+        i = (i + 1) % items.length;
+        items[i].classList.add('active');
+      }, 2600);
+    })();
     </script>
     """
     html = _page(_t("title_landing"), body, bare=True, extra_css=WELCOME_CSS)
+    html = (html
+            .replace("wmsg-item__A0__", "wmsg-item" + a0)
+            .replace("wmsg-item__A1__", "wmsg-item" + a1)
+            .replace("__ANIM__", animate))
     return html.replace('dir="rtl"', 'dir="ltr"').replace('lang="ar"', 'lang="en"')
 
 
