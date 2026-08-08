@@ -806,8 +806,8 @@ GREETINGS = [
 
 
 WELCOME_LANGS = [
-    ("🇸🇦", "العربية", "ar", "واجهة عربية بالكامل"),
-    ("🇬🇧", "English", "en", "Full English interface"),
+    ('<span class="lang-badge">SA</span>', "العربية", "ar", "واجهة عربية بالكامل"),
+    ('<span class="lang-badge">UK</span>', "English", "en", "Full English interface"),
 ]
 
 WELCOME_CSS = """
@@ -862,6 +862,7 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 660px; margin: 0 auto; }
 .lang-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: center; background: #FFFFFF; border: 2px solid #99F6E4; border-radius: 22px; padding: 30px 22px; font-family: inherit; cursor: pointer; box-shadow: 0 6px 18px rgba(15,118,110,.08); transition: transform .2s ease, background .3s ease, box-shadow .2s ease, border-color .3s ease; }
 .lang-tile .fl { font-size: 46px; line-height: 1; margin-bottom: 6px; }
+.lang-badge { width: 58px; height: 58px; border-radius: 50%; background: #CCFBF1; color: #0F766E; font-size: 17px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: background .3s ease, color .3s ease; }
 .lang-tile .lt { font-size: 23px; font-weight: 800; color: #134E4A; transition: color .3s ease; }
 .lang-tile .ld { font-size: 14px; color: #64748B; transition: color .3s ease; }
 .lang-tile .ck { position: absolute; top: 12px; right: 14px; width: 26px; height: 26px; border-radius: 50%; background: #FFFFFF; color: #0F766E; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.5); transition: opacity .2s ease, transform .25s ease, background .3s ease; }
@@ -869,6 +870,7 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 .lang-tile.sel { background: #0F766E; border-color: #0F766E; box-shadow: 0 14px 34px rgba(15,118,110,.30); }
 .lang-tile.sel .lt { color: #FFFFFF; }
 .lang-tile.sel .ld { color: #D1FAE5; }
+.lang-tile.sel .lang-badge { background: #FFFFFF; color: #0F766E; }
 .lang-tile.sel .ck { background: #FFFFFF; color: #0F766E; opacity: 1; transform: scale(1); }
 .w-footer { background: #0B2E6B; color: #DCEEFF; text-align: center; padding: 34px 20px 26px; border-radius: 26px 26px 0 0; margin-top: 26px; }
 .w-footer .fl { font-size: 20px; font-weight: 800; color: #FFFFFF; margin-bottom: 4px; }
@@ -903,7 +905,7 @@ def welcome_page():
     elif cur == "ar":
         a0, a1, c0, c1, animate = " active", "", " sel", "", "false"
     else:
-        a0, a1, c0, c1, animate = " active", "", "", "", "true"
+        a0, a1, c0, c1, animate = " active", "", " sel", "", "true"
     tiles = "".join(
         '<button class="lang-tile__C%s__" onclick="ssGo(\'%s\',this)"><span class="ck">✓</span><span class="fl">%s</span><span class="lt">%s</span><span class="ld">%s</span></button>'
         % (i, code, flag, label, desc)
