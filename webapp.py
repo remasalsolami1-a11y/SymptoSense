@@ -430,34 +430,76 @@ __GSC_TAG__
 <meta name="theme-color" content="#1677E8">
 <style>__CSS__</style>
 <style>
-.asst-fab { position: fixed; bottom: 22px; right: 22px; z-index: 999; width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #1769E0, #0F766E); color: #FFF; font-size: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 26px rgba(15,118,110,.45); border: none; animation: asstPulse 2.4s infinite; }
-[dir="rtl"] .asst-fab { right: auto; left: 22px; }
-@keyframes asstPulse { 0%,100% { box-shadow: 0 10px 26px rgba(15,118,110,.45); } 50% { box-shadow: 0 10px 34px rgba(23,105,224,.65); } }
-.asst-panel { position: fixed; bottom: 92px; right: 22px; z-index: 999; width: 348px; max-width: calc(100vw - 28px); max-height: 560px; display: none; flex-direction: column; background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 20px; box-shadow: 0 20px 60px rgba(11,46,107,.22); overflow: hidden; }
-[dir="rtl"] .asst-panel { right: auto; left: 22px; }
+.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1769E0, #0B2E6B); color: #FFF; font-family: inherit; font-size: 16px; font-weight: 800; padding: 13px 22px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(11,46,107,.35); }
+[dir="rtl"] .asst-fab { left: 22px; right: auto; }
+.asst-fab .asst-fab-ic { font-size: 22px; line-height: 1; }
+.asst-fab .asst-fab-lb { letter-spacing: .2px; }
+.asst-fab.pulse { animation: asstPulse 2.6s infinite; }
+.asst-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(11,46,107,.42); }
+@keyframes asstPulse { 0%,100% { box-shadow: 0 12px 30px rgba(11,46,107,.35); } 50% { box-shadow: 0 12px 42px rgba(23,105,224,.55); } }
+.asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 402px; max-width: calc(100vw - 24px); height: min(72vh, 620px); display: none; flex-direction: column; background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 22px; box-shadow: 0 24px 70px rgba(11,46,107,.26); overflow: hidden; }
+[dir="rtl"] .asst-panel { left: 22px; right: auto; }
 .asst-panel.open { display: flex; }
-.asst-head { background: linear-gradient(120deg, #0B2E6B, #1769E0); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.asst-head b { font-size: 15px; }
+.asst-head { background: linear-gradient(120deg, #0B2E6B, #1769E0); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.asst-head .asst-back { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex: 0 0 auto; }
+.asst-head-tx { flex: 1; min-width: 0; }
+.asst-head-tx b { font-size: 15px; display: block; }
 .asst-sub { font-size: 12px; opacity: .85; margin-top: 2px; }
-.asst-head button { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 14px; cursor: pointer; }
-.asst-body { flex: 1; overflow-y: auto; padding: 12px; background: #F6FAFF; min-height: 160px; max-height: 360px; }
-.asst-msg { border-radius: 14px; padding: 9px 12px; margin: 6px 0; font-size: 14px; line-height: 1.6; max-width: 92%; word-break: break-word; }
+.asst-head > button:last-child { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 14px; cursor: pointer; flex: 0 0 auto; }
+.asst-body { flex: 1; overflow-y: auto; padding: 14px; background: #F6FAFF; }
+.asst-msg { border-radius: 14px; padding: 10px 14px; margin: 6px 0; font-size: 14px; line-height: 1.7; max-width: 94%; word-break: break-word; }
 .asst-user { background: #1769E0; color: #FFF; margin-left: auto; }
 [dir="rtl"] .asst-user { margin-left: 0; margin-right: auto; }
 .asst-bot { background: #FFFFFF; border: 1px solid #D7E7FA; color: #1e293b; }
+.asst-opts { display: grid; gap: 10px; margin: 10px 0 6px; }
+.asst-opt { display: flex; align-items: center; gap: 12px; text-align: start; background: #FFFFFF; border: 1.5px solid #D7E7FA; border-radius: 16px; padding: 12px 14px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 12px rgba(11,46,107,.05); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.asst-opt:hover { transform: translateY(-2px); border-color: #1769E0; box-shadow: 0 8px 20px rgba(22,119,232,.14); }
+.asst-opt .ao-ic { font-size: 24px; flex: 0 0 auto; }
+.asst-opt .ao-tx { min-width: 0; }
+.asst-opt .ao-t { display: block; font-size: 14.5px; font-weight: 800; color: #0B2E6B; }
+.asst-opt .ao-d { display: block; font-size: 12.5px; color: #64748B; line-height: 1.5; margin-top: 2px; }
 .asst-qs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.asst-chip { border: 1px solid #99F6E4; background: #FFFFFF; color: #0F766E; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
-.asst-chip:hover { background: #F0FDFA; }
+.asst-chip { border: 1px solid #BFDDFF; background: #FFFFFF; color: #0B2E6B; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.asst-chip:hover { background: #E8F3FF; }
 .asst-emerg { background: #FEE2E2; border: 1px solid #FCA5A5; color: #7F1D1D; border-radius: 12px; padding: 10px 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; }
 .asst-emerg a { color: #B91C1C; font-weight: 800; }
-.asst-foot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #E2E8F0; background: #FFFFFF; }
-.asst-inp { flex: 1; border: 1px solid #CBD5E1; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-family: inherit; }
-.asst-foot button { border: none; border-radius: 10px; background: #1769E0; color: #FFF; padding: 0 16px; font-size: 15px; cursor: pointer; }
-.asst-disc { font-size: 11px; color: #94A3B8; text-align: center; padding: 7px; background: #F8FAFC; border-top: 1px dashed #E2E8F0; }
+.asst-foot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #E2E8F0; background: #FFFFFF; flex: 0 0 auto; }
+.asst-inp { flex: 1; border: 1px solid #CBD5E1; border-radius: 12px; padding: 10px 14px; font-size: 14px; font-family: inherit; }
+.asst-foot button { border: none; border-radius: 12px; background: #1769E0; color: #FFF; padding: 0 16px; font-size: 15px; cursor: pointer; }
+.asst-mh-btn { background: #F3F1FA !important; color: #6B5B95 !important; font-size: 12px !important; white-space: nowrap; padding: 0 10px !important; }
+.asst-disc { font-size: 11px; color: #94A3B8; text-align: center; padding: 7px; background: #F8FAFC; border-top: 1px dashed #E2E8F0; flex: 0 0 auto; }
+.asst-panel.asst-mh { background: #FFFDF9; border-color: #E3D9F0; }
+.asst-panel.asst-mh .asst-head { background: linear-gradient(120deg, #7B9E89, #A8C3B4); }
+.asst-panel.asst-mh .asst-body { background: #FAF7F3; }
+.asst-panel.asst-mh .asst-bot { background: #FFFFFF; border-color: #E9E2F4; color: #4A4458; font-size: 15px; }
+.asst-panel.asst-mh .asst-user { background: #7B9E89; }
+.asst-panel.asst-mh .asst-opt { border-color: #E9E2F4; box-shadow: none; }
+.asst-panel.asst-mh .asst-opt:hover { border-color: #7B9E89; box-shadow: 0 8px 20px rgba(123,158,137,.14); }
+.asst-panel.asst-mh .asst-opt .ao-t { color: #4A4458; }
+.asst-panel.asst-mh .asst-chip { border-color: #E3D9F0; color: #6B5B95; background: #FFFFFF; }
+.asst-panel.asst-mh .asst-chip:hover { background: #F6F3FB; }
+.asst-panel.asst-mh .asst-foot { background: #FFFDF9; }
+.asst-panel.asst-mh .asst-foot button { background: #7B9E89; }
+.asst-breath { text-align: center; margin: 12px auto; width: 118px; height: 118px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; }
+.asst-br-0 { background: radial-gradient(circle, #7B9E89, #5E8A6F); animation: brIn 4s ease-in-out infinite; }
+.asst-br-1 { background: radial-gradient(circle, #B8A9D8, #9C87C9); animation: brHold 7s ease-in-out infinite; }
+.asst-br-2 { background: radial-gradient(circle, #8FBFE6, #6FA7D8); animation: brOut 8s ease-in-out infinite; }
+@keyframes brIn { 0% { transform: scale(.72); } 100% { transform: scale(1.05); } }
+@keyframes brHold { 0%,100% { transform: scale(1.05); } 50% { transform: scale(1.08); } }
+@keyframes brOut { 0% { transform: scale(1.05); } 100% { transform: scale(.72); } }
+.asst-panel.no-anim *, .asst-panel.no-anim *::before, .asst-panel.no-anim *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .asst-fab.pulse, .asst-br-0, .asst-br-1, .asst-br-2 { animation: none !important; } }
 .asst-fb { display: flex; gap: 6px; align-items: center; margin: 2px 0 6px; }
 .asst-fb-btn { border: 1px solid #D7E7FA; background: #FFFFFF; border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
-.asst-fb-btn:hover { background: #F0FDFA; border-color: #99F6E4; }
+.asst-fb-btn:hover { background: #E8F3FF; border-color: #BFDDFF; }
 .asst-fb-ok { font-size: 12px; color: #0F766E; font-weight: 700; }
+@media (max-width: 560px) {
+  .asst-panel { bottom: 0; left: 0; right: 0; width: 100%; max-width: none; height: 80vh; border-radius: 22px 22px 0 0; }
+  [dir="rtl"] .asst-panel { left: 0; right: 0; }
+  .asst-fab { bottom: 16px; left: 16px; padding: 13px 15px; }
+  [dir="rtl"] .asst-fab { left: 16px; right: auto; }
+  .asst-fab .asst-fab-lb { display: none; }
+}
 .expl-bg { position: fixed; inset: 0; z-index: 1001; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; padding: 18px; }
 .expl-bg.open { display: flex; }
 .expl-modal { background: #FFFFFF; border-radius: 20px; max-width: 560px; width: 100%; max-height: 86vh; overflow-y: auto; padding: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
@@ -479,7 +521,6 @@ __GSC_TAG__
 .asst-reasons { display: flex; flex-direction: column; gap: 8px; }
 .asst-reason { border: 1px solid #E2E8F0; background: #F8FAFC; border-radius: 12px; padding: 11px 14px; font-size: 14px; cursor: pointer; font-family: inherit; text-align: start; color: #334155; }
 .asst-reason:hover { border-color: #0F766E; background: #F0FDFA; color: #0F766E; }
-@media (max-width: 520px) { .asst-panel { bottom: 82px; right: 10px; left: 10px; max-width: none; width: auto; } [dir="rtl"] .asst-panel { right: 10px; left: 10px; } }
 </style>
 </head>
 <body>
@@ -504,18 +545,21 @@ __NAV__
 __BODY__
 </div>
 __FOOTER__
-<button class="asst-fab" id="asstFab" onclick="asstToggle()" title="__AST_TITLE__">🤖</button>
+<button class="asst-fab pulse" id="asstFab" onclick="asstToggle()" title="__AST_TITLE__"><span class="asst-fab-ic">🤖</span><span class="asst-fab-lb">__AST_TITLE__</span></button>
 <div class="asst-panel" id="asstPanel">
   <div class="asst-head">
-    <div><b>🤖 __AST_TITLE__</b><div class="asst-sub">__AST_SUB__</div></div>
+    <button class="asst-back" id="asstBack" onclick="asstBackMain()" style="display:none;">↩</button>
+    <div class="asst-head-tx"><b id="asstHeadT">🤖 __AST_TITLE__</b><div class="asst-sub" id="asstSubT">__AST_SUB__</div></div>
     <button onclick="asstToggle()">✕</button>
   </div>
   <div class="asst-body" id="asstBody">
-    <div class="asst-msg asst-bot">__AST_GREET__</div>
+    <div class="asst-msg asst-bot" id="asstGreet">__AST_GREET__</div>
+    <div class="asst-opts" id="asstOpts"></div>
     <div class="asst-qs" id="asstQs"></div>
   </div>
   <div class="asst-foot">
     <input class="asst-inp" id="asstInput" placeholder="__AST_PH__" onkeydown="if(event.key==='Enter')asstSend()">
+    <button class="asst-mh-btn" id="asstMhBtn" onclick="asstToggleAnim()" style="display:none;">__AST_MH_ANIM__</button>
     <button onclick="asstSend()">➤</button>
   </div>
   <div class="asst-disc">__AST_DISC__</div>
@@ -537,12 +581,163 @@ __FOOTER__
 <script>
 var ASST_T = __AST_T__;
 function asstTT(k) { return ASST_T[k] || k; }
+var asstPageCtx = '';
+var asstMhMode = false;
+var asstBrTimer = null, asstBrPhase = 0;
+function asstSetCtx(k) { asstPageCtx = k || ''; }
 function asstToggle() {
   var p = document.getElementById('asstPanel');
   var f = document.getElementById('asstFab');
   var open = p.classList.toggle('open');
-  f.textContent = open ? '✕' : '🤖';
-  if (open) { document.getElementById('asstInput').focus(); }
+  f.querySelector('.asst-fab-ic').textContent = open ? '✕' : '🤖';
+  f.querySelector('.asst-fab-lb').textContent = open ? asstTT('asst_close') : asstTT('asst_title');
+  if (open) {
+    asstShowMain();
+    document.getElementById('asstInput').focus();
+  } else {
+    asstBreathStop();
+  }
+}
+function asstGreeting() {
+  var c = asstPageCtx;
+  if (c === 'sug') return asstTT('asst_calc_sug_greet');
+  if (c === 'bmi') return asstTT('asst_calc_bmi_greet');
+  if (c === 'fluids') return asstTT('asst_calc_fluids_greet');
+  if (c === 'cal') return asstTT('asst_calc_cal_greet');
+  if (c === 'dose') return asstTT('asst_calc_dose_greet');
+  if (c === 'calc') return asstTT('asst_calc_greet');
+  return asstTT('asst_greet');
+}
+function asstChips() {
+  var c = asstPageCtx;
+  if (c === 'sug') return [asstTT('asst_q_sug1'), asstTT('asst_q_sug2'), asstTT('asst_q_sug3')];
+  if (c === 'bmi') return [asstTT('asst_q_bmi1'), asstTT('asst_q_bmi2'), asstTT('asst_q_bmi3')];
+  if (c === 'fluids') return [asstTT('asst_q_fluids1')];
+  if (c === 'cal') return [asstTT('asst_q_cal1')];
+  if (c === 'dose') return [asstTT('asst_q_dose1')];
+  if (c === 'calc') return [asstTT('asst_q_calc1'), asstTT('asst_q_calc2'), asstTT('asst_q_calc3')];
+  return [asstTT('asst_q1'), asstTT('asst_q2'), asstTT('asst_q3'), asstTT('asst_q4')];
+}
+function asstMainOpts() {
+  return [
+    { ic: '🩺', t: asstTT('asst_opt_symp'), d: asstTT('asst_opt_symp_d'), act: 'go', k: 'symp' },
+    { ic: '🧠', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
+    { ic: '🔍', t: asstTT('asst_opt_q'), d: asstTT('asst_opt_q_d'), act: 'go', k: 'q' }
+  ];
+}
+function asstMhOpts() {
+  return [
+    { ic: '🫂', t: asstTT('asst_mh_opt1'), d: asstTT('asst_mh_opt1_d'), act: 'mh', k: 'talk' },
+    { ic: '🌿', t: asstTT('asst_mh_opt2'), d: asstTT('asst_mh_opt2_d'), act: 'mh', k: 'calm' },
+    { ic: '🧠', t: asstTT('asst_mh_opt3'), d: asstTT('asst_mh_opt3_d'), act: 'mh', k: 'feel' }
+  ];
+}
+function asstRenderOpts() {
+  var box = document.getElementById('asstOpts');
+  if (!box) return;
+  var arr = asstMhMode ? asstMhOpts() : asstMainOpts();
+  box.innerHTML = arr.map(function(o) {
+    return '<button class="asst-opt" onclick="asstOptClick(\\'' + o.act + '\\',\\'' + o.k + '\\')">' +
+      '<span class="ao-ic">' + o.ic + '</span>' +
+      '<span class="ao-tx"><span class="ao-t">' + o.t + '</span><span class="ao-d">' + o.d + '</span></span></button>';
+  }).join('');
+}
+function asstShowMain() {
+  var g = document.getElementById('asstGreet');
+  if (g) {
+    var msgs = document.querySelectorAll('#asstBody .asst-msg:not(#asstGreet)');
+    if (msgs.length === 0) { g.textContent = asstGreeting(); g.style.whiteSpace = 'pre-line'; }
+  }
+  asstRenderOpts();
+  asstInitQs();
+}
+function asstInitQs() {
+  var qs = document.getElementById('asstQs');
+  if (!qs) return;
+  qs.innerHTML = asstChips().map(function(q) {
+    var qq = q.replace(/["'\\\\]/g, '');
+    return '<button class="asst-chip" onclick="asstAsk(\\'' + qq + '\\')">' + q + '</button>';
+  }).join('');
+}
+function asstEnterMH() {
+  asstMhMode = true;
+  document.getElementById('asstPanel').classList.add('asst-mh');
+  document.getElementById('asstHeadT').textContent = asstTT('asst_mh_title');
+  document.getElementById('asstSubT').textContent = asstTT('asst_mh_sub');
+  document.getElementById('asstBack').style.display = '';
+  document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
+  document.getElementById('asstMhBtn').style.display = '';
+  var g = document.getElementById('asstGreet');
+  if (g) { g.textContent = asstTT('asst_mh_greet'); g.style.whiteSpace = 'pre-line'; }
+  asstRenderOpts();
+  asstInitQs();
+}
+function asstBackMain() {
+  asstBreathStop();
+  asstMhMode = false;
+  document.getElementById('asstPanel').classList.remove('asst-mh');
+  document.getElementById('asstHeadT').textContent = '🤖 ' + asstTT('asst_title');
+  document.getElementById('asstSubT').textContent = asstTT('asst_sub');
+  document.getElementById('asstBack').style.display = 'none';
+  document.getElementById('asstInput').placeholder = asstTT('asst_ph');
+  document.getElementById('asstMhBtn').style.display = 'none';
+  asstShowMain();
+}
+function asstToggleAnim() {
+  var p = document.getElementById('asstPanel');
+  p.classList.toggle('no-anim');
+  document.getElementById('asstMhBtn').textContent = p.classList.contains('no-anim') ? asstTT('asst_mh_anim_on') : asstTT('asst_mh_anim');
+}
+function asstOptClick(act, k) {
+  if (act === 'mh') { asstMhAction(k); return; }
+  if (k === 'symp') { location.href = '/chat'; return; }
+  if (k === 'q') { document.getElementById('asstInput').focus(); return; }
+}
+function asstMhAction(k) {
+  if (k === 'talk') {
+    asstMhMsg(asstTT('asst_mh_talk_msg'));
+    document.getElementById('asstInput').focus();
+  } else if (k === 'calm') {
+    asstBreathStart();
+    asstMhMsg(asstTT('asst_mh_calm_msg'));
+    document.getElementById('asstInput').focus();
+  } else if (k === 'feel') {
+    asstMhMsg(asstTT('asst_mh_feel_msg'));
+    document.getElementById('asstInput').focus();
+  }
+}
+function asstMhMsg(text) {
+  var body = document.getElementById('asstBody');
+  var d = document.createElement('div');
+  d.className = 'asst-msg asst-bot';
+  d.textContent = text;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+function asstBreathStart() {
+  asstBreathStop();
+  var b = document.getElementById('asstBreath');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'asstBreath';
+    var body = document.getElementById('asstBody');
+    body.appendChild(b);
+  }
+  b.style.display = '';
+  var phases = [[asstTT('asst_br_in'), 4000], [asstTT('asst_br_hold'), 7000], [asstTT('asst_br_out'), 8000]];
+  function step() {
+    var ph = phases[asstBrPhase % 3];
+    b.textContent = ph[0];
+    b.className = 'asst-breath asst-br-' + (asstBrPhase % 3);
+    asstBrPhase++;
+    asstBrTimer = setTimeout(step, ph[1]);
+  }
+  step();
+}
+function asstBreathStop() {
+  if (asstBrTimer) { clearTimeout(asstBrTimer); asstBrTimer = null; }
+  var b = document.getElementById('asstBreath');
+  if (b) b.style.display = 'none';
 }
 function asstSay(text) {
   var body = document.getElementById('asstBody');
@@ -707,7 +902,7 @@ function asstSend() {
   sessionStorage.setItem('asst_hist', JSON.stringify(hist));
   asstTyping(true);
   fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: hist, lang: document.documentElement.lang === 'en' ? 'en' : 'ar' }) })
+    body: JSON.stringify({ messages: hist, lang: document.documentElement.lang === 'en' ? 'en' : 'ar', mode: asstMhMode ? 'mh' : '' }) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       asstTyping(false);
@@ -721,14 +916,6 @@ function asstSend() {
       }
     })
     .catch(function() { asstTyping(false); asstReply(asstTT('offline')); });
-}
-function asstInitQs() {
-  var qs = document.getElementById('asstQs');
-  var arr = [asstTT('q1'), asstTT('q2'), asstTT('q3'), asstTT('q4')];
-  qs.innerHTML = arr.map(function(q) {
-    var qq = q.replace(/["'\\\\]/g, '');
-    return '<button class="asst-chip" onclick="asstAsk(\\'' + qq + '\\')">' + q + '</button>';
-  }).join('');
 }
 asstInitQs();
 </script>
@@ -1182,6 +1369,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__AST_GREET__", ast["asst_greet"])
         .replace("__AST_PH__", ast["asst_ph"])
         .replace("__AST_DISC__", ast["asst_disc"])
+        .replace("__AST_MH_ANIM__", ast["asst_mh_anim"])
         .replace("__AST_EXPLAIN_ASK__", ast["asst_explain_ask"])
         .replace("__AST_T__", json.dumps(ast, ensure_ascii=False))
         .replace("__BODY__", body)
@@ -2715,9 +2903,52 @@ CT = {
         "fam_each_person": "كل فرد له ملفه الخاص: العمر، الجنس، الأمراض، الأدوية، التحاليل والتحليلات السابقة.",
         "fam_hub_intro": "مكان واحد لإدارة السجلات الصحية للأشخاص الذين تعتني بهم.",
         "asst_title": "اسأل SymptoSense",
-        "asst_sub": "مساعد ذكي داخل الموقع",
+        "asst_sub": "المساعد الذكي للموقع",
         "asst_ph": "اكتب سؤالك...",
-        "asst_greet": "أهلاً! أنا مساعد SymptoSense 🤖 اسألني عن الأعراض، الأدوية، فحص الدم، أو أفراد عائلتك، وسأوجّهك للخدمة المناسبة.",
+        "asst_close": "إغلاق",
+        "asst_greet": "🤍 مرحبًا، أنا SymptoSense\nكيف أقدر أساعدك اليوم؟",
+        "asst_opt_symp": "أعراض جسدية",
+        "asst_opt_symp_d": "احكِ لي عن الأعراض التي تشعر بها.",
+        "asst_opt_mh": "صحتي النفسية",
+        "asst_opt_mh_d": "مساحة هادئة إذا كنت تشعر بالقلق أو التوتر أو تحتاج أحد يسمعك.",
+        "asst_opt_q": "سؤال صحي",
+        "asst_opt_q_d": "اسألني عن موضوع صحي تريد فهمه.",
+        "asst_mh_title": "🧠 صحتي النفسية",
+        "asst_mh_sub": "مساحة هادئة لك",
+        "asst_mh_greet": "🤍 أنا هنا معك\nما تحتاج ترتب كلامك... خذ راحتك واحكِ لي.",
+        "asst_mh_opt1": "أبي أتكلم",
+        "asst_mh_opt1_d": "إذا تحتاج أحد يسمعك.",
+        "asst_mh_opt2": "ساعدني أهدأ",
+        "asst_mh_opt2_d": "إذا كنت متوترًا أو تشعر بالهلع الآن.",
+        "asst_mh_opt3": "أبي أفهم شعوري",
+        "asst_mh_opt3_d": "إذا كنت تريد فهم ما تشعر به بشكل أفضل.",
+        "asst_mh_ph": "احكِ لي براحتك...",
+        "asst_mh_anim": "إيقاف الحركة",
+        "asst_mh_anim_on": "تشغيل الحركة",
+        "asst_mh_talk_msg": "🤍 أنا معك هنا. ابدأ بأي شيء يشغل بالك — حتى لو كان الكلام غير مرتب، لا بأس. أنا أسمعك.",
+        "asst_mh_calm_msg": "🌿 خذ نفسًا عميقًا معي… شاهد الدائرة وتنفس معها. خذ وقتك، أنا هنا.",
+        "asst_mh_feel_msg": "🧠 خذ وقتك… متى ظهر هذا الشعور؟ وش كان قبله؟ اكتب ما يخطر ببالك مهما كان بسيطًا.",
+        "asst_br_in": "تنفّس",
+        "asst_br_hold": "احبس",
+        "asst_br_out": "أخرج",
+        "asst_calc_greet": "🤍 أنا هنا إذا احتجتني\nعندك سؤال عن إحدى الحاسبات؟ اسألني.",
+        "asst_calc_bmi_greet": "⚖️ ظهرت لك نتيجة BMI؟\nأقدر أشرح لك معناها بطريقة بسيطة.",
+        "asst_calc_sug_greet": "🩸 تبغى تفهم قراءة السكر؟\nأقدر أوضح لك معنى النتيجة حسب نوع القياس.",
+        "asst_calc_fluids_greet": "💧 عندك سؤال عن احتياج السوائل؟\nأقدر أساعدك.",
+        "asst_calc_cal_greet": "🔥 عندك سؤال عن السعرات؟\nأقدر أوضح لك الفكرة.",
+        "asst_calc_dose_greet": "💊 عندك سؤال عن مواعيد الدواء؟\nأقدر أساعدك.",
+        "asst_q_calc1": "وش أفضل حاسبة أبدأ فيها؟",
+        "asst_q_calc2": "كيف أستخدم حاسبة السكر؟",
+        "asst_q_calc3": "هل النتائج دقيقة؟",
+        "asst_q_sug1": "وش معنى قراءة السكر؟",
+        "asst_q_sug2": "وش الفرق بين صائم وبعد الأكل؟",
+        "asst_q_sug3": "هل قراءتي طبيعية؟",
+        "asst_q_bmi1": "اشرح لي معنى نتيجتي BMI",
+        "asst_q_bmi2": "هل BMI دقيق دائمًا؟",
+        "asst_q_bmi3": "وش الوزن المثالي لطولي؟",
+        "asst_q_fluids1": "كم أحتاج أشرب ماء باليوم؟",
+        "asst_q_cal1": "وش السعرات المناسبة لي؟",
+        "asst_q_dose1": "كيف أنظم مواعيد دوائي؟",
         "asst_q1": "أشعر بألم في رأسي منذ يومين",
         "asst_q2": "كيف أرفع فحص الدم؟",
         "asst_q3": "ما هي خدمة صحة العائلة؟",
@@ -2804,17 +3035,22 @@ CT = {
         "asst_fr1": "الشرح غير واضح", "asst_fr2": "الإجابة طويلة جداً", "asst_fr3": "لم تجب عن سؤالي",
         "asst_fr4": "أريد معلومات أكثر", "asst_fr5": "الإجابة غير مناسبة", "asst_fr6": "سبب آخر",
         "calc_h": "🧮 الحاسبات الصحية",
-        "calc_sub": "احسب مؤشرات صحية شائعة واحصل على نتائج وتقديرات مبسطة.",
+        "calc_sub": "أدوات بسيطة تساعدك تفهم بعض المؤشرات الصحية. احسب، افهم النتيجة، وإذا احتجت اسأل SymptoSense.",
         "calc_now": "احسب الآن",
         "calc_back": "↩ العودة للحاسبات",
-        "calc_follow": "💡 هل تريد فهم النتيجة أكثر؟",
-        "calc_ask": "🤖 اسأل المساعد الذكي",
+        "calc_follow": "💡 وش معنى النتيجة؟",
+        "calc_ask": "🤖 اسأل SymptoSense",
+        "calc_ask_bmi_t": "💡 وش معنى النتيجة؟",
+        "calc_ask_bmi_b": "🤖 خل SymptoSense يشرحها لك",
+        "calc_ask_sug_t": "💡 وش معنى هذا الرقم؟",
+        "calc_ask_sug_b": "🤖 اسأل SymptoSense",
         "calc_alert_t": "🚨 تنبيه",
         "calc_alert_msg": "النتيجة التي أدخلتها قد تستدعي تقييمًا طبيًا، خصوصًا إذا كانت لديك أعراض شديدة.",
         "calc_alert_high": "🚨 القراءة مرتفعة جدًا — يُنصح بالحصول على تقييم طبي عاجل، وإذا كانت مصحوبة بأعراض شديدة فاتصل بالإسعاف 997 فورًا.",
         "calc_alert_low": "🚨 القراءة منخفضة جدًا — إذا كانت مصحوبة بأعراض (رجفة، دوخة، عرق، تشوش) فتناول مصدر سكر سريع واطلب تقييمًا طبيًا، وإذا تدهورت الحالة فاتصل بالإسعاف 997.",
         "calc_em_btn": "🚨 إرشادات الطوارئ",
-        "calc_disc": "⚠️ تنبيه صحي: جميع النتائج المعروضة في هذا القسم لأغراض التثقيف والحساب التقريبي فقط، ولا تُعد تشخيصًا طبيًا أو بديلًا عن استشارة الطبيب. لا تستخدم النتائج لتغيير الأدوية أو الجرعات أو خطة العلاج دون استشارة مختص.",
+        "calc_disc_t": "مهم تعرف",
+        "calc_disc": "النتائج تقديرية وللتثقيف فقط، ولا تستبدل استشارة الطبيب. لا تغيّر دواءك أو جرعتك بناءً على نتيجة الحاسبة.",
         "calc_err": "حدث خطأ في الحساب — تحقق من القيم المدخلة.",
         "calc_bmi_name": "مؤشر كتلة الجسم",
         "calc_bmi_desc": "احسب مؤشر كتلة الجسم بناءً على طولك ووزنك.",
@@ -2884,7 +3120,9 @@ CT = {
         "calc_cal_note": "الرقم تقديري وقد يختلف حسب عوامل متعددة. لا تُستخدم الحاسبة لإنشاء حمية أو خطة علاجية تلقائية.",
         "calc_cal_ctx": "احتياج المستخدم اليومي التقديري من السعرات = %s سعرة حرارية",
         "calc_sug_name": "مستوى السكر",
-        "calc_sug_desc": "أدخل قراءة السكر لمعرفة تصنيفها بشكل عام.",
+        "calc_sug_desc": "أدخل قراءة السكر وحدد نوع القياس لفهمها بشكل عام.",
+        "calc_sug_tag": "الحاسبة الأكثر حساسية — التفسير يعتمد على نوع القياس",
+        "calc_sug_hint": "القراءة تختلف حسب نوع القياس: صائم ≠ بعد الأكل ≠ عشوائي ≠ HbA1c. اختر النوع الصحيح قبل تفسير النتيجة.",
         "calc_sug_type": "نوع القياس",
         "calc_sug_fast": "🕐 صائم",
         "calc_sug_post": "🍽️ بعد الأكل بساعتين",
@@ -3044,9 +3282,52 @@ CT = {
         "fam_each_person": "Each person has their own profile: age, gender, conditions, medications, tests, and past analyses.",
         "fam_hub_intro": "One place to manage health records for the people you care for.",
         "asst_title": "Ask SymptoSense",
-        "asst_sub": "On-site smart assistant",
+        "asst_sub": "The site's smart assistant",
         "asst_ph": "Type your question...",
-        "asst_greet": "Hi! I'm SymptoSense's assistant 🤖 Ask me about symptoms, medications, blood tests, or family members, and I'll point you to the right service.",
+        "asst_close": "Close",
+        "asst_greet": "🤍 Hi, I'm SymptoSense\nHow can I help you today?",
+        "asst_opt_symp": "Physical symptoms",
+        "asst_opt_symp_d": "Tell me about the symptoms you're feeling.",
+        "asst_opt_mh": "My mental health",
+        "asst_opt_mh_d": "A calm space if you feel anxious, stressed, or need someone to listen.",
+        "asst_opt_q": "Health question",
+        "asst_opt_q_d": "Ask me about any health topic you want to understand.",
+        "asst_mh_title": "🧠 My mental health",
+        "asst_mh_sub": "A calm space for you",
+        "asst_mh_greet": "🤍 I'm here with you\nNo need to arrange your words... take your time and tell me.",
+        "asst_mh_opt1": "I want to talk",
+        "asst_mh_opt1_d": "If you need someone to listen.",
+        "asst_mh_opt2": "Help me calm down",
+        "asst_mh_opt2_d": "If you feel anxious or panicked right now.",
+        "asst_mh_opt3": "Help me understand my feeling",
+        "asst_mh_opt3_d": "If you want to understand what you feel better.",
+        "asst_mh_ph": "Tell me freely...",
+        "asst_mh_anim": "Stop motion",
+        "asst_mh_anim_on": "Start motion",
+        "asst_mh_talk_msg": "🤍 I'm here with you. Start with anything on your mind — even if it's unorganized. I'm listening.",
+        "asst_mh_calm_msg": "🌿 Take a deep breath with me... watch the circle and breathe with it. Take your time, I'm here.",
+        "asst_mh_feel_msg": "🧠 Take your time... when did this feeling appear? What came before it? Write whatever comes to mind, however small.",
+        "asst_br_in": "Breathe in",
+        "asst_br_hold": "Hold",
+        "asst_br_out": "Breathe out",
+        "asst_calc_greet": "🤍 I'm here if you need me\nGot a question about one of the calculators? Ask me.",
+        "asst_calc_bmi_greet": "⚖️ Got a BMI result?\nI can explain what it means simply.",
+        "asst_calc_sug_greet": "🩸 Want to understand a sugar reading?\nI can clarify the result based on the measurement type.",
+        "asst_calc_fluids_greet": "💧 Got a question about fluid needs?\nI can help.",
+        "asst_calc_cal_greet": "🔥 Got a question about calories?\nI can explain the idea.",
+        "asst_calc_dose_greet": "💊 Got a question about dose times?\nI can help.",
+        "asst_q_calc1": "Which calculator should I start with?",
+        "asst_q_calc2": "How do I use the sugar calculator?",
+        "asst_q_calc3": "Are the results accurate?",
+        "asst_q_sug1": "What does a sugar reading mean?",
+        "asst_q_sug2": "What's the difference between fasting and post-meal?",
+        "asst_q_sug3": "Is my reading normal?",
+        "asst_q_bmi1": "Explain what my BMI means",
+        "asst_q_bmi2": "Is BMI always accurate?",
+        "asst_q_bmi3": "What's the ideal weight for my height?",
+        "asst_q_fluids1": "How much water should I drink a day?",
+        "asst_q_cal1": "What calories are right for me?",
+        "asst_q_dose1": "How do I organize my dose times?",
         "asst_q1": "I've had a headache for two days",
         "asst_q2": "How do I upload a blood test?",
         "asst_q3": "What is the Family Health Hub?",
@@ -3133,17 +3414,22 @@ CT = {
         "asst_fr1": "The explanation was unclear", "asst_fr2": "The answer was too long", "asst_fr3": "It didn't answer my question",
         "asst_fr4": "I need more information", "asst_fr5": "The answer wasn't relevant", "asst_fr6": "Other reason",
         "calc_h": "🧮 Health Calculators",
-        "calc_sub": "Compute common health indicators and get simple results and estimates.",
+        "calc_sub": "Simple tools to help you understand some health indicators. Calculate, understand the result, and if you need more, ask SymptoSense.",
         "calc_now": "Calculate now",
         "calc_back": "↩ Back to calculators",
-        "calc_follow": "💡 Want to understand your result more?",
-        "calc_ask": "🤖 Ask the smart assistant",
+        "calc_follow": "💡 What does the result mean?",
+        "calc_ask": "🤖 Ask SymptoSense",
+        "calc_ask_bmi_t": "💡 What does the result mean?",
+        "calc_ask_bmi_b": "🤖 Let SymptoSense explain it",
+        "calc_ask_sug_t": "💡 What does this number mean?",
+        "calc_ask_sug_b": "🤖 Ask SymptoSense",
         "calc_alert_t": "🚨 Alert",
         "calc_alert_msg": "The result you entered may warrant medical evaluation, especially if you have severe symptoms.",
         "calc_alert_high": "🚨 The reading is very high — urgent medical evaluation is advised; if it's accompanied by severe symptoms, call emergency services 997 immediately.",
         "calc_alert_low": "🚨 The reading is very low — if accompanied by symptoms (shaking, dizziness, sweating, confusion), have a fast-acting sugar source and seek medical evaluation; if it worsens, call 997.",
         "calc_em_btn": "🚨 Emergency guide",
-        "calc_disc": "⚠️ Health notice: all results shown in this section are for education and rough estimation only. They are not a medical diagnosis or a substitute for a doctor's consultation. Do not use the results to change medications, doses, or a treatment plan without a specialist.",
+        "calc_disc_t": "Good to know",
+        "calc_disc": "The results are estimates for education only and don't replace a doctor's consultation. Don't change your medication or dose based on a calculator result.",
         "calc_err": "Calculation error — please check the entered values.",
         "calc_bmi_name": "Body Mass Index",
         "calc_bmi_desc": "Compute your Body Mass Index based on your height and weight.",
@@ -3213,7 +3499,9 @@ CT = {
         "calc_cal_note": "The number is an estimate and may vary due to many factors. This calculator is not used to create a diet or automatic treatment plan.",
         "calc_cal_ctx": "The user's estimated daily calorie need is %s calories",
         "calc_sug_name": "Blood Sugar Level",
-        "calc_sug_desc": "Enter a glucose reading to understand its general classification.",
+        "calc_sug_desc": "Enter a glucose reading and choose the measurement type to understand it in general.",
+        "calc_sug_tag": "The most sensitive calculator — the interpretation depends on the measurement type",
+        "calc_sug_hint": "The reading differs by measurement type: fasting ≠ after-meal ≠ random ≠ HbA1c. Choose the right type before interpreting the result.",
         "calc_sug_type": "Measurement type",
         "calc_sug_fast": "🕐 Fasting",
         "calc_sug_post": "🍽️ 2 hours after a meal",
@@ -4072,17 +4360,23 @@ def search_page():
 
 # ---------------------------------------------------------------- health calculators
 CALC_CSS = """
-.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 16px; margin-top: 4px; }
+.calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 6px; }
 .calc-card { background: #FFFFFF; border: 1.5px solid #D7E7FA; border-radius: 18px; padding: 22px 18px; cursor: pointer; text-align: center; font-family: inherit; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
 .calc-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(22,119,232,.16); border-color: #1769E0; }
-.calc-card .cc-ic { font-size: 42px; }
-.calc-card h3 { font-size: 17px; font-weight: 800; color: #0B2E6B; margin: 10px 0 6px; }
+.calc-card .cc-ic { font-size: 40px; }
+.calc-card h3 { font-size: 17px; font-weight: 800; color: #0B2E6B; margin: 8px 0 6px; }
 .calc-card p { font-size: 13.5px; color: #475569; line-height: 1.8; margin-bottom: 14px; }
-.calc-card .cc-btn { display: inline-block; background: linear-gradient(135deg, #1677E8, #0F766E); color: #FFF; font-weight: 800; font-size: 13.5px; padding: 10px 22px; border-radius: 999px; }
+.calc-card .cc-btn { display: inline-block; background: linear-gradient(135deg, #1769E0, #0B2E6B); color: #FFF; font-weight: 800; font-size: 13.5px; padding: 10px 22px; border-radius: 999px; }
+.calc-card .cc-tag { display: inline-block; background: #E8F3FF; color: #1769E0; border: 1px solid #BFDDFF; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; margin-bottom: 4px; }
+.calc-card.cal-fea { grid-column: 1 / -1; background: linear-gradient(120deg, #FFFFFF, #F2F8FF); border: 2px solid #1769E0; box-shadow: 0 8px 24px rgba(22,119,232,.10); }
+.calc-card.cal-fea .cc-ic { font-size: 44px; }
+.calc-card.cal-fea p { font-size: 14px; }
+.calc-sub { max-width: 720px; }
 .calc-pane { display: none; }
 .calc-pane.open { display: block; animation: fadeIn .35s ease both; }
 .calc-back { margin-bottom: 12px; }
 .calc-form .cf-row { margin-bottom: 14px; }
+.calc-sug-hint { display: flex; gap: 10px; align-items: flex-start; background: #F0F7FF; border: 1px solid #BFDDFF; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.8; color: #17356D; margin-bottom: 14px; }
 .calc-result { margin-top: 16px; background: #FFFFFF; border: 1.5px solid #D7E7FA; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(11,46,107,.08); }
 .cr-value { font-size: 18px; font-weight: 800; color: #0B2E6B; }
 .cr-value .cr-num { font-size: 26px; }
@@ -4097,8 +4391,9 @@ CALC_CSS = """
 .cr-alert { margin-top: 14px; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #7F1D1D; border-radius: 14px; padding: 14px 16px; font-size: 14px; line-height: 1.8; }
 .cr-alert a { color: #B91C1C; font-weight: 800; text-decoration: underline; }
 .cr-assist { margin-top: 16px; border-top: 1px dashed #CBD5E1; padding-top: 14px; text-align: center; }
-.cr-assist .cr-follow { font-size: 14px; font-weight: 700; color: #134E4A; margin-bottom: 10px; }
-.cr-assist .btn { min-width: 220px; }
+.cr-assist .cr-follow { font-size: 15px; font-weight: 800; color: #0B2E6B; margin-bottom: 10px; }
+.cr-assist .btn { min-width: 250px; background: linear-gradient(135deg, #1769E0, #0B2E6B); color: #FFF; border: none; }
+.cr-assist .btn:hover { transform: translateY(-1px); }
 .calc-rows { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .cd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
 .cd-row b { color: #0B2E6B; }
@@ -4107,30 +4402,35 @@ CALC_CSS = """
 .calc-unit-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .calc-unit-row label { flex: 1; min-width: 140px; border: 2px solid #E2E8F0; border-radius: 12px; padding: 11px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 700; color: #475569; font-family: inherit; }
 .calc-unit-row input[type="radio"] { display: none; }
-.calc-unit-row input[type="radio"]:checked + label { border-color: #0F766E; background: #F0FDFA; color: #0F766E; }
+.calc-unit-row input[type="radio"]:checked + label { border-color: #1769E0; background: #F0F7FF; color: #1769E0; }
 .calc-a1c-hint { font-size: 12.5px; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 8px 12px; margin-top: 8px; }
+.calc-disc-card { display: flex; gap: 12px; align-items: flex-start; background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 16px; padding: 16px 18px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(11,46,107,.05); }
+.calc-disc-card .cdc-ic { font-size: 22px; line-height: 1.4; }
+.calc-disc-card .cdc-t { font-weight: 800; color: #0B2E6B; margin-bottom: 4px; font-size: 15px; }
+.calc-disc-card .cdc-p { font-size: 13.5px; color: #475569; line-height: 1.9; }
+@media (max-width: 640px) { .calc-grid { grid-template-columns: 1fr; } }
 """
 
 
 def calculators_page():
     t = CT["en" if _lang() == "en" else "ar"]
     cards = [
-        ("bmi", "⚖️", "calc_bmi_name", "calc_bmi_desc"),
-        ("fluids", "💧", "calc_fluids_name", "calc_fluids_desc"),
-        ("dose", "💊", "calc_dose_name", "calc_dose_desc"),
-        ("cal", "🔥", "calc_cal_name", "calc_cal_desc"),
-        ("sug", "🩸", "calc_sug_name", "calc_sug_desc"),
+        ("bmi", "⚖️", "calc_bmi_name", "calc_bmi_desc", ""),
+        ("fluids", "💧", "calc_fluids_name", "calc_fluids_desc", ""),
+        ("dose", "💊", "calc_dose_name", "calc_dose_desc", ""),
+        ("cal", "🔥", "calc_cal_name", "calc_cal_desc", ""),
+        ("sug", "🩸", "calc_sug_name", "calc_sug_desc", "cal-fea"),
     ]
     cards_html = "".join(
-        '<button class="calc-card" onclick="showCalc(\'%s\')"><div class="cc-ic">%s</div>'
-        '<h3>%s</h3><p>%s</p><span class="cc-btn">%s</span></button>'
-        % (k, ic, t[n], t[d], t["calc_now"])
-        for k, ic, n, d in cards
+        '<button class="calc-card %s" onclick="showCalc(\'%s\')"><div class="cc-ic">%s</div>'
+        '<h3>%s</h3>%s<p>%s</p><span class="cc-btn">%s</span></button>'
+        % (cls, k, ic, t[n], ('<span class="cc-tag">%s</span>' % t["calc_sug_tag"]) if cls else "", t[d], t["calc_now"])
+        for k, ic, n, d, cls in cards
     )
     body = """
     <div class="card">
       <h2>__CALCH__</h2>
-      <p class="muted">__CALCSUB__</p>
+      <p class="muted calc-sub">__CALCSUB__</p>
       <div class="calc-grid">__CARDS__</div>
     </div>
 
@@ -4219,6 +4519,7 @@ def calculators_page():
 
       <div class="calc-pane" id="pane-sug">
         <div class="card">
+          <div class="calc-sug-hint">🩸 __SUGHINT__</div>
           <div class="calc-form">
             <div class="grid2">
               <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="sgAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
@@ -4249,7 +4550,13 @@ def calculators_page():
       </div>
     </div>
 
-    <div class="warn">__CALCDISC__</div>
+    <div class="calc-disc-card">
+      <div class="cdc-ic">⚠️</div>
+      <div>
+        <div class="cdc-t">__CALCDISCT__</div>
+        <div class="cdc-p">__CALCDISC__</div>
+      </div>
+    </div>
     <script>
     const T = __PT__;
     function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
@@ -4258,8 +4565,12 @@ def calculators_page():
     const PANE_TITLES = { bmi: 'calc_bmi_name', fluids: 'calc_fluids_name', dose: 'calc_dose_name', cal: 'calc_cal_name', sug: 'calc_sug_name' };
     const CAT_EMOJI = { green: '🟢', blue: '🔵', yellow: '🟡', orange: '🟠', red: '🔴' };
     let calcCtx = '';
+    let asstCalcKind = 'calc';
+    if (typeof asstSetCtx === 'function') asstSetCtx('calc');
 
     function showCalc(k) {
+      asstCalcKind = k;
+      if (typeof asstSetCtx === 'function') asstSetCtx(k);
       document.getElementById('calcPaneArea').style.display = '';
       document.getElementById('paneTitle').textContent = CTT(PANE_TITLES[k]);
       document.querySelectorAll('.calc-pane').forEach(function(p) { p.classList.remove('open'); });
@@ -4287,7 +4598,15 @@ def calculators_page():
       document.getElementById('sgA1cHint').style.display = a1c ? '' : 'none';
     }
     function askCalc() {
+      if (typeof asstSetCtx === 'function') asstSetCtx(asstCalcKind || 'calc');
       if (calcCtx && typeof asstSendContextText === 'function') asstSendContextText(calcCtx);
+    }
+    function assistHTML(kind) {
+      let askT = CTT('calc_follow'), askB = CTT('calc_ask');
+      if (kind === 'bmi') { askT = CTT('calc_ask_bmi_t'); askB = CTT('calc_ask_bmi_b'); }
+      else if (kind === 'sug') { askT = CTT('calc_ask_sug_t'); askB = CTT('calc_ask_sug_b'); }
+      return '<div class="cr-assist"><div class="cr-follow">' + esc(askT) + '</div>' +
+        '<button class="btn pri" onclick="askCalc()">' + esc(askB) + '</button></div>';
     }
     function fmtNum(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
     function fmtTime(h, m) {
@@ -4313,16 +4632,12 @@ def calculators_page():
       return '<div class="cr-alert">' + esc(CTT('calc_alert_t')) + ' — ' + esc(msg) +
         ' <br><a href="/emergency">' + esc(CTT('calc_em_btn')) + ' →</a></div>';
     }
-    function assistHTML() {
-      return '<div class="cr-assist"><div class="cr-follow">' + esc(CTT('calc_follow')) + '</div>' +
-        '<button class="btn pri" onclick="askCalc()">' + esc(CTT('calc_ask')) + '</button></div>';
-    }
     function renderBox(id, d, kind, valueLabel, unit, extraPed) {
       const box = document.getElementById(id);
       let h = '<div class="calc-result">';
       h += '<div class="cr-value">' + esc(valueLabel) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(unit || '') + '</div>';
       h += catHTML(d, kind) + noteHTML(d, kind, extraPed);
-      h += alertHTML(d) + assistHTML();
+      h += alertHTML(d) + assistHTML(kind);
       h += '</div>';
       box.innerHTML = h;
     }
@@ -4350,7 +4665,7 @@ def calculators_page():
         let h = '<div class="calc-result">';
         h += '<div class="cr-value">' + esc(CTT('calc_fluids_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_fluids_unit')) + '</div>';
         h += '<div class="cr-note">' + esc(CTT('calc_fluids_note')) + '</div>';
-        h += alertHTML(d) + assistHTML() + '</div>';
+        h += alertHTML(d) + assistHTML('fluids') + '</div>';
         document.getElementById('resFluids').innerHTML = h;
         calcCtx = CTT('calc_fluids_ctx').replace('%s', fmtNum(d.value));
       }, 'resFluids');
@@ -4370,7 +4685,7 @@ def calculators_page():
             (s.first ? '<span class="cd-first">' + esc(CTT('calc_dose_first_dose')) + '</span>' : '<span class="muted">' + esc(CTT('calc_dose_next')) + '</span>') + '</div>';
         });
         hh += '</div><div class="cd-note">' + esc(CTT('calc_dose_note')) + '</div>';
-        hh += assistHTML() + '</div>';
+        hh += assistHTML('dose') + '</div>';
         document.getElementById('resDose').innerHTML = hh;
         calcCtx = CTT('calc_dose_ctx').replace('%s', med);
       }, 'resDose');
@@ -4386,7 +4701,7 @@ def calculators_page():
         let bb = '<div class="calc-result">';
         bb += '<div class="cr-value">' + esc(CTT('calc_cal_val')) + ' <span class="cr-num">≈ ' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_cal_unit')) + '</div>';
         bb += '<div class="cr-note">' + esc(CTT('calc_cal_note')) + '</div>';
-        bb += alertHTML(d) + assistHTML() + '</div>';
+        bb += alertHTML(d) + assistHTML('cal') + '</div>';
         document.getElementById('resCal').innerHTML = bb;
         calcCtx = CTT('calc_cal_ctx').replace('%s', fmtNum(d.value));
       }, 'resCal');
@@ -4402,7 +4717,7 @@ def calculators_page():
         let hh = '<div class="calc-result">';
         hh += '<div class="cr-value">' + esc(CTT('calc_sug_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(d.unit) + ' · ' + esc(typeLabel) + '</div>';
         hh += catHTML(d, 'sug') + noteHTML(d, 'sug', !!d.pediatric);
-        hh += alertHTML(d) + assistHTML() + '</div>';
+        hh += alertHTML(d) + assistHTML('sug') + '</div>';
         document.getElementById('resSug').innerHTML = hh;
         if (d.type === 'a1c') calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', '%').replace('%t', 'HbA1c');
         else calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', d.unit).replace('%t', typeLabel);
@@ -4414,7 +4729,8 @@ def calculators_page():
         ("__PT__", json.dumps(t, ensure_ascii=False)),
         ("__CALCH__", t["calc_h"]), ("__CALCSUB__", t["calc_sub"]),
         ("__CARDS__", cards_html), ("__CALCBACK__", t["calc_back"]),
-        ("__CALCDISC__", t["calc_disc"]),
+        ("__CALCDISC__", t["calc_disc"]), ("__CALCDISCT__", t["calc_disc_t"]),
+        ("__SUGHINT__", t["calc_sug_hint"]),
         ("__BW__", t["calc_bmi_w"]), ("__BWPH__", t["calc_bmi_w_ph"]),
         ("__BH__", t["calc_bmi_h"]), ("__BHPH__", t["calc_bmi_h_ph"]),
         ("__BBTN__", t["calc_bmi_btn"]),
@@ -5619,10 +5935,11 @@ def api_assistant():
     try:
         data = request.get_json(force=True)
         lang = "en" if data.get("lang") == "en" else "ar"
+        mode = data.get("mode") or ""
         messages = [m for m in (data.get("messages") or []) if m.get("content")]
         last_text = messages[-1]["content"][:600] if messages else ""
         flags = analysis_core.detect_red_flags([], last_text, lang)
-        services = _assistant_services(last_text, lang)
+        services = [] if mode == "mh" else _assistant_services(last_text, lang)
         if flags:
             if lang == "en":
                 answer = ("I'm concerned about what you described — it can be an emergency sign ("
@@ -5635,7 +5952,24 @@ def api_assistant():
         for m in messages[-6:]:
             role = "user" if m.get("role") == "user" else "assistant"
             hist.append({"role": role, "content": str(m.get("content") or "")[:600]})
-        if lang == "en":
+        if mode == "mh":
+            if lang == "en":
+                sys = (
+                    "You are the calm mental-wellbeing space inside SymptoSense. Answer in warm, gentle, short English "
+                    "(90 words max), using caring language. Never diagnose, judge, or push solutions. Your role is to listen, "
+                    "validate, reassure, and suggest simple steps (slow breathing, resting, talking to someone close, or seeing a professional). "
+                    "If the user expresses thoughts of self-harm or suicide: respond immediately with firm kindness that they should "
+                    "contact the mental health support line 937 or emergency services 997 right now — never minimize it. "
+                    "Remind them you are not a replacement for a specialist."
+                )
+            else:
+                sys = (
+                    "أنت مساحة هادئة للصحة النفسية داخل موقع SymptoSense. تحدث بالعربية بأسلوب سعودي ودود ودافئ، بجمل قصيرة ولطيفة (90 كلمة كحد أقصى). "
+                    "لا تشخّص ولا تحكم ولا تحاول حل المشكلة بقوة؛ مهمتك أن تسمع وتطمئن وتقترح خطوات بسيطة (تنفس عميق، أخذ قسط، التحدث مع شخص قريب، مراجعة مختص). "
+                    "إذا عبر المستخدم عن أفكار إيذاء النفس أو الانتحار: استجب فورًا وبحزم وحنان بأنه يجب التواصل مع خط مساندة الصحة النفسية 937 أو الطوارئ 997 الآن، "
+                    "ولا تقلل من الأمر أبدًا. ذكّر أنه لا يستبدل المختص."
+                )
+        elif lang == "en":
             sys = (
                 "You are SymptoSense's in-site assistant. Answer briefly in warm English (120 words max). "
                 "You help navigate the site: /chat symptom analysis, /blood CBC upload, /meds medication info & reminders, "
