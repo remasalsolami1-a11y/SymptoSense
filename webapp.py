@@ -12,6 +12,8 @@ import hashlib
 import random
 from datetime import datetime, timezone
 
+CONTACT_WHATSAPP = os.environ.get("CONTACT_WHATSAPP", "")
+
 from flask import Flask, request, jsonify, render_template_string, session, send_file, Response
 
 import db
@@ -68,15 +70,23 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .step h3 { margin: 10px 0 6px; font-size: 15px; }
 .step p { font-size: 13px; color: #64748b; }
 .warn { background: #fff7ed; border: 1px solid #fdba74; color: #7c2d12; border-radius: 12px; padding: 14px 18px; font-size: 14px; margin-bottom: 22px; }
-.footer { text-align: center; padding: 34px 22px 26px; color: #DCEEFF; font-size: 13px; background: #0B2E6B; margin-top: 30px; border-radius: 26px 26px 0 0; }
+.footer { text-align: center; padding: 40px 22px 30px; color: #DCEEFF; font-size: 13px; background: #0B2E6B; margin-top: 30px; border-radius: 26px 26px 0 0; }
 .footer .f-brand { font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: .3px; }
 .footer .f-brand span { color: #6FB2FF; }
 .footer .f-tag { margin-top: 4px; color: #B9CCE8; font-size: 14px; }
 .footer a { color: #6fb2ff; }
-.footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 16px 0 14px; font-size: 13.5px; }
+.footer .f-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px; max-width: 860px; margin: 24px auto 8px; text-align: start; }
+.footer .f-sec h4 { color: #FFFFFF; font-size: 13px; font-weight: 800; margin: 0 0 8px; letter-spacing: .2px; }
+.footer .f-sec p { color: #B9CCE8; line-height: 1.8; font-size: 12.8px; margin: 0; }
+.footer .f-sec .f-owner { font-size: 13.5px; color: #DCEEFF; line-height: 1.9; }
+.footer .f-wa { display: inline-flex; align-items: center; gap: 8px; background: #25D366; color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 999px; text-decoration: none; margin-top: 2px; }
+.footer .f-wa:hover { background: #1fb959; color: #FFFFFF; }
+.footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 18px 0 22px; font-size: 13px; }
 .footer .f-links a { color: #DCEEFF; }
 .footer .f-links a:hover { color: #FFFFFF; text-decoration: underline; }
-.footer .f-copy { color: #8CA7CC; }
+.footer .f-love { color: #FFFFFF; font-size: 14.5px; font-weight: 700; letter-spacing: .2px; }
+.footer .f-love b { color: #8FC3FF; font-weight: 800; }
+.footer .f-copy { color: #8CA7CC; margin-top: 8px; font-size: 12px; }
 .chat-wrap { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 22px; box-shadow: 0 4px 20px rgba(15,23,42,.08); border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; height: 78vh; }
 .chat-head { background: #1677E8; color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
 .chat-head .avatar { width: 40px; height: 40px; border-radius: 50%; background: #BFDDFF; color: #1677E8; display: flex; align-items: center; justify-content: center; font-size: 20px; }
@@ -987,6 +997,17 @@ L = {
         "footer_terms": "الشروط",
         "footer_contact": "تواصل معنا",
         "footer_copy": "© 2026 SymptoSense",
+        "footer_slogan": "مساعدك الصحي الذكي",
+        "footer_synopsis_t": "عن المشروع",
+        "footer_synopsis_d": "SymptoSense منصة صحية ذكية تهدف إلى تبسيط الوصول إلى المعلومات والأدوات الصحية ومساعدة المستخدم على فهم حالته بشكل أوضح.",
+        "footer_owner_t": "صاحبة المشروع",
+        "footer_owner_name": "ريماس 🤍",
+        "footer_owner_role": "مصممة ومطورة SymptoSense",
+        "footer_contact_t": "للتواصل",
+        "footer_wa_btn": "💬 تواصل معي على WhatsApp",
+        "footer_love": "صُنع بكل حب 🤍 بواسطة",
+        "footer_love_name": "ريماس",
+        "footer_copy_full": "© 2026 SymptoSense — جميع الحقوق محفوظة",
         "keywords": "تحليل الأعراض, فحص الأعراض, تشخيص مبدئي, صحة, طب, مستشفيات السعودية, SymptoSense",
         "title_landing": "SymptoSense — تحليل الأعراض بالذكاء الاصطناعي",
         "title_chat": "SymptoSense — فحص الأعراض",
@@ -1184,6 +1205,17 @@ L = {
         "footer_terms": "Terms",
         "footer_contact": "Contact us",
         "footer_copy": "© 2026 SymptoSense",
+        "footer_slogan": "Your smart health assistant",
+        "footer_synopsis_t": "About the project",
+        "footer_synopsis_d": "SymptoSense is a smart health platform that simplifies access to reliable health information and tools, helping you understand your condition more clearly.",
+        "footer_owner_t": "Project owner",
+        "footer_owner_name": "Remas 🤍",
+        "footer_owner_role": "SymptoSense Designer & Developer",
+        "footer_contact_t": "Contact",
+        "footer_wa_btn": "💬 Chat with me on WhatsApp",
+        "footer_love": "Made with love 🤍 by",
+        "footer_love_name": "Remas",
+        "footer_copy_full": "© 2026 SymptoSense — All rights reserved",
         "keywords": "symptom checker, symptoms analysis, preliminary assessment, health, medicine, Saudi hospitals, SymptoSense",
         "title_landing": "SymptoSense — AI Symptom Checker",
         "title_chat": "SymptoSense — Symptom Checker",
@@ -1399,21 +1431,33 @@ def _nav():
 
 
 def _footer():
+    wa = "https://wa.me/" + CONTACT_WHATSAPP if CONTACT_WHATSAPP else "#"
     return (
         '<div class="footer" id="contact">'
-        '<div class="f-brand">Sympto<span>Sense</span></div>'
+        '<div class="f-brand">Sympto<span>Sense</span> 💙</div>'
         '<p class="f-tag">%s</p>'
+        '<div class="f-grid">'
+        '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
+        '<div class="f-sec"><h4>%s</h4><p class="f-owner">%s<br>%s</p></div>'
+        '<div class="f-sec"><h4>%s</h4>'
+        '<a class="f-wa" href="%s" target="_blank" rel="noopener">%s</a>'
+        '</div>'
+        '</div>'
         '<div class="f-links">'
         '<a href="/about">%s</a>'
         '<a href="/about">%s</a>'
         '<a href="/about">%s</a>'
         '<a href="/admin">%s</a>'
-        '<a href="/about">%s</a>'
         '</div>'
+        '<p class="f-love">%s <b>%s</b></p>'
         '<p class="f-copy">%s</p>'
         '</div>'
-    ) % (_t("footer_tag"), _t("nav_about"), _t("footer_privacy"), _t("footer_terms"),
-         _t("nav_admin"), _t("footer_contact"), _t("footer_copy"))
+    ) % (_t("footer_slogan"),
+         _t("footer_synopsis_t"), _t("footer_synopsis_d"),
+         _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
+         _t("footer_contact_t"), wa, _t("footer_wa_btn"),
+         _t("nav_about"), _t("footer_privacy"), _t("footer_terms"), _t("nav_admin"),
+         _t("footer_love"), _t("footer_love_name"), _t("footer_copy_full"))
 
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
