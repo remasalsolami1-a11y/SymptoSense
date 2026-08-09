@@ -41,8 +41,9 @@ a { text-decoration: none; color: inherit; }
 .nav .logo { font-size: 22px; font-weight: 800; letter-spacing: .3px; color: #0B2E6B; display: flex; align-items: center; gap: 6px; }
 .nav .logo span { color: #1677E8; }
 .nav .links { display: flex; gap: 2px; flex-wrap: wrap; }
-.nav .links a { color: #17356D; padding: 8px 13px; border-radius: 10px; font-size: 15px; font-weight: 600; }
-.nav .links a:hover { background: #E8F3FF; color: #1677E8; }
+.nav .links a { color: #17356D; padding: 8px 14px; border-radius: 999px; font-size: 15px; font-weight: 600; }
+.nav .links a:hover { color: #1677E8; background: #F0F7FF; }
+.nav .links a.on { background: #DCEEFF; color: #1677E8; font-weight: 700; }
 .container { max-width: 1080px; margin: 0 auto; padding: 26px 18px; }
 .hero { background: linear-gradient(135deg, #1677E8 0%, #3b8aee 55%, #4d97ef 100%); color: #fff; border-radius: 20px; padding: 48px 36px; text-align: center; margin-bottom: 30px; }
 .hero h1 { font-size: 40px; margin-bottom: 12px; }
@@ -67,11 +68,15 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .step h3 { margin: 10px 0 6px; font-size: 15px; }
 .step p { font-size: 13px; color: #64748b; }
 .warn { background: #fff7ed; border: 1px solid #fdba74; color: #7c2d12; border-radius: 12px; padding: 14px 18px; font-size: 14px; margin-bottom: 22px; }
-.footer { text-align: center; padding: 30px 22px; color: #DCEEFF; font-size: 13px; background: #0B2E6B; margin-top: 30px; border-radius: 26px 26px 0 0; }
+.footer { text-align: center; padding: 34px 22px 26px; color: #DCEEFF; font-size: 13px; background: #0B2E6B; margin-top: 30px; border-radius: 26px 26px 0 0; }
+.footer .f-brand { font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: .3px; }
+.footer .f-brand span { color: #6FB2FF; }
+.footer .f-tag { margin-top: 4px; color: #B9CCE8; font-size: 14px; }
 .footer a { color: #6fb2ff; }
-.footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 10px 0 8px; font-size: 13px; }
+.footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 16px 0 14px; font-size: 13.5px; }
 .footer .f-links a { color: #DCEEFF; }
 .footer .f-links a:hover { color: #FFFFFF; text-decoration: underline; }
+.footer .f-copy { color: #8CA7CC; }
 .chat-wrap { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 22px; box-shadow: 0 4px 20px rgba(15,23,42,.08); border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; height: 78vh; }
 .chat-head { background: #1677E8; color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
 .chat-head .avatar { width: 40px; height: 40px; border-radius: 50%; background: #BFDDFF; color: #1677E8; display: flex; align-items: center; justify-content: center; font-size: 20px; }
@@ -430,14 +435,14 @@ __GSC_TAG__
 <meta name="theme-color" content="#1677E8">
 <style>__CSS__</style>
 <style>
-.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1769E0, #0B2E6B); color: #FFF; font-family: inherit; font-size: 16px; font-weight: 800; padding: 13px 22px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(11,46,107,.35); }
+.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1769E0, #0B2E6B); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(11,46,107,.35); }
 [dir="rtl"] .asst-fab { left: 22px; right: auto; }
-.asst-fab .asst-fab-ic { font-size: 22px; line-height: 1; }
+.asst-fab .asst-fab-ic { font-size: 24px; line-height: 1; }
 .asst-fab .asst-fab-lb { letter-spacing: .2px; }
 .asst-fab.pulse { animation: asstPulse 2.6s infinite; }
 .asst-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(11,46,107,.42); }
 @keyframes asstPulse { 0%,100% { box-shadow: 0 12px 30px rgba(11,46,107,.35); } 50% { box-shadow: 0 12px 42px rgba(23,105,224,.55); } }
-.asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 402px; max-width: calc(100vw - 24px); height: min(72vh, 620px); display: none; flex-direction: column; background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 22px; box-shadow: 0 24px 70px rgba(11,46,107,.26); overflow: hidden; }
+.asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 400px; max-width: calc(100vw - 24px); height: min(78vh, 600px); display: none; flex-direction: column; background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 22px; box-shadow: 0 24px 70px rgba(11,46,107,.26); overflow: hidden; }
 [dir="rtl"] .asst-panel { left: 22px; right: auto; }
 .asst-panel.open { display: flex; }
 .asst-head { background: linear-gradient(120deg, #0B2E6B, #1769E0); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
@@ -610,6 +615,7 @@ function asstGreeting() {
 }
 function asstChips() {
   var c = asstPageCtx;
+  if (asstMhMode) return [asstTT('asst_mh_calm_chip')];
   if (c === 'sug') return [asstTT('asst_q_sug1'), asstTT('asst_q_sug2'), asstTT('asst_q_sug3')];
   if (c === 'bmi') return [asstTT('asst_q_bmi1'), asstTT('asst_q_bmi2'), asstTT('asst_q_bmi3')];
   if (c === 'fluids') return [asstTT('asst_q_fluids1')];
@@ -621,15 +627,20 @@ function asstChips() {
 function asstMainOpts() {
   return [
     { ic: '🩺', t: asstTT('asst_opt_symp'), d: asstTT('asst_opt_symp_d'), act: 'go', k: 'symp' },
-    { ic: '🧠', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
-    { ic: '🔍', t: asstTT('asst_opt_q'), d: asstTT('asst_opt_q_d'), act: 'go', k: 'q' }
+    { ic: '💊', t: asstTT('asst_opt_drug'), d: asstTT('asst_opt_drug_d'), act: 'go', k: 'drug' },
+    { ic: '🩸', t: asstTT('asst_opt_blood'), d: asstTT('asst_opt_blood_d'), act: 'go', k: 'blood' },
+    { ic: '🤍', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
+    { ic: '🧮', t: asstTT('asst_opt_calc'), d: asstTT('asst_opt_calc_d'), act: 'go', k: 'calc' }
   ];
 }
 function asstMhOpts() {
   return [
-    { ic: '🫂', t: asstTT('asst_mh_opt1'), d: asstTT('asst_mh_opt1_d'), act: 'mh', k: 'talk' },
-    { ic: '🌿', t: asstTT('asst_mh_opt2'), d: asstTT('asst_mh_opt2_d'), act: 'mh', k: 'calm' },
-    { ic: '🧠', t: asstTT('asst_mh_opt3'), d: asstTT('asst_mh_opt3_d'), act: 'mh', k: 'feel' }
+    { ic: '😟', t: asstTT('asst_mh_o_anx'), d: asstTT('asst_mh_o_anx_d'), act: 'ask', k: 'anxiety' },
+    { ic: '😔', t: asstTT('asst_mh_o_sad'), d: asstTT('asst_mh_o_sad_d'), act: 'ask', k: 'sadness' },
+    { ic: '😣', t: asstTT('asst_mh_o_str'), d: asstTT('asst_mh_o_str_d'), act: 'ask', k: 'stress' },
+    { ic: '😴', t: asstTT('asst_mh_o_slp'), d: asstTT('asst_mh_o_slp_d'), act: 'ask', k: 'sleep' },
+    { ic: '💭', t: asstTT('asst_mh_o_tho'), d: asstTT('asst_mh_o_tho_d'), act: 'ask', k: 'thoughts' },
+    { ic: '💬', t: asstTT('asst_mh_o_oth'), d: asstTT('asst_mh_o_oth_d'), act: 'ask', k: 'other' }
   ];
 }
 function asstRenderOpts() {
@@ -656,8 +667,12 @@ function asstInitQs() {
   if (!qs) return;
   qs.innerHTML = asstChips().map(function(q) {
     var qq = q.replace(/["'\\\\]/g, '');
-    return '<button class="asst-chip" onclick="asstAsk(\\'' + qq + '\\')">' + q + '</button>';
+    return '<button class="asst-chip" onclick="asstChipClick(\\'' + qq + '\\')">' + q + '</button>';
   }).join('');
+}
+function asstChipClick(txt) {
+  if (asstMhMode && txt === asstTT('asst_mh_calm_chip')) { asstMhAction('calm'); return; }
+  asstAsk(txt);
 }
 function asstEnterMH() {
   asstMhMode = true;
@@ -689,22 +704,35 @@ function asstToggleAnim() {
   document.getElementById('asstMhBtn').textContent = p.classList.contains('no-anim') ? asstTT('asst_mh_anim_on') : asstTT('asst_mh_anim');
 }
 function asstOptClick(act, k) {
-  if (act === 'mh') { asstMhAction(k); return; }
+  if (act === 'mh') { asstEnterMH(); return; }
+  if (act === 'ask') { asstMhAction(k); return; }
   if (k === 'symp') { location.href = '/chat'; return; }
+  if (k === 'drug') { location.href = '/meds'; return; }
+  if (k === 'blood') { location.href = '/blood'; return; }
+  if (k === 'calc') { location.href = '/calculators'; return; }
   if (k === 'q') { document.getElementById('asstInput').focus(); return; }
 }
 function asstMhAction(k) {
-  if (k === 'talk') {
-    asstMhMsg(asstTT('asst_mh_talk_msg'));
-    document.getElementById('asstInput').focus();
-  } else if (k === 'calm') {
+  if (k === 'calm') {
     asstBreathStart();
     asstMhMsg(asstTT('asst_mh_calm_msg'));
     document.getElementById('asstInput').focus();
-  } else if (k === 'feel') {
-    asstMhMsg(asstTT('asst_mh_feel_msg'));
-    document.getElementById('asstInput').focus();
+    return;
   }
+  var send = {
+    'anxiety': asstTT('asst_mh_send_anx'),
+    'sadness': asstTT('asst_mh_send_sad'),
+    'stress': asstTT('asst_mh_send_str'),
+    'sleep': asstTT('asst_mh_send_slp'),
+    'thoughts': asstTT('asst_mh_send_tho'),
+    'other': asstTT('asst_mh_send_oth')
+  }[k] || asstTT('asst_mh_send_oth');
+  asstSendContextText(send);
+}
+function openAsstMH() {
+  var p = document.getElementById('asstPanel');
+  if (!p.classList.contains('open')) asstToggle();
+  asstEnterMH();
 }
 function asstMhMsg(text) {
   var body = document.getElementById('asstBody');
@@ -770,7 +798,7 @@ function asstReply(text, flags) {
   if (flags && flags.length) {
     var a = document.createElement('div');
     a.className = 'asst-emerg';
-    a.innerHTML = asstTT('emerg_txt') + ' <b>997</b><br><a href="/emergency">' + asstTT('emerg_btn') + '</a>';
+    a.innerHTML = asstTT('asst_emerg_txt') + ' <b>997</b><br><a href="/emergency">' + asstTT('asst_emerg_btn') + '</a>';
     body.appendChild(a);
   }
   var fb = document.createElement('div');
@@ -912,10 +940,10 @@ function asstSend() {
         sessionStorage.setItem('asst_hist', JSON.stringify(hist.slice(-16)));
         if (d.services && d.services.length) asstShowServices(d.services);
       } else {
-        asstReply(asstTT('offline'));
+        asstReply(asstTT('asst_offline'));
       }
     })
-    .catch(function() { asstTyping(false); asstReply(asstTT('offline')); });
+    .catch(function() { asstTyping(false); asstReply(asstTT('asst_offline')); });
 }
 asstInitQs();
 </script>
@@ -946,6 +974,7 @@ L = {
         "nav_family": "العائلة",
         "nav_firstaid": "الإسعافات", "nav_tips": "النصائح", "nav_relax": "الاسترخاء",
         "nav_calculators": "الحاسبات الصحية",
+        "nav_search": "البحث الصحي",
         "nav_admin": "لوحة التحكم", "nav_about": "عن الموقع",
         "nav_how": "كيف يعمل", "nav_features": "المميزات", "nav_contact": "تواصل معنا",
         "nav_profile": "ملفي", "nav_history": "سجلّي",
@@ -953,6 +982,11 @@ L = {
         "nav_aware": "التوعية", "nav_blog": "المدونة",
         "footer_note": "SymptoSense © 2026 — للتوعية الصحية فقط وليس بديلاً عن الاستشارة الطبية.",
         "footer_emergency": "في حالة الطوارئ اتصل بالإسعاف مباشرة: <b>997</b> (السعودية)",
+        "footer_tag": "التوعية الصحية تبدأ بخطوة.",
+        "footer_privacy": "الخصوصية",
+        "footer_terms": "الشروط",
+        "footer_contact": "تواصل معنا",
+        "footer_copy": "© 2026 SymptoSense",
         "keywords": "تحليل الأعراض, فحص الأعراض, تشخيص مبدئي, صحة, طب, مستشفيات السعودية, SymptoSense",
         "title_landing": "SymptoSense — تحليل الأعراض بالذكاء الاصطناعي",
         "title_chat": "SymptoSense — فحص الأعراض",
@@ -1000,36 +1034,52 @@ L = {
         "home_badge": "مساعدك الصحي بالذكاء الاصطناعي",
         "home_h1": "مرحبًا بك في",
         "home_h1b": "SymptoSense",
-        "home_sub": "مساعدك الذكي لفهم الأعراض الصحية",
+        "home_sub": "مساعدك الصحي الذكي لفهم أعراضك",
         "home_desc": "أدخل أعراضك في خطوات بسيطة واحصل على تقييم أولي ذكي يساعدك على فهم حالتك ومعرفة الخطوة المناسبة التالية — مع الحفاظ على خصوصيتك.",
-        "home_btn1": "ابدأ التقييم الآن",
+        "home_btn1": "ابدأ التقييم الآن ✨",
         "home_btn2": "كيف يعمل SymptoSense؟",
         "home_ph1": "افهم أعراضك",
         "home_ph2": "اعتني بصحتك",
-        "home_services": "اختر ما تحتاج",
-        "home_services_sub": "أدوات ذكية تساعدك على العناية بصحتك",
+        "home_services": "الخدمات الصحية 🩺",
+        "home_services_sub": "أدوات ذكية تساعدك على فهم صحتك واتخاذ الخطوة المناسبة.",
         "home_more": "عرض المزيد",
         "home_less": "عرض أقل",
-        "home_tools_t": "🤔 ماذا تحتاج؟",
-        "home_tools_sub": "لست متأكداً من أين تبدأ؟ اختر ما يناسب حالتك.",
-        "home_tools_1t": "أشعر بأعراض",
-        "home_tools_1p": "تحليل الأعراض والحصول على توصيات",
-        "home_tools_2t": "لدي فحص دم",
-        "home_tools_2p": "قراءة وتحليل نتائج CBC",
-        "home_tools_3t": "سؤال عن دواء",
-        "home_tools_3p": "معلومات وتحذيرات عن الأدوية",
-        "home_tools_4t": "الحالة طارئة",
-        "home_tools_4p": "أرقام الطوارئ والإسعاف",
-        "home_tools_5t": "أريد حساب مؤشر صحي",
-        "home_tools_5p": "BMI والسعرات واحتياج السوائل والسكر",
-        "home_how": "كيف يعمل؟",
+        "home_f_t": "فحص الأعراض",
+        "home_f_p": "أدخل أعراضك واحصل على تقييم أولي يساعدك على فهم حالتك.",
+        "home_f_btn": "ابدأ الآن",
+        "home_b_t": "تحليل الدم",
+        "home_b_p": "ارفع تقرير تحليل الدم واحصل على شرح مبسط للنتائج.",
+        "home_b_btn": "حلل الآن",
+        "home_m_t": "البحث عن دواء",
+        "home_m_p": "ابحث عن معلومات حول الأدوية والجرعات وطريقة الاستخدام بأمان.",
+        "home_m_btn": "ابحث الآن",
+        "home_calc_t": "الحاسبات الصحية",
+        "home_calc_p": "احسب مؤشرات صحية مثل BMI والسعرات وغيرها.",
+        "home_calc_btn": "احسب الآن",
+        "home_mh_t": "صحتي النفسية",
+        "home_mh_p": "مساحة خاصة للحديث عن مشاعرك، القلق والتوتر مع مساعدك الذكي.",
+        "home_mh_btn": "تحدث مع المساعد 🤍",
+        "home_asst_t": "المساعد الذكي",
+        "home_asst_sub": "اسأل مساعد SymptoSense عن أي شيء يخص صحتك — متاح دائمًا في أي وقت.",
+        "home_asst_btn": "🤖 اسأل SymptoSense",
+        "home_quick_t": "المساعدة السريعة 🚨",
+        "home_quick_hosp_t": "أقرب مستشفى",
+        "home_quick_hosp_p": "ابحث عن أقرب منشأة صحية مناسبة لموقعك.",
+        "home_quick_em_t": "أرقام الطوارئ",
+        "home_quick_em_p": "الوصول السريع إلى أرقام الطوارئ المهمة.",
+        "home_care_t": "العناية والدعم 💙",
+        "home_care_mh_t": "صحتي النفسية",
+        "home_care_relax_t": "استرخاء وتهدئة",
+        "home_care_check_t": "متابعة يومية",
+        "home_care_tips_t": "نصائح صحية",
+        "home_how": "كيف يعمل SymptoSense؟",
         "home_step1_t": "أدخل أعراضك",
-        "home_step1_p": "العمر، الجنس، الأعراض، المدة، والشدة بخطوات بسيطة.",
-        "home_step2_t": "أجب عن أسئلة المتابعة",
-        "home_step2_p": "أمراض سابقة، أدوية حالية، وأي معلومات إضافية مهمة.",
+        "home_step1_p": "صف حالتك الصحية بخطوات بسيطة.",
+        "home_step2_t": "أجب عن الأسئلة",
+        "home_step2_p": "أجب عن أسئلة ذكية تساعد على فهم حالتك بشكل أفضل.",
         "home_step3_t": "احصل على تقييم أولي",
-        "home_step3_p": "مستوى الخطورة، الاحتمالات المحتملة، والتوصيات المناسبة.",
-        "home_warn2": "<b>SymptoSense لا يقدّم تشخيصًا طبيًا نهائيًا</b> ولا يُغني عن استشارة الطبيب. في حال وجود أعراض خطرة (ألم صدر حاد، صعوبة تنفس، نزيف حاد، فقدان وعي) اتصل بالإسعاف فورًا <b>997</b>.",
+        "home_step3_p": "احصل على معلومات وإرشادات تساعدك على معرفة الخطوة التالية.",
+        "home_warn2": "<b>تنبيه:</b> المعلومات المقدمة في SymptoSense للتوعية الصحية وليست بديلًا عن استشارة الطبيب. في الحالات الطارئة أو الأعراض الشديدة، يرجى التواصل مع خدمات الطوارئ أو مراجعة أقرب منشأة صحية.",
         "ab_t1": "ما هو SymptoSense؟",
         "ab_p1": "SymptoSense مساعد صحي توعوي يعتمد على الذكاء الاصطناعي لمساعدتك في فهم أعراضك والحصول على تقييم أولي مبني على مصادر طبية موثوقة (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "يوفّر الموقع: تحليل الأعراض مع تقييم الخطورة، تحذيرات الأدوية وتفاعلاتها، أقرب المستشفيات بناءً على موقعك، تحليل فحوصات الدم، الإسعافات الأولية، ونصائح صحية يومية.",
@@ -1121,6 +1171,7 @@ L = {
         "nav_family": "Family",
         "nav_firstaid": "First Aid", "nav_tips": "Tips", "nav_relax": "Relax",
         "nav_calculators": "Health Calculators",
+        "nav_search": "Health Search",
         "nav_admin": "Dashboard", "nav_about": "About",
         "nav_how": "How it works", "nav_features": "Features", "nav_contact": "Contact",
         "nav_profile": "My profile", "nav_history": "My history",
@@ -1128,6 +1179,11 @@ L = {
         "nav_aware": "Awareness", "nav_blog": "Blog",
         "footer_note": "SymptoSense © 2026 — Health awareness only; not a substitute for professional medical advice.",
         "footer_emergency": "In an emergency call an ambulance directly: <b>997</b> (Saudi Arabia)",
+        "footer_tag": "Health awareness starts with a step.",
+        "footer_privacy": "Privacy",
+        "footer_terms": "Terms",
+        "footer_contact": "Contact us",
+        "footer_copy": "© 2026 SymptoSense",
         "keywords": "symptom checker, symptoms analysis, preliminary assessment, health, medicine, Saudi hospitals, SymptoSense",
         "title_landing": "SymptoSense — AI Symptom Checker",
         "title_chat": "SymptoSense — Symptom Checker",
@@ -1175,36 +1231,52 @@ L = {
         "home_badge": "Your AI-Powered Health Assistant",
         "home_h1": "Welcome to",
         "home_h1b": "SymptoSense",
-        "home_sub": "Your smart assistant to understand health symptoms",
+        "home_sub": "Your smart health assistant to understand your symptoms",
         "home_desc": "Enter your symptoms in a few simple steps and get an initial smart assessment that helps you understand your condition and know the right next step — while keeping your privacy.",
-        "home_btn1": "Start assessment now",
+        "home_btn1": "Start assessment now ✨",
         "home_btn2": "How does SymptoSense work?",
         "home_ph1": "Understand your symptoms",
         "home_ph2": "Take care of your health",
-        "home_services": "What do you need?",
-        "home_services_sub": "Smart tools to help you take care of your health",
+        "home_services": "Health Services 🩺",
+        "home_services_sub": "Smart tools to help you understand your health and take the right next step.",
         "home_more": "Show more",
         "home_less": "Show less",
-        "home_tools_t": "🤔 What do you need?",
-        "home_tools_sub": "Not sure where to start? Pick what fits your situation.",
-        "home_tools_1t": "I have symptoms",
-        "home_tools_1p": "Symptom analysis and recommendations",
-        "home_tools_2t": "I have a blood test",
-        "home_tools_2p": "Read and analyze CBC results",
-        "home_tools_3t": "A question about a drug",
-        "home_tools_3p": "Drug information and warnings",
-        "home_tools_4t": "It's an emergency",
-        "home_tools_4p": "Emergency numbers and ambulance",
-        "home_tools_5t": "I want to compute a health metric",
-        "home_tools_5p": "BMI, calories, fluid needs and blood sugar",
-        "home_how": "How does it work?",
+        "home_f_t": "Symptom Check",
+        "home_f_p": "Enter your symptoms and get an initial assessment that helps you understand your condition.",
+        "home_f_btn": "Start now",
+        "home_b_t": "Blood Test Analysis",
+        "home_b_p": "Upload your blood test report and get a simple explanation of the results.",
+        "home_b_btn": "Analyze now",
+        "home_m_t": "Drug Search",
+        "home_m_p": "Search for safe information about medications, doses, and how to use them.",
+        "home_m_btn": "Search now",
+        "home_calc_t": "Health Calculators",
+        "home_calc_p": "Calculate health indicators like BMI, calories, and more.",
+        "home_calc_btn": "Calculate now",
+        "home_mh_t": "My Mental Health",
+        "home_mh_p": "A private space to talk about your feelings, anxiety, and stress with your smart assistant.",
+        "home_mh_btn": "Talk to the assistant 🤍",
+        "home_asst_t": "Smart Assistant",
+        "home_asst_sub": "Ask SymptoSense about anything health-related — always available whenever you need.",
+        "home_asst_btn": "🤖 Ask SymptoSense",
+        "home_quick_t": "Quick Help 🚨",
+        "home_quick_hosp_t": "Nearest Hospital",
+        "home_quick_hosp_p": "Find the nearest health facility suitable for your location.",
+        "home_quick_em_t": "Emergency Numbers",
+        "home_quick_em_p": "Quick access to the important emergency numbers.",
+        "home_care_t": "Care & Support 💙",
+        "home_care_mh_t": "Mental Health",
+        "home_care_relax_t": "Relax & Calm",
+        "home_care_check_t": "Daily Check-in",
+        "home_care_tips_t": "Health Tips",
+        "home_how": "How does SymptoSense work?",
         "home_step1_t": "Enter your symptoms",
-        "home_step1_p": "Age, gender, symptoms, duration, and severity with simple buttons.",
-        "home_step2_t": "Answer follow-up questions",
-        "home_step2_p": "Past conditions, current medications, and any other important details.",
+        "home_step1_p": "Describe your health condition in simple steps.",
+        "home_step2_t": "Answer questions",
+        "home_step2_p": "Answer smart questions that help understand your condition better.",
         "home_step3_t": "Get an initial assessment",
-        "home_step3_p": "Urgency level, likely conditions, and appropriate recommendations.",
-        "home_warn2": "<b>SymptoSense does not provide a final medical diagnosis</b> and is not a substitute for seeing a doctor. If you have dangerous symptoms (severe chest pain, difficulty breathing, heavy bleeding, loss of consciousness) call an ambulance immediately at <b>997</b>.",
+        "home_step3_p": "Get information and guidance that help you know the next step.",
+        "home_warn2": "<b>Note:</b> The information provided in SymptoSense is for health awareness and is not a substitute for a doctor's consultation. In emergency cases or severe symptoms, please contact emergency services or visit the nearest health facility.",
         "ab_t1": "What is SymptoSense?",
         "ab_p1": "SymptoSense is an AI-powered health awareness assistant that helps you understand your symptoms and get an initial assessment based on trusted medical sources (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "The site provides: symptom analysis with urgency assessment, medication warnings and interactions, nearest hospitals based on your location, blood test analysis, first aid, and daily health tips.",
@@ -1303,7 +1375,7 @@ def _nav():
     path = request.path
     links = [
         ("/home", "nav_home"), ("/chat", "nav_chat"), ("/blood", "nav_blood"),
-        ("/search", "nav_search"), ("/calculators", "nav_calculators"), ("/meds", "nav_meds"), ("/family", "nav_family"), ("/emergency", "nav_emergency"), ("/tips", "nav_tips"),
+        ("/meds", "nav_meds"), ("/calculators", "nav_calculators"), ("/family", "nav_family"), ("/emergency", "nav_emergency"),
     ]
     html = '<nav class="nav"><div class="logo">Sympto<span>Sense</span> 🩺</div><div class="links">'
     for href, key in links:
@@ -1311,10 +1383,12 @@ def _nav():
         html += '<a href="%s"%s>%s</a>' % (href, cls, _t(key))
     html += ('<div class="dd"><button class="dd-btn" onclick="toggleDD(event)">%s <span style="font-size:11px;">▼</span></button>'
              '<div class="dd-menu">'
+             '<a href="/search">%s</a>'
+             '<a href="/tips">%s</a>'
              '<a href="/chat">%s</a>'
              '<a href="/emergency#geo">%s</a>'
              '<a href="/about">%s</a>'
-             '</div></div>') % (_t("nav_explore"), _t("nav_q"), _t("nav_geo"),
+             '</div></div>') % (_t("nav_explore"), _t("nav_search"), _t("nav_tips"), _t("nav_q"), _t("nav_geo"),
                                  _t("nav_aware"))
     html += '</div>'
     html += ('<div class="lang-sw"><a href="#" onclick="setLang(&#39;ar&#39;);return false;" class="%s">العربية</a>'
@@ -1327,17 +1401,19 @@ def _nav():
 def _footer():
     return (
         '<div class="footer" id="contact">'
-        '<p style="font-size:17px;font-weight:800;color:#FFFFFF;">SymptoSense ❤️‍🩹</p>'
+        '<div class="f-brand">Sympto<span>Sense</span></div>'
+        '<p class="f-tag">%s</p>'
         '<div class="f-links">'
         '<a href="/about">%s</a>'
-        '<a href="/home#services">%s</a>'
+        '<a href="/about">%s</a>'
+        '<a href="/about">%s</a>'
         '<a href="/admin">%s</a>'
+        '<a href="/about">%s</a>'
         '</div>'
-        '<p>%s</p>'
-        '<p style="margin-top:6px;">%s</p>'
+        '<p class="f-copy">%s</p>'
         '</div>'
-    ) % (_t("nav_about"), _t("nav_features"), _t("nav_admin"),
-         _t("footer_note"), _t("footer_emergency"))
+    ) % (_t("footer_tag"), _t("nav_about"), _t("footer_privacy"), _t("footer_terms"),
+         _t("nav_admin"), _t("footer_contact"), _t("footer_copy"))
 
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -1608,6 +1684,46 @@ def welcome_page():
     return html.replace('dir="rtl"', 'dir="ltr"').replace('lang="ar"', 'lang="en"')
 
 
+HOME_CSS = """
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.svc-card { background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; box-shadow: 0 4px 16px rgba(23,105,224,.06); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.svc-card:hover { transform: translateY(-4px); border-color: #1677E8; box-shadow: 0 14px 30px rgba(22,119,232,.14); }
+.svc-ic { width: 60px; height: 60px; border-radius: 16px; background: #E8F3FF; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.svc-card h3 { color: #123A78; font-size: 17px; font-weight: 800; margin: 0; }
+.svc-card p { color: #475569; font-size: 14px; line-height: 1.7; margin: 0; }
+.svc-btn { background: #1677E8; color: #FFFFFF; font-weight: 700; font-size: 14px; padding: 9px 22px; border-radius: 999px; margin-top: auto; }
+.svc-card:hover .svc-btn { background: #1255c0; }
+.mh-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: linear-gradient(120deg, #F6F4FF 0%, #EEF6FF 60%, #FFFFFF 100%); border: 1px solid #E2DCF5; border-radius: 18px; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(139,115,204,.08); }
+.mh-ic { width: 60px; height: 60px; border-radius: 16px; background: linear-gradient(135deg, #C9B8F0, #A992E8); display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 8px 20px rgba(139,115,204,.25); }
+.mh-tx { flex: 1; min-width: 220px; }
+.mh-tx h3 { color: #123A78; font-size: 18px; font-weight: 800; margin: 0 0 4px; }
+.mh-tx p { color: #475569; font-size: 14px; line-height: 1.7; margin: 0; }
+.mh-btn { background: linear-gradient(135deg, #8A7CC8, #6B5B95); color: #FFFFFF; font-weight: 700; font-size: 15px; padding: 11px 24px; border-radius: 999px; box-shadow: 0 8px 20px rgba(107,91,149,.25); }
+.mh-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(107,91,149,.32); }
+.asst-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: linear-gradient(120deg, #0B2E6B 0%, #1769E0 100%); color: #FFFFFF; border-radius: 20px; padding: 26px 28px; margin-bottom: 14px; box-shadow: 0 18px 40px rgba(22,119,232,.22); }
+.asst-cta-ic { font-size: 42px; }
+.asst-cta-tx { flex: 1; min-width: 220px; }
+.asst-cta-tx b { font-size: 20px; display: block; margin-bottom: 4px; }
+.asst-cta-tx p { opacity: .92; font-size: 14px; line-height: 1.7; margin: 0; }
+.asst-cta button { border: none; background: #FFFFFF; color: #0B2E6B; font-weight: 800; font-size: 15px; padding: 12px 26px; border-radius: 999px; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(11,46,107,.22); }
+.asst-cta button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(11,46,107,.30); }
+.quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-bottom: 30px; }
+.quick-card { display: flex; align-items: flex-start; gap: 14px; background: #FFFFFF; border: 1px solid #F2DCA8; border-radius: 16px; padding: 18px; box-shadow: 0 3px 12px rgba(180,140,40,.06); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.quick-card:hover { transform: translateY(-2px); border-color: #F5B93C; box-shadow: 0 10px 24px rgba(180,140,40,.12); }
+.q-ic { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 14px; background: #FFF4DE; display: flex; align-items: center; justify-content: center; font-size: 25px; }
+.quick-card b { color: #123A78; font-size: 15.5px; }
+.quick-card p { color: #475569; font-size: 13.5px; line-height: 1.6; margin: 4px 0 0; }
+.care-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 34px; }
+.care-item { background: #FFFFFF; border: 1px solid #D7E7FA; border-radius: 16px; padding: 18px 14px; text-align: center; font-weight: 800; color: #123A78; font-size: 14.5px; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.care-item span { display: block; font-size: 27px; margin-bottom: 8px; }
+.care-item:hover { transform: translateY(-2px); border-color: #1677E8; box-shadow: 0 8px 20px rgba(22,119,232,.10); }
+@media (max-width: 640px) {
+  .svc-grid { grid-template-columns: 1fr; }
+  .mh-card, .asst-cta { flex-direction: column; align-items: flex-start; }
+}
+"""
+
+
 def home_page():
     t = _t
     body = """
@@ -1618,7 +1734,7 @@ def home_page():
         <p class="hh-sub">%s</p>
         <p class="hh-desc">%s</p>
         <div class="hh-btns">
-          <a class="btn pri" href="/chat">🔵 %s</a>
+          <a class="btn pri" href="/chat">%s</a>
           <a class="btn sec" href="#how">%s</a>
         </div>
       </div>
@@ -1627,9 +1743,9 @@ def home_page():
         <span class="hh-ic i1">🩺</span>
         <span class="hh-ic i2">❤️</span>
         <span class="hh-ic i3">📱</span>
-        <span class="hh-ic i4">🤖</span>
-        <span class="hh-ic i5">➕</span>
-        <span class="hh-ic i6">🛡️</span>
+        <span class="hh-ic i4">🛡️</span>
+        <span class="hh-ic i5">🩸</span>
+        <span class="hh-ic i6">⚕️</span>
         <div class="phone">
           <div class="phone-screen">
             <div class="phone-heart">❤️</div>
@@ -1640,26 +1756,68 @@ def home_page():
       </div>
     </div>
 
-    <!--TOOLS-->
-
     <h2 class="sec-head" id="services">%s</h2>
     <p class="sec-sub">%s</p>
-    <div class="features">
-      <a class="feature serv" href="/chat"><div class="ic">🩺</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/blood"><div class="ic">🩸</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/meds"><div class="ic">💊</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/emergency"><div class="ic">🏥</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/firstaid"><div class="ic">🚨</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/calculators"><div class="ic">🧮</div><h3>%s</h3><p>%s</p></a>
-      <a class="feature serv" href="/emergency"><div class="ic">🚑</div><h3>%s</h3><p>%s</p></a>
-      <div id="more-services">
-        <a class="feature serv" href="/chat"><div class="ic">❓</div><h3>%s</h3><p>%s</p></a>
-        <a class="feature serv" href="/tips"><div class="ic">💡</div><h3>%s</h3><p>%s</p></a>
-        <a class="feature serv" href="/relax"><div class="ic">🧘</div><h3>%s</h3><p>%s</p></a>
-        <a class="feature serv" href="/checkin"><div class="ic">📋</div><h3>%s</h3><p>%s</p></a>
-      </div>
+    <div class="svc-grid">
+      <a class="svc-card" href="/chat">
+        <span class="svc-ic">🩺</span>
+        <h3>%s</h3><p>%s</p>
+        <span class="svc-btn">%s</span>
+      </a>
+      <a class="svc-card" href="/blood">
+        <span class="svc-ic">🩸</span>
+        <h3>%s</h3><p>%s</p>
+        <span class="svc-btn">%s</span>
+      </a>
+      <a class="svc-card" href="/meds">
+        <span class="svc-ic">💊</span>
+        <h3>%s</h3><p>%s</p>
+        <span class="svc-btn">%s</span>
+      </a>
+      <a class="svc-card" href="/calculators">
+        <span class="svc-ic">🧮</span>
+        <h3>%s</h3><p>%s</p>
+        <span class="svc-btn">%s</span>
+      </a>
     </div>
-    <button class="more-btn" id="moreBtn" onclick="var m=document.getElementById('more-services');var open=m.style.display!=='none';m.style.display=open?'none':'grid';document.getElementById('moreBtn').textContent=open?'%s':'%s';">%s</button>
+
+    <div class="mh-card">
+      <span class="mh-ic">🤍</span>
+      <div class="mh-tx">
+        <h3>%s</h3>
+        <p>%s</p>
+      </div>
+      <a class="mh-btn" href="#" onclick="openAsstMH();return false;">%s</a>
+    </div>
+
+    <div class="asst-cta">
+      <span class="asst-cta-ic">🤖</span>
+      <div class="asst-cta-tx">
+        <b>%s</b>
+        <p>%s</p>
+      </div>
+      <button onclick="asstToggle()">%s</button>
+    </div>
+
+    <h2 class="sec-head">%s</h2>
+    <div class="quick-grid">
+      <a class="quick-card" href="/emergency#geo">
+        <span class="q-ic">🏥</span>
+        <div><b>%s</b><p>%s</p></div>
+      </a>
+      <a class="quick-card" href="/emergency">
+        <span class="q-ic">🚑</span>
+        <div><b>%s</b><p>%s</p></div>
+      </a>
+    </div>
+
+    <h2 class="sec-head">%s</h2>
+    <div class="care-grid">
+      <a class="care-item" href="#" onclick="openAsstMH();return false;"><span>🤍</span>%s</a>
+      <a class="care-item" href="/relax"><span>🌱</span>%s</a>
+      <a class="care-item" href="/checkin"><span>📋</span>%s</a>
+      <a class="care-item" href="/tips"><span>💡</span>%s</a>
+    </div>
 
     <h2 class="sec-head" id="how">%s</h2>
     <div class="how-wrap">
@@ -1677,21 +1835,24 @@ def home_page():
         t("home_btn1"), t("home_btn2"),
         t("home_ph1"), t("home_ph2"),
         t("home_services"), t("home_services_sub"),
-        t("home_f_t"), t("home_f_p"), t("home_b_t"), t("home_b_p"),
-        t("home_m_t"), t("home_m_p"), t("home_h_t"), t("home_h_p"),
-        t("home_fa_t"), t("home_fa_p"), t("home_calc_t"), t("home_calc_p"), t("home_e_t"), t("home_e_p"),
-        t("home_q_t"), t("home_q_p"),
-        t("home_t_t"), t("home_t_p"), t("home_r_t"), t("home_r_p"),
-        t("home_c_t"), t("home_c_p"),
-        t("home_more"), t("home_less"), t("home_more"),
+        t("home_f_t"), t("home_f_p"), t("home_f_btn"),
+        t("home_b_t"), t("home_b_p"), t("home_b_btn"),
+        t("home_m_t"), t("home_m_p"), t("home_m_btn"),
+        t("home_calc_t"), t("home_calc_p"), t("home_calc_btn"),
+        t("home_mh_t"), t("home_mh_p"), t("home_mh_btn"),
+        t("home_asst_t"), t("home_asst_sub"), t("home_asst_btn"),
+        t("home_quick_t"),
+        t("home_quick_hosp_t"), t("home_quick_hosp_p"),
+        t("home_quick_em_t"), t("home_quick_em_p"),
+        t("home_care_t"),
+        t("home_care_mh_t"), t("home_care_relax_t"), t("home_care_check_t"), t("home_care_tips_t"),
         t("home_how"),
         t("home_step1_t"), t("home_step1_p"),
         t("home_step2_t"), t("home_step2_p"),
         t("home_step3_t"), t("home_step3_p"),
         t("home_warn2"),
     )
-    body = body.replace("<!--TOOLS-->", _tools_html(t))
-    return _page(_t("title_landing"), body)
+    return _page(_t("title_landing"), body, extra_css=HOME_CSS)
 
 
 def _tools_html(t):
@@ -2906,16 +3067,41 @@ CT = {
         "asst_sub": "المساعد الذكي للموقع",
         "asst_ph": "اكتب سؤالك...",
         "asst_close": "إغلاق",
-        "asst_greet": "🤍 مرحبًا، أنا SymptoSense\nكيف أقدر أساعدك اليوم؟",
-        "asst_opt_symp": "أعراض جسدية",
+        "asst_greet": "أهلًا! 👋\nأنا مساعد SymptoSense. كيف أقدر أساعدك اليوم؟",
+        "asst_opt_symp": "أعراض صحية",
         "asst_opt_symp_d": "احكِ لي عن الأعراض التي تشعر بها.",
+        "asst_opt_drug": "سؤال عن دواء",
+        "asst_opt_drug_d": "استفسر عن دواء أو جرعته أو تحذيراته.",
+        "asst_opt_blood": "تحليل دم",
+        "asst_opt_blood_d": "افهم نتائج فحص الدم بشرح مبسط.",
         "asst_opt_mh": "صحتي النفسية",
-        "asst_opt_mh_d": "مساحة هادئة إذا كنت تشعر بالقلق أو التوتر أو تحتاج أحد يسمعك.",
+        "asst_opt_mh_d": "مساحة هادئة للحديث عن مشاعرك والقلق والتوتر.",
+        "asst_opt_calc": "حاسبة صحية",
+        "asst_opt_calc_d": "احسب مؤشرًا صحيًا مثل BMI أو السعرات.",
         "asst_opt_q": "سؤال صحي",
         "asst_opt_q_d": "اسألني عن موضوع صحي تريد فهمه.",
-        "asst_mh_title": "🧠 صحتي النفسية",
+        "asst_mh_title": "🤍 صحتي النفسية",
         "asst_mh_sub": "مساحة هادئة لك",
-        "asst_mh_greet": "🤍 أنا هنا معك\nما تحتاج ترتب كلامك... خذ راحتك واحكِ لي.",
+        "asst_mh_greet": "أنا معك 🤍\nوش أكثر شيء حاب تتكلم عنه؟",
+        "asst_mh_o_anx": "القلق",
+        "asst_mh_o_anx_d": "قلق أو أفكار تدور في رأسك.",
+        "asst_mh_o_sad": "الحزن",
+        "asst_mh_o_sad_d": "مزاج منخفض أو حزن.",
+        "asst_mh_o_str": "التوتر",
+        "asst_mh_o_str_d": "توتر أو ضغط نفسي.",
+        "asst_mh_o_slp": "النوم",
+        "asst_mh_o_slp_d": "صعوبة في النوم أو الأرق.",
+        "asst_mh_o_tho": "أفكار كثيرة",
+        "asst_mh_o_tho_d": "أفكار متزاحمة ومشوشة.",
+        "asst_mh_o_oth": "شيء آخر",
+        "asst_mh_o_oth_d": "موضوع آخر تحب تشاركه.",
+        "asst_mh_send_anx": "أشعر بقلق كبير",
+        "asst_mh_send_sad": "أشعر بالحزن",
+        "asst_mh_send_str": "أنا متوتر ومضغوط",
+        "asst_mh_send_slp": "ما أقدر أنام",
+        "asst_mh_send_tho": "أفكاري كثيرة ومتزاحمة",
+        "asst_mh_send_oth": "أبي أتكلم عن شيء آخر",
+        "asst_mh_calm_chip": "🌿 ساعدني أهدأ",
         "asst_mh_opt1": "أبي أتكلم",
         "asst_mh_opt1_d": "إذا تحتاج أحد يسمعك.",
         "asst_mh_opt2": "ساعدني أهدأ",
@@ -3285,16 +3471,41 @@ CT = {
         "asst_sub": "The site's smart assistant",
         "asst_ph": "Type your question...",
         "asst_close": "Close",
-        "asst_greet": "🤍 Hi, I'm SymptoSense\nHow can I help you today?",
+        "asst_greet": "Hello! 👋\nI'm SymptoSense. How can I help you today?",
         "asst_opt_symp": "Physical symptoms",
         "asst_opt_symp_d": "Tell me about the symptoms you're feeling.",
+        "asst_opt_drug": "A question about a drug",
+        "asst_opt_drug_d": "Ask about a medication, its dose, or warnings.",
+        "asst_opt_blood": "Blood test",
+        "asst_opt_blood_d": "Understand your blood test results in simple terms.",
         "asst_opt_mh": "My mental health",
-        "asst_opt_mh_d": "A calm space if you feel anxious, stressed, or need someone to listen.",
+        "asst_opt_mh_d": "A calm space to talk about your feelings, anxiety, and stress.",
+        "asst_opt_calc": "Health calculator",
+        "asst_opt_calc_d": "Calculate a health metric like BMI or calories.",
         "asst_opt_q": "Health question",
         "asst_opt_q_d": "Ask me about any health topic you want to understand.",
-        "asst_mh_title": "🧠 My mental health",
+        "asst_mh_title": "🤍 My mental health",
         "asst_mh_sub": "A calm space for you",
-        "asst_mh_greet": "🤍 I'm here with you\nNo need to arrange your words... take your time and tell me.",
+        "asst_mh_greet": "I'm with you 🤍\nWhat would you like to talk about most?",
+        "asst_mh_o_anx": "Anxiety",
+        "asst_mh_o_anx_d": "Worry or thoughts running through your head.",
+        "asst_mh_o_sad": "Sadness",
+        "asst_mh_o_sad_d": "Low mood or sadness.",
+        "asst_mh_o_str": "Stress",
+        "asst_mh_o_str_d": "Tension or pressure.",
+        "asst_mh_o_slp": "Sleep",
+        "asst_mh_o_slp_d": "Difficulty sleeping or insomnia.",
+        "asst_mh_o_tho": "Many thoughts",
+        "asst_mh_o_tho_d": "Racing, jumbled thoughts.",
+        "asst_mh_o_oth": "Something else",
+        "asst_mh_o_oth_d": "Another topic you'd like to share.",
+        "asst_mh_send_anx": "I feel very anxious",
+        "asst_mh_send_sad": "I feel sad",
+        "asst_mh_send_str": "I'm stressed and tense",
+        "asst_mh_send_slp": "I can't sleep",
+        "asst_mh_send_tho": "I have many racing thoughts",
+        "asst_mh_send_oth": "I want to talk about something else",
+        "asst_mh_calm_chip": "🌿 Help me calm down",
         "asst_mh_opt1": "I want to talk",
         "asst_mh_opt1_d": "If you need someone to listen.",
         "asst_mh_opt2": "Help me calm down",
