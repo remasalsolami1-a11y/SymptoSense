@@ -12,7 +12,8 @@ import hashlib
 import random
 from datetime import datetime, timezone
 
-CONTACT_WHATSAPP = os.environ.get("CONTACT_WHATSAPP", "")
+CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
+
 
 from flask import Flask, request, jsonify, render_template_string, session, send_file, Response
 
@@ -79,8 +80,8 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .footer .f-sec h4 { color: #FFFFFF; font-size: 13px; font-weight: 800; margin: 0 0 8px; letter-spacing: .2px; }
 .footer .f-sec p { color: #B9CCE8; line-height: 1.8; font-size: 12.8px; margin: 0; }
 .footer .f-sec .f-owner { font-size: 13.5px; color: #DCEEFF; line-height: 1.9; }
-.footer .f-wa { display: inline-flex; align-items: center; gap: 8px; background: #25D366; color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 999px; text-decoration: none; margin-top: 2px; }
-.footer .f-wa:hover { background: #1fb959; color: #FFFFFF; }
+.footer .f-tg { display: inline-flex; align-items: center; gap: 8px; background: #0088cc; color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 999px; text-decoration: none; margin-top: 2px; }
+.footer .f-tg:hover { background: #006daa; color: #FFFFFF; }
 .footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 18px 0 22px; font-size: 13px; }
 .footer .f-links a { color: #DCEEFF; }
 .footer .f-links a:hover { color: #FFFFFF; text-decoration: underline; }
@@ -1004,7 +1005,7 @@ L = {
         "footer_owner_name": "ريماس 🤍",
         "footer_owner_role": "مصممة ومطورة SymptoSense",
         "footer_contact_t": "للتواصل",
-        "footer_wa_btn": "💬 تواصل معي على WhatsApp",
+        "footer_wa_btn": "💬 تواصل معي على تيليجرام",
         "footer_love": "صُنع بكل حب 🤍 بواسطة",
         "footer_love_name": "ريماس",
         "footer_copy_full": "© 2026 SymptoSense — جميع الحقوق محفوظة",
@@ -1212,7 +1213,7 @@ L = {
         "footer_owner_name": "Remas 🤍",
         "footer_owner_role": "SymptoSense Designer & Developer",
         "footer_contact_t": "Contact",
-        "footer_wa_btn": "💬 Chat with me on WhatsApp",
+        "footer_wa_btn": "💬 Chat with me on Telegram",
         "footer_love": "Made with love 🤍 by",
         "footer_love_name": "Remas",
         "footer_copy_full": "© 2026 SymptoSense — All rights reserved",
@@ -1431,7 +1432,7 @@ def _nav():
 
 
 def _footer():
-    wa = "https://wa.me/" + CONTACT_WHATSAPP if CONTACT_WHATSAPP else "#"
+    tg = "https://t.me/" + CONTACT_TELEGRAM if CONTACT_TELEGRAM else "#"
     return (
         '<div class="footer" id="contact">'
         '<div class="f-brand">Sympto<span>Sense</span> 💙</div>'
@@ -1440,7 +1441,7 @@ def _footer():
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
         '<div class="f-sec"><h4>%s</h4><p class="f-owner">%s<br>%s</p></div>'
         '<div class="f-sec"><h4>%s</h4>'
-        '<a class="f-wa" href="%s" target="_blank" rel="noopener">%s</a>'
+        '<a class="f-tg" href="%s" target="_blank" rel="noopener">%s</a>'
         '</div>'
         '</div>'
         '<div class="f-links">'
@@ -1455,7 +1456,7 @@ def _footer():
     ) % (_t("footer_slogan"),
          _t("footer_synopsis_t"), _t("footer_synopsis_d"),
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
-         _t("footer_contact_t"), wa, _t("footer_wa_btn"),
+         _t("footer_contact_t"), tg, _t("footer_wa_btn"),
          _t("nav_about"), _t("footer_privacy"), _t("footer_terms"), _t("nav_admin"),
          _t("footer_love"), _t("footer_love_name"), _t("footer_copy_full"))
 
@@ -5459,7 +5460,7 @@ def history_page():
         share_txt = (
             "SymptoSense: " + ", ".join(r["symptoms"]) + " → " + u_label
         )
-        share_url = "https://wa.me/?text=" + share_txt.replace(" ", "%20")
+        share_url = "https://t.me/share/url?text=" + share_txt.replace(" ", "%20")
         cards += """
         <div class="hist-card">
           <div class="hist-head"><b>📅 %s</b><span class="pill pill-%s">%s</span></div>
