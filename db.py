@@ -405,13 +405,139 @@ def init_db():
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_ml_plan ON med_logs(plan_id, log_date)")
+        # ---- Smart Account System tables ----
+        _create_ss_tables(c)
         conn.commit()
         _migrate_records(conn, c)
         _migrate_feedback(conn, c)
         _migrate_members(conn, c)
+        _migrate_ss_columns(conn, c)
         conn.commit()
     finally:
         conn.close()
+
+
+def _create_ss_tables(c):
+    """Create SymptoSense Smart Account tables if they don't exist."""
+    if USE_POSTGRES:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_users (
+                id SERIAL PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                last_login TEXT
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_health_profiles (
+                user_id INTEGER PRIMARY KEY REFERENCES ss_users(id) ON DELETE CASCADE,
+                display_name TEXT DEFAULT '',
+                dob TEXT DEFAULT '',
+                gender TEXT DEFAULT '',
+                height TEXT DEFAULT '',
+                weight TEXT DEFAULT '',
+                activity_level TEXT DEFAULT '',
+                medications TEXT DEFAULT '',
+                allergies TEXT DEFAULT '',
+                health_conditions TEXT DEFAULT '',
+                extra_info TEXT DEFAULT '',
+                lang TEXT DEFAULT 'ar',
+                updated_at TEXT NOT NULL
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_privacy (
+                user_id INTEGER PRIMARY KEY REFERENCES ss_users(id) ON DELETE CASCADE,
+                use_in_assistant INTEGER DEFAULT 1,
+                use_in_analysis INTEGER DEFAULT 1,
+                use_in_calculators INTEGER DEFAULT 1,
+                save_chat_history INTEGER DEFAULT 1,
+                updated_at TEXT NOT NULL
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_chat_history (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES ss_users(id) ON DELETE CASCADE,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_ss_chat_user ON ss_chat_history(user_id)")
+    else:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                last_login TEXT
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_health_profiles (
+                user_id INTEGER PRIMARY KEY,
+                display_name TEXT DEFAULT '',
+                dob TEXT DEFAULT '',
+                gender TEXT DEFAULT '',
+                height TEXT DEFAULT '',
+                weight TEXT DEFAULT '',
+                activity_level TEXT DEFAULT '',
+                medications TEXT DEFAULT '',
+                allergies TEXT DEFAULT '',
+                health_conditions TEXT DEFAULT '',
+                extra_info TEXT DEFAULT '',
+                lang TEXT DEFAULT 'ar',
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES ss_users(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_privacy (
+                user_id INTEGER PRIMARY KEY,
+                use_in_assistant INTEGER DEFAULT 1,
+                use_in_analysis INTEGER DEFAULT 1,
+                use_in_calculators INTEGER DEFAULT 1,
+                save_chat_history INTEGER DEFAULT 1,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES ss_users(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS ss_chat_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES ss_users(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_ss_chat_user ON ss_chat_history(user_id)")
+
+
+def _migrate_ss_columns(conn, c):
+    """Add any new columns to existing ss_ tables."""
+    def columns(table):
+        if USE_POSTGRES:
+            c.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                (table,),
+            )
+            return {row[0] for row in c.fetchall()}
+        c.execute(f"PRAGMA table_info({table})")
+        return {row[1] for row in c.fetchall()}
+    try:
+        hp_cols = columns("ss_health_profiles")
+        for col, default in [("extra_info", ""), ("activity_level", "")]:
+            if col not in hp_cols:
+                c.execute(f"ALTER TABLE ss_health_profiles ADD COLUMN {col} TEXT DEFAULT '{default}'")
+    except Exception:
+        pass
 
 
 def _migrate_feedback(conn, c):
@@ -1476,5 +1602,324 @@ def all_conversations():
             state = json.loads(state_blob) if state_blob else None
             out.setdefault(conv_name, {})[key] = state
         return out
+    finally:
+        conn.close()
+
+
+# ---- SymptoSense Smart Account System ----
+
+import re as _re
+
+def _hash_password(password):
+    """Hash password with SHA-256 + salt."""
+    salt = os.environ.get("HASH_SALT", "symptosense")
+    return hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
+
+
+def create_ss_user(email, name, password):
+    """Create a new user account. Returns (user_id, error_message)."""
+    email = (email or "").strip().lower()
+    name = (name or "").strip()
+    password = password or ""
+    if not email or not _re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+        return None, "invalid_email"
+    if not name or len(name) < 2:
+        return None, "invalid_name"
+    if len(password) < 6:
+        return None, "password_too_short"
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        now = datetime.now(timezone.utc).isoformat()
+        pw_hash = _hash_password(password)
+        if USE_POSTGRES:
+            c.execute(
+                "INSERT INTO ss_users (email, name, password_hash, created_at) VALUES (%s,%s,%s,%s) RETURNING id",
+                (email, name, pw_hash, now),
+            )
+            user_id = c.fetchone()[0]
+        else:
+            c.execute(
+                "INSERT INTO ss_users (email, name, password_hash, created_at) VALUES (?,?,?,?)",
+                (email, name, pw_hash, now),
+            )
+            user_id = c.lastrowid
+        conn.commit()
+        return user_id, None
+    except Exception:
+        return None, "email_exists"
+    finally:
+        conn.close()
+
+
+def authenticate_ss_user(email, password):
+    """Authenticate user. Returns user_id or None."""
+    email = (email or "").strip().lower()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "SELECT id, password_hash FROM ss_users WHERE email=%s" % PH,
+            (email,),
+        )
+        row = c.fetchone()
+        if not row:
+            return None
+        user_id, stored_hash = row
+        if _hash_password(password) != stored_hash:
+            return None
+        now = datetime.now(timezone.utc).isoformat()
+        c.execute("UPDATE ss_users SET last_login=%s WHERE id=%s" % (PH, PH), (now, user_id))
+        conn.commit()
+        return user_id
+    finally:
+        conn.close()
+
+
+def get_ss_user(user_id):
+    """Get user info by ID."""
+    if not user_id:
+        return None
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id, email, name, created_at, last_login FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        row = c.fetchone()
+        if not row:
+            return None
+        return {"id": row[0], "email": row[1], "name": row[2], "created_at": row[3], "last_login": row[4]}
+    finally:
+        conn.close()
+
+
+def get_ss_user_by_email(email):
+    """Get user info by email."""
+    email = (email or "").strip().lower()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id, email, name FROM ss_users WHERE email=%s" % PH, (email,))
+        row = c.fetchone()
+        if not row:
+            return None
+        return {"id": row[0], "email": row[1], "name": row[2]}
+    finally:
+        conn.close()
+
+
+def save_health_profile(user_id, data):
+    """Save or update health profile for a user."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        now = datetime.now(timezone.utc).isoformat()
+        fields = {
+            "display_name": data.get("display_name", ""),
+            "dob": data.get("dob", ""),
+            "gender": data.get("gender", ""),
+            "height": data.get("height", ""),
+            "weight": data.get("weight", ""),
+            "activity_level": data.get("activity_level", ""),
+            "medications": data.get("medications", ""),
+            "allergies": data.get("allergies", ""),
+            "health_conditions": data.get("health_conditions", ""),
+            "extra_info": data.get("extra_info", ""),
+            "lang": data.get("lang", "ar"),
+            "updated_at": now,
+        }
+        if USE_POSTGRES:
+            cols = ", ".join(fields.keys())
+            phs = ", ".join(["%s"] * len(fields))
+            updates = ", ".join(f"{k}=excluded.{k}" for k in fields.keys())
+            c.execute(
+                f"INSERT INTO ss_health_profiles ({cols}) VALUES ({phs}) "
+                f"ON CONFLICT(user_id) DO UPDATE SET {updates}",
+                (int(user_id),) + tuple(fields.values()),
+            )
+        else:
+            cols = ", ".join(["user_id"] + list(fields.keys()))
+            phs = ", ".join(["?"] * (1 + len(fields)))
+            updates = ", ".join(f"{k}=excluded.{k}" for k in fields.keys())
+            c.execute(
+                f"INSERT OR REPLACE INTO ss_health_profiles ({cols}) VALUES ({phs})",
+                (int(user_id),) + tuple(fields.values()),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def load_health_profile(user_id):
+    """Load health profile for a user."""
+    if not user_id:
+        return None
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "SELECT display_name, dob, gender, height, weight, activity_level, "
+            "medications, allergies, health_conditions, extra_info, lang, updated_at "
+            "FROM ss_health_profiles WHERE user_id=%s" % PH,
+            (int(user_id),),
+        )
+        row = c.fetchone()
+        if not row:
+            return None
+        return {
+            "display_name": row[0] or "",
+            "dob": row[1] or "",
+            "gender": row[2] or "",
+            "height": row[3] or "",
+            "weight": row[4] or "",
+            "activity_level": row[5] or "",
+            "medications": row[6] or "",
+            "allergies": row[7] or "",
+            "health_conditions": row[8] or "",
+            "extra_info": row[9] or "",
+            "lang": row[10] or "ar",
+            "updated_at": row[11] or "",
+        }
+    finally:
+        conn.close()
+
+
+def delete_health_profile(user_id):
+    """Delete health profile for a user."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (int(user_id),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def save_privacy_settings(user_id, data):
+    """Save privacy settings for a user."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        now = datetime.now(timezone.utc).isoformat()
+        use_assistant = 1 if data.get("use_in_assistant", True) else 0
+        use_analysis = 1 if data.get("use_in_analysis", True) else 0
+        use_calc = 1 if data.get("use_in_calculators", True) else 0
+        save_chat = 1 if data.get("save_chat_history", True) else 0
+        if USE_POSTGRES:
+            c.execute(
+                "INSERT INTO ss_privacy (user_id, use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history, updated_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT(user_id) DO UPDATE SET "
+                "use_in_assistant=excluded.use_in_assistant, use_in_analysis=excluded.use_in_analysis, "
+                "use_in_calculators=excluded.use_in_calculators, save_chat_history=excluded.save_chat_history, "
+                "updated_at=excluded.updated_at",
+                (int(user_id), use_assistant, use_analysis, use_calc, save_chat, now),
+            )
+        else:
+            c.execute(
+                "INSERT OR REPLACE INTO ss_privacy (user_id, use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history, updated_at) "
+                "VALUES (?,?,?,?,?,?)",
+                (int(user_id), use_assistant, use_analysis, use_calc, save_chat, now),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def load_privacy_settings(user_id):
+    """Load privacy settings for a user."""
+    if not user_id:
+        return {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "SELECT use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history "
+            "FROM ss_privacy WHERE user_id=%s" % PH,
+            (int(user_id),),
+        )
+        row = c.fetchone()
+        if not row:
+            return {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
+        return {
+            "use_in_assistant": bool(row[0]),
+            "use_in_analysis": bool(row[1]),
+            "use_in_calculators": bool(row[2]),
+            "save_chat_history": bool(row[3]),
+        }
+    finally:
+        conn.close()
+
+
+def save_chat_message(user_id, role, content):
+    """Save a chat message for a user."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        now = datetime.now(timezone.utc).isoformat()
+        if USE_POSTGRES:
+            c.execute(
+                "INSERT INTO ss_chat_history (user_id, role, content, timestamp) VALUES (%s,%s,%s,%s)",
+                (int(user_id), role, content, now),
+            )
+        else:
+            c.execute(
+                "INSERT INTO ss_chat_history (user_id, role, content, timestamp) VALUES (?,?,?,?)",
+                (int(user_id), role, content, now),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_chat_history(user_id, limit=50):
+    """Get chat history for a user."""
+    if not user_id:
+        return []
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "SELECT role, content, timestamp FROM ss_chat_history WHERE user_id=%s ORDER BY id DESC LIMIT %s" % (PH, PH),
+            (int(user_id), int(limit)),
+        )
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    return [{"role": r[0], "content": r[1], "timestamp": r[2]} for r in reversed(rows)]
+
+
+def clear_chat_history(user_id):
+    """Clear chat history for a user."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("DELETE FROM ss_chat_history WHERE user_id=%s" % PH, (int(user_id),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_ss_user(user_id):
+    """Delete a user account and all associated data."""
+    if not user_id:
+        return
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        uid = int(user_id)
+        c.execute("DELETE FROM ss_chat_history WHERE user_id=%s" % PH, (uid,))
+        c.execute("DELETE FROM ss_privacy WHERE user_id=%s" % PH, (uid,))
+        c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (uid,))
+        c.execute("DELETE FROM ss_users WHERE id=%s" % PH, (uid,))
+        conn.commit()
     finally:
         conn.close()

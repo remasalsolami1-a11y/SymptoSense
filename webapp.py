@@ -14,8 +14,8 @@ from datetime import datetime, timezone
 
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
-
-from flask import Flask, request, jsonify, render_template_string, session, send_file, Response
+from functools import wraps
+from flask import Flask, request, jsonify, render_template_string, session, send_file, Response, redirect, url_for
 
 import db
 import ml_diagnosis
@@ -421,6 +421,70 @@ html[dir="rtl"] .how-arrow.en { display: none; }
   .hh-l h1 { font-size: 30px; }
   .hh-r { min-height: 300px; }
   .nav { padding: 12px 16px; }
+}
+/* ---- Smart Account System CSS ---- */
+.auth-wrap { min-height: 86vh; display: flex; align-items: center; justify-content: center; padding: 26px 18px; }
+.auth-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 10px 30px rgba(15,23,42,.08); padding: 42px 30px; max-width: 460px; width: 100%; text-align: center; animation: fadeIn .5s ease both; }
+.auth-card .auth-icon { font-size: 48px; margin-bottom: 12px; }
+.auth-card h1 { font-size: 26px; color: #0B2E6B; margin: 0 0 6px; }
+.auth-card .auth-sub { color: #64748b; font-size: 15px; margin-bottom: 24px; }
+.auth-card .auth-field { text-align: right; margin-bottom: 14px; }
+.auth-card .auth-field label { display: block; font-size: 14px; font-weight: 700; color: #0B2E6B; margin-bottom: 4px; }
+.auth-card .auth-field input { width: 100%; border: 1.5px solid #D7E7FA; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: inherit; background: #F8FAFC; color: #1e293b; transition: border-color .2s; }
+.auth-card .auth-field input:focus { outline: none; border-color: #1677E8; background: #fff; }
+.auth-card .auth-btn { width: 100%; background: #1677E8; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s, transform .1s; }
+.auth-card .auth-btn:hover { background: #0B2E6B; transform: translateY(-1px); }
+.auth-card .auth-link { margin-top: 16px; font-size: 14px; color: #64748b; }
+.auth-card .auth-link a { color: #1677E8; font-weight: 700; text-decoration: none; }
+.auth-card .auth-link a:hover { text-decoration: underline; }
+.auth-card .auth-error { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600; margin-bottom: 14px; display: none; }
+.auth-card .auth-error.show { display: block; }
+/* Profile page */
+.ss-profile-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(15,23,42,.04); }
+.ss-profile-card h2 { color: #1677E8; font-size: 18px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.ss-profile-card .ss-field { display: flex; align-items: center; gap: 12px; background: #F7FAFF; border: 1px solid #D7E7FA; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.ss-profile-card .ss-field .ss-f-icon { font-size: 22px; width: 42px; height: 42px; min-width: 42px; border-radius: 12px; background: #E8F3FF; display: flex; align-items: center; justify-content: center; }
+.ss-profile-card .ss-field label { margin: 0 0 2px; color: #0B2E6B; font-size: 13px; font-weight: 700; }
+.ss-profile-card .ss-field input, .ss-profile-card .ss-field select, .ss-profile-card .ss-field textarea { background: #fff; border: 1px solid #D7E7FA; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; width: 100%; }
+.ss-profile-card .ss-field textarea { min-height: 60px; resize: vertical; }
+.ss-profile-card .ss-field input:focus, .ss-profile-card .ss-field select:focus, .ss-profile-card .ss-field textarea:focus { outline: none; border-color: #1677E8; }
+.ss-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .ss-grid2 { grid-template-columns: 1fr; } }
+.ss-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.ss-btn-primary { background: #1677E8; color: #fff; border: none; border-radius: 12px; padding: 12px 24px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s; }
+.ss-btn-primary:hover { background: #0B2E6B; }
+.ss-btn-danger { background: #fff; color: #dc2626; border: 1.5px solid #fca5a5; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s; }
+.ss-btn-danger:hover { background: #fee2e2; }
+.ss-msg { text-align: center; font-weight: 700; color: #16a34a; font-size: 14px; margin-top: 10px; }
+.ss-msg.error { color: #dc2626; }
+/* Privacy toggles */
+.ss-toggle-row { display: flex; align-items: center; justify-content: space-between; background: #F7FAFF; border: 1px solid #D7E7FA; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+.ss-toggle-row .ss-t-label { font-size: 14px; font-weight: 600; color: #1e293b; flex: 1; }
+.ss-toggle { position: relative; width: 48px; height: 26px; flex: 0 0 auto; }
+.ss-toggle input { opacity: 0; width: 0; height: 0; }
+.ss-toggle .ss-slider { position: absolute; inset: 0; background: #CBD5E1; border-radius: 999px; cursor: pointer; transition: background .25s; }
+.ss-toggle .ss-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .25s; }
+.ss-toggle input:checked + .ss-slider { background: #1677E8; }
+.ss-toggle input:checked + .ss-slider::before { transform: translateX(22px); }
+/* Smart context modal */
+.ss-modal-overlay { position: fixed; inset: 0; z-index: 9998; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); padding: 18px; }
+.ss-modal-overlay.open { display: flex; }
+.ss-modal { background: #fff; border-radius: 22px; max-width: 440px; width: 100%; padding: 30px 26px; text-align: center; box-shadow: 0 24px 60px rgba(15,23,42,.25); animation: fadeIn .35s ease; }
+.ss-modal h3 { font-size: 20px; color: #0B2E6B; margin-bottom: 8px; }
+.ss-modal p { font-size: 14px; color: #475569; line-height: 1.7; margin-bottom: 14px; }
+.ss-modal .ss-modal-list { text-align: start; background: #F0F7FF; border: 1px solid #D7E7FA; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 13.5px; color: #334155; line-height: 1.8; }
+.ss-modal .ss-modal-list b { color: #1677E8; }
+.ss-modal .ss-modal-btns { display: flex; flex-direction: column; gap: 8px; }
+.ss-modal .ss-modal-btn { border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s, transform .1s; }
+.ss-modal .ss-modal-btn:hover { transform: translateY(-1px); }
+.ss-modal .ss-modal-btn.primary { background: #1677E8; color: #fff; }
+.ss-modal .ss-modal-btn.primary:hover { background: #0B2E6B; }
+.ss-modal .ss-modal-btn.secondary { background: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; }
+.ss-modal .ss-modal-btn.secondary:hover { background: #E2E8F0; }
+.ss-modal .ss-modal-btn.tertiary { background: transparent; color: #64748b; }
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .auth-card, .ss-modal, .ss-profile-card { animation: none !important; transition: none !important; }
 }
 """
 
@@ -958,6 +1022,56 @@ function asstSend() {
 }
 asstInitQs();
 </script>
+<!-- Smart Context Modal -->
+<div class="ss-modal-overlay" id="smartCtxModal">
+  <div class="ss-modal">
+    <div style="font-size:36px;margin-bottom:8px;">✨</div>
+    <h3 id="smartCtxTitle">✨ استخدام معلوماتي المحفوظة؟</h3>
+    <p id="smartCtxDesc">لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.</p>
+    <div class="ss-modal-list" id="smartCtxList" style="display:none;">
+      <b>سيتم استخدام:</b><br>
+      <span id="smartCtxFields"></span>
+    </div>
+    <div class="ss-modal-btns">
+      <button class="ss-modal-btn primary" id="smartCtxUse" onclick="smartCtxAction('use')">✨ استخدام معلوماتي</button>
+      <button class="ss-modal-btn secondary" id="smartCtxManual" onclick="smartCtxAction('manual')">إدخال المعلومات يدويًا</button>
+      <button class="ss-modal-btn tertiary" id="smartCtxSkip" onclick="smartCtxAction('skip')">تخطي</button>
+    </div>
+  </div>
+</div>
+<script>
+var smartCtxCallback = null;
+var smartCtxProfile = null;
+function smartCtxShow(profile, callback) {
+  smartCtxProfile = profile;
+  smartCtxCallback = callback;
+  var modal = document.getElementById('smartCtxModal');
+  if (!modal || !profile) { if (callback) callback('manual'); return; }
+  var fields = [];
+  if (profile.display_name) fields.push('👤 ' + (LANG === 'ar' ? 'الاسم' : 'Name'));
+  if (profile.dob || profile.gender) fields.push('⚧ ' + (LANG === 'ar' ? 'العمر والجنس' : 'Age & Gender'));
+  if (profile.height) fields.push('📏 ' + (LANG === 'ar' ? 'الطول' : 'Height'));
+  if (profile.weight) fields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن' : 'Weight'));
+  if (profile.medications) fields.push('💊 ' + (LANG === 'ar' ? 'الأدوية' : 'Medications'));
+  if (profile.allergies) fields.push('⚠️ ' + (LANG === 'ar' ? 'الحساسية' : 'Allergies'));
+  if (profile.health_conditions) fields.push('🩺 ' + (LANG === 'ar' ? 'الحالات الصحية' : 'Health Conditions'));
+  var listEl = document.getElementById('smartCtxList');
+  var fieldsEl = document.getElementById('smartCtxFields');
+  if (fields.length && listEl && fieldsEl) {
+    listEl.style.display = 'block';
+    fieldsEl.innerHTML = fields.join('<br>');
+  } else if (listEl) {
+    listEl.style.display = 'none';
+  }
+  modal.classList.add('open');
+}
+function smartCtxAction(action) {
+  var modal = document.getElementById('smartCtxModal');
+  if (modal) modal.classList.remove('open');
+  if (smartCtxCallback) smartCtxCallback(action);
+  smartCtxCallback = null;
+}
+</script>
 </body>
 </html>
 """
@@ -967,6 +1081,45 @@ def _user_id():
     if "uid" not in session:
         session["uid"] = secrets.token_hex(8)
     return "web-" + hashlib.sha1(session["uid"].encode()).hexdigest()[:12]
+
+
+def _ss_user_id():
+    """Get the logged-in SymptoSense user ID from session, or None."""
+    return session.get("ss_user_id")
+
+
+def _ss_user():
+    """Get the logged-in user info dict, or None."""
+    uid = _ss_user_id()
+    if not uid:
+        return None
+    return db.get_ss_user(uid)
+
+
+def _ss_health():
+    """Get the logged-in user's health profile, or None."""
+    uid = _ss_user_id()
+    if not uid:
+        return None
+    return db.load_health_profile(uid)
+
+
+def _ss_privacy():
+    """Get the logged-in user's privacy settings."""
+    uid = _ss_user_id()
+    if not uid:
+        return {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
+    return db.load_privacy_settings(uid)
+
+
+def login_required(f):
+    """Decorator that redirects to /login if user is not authenticated."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not _ss_user_id():
+            return redirect("/login?next=" + request.path)
+        return f(*args, **kwargs)
+    return decorated
 
 
 def _site_url():
@@ -1186,6 +1339,90 @@ L = {
         "em_geo_err": "تعذّر تحديد موقعك — تأكد من السماح بالموقع الجغرافي.",
         "em_geo_empty": "لم يتم العثور على مستشفيات قريبة.",
         "em_nearby": "أقرب المستشفيات:",
+        "nav_login": "تسجيل الدخول 👤",
+        "nav_myaccount": "حسابي 👤",
+        "nav_health_profile": "ملفي الصحي",
+        "nav_myhistory": "سجلي",
+        "nav_privacy": "الخصوصية",
+        "nav_logout": "تسجيل الخروج",
+        "title_login": "SymptoSense — تسجيل الدخول",
+        "title_register": "SymptoSense — إنشاء حساب",
+        "title_settings": "SymptoSense — إعدادات الخصوصية",
+        "login_h": "مرحبًا بك مجددًا 💙",
+        "login_sub": "سجّل دخولك للوصول إلى تجربتك الشخصية",
+        "login_email": "البريد الإلكتروني",
+        "login_pass": "كلمة المرور",
+        "login_btn": "تسجيل الدخول",
+        "login_noaccount": "ليس لديك حساب؟",
+        "login_register": "إنشاء حساب",
+        "login_error": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+        "login_forgot": "نسيت كلمة المرور؟",
+        "register_h": "أنشئ حسابك 💙",
+        "register_sub": "ابدأ رحلتك الصحية مع SymptoSense",
+        "register_name": "الاسم",
+        "register_email": "البريد الإلكتروني",
+        "register_pass": "كلمة المرور (٦ أحرف على الأقل)",
+        "register_confirm": "تأكيد كلمة المرور",
+        "register_btn": "إنشاء حساب",
+        "register_hasaccount": "لديك حساب بالفعل؟",
+        "register_login": "تسجيل الدخول",
+        "register_error": "حدث خطأ — تأكد من صحة البيانات",
+        "register_pass_mismatch": "كلمتا المرور غير متطابقتين",
+        "profile_h": "ملفي الصحي 👤",
+        "profile_sub": "معلوماتك تساعد SymptoSense على تخصيص تجربتك عند موافقتك.",
+        "profile_basic": "معلوماتي الأساسية",
+        "profile_name": "الاسم",
+        "profile_dob": "تاريخ الميلاد",
+        "profile_gender": "الجنس",
+        "profile_male": "ذكر",
+        "profile_female": "أنثى",
+        "profile_lang_pref": "اللغة المفضلة",
+        "profile_health": "معلوماتي الصحية",
+        "profile_height": "الطول (سم)",
+        "profile_weight": "الوزن (كجم)",
+        "profile_meds": "الأدوية الحالية",
+        "profile_meds_ph": "مثال: بندول، فولتارين",
+        "profile_allergies": "الحساسية",
+        "profile_allergies_ph": "مثال: البنسلين",
+        "profile_conditions": "الحالات الصحية",
+        "profile_conditions_ph": "مثال: سكري، ضغط الدم",
+        "profile_extra": "معلومات إضافية",
+        "profile_extra_ph": "أي معلومات صحية أخرى تريدها حفظها",
+        "profile_save": "حفظ المعلومات ✨",
+        "profile_saved": "تم حفظ المعلومات بنجاح ✅",
+        "profile_delete_btn": "حذف المعلومات 🗑️",
+        "profile_delete_confirm": "هل أنت متأكد من حذف جميع معلوماتك الصحية؟",
+        "profile_deleted": "تم حذف المعلومات بنجاح",
+        "profile_activity": "مستوى النشاط",
+        "activity_low": "قليل",
+        "activity_moderate": "متوسط",
+        "activity_high": "كثير",
+        "settings_h": "إعدادات الخصوصية 🔒",
+        "settings_sub": "تحكم في كيفية استخدام معلوماتك",
+        "settings_assistant": "السماح باستخدام معلوماتي في المساعد",
+        "settings_analysis": "السماح باستخدام معلوماتي في فحص الأعراض",
+        "settings_calc": "السماح باستخدام معلوماتي في الحاسبات",
+        "settings_chat": "حفظ سجل المحادثات",
+        "settings_save": "حفظ الإعدادات",
+        "settings_saved": "تم حفظ الإعدادات ✅",
+        "smart_use_title": "✨ استخدام معلوماتي المحفوظة؟",
+        "smart_use_desc": "لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.",
+        "smart_use_list": "سيتم استخدام:",
+        "smart_use_btn": "✨ استخدام معلوماتي",
+        "smart_manual_btn": "إدخال المعلومات يدويًا",
+        "smart_skip_btn": "تخطي",
+        "smart_suggest_title": "💡 هل تريد اقتراحًا أكثر تخصيصًا؟",
+        "smart_suggest_desc": "يمكنني استخدام بعض معلوماتك المحفوظة لتحسين الأسئلة والشرح.",
+        "smart_suggest_btn": "✨ استخدم معلوماتي للحصول على اقتراح أفضل",
+        "smart_decline_btn": "لا، تابع بدونها",
+        "welcome_back": "مرحبًا بعودتك يا",
+        "welcome_back_sub": "معلوماتك المحفوظة جاهزة لتخصيص تجربتك.",
+        "no_account_sub": "أنشئ حسابك للحصول على تجربة شخصية",
+        "chat_history_h": "سجل المحادثات 📋",
+        "chat_history_sub": "محادثاتك السابقة مع المساعد",
+        "chat_history_empty": "لا توجد محادثات بعد",
+        "delete_account": "حذف الحساب",
+        "delete_account_confirm": "هل أنت متأكد؟ سيتم حذف حسابك وجميع بياناتك نهائيًا.",
     },
     "en": {
         "nav_home": "Home", "nav_chat": "Symptom Check", "nav_blood": "Blood Tests",
@@ -1394,6 +1631,90 @@ L = {
         "em_geo_err": "Could not locate you — please allow location access.",
         "em_geo_empty": "No nearby hospitals found.",
         "em_nearby": "Nearest hospitals:",
+        "nav_login": "Login 👤",
+        "nav_myaccount": "My Account 👤",
+        "nav_health_profile": "Health Profile",
+        "nav_myhistory": "My History",
+        "nav_privacy": "Privacy",
+        "nav_logout": "Logout",
+        "title_login": "SymptoSense — Login",
+        "title_register": "SymptoSense — Register",
+        "title_settings": "SymptoSense — Privacy Settings",
+        "login_h": "Welcome back 💙",
+        "login_sub": "Sign in to access your personalized experience",
+        "login_email": "Email",
+        "login_pass": "Password",
+        "login_btn": "Sign In",
+        "login_noaccount": "Don't have an account?",
+        "login_register": "Create one",
+        "login_error": "Invalid email or password",
+        "login_forgot": "Forgot password?",
+        "register_h": "Create your account 💙",
+        "register_sub": "Start your health journey with SymptoSense",
+        "register_name": "Name",
+        "register_email": "Email",
+        "register_pass": "Password (min 6 characters)",
+        "register_confirm": "Confirm password",
+        "register_btn": "Create Account",
+        "register_hasaccount": "Already have an account?",
+        "register_login": "Sign In",
+        "register_error": "An error occurred — please check your details",
+        "register_pass_mismatch": "Passwords do not match",
+        "profile_h": "Health Profile 👤",
+        "profile_sub": "Your information helps SymptoSense personalize your experience when you allow it.",
+        "profile_basic": "My Basic Info",
+        "profile_name": "Name",
+        "profile_dob": "Date of Birth",
+        "profile_gender": "Gender",
+        "profile_male": "Male",
+        "profile_female": "Female",
+        "profile_lang_pref": "Preferred Language",
+        "profile_health": "My Health Info",
+        "profile_height": "Height (cm)",
+        "profile_weight": "Weight (kg)",
+        "profile_meds": "Current Medications",
+        "profile_meds_ph": "e.g. Paracetamol, Ibuprofen",
+        "profile_allergies": "Allergies",
+        "profile_allergies_ph": "e.g. Penicillin",
+        "profile_conditions": "Health Conditions",
+        "profile_conditions_ph": "e.g. Diabetes, High blood pressure",
+        "profile_extra": "Additional Information",
+        "profile_extra_ph": "Any other health information you'd like to save",
+        "profile_save": "Save Information ✨",
+        "profile_saved": "Information saved successfully ✅",
+        "profile_delete_btn": "Delete Information 🗑️",
+        "profile_delete_confirm": "Are you sure you want to delete all your health information?",
+        "profile_deleted": "Information deleted successfully",
+        "profile_activity": "Activity Level",
+        "activity_low": "Low",
+        "activity_moderate": "Moderate",
+        "activity_high": "High",
+        "settings_h": "Privacy Settings 🔒",
+        "settings_sub": "Control how your information is used",
+        "settings_assistant": "Allow using my information in the assistant",
+        "settings_analysis": "Allow using my information in symptom analysis",
+        "settings_calc": "Allow using my information in calculators",
+        "settings_chat": "Save conversation history",
+        "settings_save": "Save Settings",
+        "settings_saved": "Settings saved successfully ✅",
+        "smart_use_title": "✨ Use my saved information?",
+        "smart_use_desc": "You have saved information that could help make the result more personalized.",
+        "smart_use_list": "The following will be used:",
+        "smart_use_btn": "✨ Use my information",
+        "smart_manual_btn": "Enter information manually",
+        "smart_skip_btn": "Skip",
+        "smart_suggest_title": "💡 Want a more personalized suggestion?",
+        "smart_suggest_desc": "I can use some of your saved information to improve the questions and explanation.",
+        "smart_suggest_btn": "✨ Use my information for a better suggestion",
+        "smart_decline_btn": "No, continue without it",
+        "welcome_back": "Welcome back,",
+        "welcome_back_sub": "Your saved information is ready to personalize your experience.",
+        "no_account_sub": "Create your account for a personalized experience",
+        "chat_history_h": "Chat History 📋",
+        "chat_history_sub": "Your previous conversations with the assistant",
+        "chat_history_empty": "No conversations yet",
+        "delete_account": "Delete Account",
+        "delete_account_confirm": "Are you sure? Your account and all data will be permanently deleted.",
     },
 }
 
@@ -1424,10 +1745,26 @@ def _nav():
              '</div></div>') % (_t("nav_explore"), _t("nav_search"), _t("nav_tips"), _t("nav_q"), _t("nav_geo"),
                                  _t("nav_aware"))
     html += '</div>'
+    html += '<div style="display:flex;align-items:center;gap:8px;">'
+    user = _ss_user()
+    if user:
+        html += ('<div class="dd"><button class="dd-btn" onclick="toggleDD(event)">👤 %s <span style="font-size:11px;">▼</span></button>'
+                 '<div class="dd-menu">'
+                 '<a href="/profile">👤 %s</a>'
+                 '<a href="/history">📋 %s</a>'
+                 '<a href="/settings">⚙️ %s</a>'
+                 '<a href="/logout">🚪 %s</a>'
+                 '</div></div>') % (
+            user.get("name", ""),
+            _t("nav_health_profile"), _t("nav_myhistory"),
+            _t("nav_privacy"), _t("nav_logout"),
+        )
+    else:
+        html += '<a href="/login" class="dd-btn" style="text-decoration:none;">%s</a>' % _t("nav_login")
     html += ('<div class="lang-sw"><a href="#" onclick="setLang(&#39;ar&#39;);return false;" class="%s">العربية</a>'
              '<a href="#" onclick="setLang(&#39;en&#39;);return false;" class="%s">English</a></div>' %
              ("on" if lang == "ar" else "", "on" if lang == "en" else ""))
-    html += '</nav>'
+    html += '</div></nav>'
     return html
 
 
@@ -2744,6 +3081,16 @@ def chat_page():
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = (state.member && state.member.id) ? state.member.id : 0;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
+        // Check if user has saved health profile and privacy allows
+        var useSaved = false;
+        try {
+          const uir = await fetch('/api/user-info');
+          const uid = await uir.json();
+          if (uid.ok && uid.logged_in && uid.profile && uid.privacy && uid.privacy.use_in_analysis) {
+            useSaved = true;
+            payload.use_saved = true;
+          }
+        } catch(e) {}
         const r = await fetch('/api/analyze', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify(payload)
@@ -5303,133 +5650,156 @@ def checkin_page():
 def profile_page():
     db.init_db()
     t = L["en" if _lang() == "en" else "ar"]
-    p = db.load_profile(_user_id()) or {}
-    gen_sel = {
-        "male": '<option value="male" selected>' + t["pr_g_male"] + '</option><option value="female">' + t["pr_g_female"] + '</option>',
-        "female": '<option value="male">' + t["pr_g_male"] + '</option><option value="female" selected>' + t["pr_g_female"] + '</option>',
-        "": '<option value="male">' + t["pr_g_male"] + '</option><option value="female">' + t["pr_g_female"] + '</option>',
-    }.get(p.get("gender", ""), "")
+    uid = _ss_user_id()
+    if not uid:
+        return redirect("/login?next=/profile")
+    user = db.get_ss_user(uid)
+    hp = db.load_health_profile(uid) or {}
     def esc(v):
         return (v or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    try:
-        rows = db.get_records(_user_id(), limit=50)
-    except Exception:
-        rows = []
-    stats = {"total": len(rows), "high": 0, "medium": 0, "low": 0}
-    for r in rows:
-        u = (r.get("urgency") or "").lower()
-        if u == "high":
-            stats["high"] += 1
-        elif u == "medium":
-            stats["medium"] += 1
-        else:
-            stats["low"] += 1
+    gen_opts = {
+        "male": '<option value="male" selected>' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
+        "female": '<option value="male">' + t["profile_male"] + '</option><option value="female" selected>' + t["profile_female"] + '</option>',
+        "": '<option value="male">' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
+    }.get(hp.get("gender", ""), '<option value="male">' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>')
+    act_opts = ""
+    for val, label in [("low", t.get("activity_low", "Low")), ("moderate", t.get("activity_moderate", "Moderate")), ("high", t.get("activity_high", "High"))]:
+        sel = ' selected' if hp.get("activity_level") == val else ""
+        act_opts += '<option value="%s"%s>%s</option>' % (val, sel, label)
     body = """
-    <div class="card" style="max-width:560px;margin:0 auto;">
-      <h2>__PRH__</h2>
-      <p class="muted">__PRSUB__</p>
-      <form id="pf" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
-        <div class="pr-grid">
-          <div><label>__PRAGE__</label><input name="age" type="number" min="1" max="120" value="__AGE__" placeholder="18"></div>
-          <div><label>__PRGEND__</label><select name="gender">__GENSEL__</select></div>
+    <div style="max-width:640px;margin:0 auto;padding:0 18px;">
+      <div class="ss-profile-card" style="text-align:center;">
+        <div style="font-size:42px;margin-bottom:8px;">👤</div>
+        <h2 style="justify-content:center;">__H__</h2>
+        <p class="muted">__SUB__</p>
+        <p style="margin-top:8px;font-size:14px;color:#0B2E6B;"><b>__WELCOME__</b> __NAME__ 💙</p>
+      </div>
+
+      <form id="hpForm">
+        <div class="ss-profile-card">
+          <h2>👤 __BASIC__</h2>
+          <div class="ss-field">
+            <div class="ss-f-icon">📛</div>
+            <div style="flex:1;"><label>__L_NAME__</label><input name="display_name" value="__VAL_NAME__" placeholder="___"></div>
+          </div>
+          <div class="ss-grid2">
+            <div class="ss-field">
+              <div class="ss-f-icon">🎂</div>
+              <div style="flex:1;"><label>__L_DOB__</label><input name="dob" type="date" value="__VAL_DOB__"></div>
+            </div>
+            <div class="ss-field">
+              <div class="ss-f-icon">⚧</div>
+              <div style="flex:1;"><label>__L_GENDER__</label><select name="gender">__GEN_OPTS__</select></div>
+            </div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">🌐</div>
+            <div style="flex:1;"><label>__L_LANG__</label>
+              <select name="lang_pref">
+                <option value="ar" __LANG_AR__>العربية</option>
+                <option value="en" __LANG_EN__>English</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div><label>__PRCOND__</label><input name="conditions" value="__COND__" placeholder="e.g. diabetes, asthma"></div>
-        <div><label>__PRMEDS__</label><input name="medications" value="__MEDS__" placeholder="e.g. Metformin"></div>
-        <div><label>__PRALL__</label><input name="allergies" value="__ALL__" placeholder="e.g. penicillin"></div>
-        <button class="btn" type="submit" style="width:100%;">__PRSAVE__</button>
-        <div id="pfMsg" style="text-align:center;font-weight:700;color:#1677E8;"></div>
+
+        <div class="ss-profile-card">
+          <h2>🩺 __HEALTH__</h2>
+          <div class="ss-grid2">
+            <div class="ss-field">
+              <div class="ss-f-icon">📏</div>
+              <div style="flex:1;"><label>__L_HEIGHT__</label><input name="height" type="number" min="50" max="250" value="__VAL_HEIGHT__" placeholder="165"></div>
+            </div>
+            <div class="ss-field">
+              <div class="ss-f-icon">⚖️</div>
+              <div style="flex:1;"><label>__L_WEIGHT__</label><input name="weight" type="number" min="20" max="300" value="__VAL_WEIGHT__" placeholder="60"></div>
+            </div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">🏃</div>
+            <div style="flex:1;"><label>__L_ACTIVITY__</label><select name="activity_level">__ACT_OPTS__</select></div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">💊</div>
+            <div style="flex:1;"><label>__L_MEDS__</label><textarea name="medications" placeholder="__PH_MEDS__">__VAL_MEDS__</textarea></div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">⚠️</div>
+            <div style="flex:1;"><label>__L_ALLERGIES__</label><textarea name="allergies" placeholder="__PH_ALLERGIES__">__VAL_ALLERGIES__</textarea></div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">🩺</div>
+            <div style="flex:1;"><label>__L_CONDITIONS__</label><textarea name="health_conditions" placeholder="__PH_CONDITIONS__">__VAL_CONDITIONS__</textarea></div>
+          </div>
+          <div class="ss-field">
+            <div class="ss-f-icon">📝</div>
+            <div style="flex:1;"><label>__L_EXTRA__</label><textarea name="extra_info" placeholder="__PH_EXTRA__">__VAL_EXTRA__</textarea></div>
+          </div>
+        </div>
+
+        <div class="ss-btn-row" style="justify-content:center;">
+          <button type="submit" class="ss-btn-primary">__SAVE_BTN__</button>
+          <a href="/settings" class="ss-btn-primary" style="text-decoration:none;background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;">⚙️ __PRIVACY__</a>
+        </div>
+        <div id="hpMsg" class="ss-msg" style="display:none;"></div>
       </form>
+
+      <div style="margin-top:16px;text-align:center;">
+        <button onclick="if(confirm('__DELETE_CONFIRM__')){deleteProfile()}" class="ss-btn-danger">__DELETE_BTN__</button>
+      </div>
     </div>
-    <div class="card" style="max-width:560px;margin:16px auto 0;">
-      <h2>__DASH__</h2>
-      <p class="muted">__DASHSUB__</p>
-      <div class="dash-stats" id="dashStats"></div>
-      <div id="dashBlood" style="margin-top:16px;"></div>
-    </div>
+
     <script>
-    const P = __PT__;
-    function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-    function bls(s) { return s === 'normal' ? P.bl_sn : (s === 'low' ? P.bl_sl : P.bl_sh); }
-    function blc(s) { return s === 'normal' ? '#16a34a' : (s === 'low' ? '#d97706' : '#dc2626'); }
-    document.getElementById('pf').addEventListener('submit', async function(e){
+    document.getElementById('hpForm').addEventListener('submit', async function(e){
       e.preventDefault();
       const f = e.target;
-      const r = await fetch('/api/profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        age: f.age.value, gender: f.gender.value, conditions: f.conditions.value,
-        medications: f.medications.value, allergies: f.allergies.value, lang: P.__LANG__
+      const r = await fetch('/api/health-profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        display_name: f.display_name.value, dob: f.dob.value, gender: f.gender.value,
+        height: f.height.value, weight: f.weight.value, activity_level: f.activity_level.value,
+        medications: f.medications.value, allergies: f.allergies.value,
+        health_conditions: f.health_conditions.value, extra_info: f.extra_info.value,
+        lang: f.lang_pref.value
       })});
       const d = await r.json();
-      const m = document.getElementById('pfMsg');
-      m.textContent = d.ok ? P.pr_saved : P.pr_err + (d.error ? ' (' + d.error + ')' : '');
+      const m = document.getElementById('hpMsg');
+      m.style.display = 'block';
+      m.textContent = d.ok ? '__MSG_OK__' : '__MSG_ERR__';
+      m.className = d.ok ? 'ss-msg' : 'ss-msg error';
+      if (d.ok) setTimeout(function(){ m.style.display = 'none'; }, 3000);
     });
-    (function renderStats(){
-      const box = document.getElementById('dashStats');
-      let h = '<div class="dash-stat"><b>' + P.stats_total + '</b><span>' + P.pr_count_an + '</span></div>';
-      h += '<div class="dash-stat"><b style="color:#dc2626;">' + P.stats_high + '</b><span>' + P.pr_count_hi + '</span></div>';
-      h += '<div class="dash-stat"><b style="color:#d97706;">' + P.stats_med + '</b><span>' + P.pr_count_med + '</span></div>';
-      h += '<div class="dash-stat"><b style="color:#16a34a;">' + P.stats_low + '</b><span>' + P.pr_count_lo + '</span></div>';
-      box.innerHTML = h;
-    })();
-    (async function renderBlood(){
-      const box = document.getElementById('dashBlood');
-      let r;
-      try { r = await fetch('/api/blood/history'); } catch(e) { return; }
-      let d;
-      try { d = await r.json(); } catch(e) { return; }
-      if (!d.ok || !d.tests || !d.tests.length) {
-        box.innerHTML = '<div class="warn">' + esc(P.pr_blood_empty) + '</div>';
-        return;
-      }
-      const last = d.tests[0];
-      let h = '<div class="rc-title">' + esc(P.pr_blood_latest) + '</div>';
-      h += '<p style="font-size:14px;line-height:1.8;">' + esc(last.summary || '') + '</p>';
-      const up = d.tests.slice(0, 4);
-      if (up.length > 1) h += '<div class="rc-title" style="margin-top:16px;">' + esc(P.pr_blood_compare) + '</div>';
-      h += '<table class="cmp-table"><tr><th>' + esc(P.pr_blood_col) + '</th>';
-      up.forEach(function(tst, i) {
-        const when = tst.timestamp ? tst.timestamp.slice(0, 10) : (P.pr_t + ' ' + (up.length - i));
-        h += '<th>' + esc(when) + '</th>';
-      });
-      h += '</tr>';
-      const byName = {};
-      up.forEach(function(tst) {
-        (tst.indicators || []).forEach(function(it) {
-          if (!byName[it.name]) byName[it.name] = [];
-          byName[it.name].push({v: it.value, u: it.unit || '', s: it.status});
-        });
-      });
-      const names = Object.keys(byName).slice(0, 14);
-      names.forEach(function(nm) {
-        const cells = byName[nm];
-        h += '<tr><td><b>' + esc(nm) + '</b></td>';
-        cells.forEach(function(c) {
-          h += '<td><span style="color:' + blc(c.s) + ';font-weight:700;">' + esc(String(c.v)) + '</span> ' + esc(c.u) +
-               '<div style="font-size:11px;color:' + blc(c.s) + ';">' + esc(bls(c.s)) + '</div></td>';
-        });
-        h += '</tr>';
-      });
-      h += '</table>';
-      box.innerHTML = h;
-    })();
+    async function deleteProfile() {
+      const r = await fetch('/api/health-profile/delete', {method:'POST'});
+      const d = await r.json();
+      if (d.ok) location.reload();
+    }
     </script>
     """
-    body = body.replace("__PRH__", t["pr_h"]).replace("__PRSUB__", t["pr_sub"])
-    body = body.replace("__PRAGE__", t["pr_age"]).replace("__PRGEND__", t["pr_gender"])
-    body = body.replace("__PRCOND__", t["pr_conditions"]).replace("__PRMEDS__", t["pr_meds"])
-    body = body.replace("__PRALL__", t["pr_allergies"]).replace("__PRSAVE__", t["pr_save"])
-    body = body.replace("__AGE__", esc(p.get("age"))).replace("__GENSEL__", gen_sel)
-    body = body.replace("__COND__", esc(p.get("conditions"))).replace("__MEDS__", esc(p.get("medications")))
-    body = body.replace("__ALL__", esc(p.get("allergies")))
-    body = body.replace("__DASH__", t["pr_dash"]).replace("__DASHSUB__", t["pr_dash_sub"])
-    body = body.replace("__PT__", json.dumps({
-        "pr_saved": t["pr_saved"], "pr_err": t["pr_err"], "__LANG__": "en" if _lang() == "en" else "ar",
-        "bl_sn": t["bl_sn"], "bl_sl": t["bl_sl"], "bl_sh": t["bl_sh"],
-        "pr_count_an": t["pr_count_an"], "pr_count_hi": t["pr_count_hi"], "pr_count_med": t["pr_count_med"], "pr_count_lo": t["pr_count_lo"],
-        "pr_blood_col": t["pr_blood_col"], "pr_blood_v": t["pr_blood_v"], "pr_t": t["pr_t"],
-        "pr_blood_empty": t["pr_blood_empty"], "pr_blood_latest": t["pr_blood_latest"], "pr_blood_compare": t["pr_blood_compare"],
-        "stats_total": stats["total"], "stats_high": stats["high"], "stats_med": stats["medium"], "stats_low": stats["low"],
-    }, ensure_ascii=False))
-    return _page(_t("title_profile"), body)
+    welcome_text = t.get("welcome_back", "Welcome back,")
+    body = body.replace("__H__", t["profile_h"]).replace("__SUB__", t["profile_sub"])
+    body = body.replace("__BASIC__", t["profile_basic"]).replace("__HEALTH__", t["profile_health"])
+    body = body.replace("__WELCOME__", welcome_text).replace("__NAME__", esc(user.get("name", "")))
+    body = body.replace("__L_NAME__", t["profile_name"]).replace("__VAL_NAME__", esc(hp.get("display_name", user.get("name", ""))))
+    body = body.replace("__L_DOB__", t["profile_dob"]).replace("__VAL_DOB__", esc(hp.get("dob", "")))
+    body = body.replace("__L_GENDER__", t["profile_gender"]).replace("__GEN_OPTS__", gen_opts)
+    body = body.replace("__L_LANG__", t["profile_lang_pref"])
+    body = body.replace("__LANG_AR__", 'selected' if hp.get("lang", "ar") == "ar" else "")
+    body = body.replace("__LANG_EN__", 'selected' if hp.get("lang", "ar") == "en" else "")
+    body = body.replace("__L_HEIGHT__", t["profile_height"]).replace("__VAL_HEIGHT__", esc(hp.get("height", "")))
+    body = body.replace("__L_WEIGHT__", t["profile_weight"]).replace("__VAL_WEIGHT__", esc(hp.get("weight", "")))
+    body = body.replace("__L_ACTIVITY__", t["profile_activity"]).replace("__ACT_OPTS__", act_opts)
+    body = body.replace("__L_MEDS__", t["profile_meds"]).replace("__VAL_MEDS__", esc(hp.get("medications", "")))
+    body = body.replace("__PH_MEDS__", t["profile_meds_ph"])
+    body = body.replace("__L_ALLERGIES__", t["profile_allergies"]).replace("__VAL_ALLERGIES__", esc(hp.get("allergies", "")))
+    body = body.replace("__PH_ALLERGIES__", t["profile_allergies_ph"])
+    body = body.replace("__L_CONDITIONS__", t["profile_conditions"]).replace("__VAL_CONDITIONS__", esc(hp.get("health_conditions", "")))
+    body = body.replace("__PH_CONDITIONS__", t["profile_conditions_ph"])
+    body = body.replace("__L_EXTRA__", t["profile_extra"]).replace("__VAL_EXTRA__", esc(hp.get("extra_info", "")))
+    body = body.replace("__PH_EXTRA__", t["profile_extra_ph"])
+    body = body.replace("__SAVE_BTN__", t["profile_save"]).replace("__PRIVACY__", t["nav_privacy"])
+    body = body.replace("__DELETE_BTN__", t["profile_delete_btn"])
+    body = body.replace("__DELETE_CONFIRM__", t["profile_delete_confirm"])
+    body = body.replace("__MSG_OK__", t["profile_saved"]).replace("__MSG_ERR__", t.get("profile_error", "Error"))
+    return _page(t["title_profile"], body)
 
 
 # ---------------------------------------------------------------- history
@@ -5653,6 +6023,315 @@ def history():
     return history_page()
 
 
+# ---- Smart Account System routes ----
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    db.init_db()
+    lang = _lang()
+    t = L["en" if lang == "en" else "ar"]
+    error = None
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
+        user_id = db.authenticate_ss_user(email, password)
+        if user_id:
+            session["ss_user_id"] = user_id
+            next_url = request.args.get("next") or "/home"
+            return redirect(next_url)
+        error = t["login_error"]
+    next_param = request.args.get("next", "")
+    body = """
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-icon">💙</div>
+        <h1>__H__</h1>
+        <p class="auth-sub">__SUB__</p>
+        <div class="auth-error __ERR_CLASS__">__ERR__</div>
+        <form method="POST" action="/login?next=__NEXT__">
+          <div class="auth-field">
+            <label>__EMAIL__</label>
+            <input type="email" name="email" required placeholder="name@example.com" autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label>__PASS__</label>
+            <input type="password" name="password" required placeholder="••••••" autocomplete="current-password">
+          </div>
+          <button type="submit" class="auth-btn">__BTN__</button>
+        </form>
+        <p class="auth-link">__NOACCT__ <a href="/register">__REG__</a></p>
+      </div>
+    </div>
+    """
+    from html import escape
+    body = body.replace("__H__", t["login_h"]).replace("__SUB__", t["login_sub"])
+    body = body.replace("__EMAIL__", t["login_email"]).replace("__PASS__", t["login_pass"])
+    body = body.replace("__BTN__", t["login_btn"]).replace("__NOACCT__", t["login_noaccount"])
+    body = body.replace("__REG__", t["login_register"])
+    body = body.replace("__NEXT__", escape(next_param or "/home"))
+    if error:
+        body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
+    else:
+        body = body.replace("__ERR_CLASS__", "").replace("__ERR__", "")
+    return _page(t["title_login"], body)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    db.init_db()
+    lang = _lang()
+    t = L["en" if lang == "en" else "ar"]
+    error = None
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+        if password != confirm:
+            error = t["register_pass_mismatch"]
+        else:
+            user_id, err = db.create_ss_user(email, name, password)
+            if user_id:
+                session["ss_user_id"] = user_id
+                return redirect("/profile")
+            error = t["register_error"]
+    body = """
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-icon">💙</div>
+        <h1>__H__</h1>
+        <p class="auth-sub">__SUB__</p>
+        <div class="auth-error __ERR_CLASS__">__ERR__</div>
+        <form method="POST" action="/register">
+          <div class="auth-field">
+            <label>__NAME__</label>
+            <input type="text" name="name" required placeholder="___" autocomplete="name">
+          </div>
+          <div class="auth-field">
+            <label>__EMAIL__</label>
+            <input type="email" name="email" required placeholder="name@example.com" autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label>__PASS__</label>
+            <input type="password" name="password" required minlength="6" placeholder="••••••" autocomplete="new-password">
+          </div>
+          <div class="auth-field">
+            <label>__CONFIRM__</label>
+            <input type="password" name="confirm" required minlength="6" placeholder="••••••" autocomplete="new-password">
+          </div>
+          <button type="submit" class="auth-btn">__BTN__</button>
+        </form>
+        <p class="auth-link">__HASACCT__ <a href="/login">__LOGIN__</a></p>
+      </div>
+    </div>
+    """
+    body = body.replace("__H__", t["register_h"]).replace("__SUB__", t["register_sub"])
+    body = body.replace("__NAME__", t["register_name"]).replace("__EMAIL__", t["register_email"])
+    body = body.replace("__PASS__", t["register_pass"]).replace("__CONFIRM__", t["register_confirm"])
+    body = body.replace("__BTN__", t["register_btn"]).replace("__HASACCT__", t["register_hasaccount"])
+    body = body.replace("__LOGIN__", t["register_login"])
+    if error:
+        body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
+    else:
+        body = body.replace("__ERR_CLASS__", "").replace("__ERR__", "")
+    return _page(t["title_register"], body)
+
+
+@app.route("/logout")
+def logout():
+    session.pop("ss_user_id", None)
+    return redirect("/home")
+
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    db.init_db()
+    lang = _lang()
+    t = L["en" if lang == "en" else "ar"]
+    msg = None
+    if request.method == "POST":
+        data = {
+            "use_in_assistant": request.form.get("use_in_assistant") == "on",
+            "use_in_analysis": request.form.get("use_in_analysis") == "on",
+            "use_in_calculators": request.form.get("use_in_calculators") == "on",
+            "save_chat_history": request.form.get("save_chat_history") == "on",
+        }
+        db.save_privacy_settings(_ss_user_id(), data)
+        msg = t["settings_saved"]
+    privacy = db.load_privacy_settings(_ss_user_id())
+    def chk(v):
+        return 'checked' if v else ''
+    body = """
+    <div class="card" style="max-width:560px;margin:0 auto;">
+      <h2>__H__</h2>
+      <p class="muted">__SUB__</p>
+      <form method="POST" style="margin-top:16px;">
+        <div class="ss-toggle-row">
+          <span class="ss-t-label">__T1__</span>
+          <label class="ss-toggle"><input type="checkbox" name="use_in_assistant" __CHK1__><span class="ss-slider"></span></label>
+        </div>
+        <div class="ss-toggle-row">
+          <span class="ss-t-label">__T2__</span>
+          <label class="ss-toggle"><input type="checkbox" name="use_in_analysis" __CHK2__><span class="ss-slider"></span></label>
+        </div>
+        <div class="ss-toggle-row">
+          <span class="ss-t-label">__T3__</span>
+          <label class="ss-toggle"><input type="checkbox" name="use_in_calculators" __CHK3__><span class="ss-slider"></span></label>
+        </div>
+        <div class="ss-toggle-row">
+          <span class="ss-t-label">__T4__</span>
+          <label class="ss-toggle"><input type="checkbox" name="save_chat_history" __CHK4__><span class="ss-slider"></span></label>
+        </div>
+        <div class="ss-btn-row">
+          <button type="submit" class="ss-btn-primary">__SAVE__</button>
+        </div>
+      </form>
+      <div class="ss-msg __MSG_CLASS__">__MSG__</div>
+    </div>
+    """
+    body = body.replace("__H__", t["settings_h"]).replace("__SUB__", t["settings_sub"])
+    body = body.replace("__T1__", t["settings_assistant"]).replace("__T2__", t["settings_analysis"])
+    body = body.replace("__T3__", t["settings_calc"]).replace("__T4__", t["settings_chat"])
+    body = body.replace("__CHK1__", chk(privacy.get("use_in_assistant", True)))
+    body = body.replace("__CHK2__", chk(privacy.get("use_in_analysis", True)))
+    body = body.replace("__CHK3__", chk(privacy.get("use_in_calculators", True)))
+    body = body.replace("__CHK4__", chk(privacy.get("save_chat_history", True)))
+    body = body.replace("__SAVE__", t["settings_save"])
+    if msg:
+        body = body.replace("__MSG_CLASS__", "").replace("__MSG__", msg)
+    else:
+        body = body.replace("__MSG_CLASS__", "ss-msg").replace("__MSG__", "")
+    return _page(t["title_settings"], body)
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def api_register():
+    db.init_db()
+    try:
+        data = request.get_json(force=True)
+        name = (data.get("name") or "").strip()
+        email = (data.get("email") or "").strip()
+        password = data.get("password") or ""
+        user_id, err = db.create_ss_user(email, name, password)
+        if user_id:
+            session["ss_user_id"] = user_id
+            return jsonify({"ok": True})
+        return jsonify({"ok": False, "error": err})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def api_login():
+    db.init_db()
+    try:
+        data = request.get_json(force=True)
+        email = (data.get("email") or "").strip()
+        password = data.get("password") or ""
+        user_id = db.authenticate_ss_user(email, password)
+        if user_id:
+            session["ss_user_id"] = user_id
+            return jsonify({"ok": True})
+        return jsonify({"ok": False, "error": "invalid_credentials"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/health-profile", methods=["GET", "POST"])
+@login_required
+def api_health_profile():
+    db.init_db()
+    uid = _ss_user_id()
+    if request.method == "GET":
+        profile = db.load_health_profile(uid) or {}
+        return jsonify({"ok": True, "profile": profile})
+    try:
+        data = request.get_json(force=True)
+        db.save_health_profile(uid, data)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/health-profile/delete", methods=["POST"])
+@login_required
+def api_delete_health_profile():
+    db.init_db()
+    try:
+        db.delete_health_profile(_ss_user_id())
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/privacy", methods=["GET", "POST"])
+@login_required
+def api_privacy():
+    db.init_db()
+    uid = _ss_user_id()
+    if request.method == "GET":
+        return jsonify({"ok": True, "privacy": db.load_privacy_settings(uid)})
+    try:
+        data = request.get_json(force=True)
+        db.save_privacy_settings(uid, data)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/account/delete", methods=["POST"])
+@login_required
+def api_delete_account():
+    db.init_db()
+    try:
+        uid = _ss_user_id()
+        db.delete_ss_user(uid)
+        session.pop("ss_user_id", None)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/chat-history", methods=["GET"])
+@login_required
+def api_chat_history():
+    db.init_db()
+    try:
+        history = db.get_chat_history(_ss_user_id(), limit=50)
+        return jsonify({"ok": True, "history": history})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/chat-history/clear", methods=["POST"])
+@login_required
+def api_clear_chat_history():
+    db.init_db()
+    try:
+        db.clear_chat_history(_ss_user_id())
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/user-info", methods=["GET"])
+def api_user_info():
+    """Return current user info and profile for smart context."""
+    db.init_db()
+    uid = _ss_user_id()
+    user = db.get_ss_user(uid) if uid else None
+    profile = db.load_health_profile(uid) if uid else None
+    privacy = db.load_privacy_settings(uid) if uid else None
+    return jsonify({
+        "ok": True,
+        "logged_in": bool(uid),
+        "user": user,
+        "profile": profile,
+        "privacy": privacy,
+    })
+
+
 @app.route("/admin")
 def admin():
     return render_template_string(DASHBOARD_HTML)
@@ -5668,7 +6347,7 @@ def robots_txt():
 @app.route("/sitemap.xml")
 def sitemap_xml():
     base = _site_url()
-    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about"]
+    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about", "/login", "/register", "/settings"]
     urls = "\n".join(
         "  <url><loc>%s</loc><changefreq>weekly</changefreq><priority>%.1f</priority></url>"
         % (base + p, 1.0 if p == "/" else 0.7)
@@ -5989,6 +6668,7 @@ def api_analyze():
         data = request.get_json(force=True)
         lang = "en" if data.get("lang") == "en" else "ar"
         member_id = data.get("member_id") or 0
+        use_saved = data.get("use_saved", False)
         member = None
         if member_id:
             try:
@@ -6017,6 +6697,30 @@ def api_analyze():
                     patient["blood"] = bt["data"]
             except Exception:
                 pass
+        # Smart context: use saved health profile if requested and permitted
+        if use_saved and not member:
+            uid = _ss_user_id()
+            if uid:
+                privacy = db.load_privacy_settings(uid)
+                if privacy.get("use_in_analysis", True):
+                    hp = db.load_health_profile(uid)
+                    if hp:
+                        if not patient["age"] and hp.get("dob"):
+                            try:
+                                from datetime import date
+                                dob = hp["dob"]
+                                born = date.fromisoformat(dob)
+                                today = date.today()
+                                patient["age"] = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+                            except Exception:
+                                pass
+                        if not patient["gender"] and hp.get("gender"):
+                            patient["gender"] = hp["gender"]
+                        if not patient["conditions"] and hp.get("health_conditions"):
+                            patient["conditions"] = hp["health_conditions"]
+                        if not patient["medications"] and hp.get("medications"):
+                            patient["medications"] = hp["medications"]
+        # Fallback to legacy profile if still missing
         if not patient["conditions"] or not patient["medications"] or not patient["age"]:
             try:
                 if member:
@@ -6042,6 +6746,18 @@ def api_analyze():
             except Exception:
                 pass
         result = analysis_core.run_analysis(patient, lang=lang)
+        # Save chat history if user is logged in and privacy allows
+        uid = _ss_user_id()
+        if uid:
+            privacy = db.load_privacy_settings(uid)
+            if privacy.get("save_chat_history", True):
+                try:
+                    symptoms_text = ", ".join(patient.get("symptoms", []))
+                    db.save_chat_message(uid, "user", symptoms_text)
+                    if result.get("possible_conditions"):
+                        db.save_chat_message(uid, "assistant", str(result.get("possible_conditions", ""))[:500])
+                except Exception:
+                    pass
         try:
             flags = analysis_core.detect_red_flags(patient["symptoms"], patient["notes"], lang)
             if flags:
