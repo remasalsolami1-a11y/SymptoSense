@@ -1029,8 +1029,10 @@ asstInitQs();
     <h3 id="smartCtxTitle">✨ استخدام معلوماتي المحفوظة؟</h3>
     <p id="smartCtxDesc">لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.</p>
     <div class="ss-modal-list" id="smartCtxList" style="display:none;">
-      <b>سيتم استخدام:</b><br>
       <span id="smartCtxFields"></span>
+    </div>
+    <div class="ss-modal-list" id="smartCtxMissingRow" style="display:none;margin-top:8px;border-color:#FDE68A;background:#FFFBEB;">
+      <span id="smartCtxMissing"></span>
     </div>
     <div class="ss-modal-btns">
       <button class="ss-modal-btn primary" id="smartCtxUse" onclick="smartCtxAction('use')">✨ استخدام معلوماتي</button>
@@ -1042,27 +1044,49 @@ asstInitQs();
 <script>
 var smartCtxCallback = null;
 var smartCtxProfile = null;
-function smartCtxShow(profile, callback) {
+var smartCtxUserInfo = null;
+function smartCtxShow(profile, callback, userInfo) {
   smartCtxProfile = profile;
   smartCtxCallback = callback;
+  smartCtxUserInfo = userInfo || null;
   var modal = document.getElementById('smartCtxModal');
   if (!modal || !profile) { if (callback) callback('manual'); return; }
-  var fields = [];
-  if (profile.display_name) fields.push('👤 ' + (LANG === 'ar' ? 'الاسم' : 'Name'));
-  if (profile.dob || profile.gender) fields.push('⚧ ' + (LANG === 'ar' ? 'العمر والجنس' : 'Age & Gender'));
-  if (profile.height) fields.push('📏 ' + (LANG === 'ar' ? 'الطول' : 'Height'));
-  if (profile.weight) fields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن' : 'Weight'));
-  if (profile.medications) fields.push('💊 ' + (LANG === 'ar' ? 'الأدوية' : 'Medications'));
-  if (profile.allergies) fields.push('⚠️ ' + (LANG === 'ar' ? 'الحساسية' : 'Allergies'));
-  if (profile.health_conditions) fields.push('🩺 ' + (LANG === 'ar' ? 'الحالات الصحية' : 'Health Conditions'));
+  var availFields = [];
+  var missingFields = [];
+  if (profile.display_name) availFields.push('👤 ' + (LANG === 'ar' ? 'الاسم: ' : 'Name: ') + profile.display_name);
+  else missingFields.push('👤 ' + (LANG === 'ar' ? 'الاسم' : 'Name'));
+  var hasAge = profile.age || profile.dob;
+  if (hasAge) availFields.push('🎂 ' + (LANG === 'ar' ? 'العمر: ' : 'Age: ') + (profile.age || profile.dob));
+  else missingFields.push('🎂 ' + (LANG === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'));
+  if (profile.gender) availFields.push('⚧ ' + (LANG === 'ar' ? 'الجنس: ' : 'Gender: ') + (LANG === 'ar' ? (profile.gender === 'male' ? 'ذكر' : 'أنثى') : profile.gender));
+  else missingFields.push('⚧ ' + (LANG === 'ar' ? 'الجنس' : 'Gender'));
+  if (profile.height) availFields.push('📏 ' + (LANG === 'ar' ? 'الطول: ' : 'Height: ') + profile.height + ' cm');
+  else missingFields.push('📏 ' + (LANG === 'ar' ? 'الطول' : 'Height'));
+  if (profile.weight) availFields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن: ' : 'Weight: ') + profile.weight + ' kg');
+  else missingFields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن' : 'Weight'));
+  if (profile.medications) availFields.push('💊 ' + (LANG === 'ar' ? 'الأدوية: ' : 'Medications: ') + profile.medications);
+  if (profile.allergies) availFields.push('⚠️ ' + (LANG === 'ar' ? 'الحساسية: ' : 'Allergies: ') + profile.allergies);
+  if (profile.health_conditions) availFields.push('🩺 ' + (LANG === 'ar' ? 'الحالات الصحية: ' : 'Health Conditions: ') + profile.health_conditions);
   var listEl = document.getElementById('smartCtxList');
   var fieldsEl = document.getElementById('smartCtxFields');
-  if (fields.length && listEl && fieldsEl) {
+  var missingEl = document.getElementById('smartCtxMissing');
+  var missingRow = document.getElementById('smartCtxMissingRow');
+  if (availFields.length && listEl && fieldsEl) {
     listEl.style.display = 'block';
-    fieldsEl.innerHTML = fields.join('<br>');
+    fieldsEl.innerHTML = '<div style="font-size:12px;color:#0B9F50;font-weight:700;margin-bottom:4px;">✅ ' + (LANG==='ar' ? 'المعلومات المحفوظة:' : 'Saved information:') + '</div>' + availFields.join('<br>');
   } else if (listEl) {
     listEl.style.display = 'none';
   }
+  if (missingFields.length && missingEl && missingRow) {
+    missingRow.style.display = 'block';
+    missingEl.innerHTML = '<div style="font-size:12px;color:#D97706;font-weight:700;margin-bottom:4px;">⚠️ ' + (LANG==='ar' ? 'معلومات ناقصة:' : 'Missing information:') + '</div>' + missingFields.join('<br>') + '<div style="margin-top:6px;font-size:11px;color:#92400E;">' + (LANG==='ar' ? 'يمكنك إضافتها لاحقاً من صفحة الملف الشخصي' : 'You can add these later from your profile page') + '</div>';
+  } else if (missingRow) {
+    missingRow.style.display = 'none';
+  }
+  var titleEl = document.getElementById('smartCtxTitle');
+  if (titleEl) titleEl.textContent = LANG === 'ar' ? '✨ استخدام معلومات ملفك الصحي' : '✨ Use your health profile';
+  var descEl = document.getElementById('smartCtxDesc');
+  if (descEl) descEl.textContent = LANG === 'ar' ? 'سيتم استخدام معلوماتك المحفوظة في التحليل الطبي' : 'Your saved info will be used in the medical analysis';
   modal.classList.add('open');
 }
 function smartCtxAction(action) {
@@ -1392,6 +1416,8 @@ L = {
         "profile_saved": "تم حفظ المعلومات بنجاح ✅",
         "profile_delete_btn": "حذف المعلومات 🗑️",
         "profile_delete_confirm": "هل أنت متأكد من حذف جميع معلوماتك الصحية؟",
+        "profile_edit_btn": "تعديل معلوماتي ✏️",
+        "profile_cancel": "إلغاء",
         "profile_deleted": "تم حذف المعلومات بنجاح",
         "profile_activity": "مستوى النشاط",
         "activity_low": "قليل",
@@ -1684,6 +1710,8 @@ L = {
         "profile_saved": "Information saved successfully ✅",
         "profile_delete_btn": "Delete Information 🗑️",
         "profile_delete_confirm": "Are you sure you want to delete all your health information?",
+        "profile_edit_btn": "Edit my info ✏️",
+        "profile_cancel": "Cancel",
         "profile_deleted": "Information deleted successfully",
         "profile_activity": "Activity Level",
         "activity_low": "Low",
@@ -2803,7 +2831,22 @@ def chat_page():
 
     function startChat() {
       addHtml('<div class="chat-start"><div class="cs-logo">🩺</div><div class="cs-title">' + esc(TT('welcome')) + '</div><div class="cs-sub">' + esc(TT('start_sub')) + '</div><div class="cs-desc">' + esc(TT('start_desc')) + '</div><div class="cs-voice" onclick="startVoice()">🎙️ ' + esc(TT('voice_btn')) + '</div></div>', 'q start');
-      askMember();
+      try {
+        fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
+          if (ui.ok && ui.logged_in && ui.has_profile && ui.privacy && ui.privacy.use_in_analysis && ui.profile) {
+            smartCtxShow(ui.profile, function(action){
+              if (action === 'use') {
+                if (ui.profile.age) state.age = ui.profile.age;
+                if (ui.profile.gender) state.gender = ui.profile.gender;
+                add((LANG==='ar'?'تم استخدام معلومات الملف الشخصي ✅':'Profile info loaded ✅'), 'bot');
+              }
+              askMember();
+            }, ui);
+          } else {
+            askMember();
+          }
+        }).catch(function(){ askMember(); });
+      } catch(e) { askMember(); }
     }
     let MEMBERS = [];
     function askMember() {
@@ -2834,7 +2877,7 @@ def chat_page():
       if (!state.symptoms.length) { add(TT('atleast'), 'bot'); return; }
       add(TT('chosen') + state.symptoms.join(LANG === 'en' ? ', ' : '، '), 'user');
       clearOpts();
-      if (state.member && state.member.age) askGender();
+      if ((state.member && state.member.age) || state.age) askGender();
       else askAge();
     }
 
@@ -2949,6 +2992,7 @@ def chat_page():
       nextClarNode();
     }
     function askAge() {
+      if (state.age) { askGender(); return; }
       state.step = 'age';
       addQ(TT('age'));
       showText(TT('age_ph'));
@@ -3081,14 +3125,16 @@ def chat_page():
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = (state.member && state.member.id) ? state.member.id : 0;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
-        // Check if user has saved health profile and privacy allows
         var useSaved = false;
+        var userInfo = null;
+        var profileMissing = [];
         try {
           const uir = await fetch('/api/user-info');
-          const uid = await uir.json();
-          if (uid.ok && uid.logged_in && uid.profile && uid.privacy && uid.privacy.use_in_analysis) {
+          userInfo = await uir.json();
+          if (userInfo.ok && userInfo.logged_in && userInfo.has_profile && userInfo.privacy && userInfo.privacy.use_in_analysis) {
             useSaved = true;
             payload.use_saved = true;
+            profileMissing = userInfo.missing_fields || [];
           }
         } catch(e) {}
         const r = await fetch('/api/analyze', {
@@ -3096,7 +3142,19 @@ def chat_page():
           body: JSON.stringify(payload)
         });
         const d = await r.json();
-        if (d.ok) { if (d.emergency) { showEmergency(d); } else { renderResult(d); } }
+        if (d.ok) {
+          if (d.emergency) { showEmergency(d); }
+          else {
+            renderResult(d);
+            if (useSaved && profileMissing.length > 0 && userInfo && userInfo.profile) {
+              var missingLabels = profileMissing.map(function(m){ return m.label; }).join(', ');
+              var msg = LANG === 'ar'
+                ? '💡 ملاحظة: لم تتم إضافة ' + missingLabels + ' بعد. يمكنك إضافتها من <a href="/profile" style="color:#1677E8;font-weight:700;">ملفي الصحي</a> لجعل النتائج أكثر دقة.'
+                : '💡 Note: ' + missingLabels + ' were not included. Add them in your <a href="/profile" style="color:#1677E8;font-weight:700;">health profile</a> for more accurate results.';
+              add(msg, 'bot');
+            }
+          }
+        }
         else add(TT('err') + (d.error||'?'), 'bot');
       } catch(e) { add(TT('conn_err'), 'bot'); }
     }
@@ -4281,6 +4339,23 @@ def blood_page():
     function stTxt(s) { return s === 'normal' ? TT('bl_status_n') : (s === 'low' ? TT('bl_status_l') : TT('bl_status_h')); }
     function lvlCls(l) { return l === 'normal' ? 'p2-green' : (l === 'see_doctor' ? 'p2-orange' : (l === 'urgent' ? 'p2-red' : 'p2-dark')); }
     function lvlTxt(l) { return TT('bl_lvl_' + l) || l; }
+    (function(){
+      fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
+        if (ui.ok && ui.logged_in && ui.profile) {
+          var p = ui.profile;
+          var bg = document.getElementById('bg');
+          var ba = document.getElementById('ba');
+          if (bg && p.gender && !bg.value) { bg.value = p.gender; }
+          if (ba) {
+            var age = p.age;
+            if (!age && p.dob) {
+              try { var bd = new Date(p.dob); var now = new Date(); age = Math.floor((now - bd) / (365.25 * 24 * 60 * 60 * 1000)); } catch(e) {}
+            }
+            if (age && !ba.value) ba.value = age;
+          }
+        }
+      }).catch(function(){});
+    })();
     </script>
     """
     repl = [
@@ -5326,6 +5401,48 @@ def calculators_page():
         else calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', d.unit).replace('%t', typeLabel);
       }, 'resSug');
     }
+    (function(){
+      fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
+        if (ui.ok && ui.logged_in && ui.profile) {
+          var p = ui.profile;
+          var age = p.age;
+          if (!age && p.dob) {
+            try { var bd = new Date(p.dob); var now = new Date(); age = Math.floor((now - bd) / (365.25 * 24 * 60 * 60 * 1000)); } catch(e) {}
+          }
+          if (age) {
+            var fields = ['flAge', 'calAge', 'sgAge'];
+            fields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = age;
+            });
+          }
+          if (p.weight) {
+            var wFields = ['bmiW', 'flW', 'calW'];
+            wFields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = p.weight;
+            });
+          }
+          if (p.height) {
+            var hFields = ['bmiH', 'calH'];
+            hFields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = p.height;
+            });
+          }
+          if (p.gender) {
+            var gFields = ['calG'];
+            var gVal = p.gender === 'male' ? 'm' : (p.gender === 'female' ? 'f' : '');
+            if (gVal) {
+              gFields.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && !el.value) el.value = gVal;
+              });
+            }
+          }
+        }
+      }).catch(function(){});
+    })();
     </script>
     """
     repl = [
@@ -5657,6 +5774,24 @@ def profile_page():
     hp = db.load_health_profile(uid) or {}
     def esc(v):
         return (v or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    def age_from_dob(dob):
+        if not dob:
+            return ""
+        try:
+            from datetime import date
+            born = date.fromisoformat(dob)
+            today = date.today()
+            return str(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
+        except Exception:
+            return ""
+    age = age_from_dob(hp.get("dob", ""))
+    gender_label = {"male": t["profile_male"], "female": t["profile_female"]}.get(hp.get("gender"), "—")
+    act_label = {"low": t.get("activity_low", "Low"), "moderate": t.get("activity_moderate", "Moderate"), "high": t.get("activity_high", "High")}.get(hp.get("activity_level"), "—")
+    lang_label = "العربية" if hp.get("lang", "ar") == "ar" else "English"
+    has_data = any([hp.get("dob"), hp.get("gender"), hp.get("height"), hp.get("weight"), hp.get("medications"), hp.get("allergies"), hp.get("health_conditions")])
+    def field_row(icon, label, value):
+        v = esc(value) if value else '<span style="color:#94A3B8;">—</span>'
+        return '<div class="ss-field"><div class="ss-f-icon">%s</div><div style="flex:1;"><label>%s</label><div style="font-size:15px;font-weight:600;color:#1e293b;padding:4px 0;">%s</div></div></div>' % (icon, label, v)
     gen_opts = {
         "male": '<option value="male" selected>' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
         "female": '<option value="male">' + t["profile_male"] + '</option><option value="female" selected>' + t["profile_female"] + '</option>',
@@ -5675,7 +5810,33 @@ def profile_page():
         <p style="margin-top:8px;font-size:14px;color:#0B2E6B;"><b>__WELCOME__</b> __NAME__ 💙</p>
       </div>
 
-      <form id="hpForm">
+      <!-- READ ONLY VIEW -->
+      <div id="viewMode">
+        <div class="ss-profile-card">
+          <h2>👤 __BASIC__</h2>
+          __ROW_NAME__
+          __ROW_DOB__
+          __ROW_GENDER__
+          __ROW_LANG__
+        </div>
+        <div class="ss-profile-card">
+          <h2>🩺 __HEALTH__</h2>
+          __ROW_HEIGHT__
+          __ROW_WEIGHT__
+          __ROW_ACTIVITY__
+          __ROW_MEDS__
+          __ROW_ALLERGIES__
+          __ROW_CONDITIONS__
+          __ROW_EXTRA__
+        </div>
+        <div class="ss-btn-row" style="justify-content:center;">
+          <button type="button" class="ss-btn-primary" onclick="showEdit()">✏️ __EDIT_BTN__</button>
+          <a href="/settings" class="ss-btn-primary" style="text-decoration:none;background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;">⚙️ __PRIVACY__</a>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <form id="hpForm" style="display:none;">
         <div class="ss-profile-card">
           <h2>👤 __BASIC__</h2>
           <div class="ss-field">
@@ -5739,13 +5900,13 @@ def profile_page():
 
         <div class="ss-btn-row" style="justify-content:center;">
           <button type="submit" class="ss-btn-primary">__SAVE_BTN__</button>
-          <a href="/settings" class="ss-btn-primary" style="text-decoration:none;background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;">⚙️ __PRIVACY__</a>
+          <button type="button" class="ss-btn-primary" style="background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;" onclick="showView()">↩ __CANCEL__</button>
         </div>
         <div id="hpMsg" class="ss-msg" style="display:none;"></div>
       </form>
 
       <div style="margin-top:16px;text-align:center;">
-        <button onclick="if(confirm('__DELETE_CONFIRM__')){deleteProfile()}" class="ss-btn-danger">__DELETE_BTN__</button>
+        <button onclick="deleteProfile()" class="ss-btn-danger">__DELETE_BTN__</button>
       </div>
     </div>
 
@@ -5760,7 +5921,9 @@ def profile_page():
     </div>
     <script>
     var LANG = '__LANG__';
-    var VAL_LABELS = {dob:__L_DOB__,gender:__L_GENDER__,height:__L_HEIGHT__,weight:__L_WEIGHT__};
+    var VAL_LABELS = {dob:__L_DOB_JSON__,gender:__L_GENDER_JSON__,height:__L_HEIGHT_JSON__,weight:__L_WEIGHT_JSON__};
+    function showEdit() { document.getElementById('viewMode').style.display='none'; document.getElementById('hpForm').style.display='block'; window.scrollTo(0,0); }
+    function showView() { document.getElementById('viewMode').style.display='block'; document.getElementById('hpForm').style.display='none'; }
     document.getElementById('hpForm').addEventListener('submit', async function(e){
       e.preventDefault();
       var f = e.target;
@@ -5769,7 +5932,7 @@ def profile_page():
       if (!f.gender.value) missing.push({key:'gender',label:VAL_LABELS.gender});
       if (!f.height.value) missing.push({key:'height',label:VAL_LABELS.height});
       if (!f.weight.value) missing.push({key:'weight',label:VAL_LABELS.weight});
-      document.querySelectorAll('.ss-field').forEach(function(el){ el.style.borderColor='#D7E7FA'; });
+      document.querySelectorAll('#hpForm .ss-field').forEach(function(el){ el.style.borderColor='#D7E7FA'; });
       if (missing.length > 0) {
         missing.forEach(function(m){
           var inp = f[m.key];
@@ -5794,7 +5957,7 @@ def profile_page():
       m.style.display = 'block';
       m.textContent = d.ok ? '__MSG_OK__' : (d.error || '__MSG_ERR__');
       m.className = d.ok ? 'ss-msg' : 'ss-msg error';
-      if (d.ok) setTimeout(function(){ m.style.display = 'none'; }, 3000);
+      if (d.ok) setTimeout(function(){ location.reload(); }, 1000);
     });
     async function deleteProfile() {
       var c = LANG==='ar' ? 'هل أنت متأكد من حذف جميع معلوماتك الصحية؟' : 'Are you sure you want to delete all your health information?';
@@ -5810,6 +5973,19 @@ def profile_page():
     body = body.replace("__H__", t["profile_h"]).replace("__SUB__", t["profile_sub"])
     body = body.replace("__BASIC__", t["profile_basic"]).replace("__HEALTH__", t["profile_health"])
     body = body.replace("__WELCOME__", welcome_text).replace("__NAME__", esc(user.get("name", "")))
+    body = body.replace("__EDIT_BTN__", t.get("profile_edit_btn", "Edit my info"))
+    body = body.replace("__CANCEL__", t.get("profile_cancel", "Cancel"))
+    body = body.replace("__ROW_NAME__", field_row("📛", t["profile_name"], hp.get("display_name", user.get("name", ""))))
+    body = body.replace("__ROW_DOB__", field_row("🎂", t["profile_dob"], (hp.get("dob", "") + (" (%s)" % age if age else "")) if hp.get("dob") else ""))
+    body = body.replace("__ROW_GENDER__", field_row("⚧", t["profile_gender"], gender_label))
+    body = body.replace("__ROW_LANG__", field_row("🌐", t["profile_lang_pref"], lang_label))
+    body = body.replace("__ROW_HEIGHT__", field_row("📏", t["profile_height"], (hp.get("height", "") + " cm") if hp.get("height") else ""))
+    body = body.replace("__ROW_WEIGHT__", field_row("⚖️", t["profile_weight"], (hp.get("weight", "") + " kg") if hp.get("weight") else ""))
+    body = body.replace("__ROW_ACTIVITY__", field_row("🏃", t["profile_activity"], act_label))
+    body = body.replace("__ROW_MEDS__", field_row("💊", t["profile_meds"], hp.get("medications", "")))
+    body = body.replace("__ROW_ALLERGIES__", field_row("⚠️", t["profile_allergies"], hp.get("allergies", "")))
+    body = body.replace("__ROW_CONDITIONS__", field_row("🩺", t["profile_conditions"], hp.get("health_conditions", "")))
+    body = body.replace("__ROW_EXTRA__", field_row("📝", t["profile_extra"], hp.get("extra_info", "")))
     body = body.replace("__L_NAME__", t["profile_name"]).replace("__VAL_NAME__", esc(hp.get("display_name", user.get("name", ""))))
     body = body.replace("__L_DOB__", t["profile_dob"]).replace("__VAL_DOB__", esc(hp.get("dob", "")))
     body = body.replace("__L_GENDER__", t["profile_gender"]).replace("__GEN_OPTS__", gen_opts)
@@ -5833,10 +6009,10 @@ def profile_page():
     body = body.replace("__MSG_OK__", t["profile_saved"]).replace("__MSG_ERR__", t.get("profile_error", "Error"))
     body = body.replace("__VAL_OK__", "حسنًا، سأكمل المعلومات" if _lang() == "ar" else "OK, I'll complete it")
     body = body.replace("__LANG__", "en" if _lang() == "en" else "ar")
-    body = body.replace("__L_DOB__", json.dumps(t["profile_dob"], ensure_ascii=False))
-    body = body.replace("__L_GENDER__", json.dumps(t["profile_gender"], ensure_ascii=False))
-    body = body.replace("__L_HEIGHT__", json.dumps(t["profile_height"], ensure_ascii=False))
-    body = body.replace("__L_WEIGHT__", json.dumps(t["profile_weight"], ensure_ascii=False))
+    body = body.replace("__L_DOB_JSON__", json.dumps(t["profile_dob"], ensure_ascii=False))
+    body = body.replace("__L_GENDER_JSON__", json.dumps(t["profile_gender"], ensure_ascii=False))
+    body = body.replace("__L_HEIGHT_JSON__", json.dumps(t["profile_height"], ensure_ascii=False))
+    body = body.replace("__L_WEIGHT_JSON__", json.dumps(t["profile_weight"], ensure_ascii=False))
     return _page(t["title_profile"], body)
 
 
@@ -6361,12 +6537,47 @@ def api_user_info():
     user = db.get_ss_user(uid) if uid else None
     profile = db.load_health_profile(uid) if uid else None
     privacy = db.load_privacy_settings(uid) if uid else None
+    missing = []
+    available = []
+    critical_fields = {"age": "العمر|Age", "gender": "الجنس|Gender", "height": "الطول|Height", "weight": "الوزن|Weight"}
+    if profile:
+        age_val = profile.get("age") if profile.get("age") else None
+        if not age_val and profile.get("dob"):
+            try:
+                from datetime import date
+                born = date.fromisoformat(profile.get("dob"))
+                today = date.today()
+                age_val = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+            except Exception:
+                pass
+        profile_data = {
+            "age": str(age_val) if age_val else "",
+            "gender": profile.get("gender", ""),
+            "height": profile.get("height", ""),
+            "weight": profile.get("weight", ""),
+            "medications": profile.get("medications", ""),
+            "allergies": profile.get("allergies", ""),
+            "health_conditions": profile.get("health_conditions", ""),
+        }
+        for k, label in critical_fields.items():
+            if profile_data.get(k):
+                available.append({"key": k, "label": label.split("|")[0] if _lang() == "ar" else label.split("|")[1], "value": profile_data[k]})
+            else:
+                missing.append({"key": k, "label": label.split("|")[0] if _lang() == "ar" else label.split("|")[1]})
+        for extra_k in ["medications", "allergies", "health_conditions"]:
+            if profile_data.get(extra_k):
+                available.append({"key": extra_k, "label": extra_k, "value": profile_data[extra_k]})
+    else:
+        missing = [{"key": k, "label": v.split("|")[0] if _lang() == "ar" else v.split("|")[1]} for k, v in critical_fields.items()]
     return jsonify({
         "ok": True,
         "logged_in": bool(uid),
         "user": user,
         "profile": profile,
         "privacy": privacy,
+        "missing_fields": missing,
+        "available_fields": available,
+        "has_profile": bool(profile),
     })
 
 
