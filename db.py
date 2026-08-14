@@ -1715,6 +1715,7 @@ def save_health_profile(user_id, data):
     try:
         c = conn.cursor()
         now = datetime.now(timezone.utc).isoformat()
+        uid = int(user_id)
         fields = {
             "display_name": data.get("display_name", ""),
             "dob": data.get("dob", ""),
@@ -1729,22 +1730,23 @@ def save_health_profile(user_id, data):
             "lang": data.get("lang", "ar"),
             "updated_at": now,
         }
+        all_cols = ["user_id"] + list(fields.keys())
+        all_vals = [uid] + list(fields.values())
         if USE_POSTGRES:
-            cols = ", ".join(fields.keys())
-            phs = ", ".join(["%s"] * len(fields))
+            cols = ", ".join(all_cols)
+            phs = ", ".join(["%s"] * len(all_cols))
             updates = ", ".join(f"{k}=excluded.{k}" for k in fields.keys())
             c.execute(
                 f"INSERT INTO ss_health_profiles ({cols}) VALUES ({phs}) "
                 f"ON CONFLICT(user_id) DO UPDATE SET {updates}",
-                (int(user_id),) + tuple(fields.values()),
+                tuple(all_vals),
             )
         else:
-            cols = ", ".join(["user_id"] + list(fields.keys()))
-            phs = ", ".join(["?"] * (1 + len(fields)))
-            updates = ", ".join(f"{k}=excluded.{k}" for k in fields.keys())
+            cols = ", ".join(all_cols)
+            phs = ", ".join(["?"] * len(all_cols))
             c.execute(
                 f"INSERT OR REPLACE INTO ss_health_profiles ({cols}) VALUES ({phs})",
-                (int(user_id),) + tuple(fields.values()),
+                tuple(all_vals),
             )
         conn.commit()
     finally:

@@ -5749,28 +5749,60 @@ def profile_page():
       </div>
     </div>
 
+    <div id="valModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:18px;">
+      <div style="background:#fff;border-radius:22px;max-width:420px;width:100%;padding:30px 26px;text-align:center;box-shadow:0 24px 60px rgba(15,23,42,.25);">
+        <div style="font-size:36px;margin-bottom:8px;">⚠️</div>
+        <h3 id="valTitle" style="font-size:20px;color:#0B2E6B;margin-bottom:8px;"></h3>
+        <p id="valDesc" style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:14px;"></p>
+        <div id="valList" style="text-align:start;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:13.5px;color:#991B1B;line-height:1.8;"></div>
+        <button onclick="document.getElementById('valModal').style.display='none'" style="background:#1677E8;color:#fff;border:none;border-radius:12px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">__VAL_OK__</button>
+      </div>
+    </div>
     <script>
+    var LANG = '__LANG__';
+    var VAL_LABELS = {dob:__L_DOB__,gender:__L_GENDER__,height:__L_HEIGHT__,weight:__L_WEIGHT__};
     document.getElementById('hpForm').addEventListener('submit', async function(e){
       e.preventDefault();
-      const f = e.target;
-      const r = await fetch('/api/health-profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      var f = e.target;
+      var missing = [];
+      if (!f.dob.value) missing.push({key:'dob',label:VAL_LABELS.dob});
+      if (!f.gender.value) missing.push({key:'gender',label:VAL_LABELS.gender});
+      if (!f.height.value) missing.push({key:'height',label:VAL_LABELS.height});
+      if (!f.weight.value) missing.push({key:'weight',label:VAL_LABELS.weight});
+      document.querySelectorAll('.ss-field').forEach(function(el){ el.style.borderColor='#D7E7FA'; });
+      if (missing.length > 0) {
+        missing.forEach(function(m){
+          var inp = f[m.key];
+          if (inp) { var field = inp.closest('.ss-field'); if(field) field.style.borderColor='#dc2626'; }
+        });
+        var listHtml = missing.map(function(m){ return '⚠️ ' + m.label; }).join('<br>');
+        document.getElementById('valTitle').textContent = LANG==='ar' ? '⚠️ باقي بعض المعلومات' : '⚠️ Some information is missing';
+        document.getElementById('valDesc').textContent = LANG==='ar' ? 'يرجى إكمال:' : 'Please complete:';
+        document.getElementById('valList').innerHTML = listHtml;
+        document.getElementById('valModal').style.display = 'flex';
+        return;
+      }
+      var r = await fetch('/api/health-profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
         display_name: f.display_name.value, dob: f.dob.value, gender: f.gender.value,
         height: f.height.value, weight: f.weight.value, activity_level: f.activity_level.value,
         medications: f.medications.value, allergies: f.allergies.value,
         health_conditions: f.health_conditions.value, extra_info: f.extra_info.value,
         lang: f.lang_pref.value
       })});
-      const d = await r.json();
-      const m = document.getElementById('hpMsg');
+      var d = await r.json();
+      var m = document.getElementById('hpMsg');
       m.style.display = 'block';
-      m.textContent = d.ok ? '__MSG_OK__' : '__MSG_ERR__';
+      m.textContent = d.ok ? '__MSG_OK__' : (d.error || '__MSG_ERR__');
       m.className = d.ok ? 'ss-msg' : 'ss-msg error';
       if (d.ok) setTimeout(function(){ m.style.display = 'none'; }, 3000);
     });
     async function deleteProfile() {
-      const r = await fetch('/api/health-profile/delete', {method:'POST'});
-      const d = await r.json();
-      if (d.ok) location.reload();
+      var c = LANG==='ar' ? 'هل أنت متأكد من حذف جميع معلوماتك الصحية؟' : 'Are you sure you want to delete all your health information?';
+      if (confirm(c)) {
+        var r = await fetch('/api/health-profile/delete', {method:'POST'});
+        var d = await r.json();
+        if (d.ok) location.reload();
+      }
     }
     </script>
     """
@@ -5799,6 +5831,12 @@ def profile_page():
     body = body.replace("__DELETE_BTN__", t["profile_delete_btn"])
     body = body.replace("__DELETE_CONFIRM__", t["profile_delete_confirm"])
     body = body.replace("__MSG_OK__", t["profile_saved"]).replace("__MSG_ERR__", t.get("profile_error", "Error"))
+    body = body.replace("__VAL_OK__", "حسنًا، سأكمل المعلومات" if _lang() == "ar" else "OK, I'll complete it")
+    body = body.replace("__LANG__", "en" if _lang() == "en" else "ar")
+    body = body.replace("__L_DOB__", json.dumps(t["profile_dob"], ensure_ascii=False))
+    body = body.replace("__L_GENDER__", json.dumps(t["profile_gender"], ensure_ascii=False))
+    body = body.replace("__L_HEIGHT__", json.dumps(t["profile_height"], ensure_ascii=False))
+    body = body.replace("__L_WEIGHT__", json.dumps(t["profile_weight"], ensure_ascii=False))
     return _page(t["title_profile"], body)
 
 
