@@ -46,9 +46,10 @@ a { text-decoration: none; color: inherit; }
 .nav .links { display: flex; gap: 2px; flex-wrap: wrap; }
 .nav .links a { color: #17356D; padding: 8px 14px; border-radius: 999px; font-size: 15px; font-weight: 600; }
 .nav .links a:hover { color: #1677E8; background: #F0F7FF; }
+:root { --bnav-h: 64px; --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
 .nav .links a.on { background: #DCEEFF; color: #1677E8; font-weight: 700; }
-.container { max-width: 1080px; margin: 0 auto; padding: 26px 18px; padding-bottom: 100px; }
-@media (max-width: 768px) { .container { padding: 16px 16px; padding-bottom: 100px; } }
+.container { max-width: 1080px; margin: 0 auto; padding: 26px 18px; padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 28px); }
+@media (max-width: 768px) { .container { padding: 16px 16px; padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 28px); } }
 .ss-profile-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(15,23,42,.06); }
 .ss-profile-card h2 { font-size: 17px; font-weight: 800; color: #1677E8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 .ss-field { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F1F5F9; }
@@ -65,9 +66,9 @@ a { text-decoration: none; color: inherit; }
 .ss-msg.success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
 .ss-msg.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
 /* Mobile Bottom Navigation */
-.ss-bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: #FFFFFF; border-top: 1px solid #E2E8F0; box-shadow: 0 -4px 20px rgba(15,23,42,.08); padding: 6px 0 env(safe-area-inset-bottom, 0px); }
+.ss-bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: #FFFFFF; border-top: 1px solid #E2E8F0; box-shadow: 0 -4px 20px rgba(15,23,42,.08); padding: 6px 0 var(--safe-bottom); padding-bottom: calc(6px + var(--safe-bottom)); }
 @media (max-width: 768px) { .ss-bnav { display: flex; justify-content: space-around; align-items: center; } .nav { display: none; } }
-.ss-bnav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; text-decoration: none; color: #94A3B8; font-size: 10px; font-weight: 700; min-width: 56px; transition: color .2s; }
+.ss-bnav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; text-decoration: none; color: #94A3B8; font-size: 10px; font-weight: 700; min-width: 56px; min-height: 48px; justify-content: center; transition: color .2s; }
 .ss-bnav a.on { color: #1677E8; }
 .ss-bnav a .bn-icon { font-size: 22px; line-height: 1; }
 /* Completion bar */
@@ -675,7 +676,7 @@ PAGE_FRAME = """
 <html lang="__LANG__" dir="__DIR__">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -771,7 +772,7 @@ __GSC_TAG__
 @media (max-width: 560px) {
   .asst-panel { bottom: 0; left: 0; right: 0; width: 100%; max-width: none; height: 80vh; border-radius: 22px 22px 0 0; }
   [dir="rtl"] .asst-panel { left: 0; right: 0; }
-  .asst-fab { bottom: 16px; left: 16px; padding: 13px 15px; }
+  .asst-fab { bottom: calc(var(--bnav-h) + var(--safe-bottom) + 12px); left: 16px; padding: 13px 15px; }
   [dir="rtl"] .asst-fab { left: 16px; right: auto; }
   .asst-fab .asst-fab-lb { display: none; }
 }
