@@ -47,189 +47,7 @@ a { text-decoration: none; color: inherit; }
 .nav .links a { color: #17356D; padding: 8px 14px; border-radius: 999px; font-size: 15px; font-weight: 600; }
 .nav .links a:hover { color: #1677E8; background: #F0F7FF; }
 .nav .links a.on { background: #DCEEFF; color: #1677E8; font-weight: 700; }
-.container { max-width: 1080px; margin: 0 auto; padding: 26px 18px; padding-bottom: 100px; }
-@media (max-width: 768px) { .container { padding: 16px 16px; padding-bottom: 100px; } }
-.ss-profile-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(15,23,42,.06); }
-.ss-profile-card h2 { font-size: 17px; font-weight: 800; color: #1677E8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.ss-field { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F1F5F9; }
-.ss-field:last-child { border-bottom: none; }
-.ss-f-icon { font-size: 18px; flex: 0 0 auto; margin-top: 2px; }
-.ss-field label { display: block; font-size: 12px; font-weight: 700; color: #64748B; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
-.ss-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 500px) { .ss-grid2 { grid-template-columns: 1fr; } }
-.ss-btn-primary { background: #1677E8; color: #fff; border: none; border-radius: 12px; padding: 13px 24px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; }
-.ss-btn-primary:hover { background: #1257B8; }
-.ss-btn-danger { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 48px; }
-.ss-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-.ss-msg { padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; margin-top: 10px; }
-.ss-msg.success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
-.ss-msg.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-/* Mobile Bottom Navigation */
-.ss-bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: #FFFFFF; border-top: 1px solid #E2E8F0; box-shadow: 0 -4px 20px rgba(15,23,42,.08); padding: 6px 0 env(safe-area-inset-bottom, 0px); }
-@media (max-width: 768px) { .ss-bnav { display: flex; justify-content: space-around; align-items: center; } .nav { display: none; } }
-.ss-bnav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; text-decoration: none; color: #94A3B8; font-size: 10px; font-weight: 700; min-width: 56px; transition: color .2s; }
-.ss-bnav a.on { color: #1677E8; }
-.ss-bnav a .bn-icon { font-size: 22px; line-height: 1; }
-/* Completion bar */
-.ss-completion { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(15,23,42,.06); }
-.ss-completion .bar-track { background: #E2E8F0; border-radius: 999px; height: 8px; margin: 10px 0 6px; overflow: hidden; }
-.ss-completion .bar-fill-green { background: linear-gradient(90deg, #16A34A, #22C55E); height: 100%; border-radius: 999px; transition: width .6s ease; }
-.ss-completion .bar-label { font-size: 13px; color: #64748B; font-weight: 600; }
-/* Smart next step card */
-.ss-next-step { background: linear-gradient(135deg, #F0F7FF, #E8F3FF); border: 1.5px solid #BFDDFF; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
-.ss-next-step h3 { font-size: 16px; font-weight: 800; color: #0B2E6B; margin-bottom: 6px; }
-.ss-next-step p { font-size: 14px; color: #475569; line-height: 1.7; margin-bottom: 12px; }
-.ss-prerow { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #EEF2F6; }
-.ss-prerow:last-child { border-bottom:none; }
-.ss-prerow .pr { font-weight:700; color:#0B2E6B; min-width:90px; }
-.ss-prerow .pv { color:#555; text-align:right; }
-.ss-prerow .pv.missing { color:#EF4444; font-style:italic; }
-.ss-prereview { background:#fff; border-radius:16px; padding:20px; border:2px solid #E3EDF7; margin:12px 0; }
-.ss-prereview h3 { margin:0 0 12px 0; color:#0B2E6B; }
-.manage-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; border:1px solid #E2E8F0; }
-.manage-card-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-.manage-icon { font-size:22px; }
-.manage-label { font-weight:700; color:#0B2E6B; font-size:15px; }
-.manage-val { font-size:15px; color:#334155; padding:8px 12px; background:#F8FAFC; border-radius:10px; margin-bottom:10px; min-height:20px; }
-.manage-actions { display:flex; gap:8px; }
-.manage-edit-btn { flex:1; padding:10px; border:2px solid #E2E8F0; border-radius:10px; background:#fff; font-weight:600; cursor:pointer; font-size:14px; text-align:center; }
-.manage-edit-btn:hover { border-color:#1677E8; color:#1677E8; }
-.manage-del-btn { flex:1; padding:10px; border:2px solid #FEE2E2; border-radius:10px; background:#fff; color:#DC2626; font-weight:600; cursor:pointer; font-size:14px; text-align:center; }
-.manage-del-btn:hover { background:#FEF2F2; }
-.memory-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:12px; border:1px solid #E2E8F0; }
-.memory-card-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-.memory-icon { font-size:22px; }
-.memory-label { font-weight:700; color:#0B2E6B; font-size:15px; }
-.memory-val { font-size:15px; color:#334155; padding:8px 12px; background:#F8FAFC; border-radius:10px; margin-bottom:8px; }
-.memory-source { display:inline-block; font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; margin-bottom:8px; }
-.memory-actions { display:flex; gap:8px; }
-.memory-legend { display:flex; flex-wrap:wrap; gap:12px; padding:12px 16px; background:#F8FAFC; border-radius:12px; margin-bottom:16px; border:1px solid #E2E8F0; }
-.memory-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#64748B; }
-.memory-dot { width:8px; height:8px; border-radius:50%; }
-.res-transparency { background:#F8FAFC; border-radius:14px; padding:18px; margin:12px 0; border:1px solid #E2E8F0; }
-.res-trans-h { font-weight:800; color:#0B2E6B; font-size:16px; margin-bottom:4px; }
-.res-trans-body { font-size:13px; color:#475569; margin-bottom:14px; }
-.trans-card { border-radius:12px; padding:14px; margin-bottom:10px; }
-.trans-known { background:#F0FDF4; border:1px solid #BBF7D0; }
-.trans-unclear { background:#FFFBEB; border:1px solid #FDE68A; }
-.trans-notasked { background:#F8FAFC; border:1px solid #E2E8F0; }
-.trans-card-h { font-weight:700; font-size:14px; color:#0B2E6B; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
-.trans-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
-.trans-dot-green { background:#16A34A; }
-.trans-dot-yellow { background:#F59E0B; }
-.trans-dot-gray { background:#94A3B8; }
-.trans-items { display:flex; flex-direction:column; gap:4px; }
-.trans-item { font-size:13px; color:#334155; padding:4px 0; }
-.trans-item-gray { color:#94A3B8; }
-.trans-add-btn { display:block; width:100%; padding:10px; margin-top:8px; border:2px dashed #FDE68A; border-radius:10px; background:#FFFBEB; color:#92400E; font-weight:600; font-size:13px; cursor:pointer; text-align:center; }
-.trans-add-btn:hover { border-color:#F59E0B; background:#FEF3C7; }
-.trans-note { font-size:12px; color:#94A3B8; font-style:italic; margin-top:8px; }
-.res-why { background:#F0F7FF; border-radius:14px; padding:18px; margin:12px 0; border:1px solid #BFDDFF; }
-.res-why-h { font-weight:800; color:#0B2E6B; font-size:16px; margin-bottom:8px; }
-.res-why-body { font-size:14px; line-height:1.8; color:#334155; }
-.res-action { border-radius:14px; padding:18px; margin:12px 0; }
-.res-action-h { font-weight:800; color:#0B2E6B; font-size:16px; margin-bottom:4px; }
-.res-assess { background:#F8FAFC; border-radius:14px; padding:18px; margin:12px 0; border:1px solid #E2E8F0; }
-.res-assess-h { font-weight:800; color:#0B2E6B; font-size:16px; margin-bottom:12px; }
-.res-assess-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #EEF2F6; }
-.res-assess-row:last-child { border-bottom:none; }
-.res-assess-label { font-weight:600; color:#475569; font-size:14px; }
-.res-questions { background:linear-gradient(135deg,#F0F7FF,#E8F3FF); border-radius:14px; padding:18px; margin:12px 0; border:1px solid #BFDDFF; }
-.res-questions-h { font-weight:800; color:#0B2E6B; font-size:16px; margin-bottom:6px; }
-.res-questions-body { font-size:13px; color:#475569; margin-bottom:10px; }
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  body { background: #0F172A; color: #E2E8F0; }
-  .nav { background: #1E293B; border-bottom-color: #334155; }
-  .nav .logo { color: #E2E8F0; }
-  .nav .links a { color: #CBD5E1; }
-  .nav .links a.on { background: #1E3A5F; color: #60A5FA; }
-  .card, .ss-profile-card, .ss-completion { background: #1E293B; border-color: #334155; }
-  .card h2, .ss-profile-card h2 { color: #60A5FA; }
-  .ss-field { border-bottom-color: #334155; }
-  .ss-field label { color: #94A3B8; }
-  .ss-next-step { background: linear-gradient(135deg, #1E293B, #172554); border-color: #1E3A5F; }
-  .ss-next-step h3 { color: #93C5FD; }
-  .ss-next-step p { color: #94A3B8; }
-  .bubble.bot { background: #1E293B; border-color: #334155; }
-  .chat-body { background: #0F172A; }
-  .chat-options { background: #1E293B; border-color: #334155; }
-  .opt { background: #1E293B; border-color: #334155; color: #E2E8F0; }
-  .chat-input { background: #1E293B; border-color: #334155; }
-  .chat-input input { background: #0F172A; border-color: #334155; color: #E2E8F0; }
-  .chat-wrap { background: #1E293B; border-color: #334155; }
-  .chat-head { background: #0B2E6B; }
-  .container { background: transparent; }
-  .ss-bnav { background: #1E293B; border-color: #334155; }
-  .ss-bnav a { color: #64748B; }
-  .ss-bnav a.on { color: #60A5FA; }
-  .welcome-card { background: #1E293B; border-color: #334155; }
-  .ss-msg.success { background: #052E16; color: #4ADE80; border-color: #166534; }
-  .ss-msg.error { background: #450A0A; color: #FCA5A5; border-color: #7F1D1D; }
-  .ss-btn-danger { background: #450A0A; color: #FCA5A5; border-color: #7F1D1D; }
-  .warn { background: #451A03; border-color: #92400E; color: #FCD34D; }
-  .footer { background: #0F172A; }
-  .asst-panel { background: #1E293B; border-color: #334155; }
-  .asst-bot { background: #1E293B; border-color: #334155; color: #E2E8F0; }
-  .asst-body { background: #0F172A; }
-  .asst-inp { background: #0F172A; border-color: #334155; color: #E2E8F0; }
-  .asst-opt { background: #1E293B; border-color: #334155; }
-  .asst-opt .ao-t { color: #E2E8F0; }
-  .asst-opt .ao-d { color: #94A3B8; }
-  .asst-chip { background: #1E293B; border-color: #334155; color: #93C5FD; }
-  .svc-card { background: #1E293B; border-color: #334155; }
-  .quick-card { background: #1E293B; border-color: #334155; }
-  .care-item { background: #1E293B; border-color: #334155; }
-  .hh { background: transparent; }
-  .hh-l { color: #E2E8F0; }
-  .mh-card { background: #1E293B; border-color: #334155; }
-  .hist-card { background: #1E293B; border-color: #334155; }
-  .rec-card { background: #1E293B; border-color: #334155; }
-  .res-card { background: #1E293B; border-color: #334155; }
-  input.inp, select.inp, textarea.inp { background: #0F172A; border-color: #334155; color: #E2E8F0; }
-  label.lbl { color: #CBD5E1; }
-  .em-card { background: #1E293B; border-color: #7F1D1D; }
-  .voice-card { background: #1E293B; }
-  .expl-modal { background: #1E293B; border-color: #334155; }
-  .ex-explain { background: #0F172A; border-color: #334155; }
-  .asst-modal { background: #1E293B; border-color: #334155; }
-  .res-why { background: #1E293B; border-color: #334155; }
-  .res-why-h { color: #93C5FD; }
-  .res-why-body { color: #CBD5E1; }
-  .res-assess { background: #1E293B; border-color: #334155; }
-  .res-assess-h { color: #93C5FD; }
-  .res-assess-row { border-color: #334155; }
-  .res-assess-label { color: #CBD5E1; }
-  .res-questions { background: linear-gradient(135deg, #1E293B, #172554); border-color: #1E3A5F; }
-  .res-questions-h { color: #93C5FD; }
-  .res-questions-body { color: #94A3B8; }
-  .ss-prerow { border-color: #334155; }
-  .ss-prerow .pr { color: #93C5FD; }
-  .ss-prerow .pv { color: #CBD5E1; }
-  .ss-prereview { background: #1E293B; border-color: #334155; }
-  .ss-prereview h3 { color: #93C5FD; }
-  .manage-card { background: #1E293B; border-color: #334155; }
-  .manage-label { color: #93C5FD; }
-  .manage-val { background: #0F172A; color: #CBD5E1; }
-  .manage-edit-btn { background: #1E293B; border-color: #334155; color: #E2E8F0; }
-  .manage-del-btn { background: #450A0A; border-color: #7F1D1D; color: #FCA5A5; }
-  .memory-card { background: #1E293B; border-color: #334155; }
-  .memory-label { color: #93C5FD; }
-  .memory-val { background: #0F172A; color: #CBD5E1; }
-  .memory-legend { background: #0F172A; border-color: #334155; }
-  .res-transparency { background: #1E293B; border-color: #334155; }
-  .res-trans-h { color: #93C5FD; }
-  .res-trans-body { color: #94A3B8; }
-  .trans-card { border-color: #334155; }
-  .trans-known { background: #052E16; border-color: #166534; }
-  .trans-unclear { background: #451A03; border-color: #92400E; }
-  .trans-notasked { background: #1E293B; border-color: #334155; }
-  .trans-card-h { color: #E2E8F0; }
-  .trans-item { color: #CBD5E1; }
-  .trans-item-gray { color: #64748B; }
-  .trans-note { color: #64748B; }
-  .night-calm { background: #0F1729; border-color: #1E293B; }
-}
+.container { max-width: 1080px; margin: 0 auto; padding: 26px 18px; }
 .hero { background: linear-gradient(135deg, #1677E8 0%, #3b8aee 55%, #4d97ef 100%); color: #fff; border-radius: 20px; padding: 48px 36px; text-align: center; margin-bottom: 30px; }
 .hero h1 { font-size: 40px; margin-bottom: 12px; }
 .hero p { font-size: 17px; opacity: .95; max-width: 640px; margin: 0 auto 24px; line-height: 1.8; }
@@ -742,19 +560,6 @@ __GSC_TAG__
 .asst-panel.asst-mh .asst-chip:hover { background: #F6F3FB; }
 .asst-panel.asst-mh .asst-foot { background: #FFFDF9; }
 .asst-panel.asst-mh .asst-foot button { background: #7B9E89; }
-.asst-panel.night-calm { background: #0F1729; border-color: #1E293B; }
-.asst-panel.night-calm .asst-head { background: linear-gradient(120deg, #1E1B4B, #312E81); }
-.asst-panel.night-calm .asst-body { background: #0F1729; }
-.asst-panel.night-calm .asst-bot { background: #1E1B4B; border-color: #312E81; color: #E0E7FF; font-size: 15px; }
-.asst-panel.night-calm .asst-user { background: #4338CA; }
-.asst-panel.night-calm .asst-opt { border-color: #312E81; background: #1E1B4B; color: #C7D2FE; }
-.asst-panel.night-calm .asst-opt:hover { border-color: #818CF8; background: #312E81; }
-.asst-panel.night-calm .asst-opt .ao-t { color: #E0E7FF; }
-.asst-panel.night-calm .asst-chip { border-color: #312E81; color: #A5B4FC; background: #1E1B4B; }
-.asst-panel.night-calm .asst-chip:hover { background: #312E81; }
-.asst-panel.night-calm .asst-foot { background: #0F1729; }
-.asst-panel.night-calm .asst-foot button { background: #4338CA; }
-.asst-panel.night-calm .asst-inp { background: #1E1B4B; border-color: #312E81; color: #E0E7FF; }
 .asst-breath { text-align: center; margin: 12px auto; width: 118px; height: 118px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; }
 .asst-br-0 { background: radial-gradient(circle, #7B9E89, #5E8A6F); animation: brIn 4s ease-in-out infinite; }
 .asst-br-1 { background: radial-gradient(circle, #B8A9D8, #9C87C9); animation: brHold 7s ease-in-out infinite; }
@@ -763,7 +568,7 @@ __GSC_TAG__
 @keyframes brHold { 0%,100% { transform: scale(1.05); } 50% { transform: scale(1.08); } }
 @keyframes brOut { 0% { transform: scale(1.05); } 100% { transform: scale(.72); } }
 .asst-panel.no-anim *, .asst-panel.no-anim *::before, .asst-panel.no-anim *::after { animation: none !important; transition: none !important; }
-@media (prefers-reduced-motion: reduce) { .asst-fab.pulse, .asst-br-0, .asst-br-1, .asst-br-2, .ss-bnav a, .ss-completion .bar-fill-green, .welcome-card { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .asst-fab.pulse, .asst-br-0, .asst-br-1, .asst-br-2 { animation: none !important; } }
 .asst-fb { display: flex; gap: 6px; align-items: center; margin: 2px 0 6px; }
 .asst-fb-btn { border: 1px solid #D7E7FA; background: #FFFFFF; border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .asst-fb-btn:hover { background: #E8F3FF; border-color: #BFDDFF; }
@@ -814,29 +619,12 @@ document.addEventListener('click', function(ev) {
   const m = document.querySelector('.dd-menu');
   if (m && !ev.target.closest('.dd')) m.classList.remove('open');
 });
-(function(){
-  var p = location.pathname;
-  var bnav = document.getElementById('ssBnav');
-  if (!bnav) return;
-  var links = bnav.querySelectorAll('a');
-  links.forEach(function(a){
-    var h = a.getAttribute('href');
-    if (h && p.indexOf(h) === 0 && h !== '#') a.classList.add('on');
-    else if (h === '/home' && p === '/') a.classList.add('on');
-  });
-});
 </script>
 __NAV__
 <div class="container">
 __BODY__
 </div>
 __FOOTER__
-<nav class="ss-bnav" id="ssBnav" aria-label="Main navigation">
-  <a href="/home" class="bn-home" aria-label="Home"><span class="bn-icon">🏠</span><span>__BNAV_HOME__</span></a>
-  <a href="/chat" class="bn-chat" aria-label="Symptom analysis"><span class="bn-icon">🩺</span><span>__BNAV_CHAT__</span></a>
-  <a href="#" class="bn-psych" onclick="openAsstMH();return false;" aria-label="Mental health"><span class="bn-icon">🧠</span><span>__BNAV_PSYCH__</span></a>
-  <a href="/profile" class="bn-profile" aria-label="My profile"><span class="bn-icon">👤</span><span>__BNAV_PROFILE__</span></a>
-</nav>
 <button class="asst-fab pulse" id="asstFab" onclick="asstToggle()" title="__AST_TITLE__"><span class="asst-fab-ic">🤖</span><span class="asst-fab-lb">__AST_TITLE__</span></button>
 <div class="asst-panel" id="asstPanel">
   <div class="asst-head">
@@ -927,8 +715,7 @@ function asstMhOpts() {
     { ic: '😣', t: asstTT('asst_mh_o_str'), d: asstTT('asst_mh_o_str_d'), act: 'ask', k: 'stress' },
     { ic: '😴', t: asstTT('asst_mh_o_slp'), d: asstTT('asst_mh_o_slp_d'), act: 'ask', k: 'sleep' },
     { ic: '💭', t: asstTT('asst_mh_o_tho'), d: asstTT('asst_mh_o_tho_d'), act: 'ask', k: 'thoughts' },
-    { ic: '💬', t: asstTT('asst_mh_o_oth'), d: asstTT('asst_mh_o_oth_d'), act: 'ask', k: 'other' },
-    { ic: '🌙', t: asstTT('asst_mh_opt_night'), d: asstTT('asst_mh_opt_night_d'), act: 'night', k: 'calm' }
+    { ic: '💬', t: asstTT('asst_mh_o_oth'), d: asstTT('asst_mh_o_oth_d'), act: 'ask', k: 'other' }
   ];
 }
 function asstRenderOpts() {
@@ -978,9 +765,7 @@ function asstEnterMH() {
 function asstBackMain() {
   asstBreathStop();
   asstMhMode = false;
-  nightCalmMode = false;
   document.getElementById('asstPanel').classList.remove('asst-mh');
-  document.getElementById('asstPanel').classList.remove('night-calm');
   document.getElementById('asstHeadT').textContent = '🤖 ' + asstTT('asst_title');
   document.getElementById('asstSubT').textContent = asstTT('asst_sub');
   document.getElementById('asstBack').style.display = 'none';
@@ -995,7 +780,6 @@ function asstToggleAnim() {
 }
 function asstOptClick(act, k) {
   if (act === 'mh') { asstEnterMH(); return; }
-  if (act === 'night') { asstEnterNightCalm(); return; }
   if (act === 'ask') { asstMhAction(k); return; }
   if (k === 'symp') { location.href = '/chat'; return; }
   if (k === 'drug') { location.href = '/meds'; return; }
@@ -1019,89 +803,6 @@ function asstMhAction(k) {
     'other': asstTT('asst_mh_send_oth')
   }[k] || asstTT('asst_mh_send_oth');
   asstSendContextText(send);
-}
-var nightCalmMode = false;
-var nightCalmStep = 0;
-function asstEnterNightCalm() {
-  nightCalmMode = true;
-  nightCalmStep = 0;
-  asstMhMode = true;
-  document.getElementById('asstPanel').classList.add('asst-mh');
-  document.getElementById('asstPanel').classList.add('night-calm');
-  document.getElementById('asstHeadT').textContent = asstTT('night_calm_title');
-  document.getElementById('asstSubT').textContent = asstTT('night_calm_greet');
-  document.getElementById('asstBack').style.display = '';
-  document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
-  document.getElementById('asstMhBtn').style.display = 'none';
-  var body = document.getElementById('asstBody');
-  body.innerHTML = '';
-  asstMhMsg(asstTT('night_calm_greet'));
-  setTimeout(function(){
-    addOptsToBody([
-      {label: asstTT('night_calm_opt_calm'), fn: function(){ nightCalmAction('calm'); }},
-      {label: asstTT('night_calm_opt_listen'), fn: function(){ nightCalmAction('listen'); }},
-      {label: asstTT('night_calm_opt_think'), fn: function(){ nightCalmAction('think'); }},
-      {label: asstTT('night_calm_opt_sleep'), fn: function(){ nightCalmAction('sleep'); }}
-    ]);
-  }, 400);
-}
-function nightCalmAction(choice) {
-  clearNightOpts();
-  if (choice === 'calm') {
-    asstMhMsg(asstTT('night_calm_calm_reply'));
-    setTimeout(function(){
-      asstMhMsg(asstTT('night_calm_calm_step'));
-      asstBreathStart();
-      setTimeout(function(){
-        addOptsToBody([{label: asstTT('night_calm_next'), fn: function(){
-          clearNightOpts(); asstBreathStop();
-          asstMhMsg(LANG==='ar' ? 'كيف تحس الآن؟ 🤍' : 'How are you feeling now? 🤍');
-          addOptsToBody([
-            {label: LANG==='ar' ? '🌿 أهدأ شوي' : '🌿 A bit calmer', fn: function(){ clearNightOpts(); asstMhMsg(LANG==='ar' ? 'هذا يسعدني 🤍 خذ وقتك.' : 'That makes me happy 🤍 Take your time.'); }},
-            {label: LANG==='ar' ? '💭 مازالت الأفكار كثيرة' : '💭 Still have racing thoughts', fn: function(){ clearNightOpts(); nightCalmAction('think'); }},
-            {label: LANG==='ar' ? '🫂 أبي أتكلم' : '🫂 I want to talk', fn: function(){ clearNightOpts(); nightCalmAction('listen'); }}
-          ]);
-        }}]);
-      }, 12000);
-    }, 1000);
-  } else if (choice === 'listen') {
-    asstMhMsg(asstTT('night_calm_listen_reply'));
-    document.getElementById('asstInput').focus();
-  } else if (choice === 'think') {
-    asstMhMsg(asstTT('night_calm_think_reply'));
-    document.getElementById('asstInput').focus();
-  } else if (choice === 'sleep') {
-    asstMhMsg(asstTT('night_calm_sleep_reply'));
-    setTimeout(function(){
-      addOptsToBody([
-        {label: asstTT('night_calm_sleep_option1') || '🫂 Talk about my day', fn: function(){ clearNightOpts(); asstSendContextText(LANG==='ar' ? 'أبي أتكلم عن يومي' : 'I want to talk about my day'); }},
-        {label: asstTT('night_calm_sleep_option2') || '🌿 Calming session', fn: function(){ clearNightOpts(); nightCalmAction('calm'); }},
-        {label: asstTT('night_calm_sleep_option3') || '💭 Empty my thoughts', fn: function(){ clearNightOpts(); nightCalmAction('think'); }},
-        {label: asstTT('night_calm_sleep_option4') || '🤍 Something simple', fn: function(){ clearNightOpts(); asstMhMsg(LANG==='ar' ? 'تبي تسمع صوت مطربق؟ ولا نصيحة بسيطة؟ 🤍' : 'Want some ambient sounds? Or a simple tip? 🤍'); }}
-      ]);
-    }, 500);
-  }
-}
-function clearNightOpts() {
-  var existing = document.querySelectorAll('.night-opts');
-  existing.forEach(function(el){ el.remove(); });
-}
-function addOptsToBody(items) {
-  var body = document.getElementById('asstBody');
-  var div = document.createElement('div');
-  div.className = 'night-opts';
-  div.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:8px 0;';
-  items.forEach(function(item){
-    var btn = document.createElement('button');
-    btn.style.cssText = 'width:100%;padding:14px 16px;border:2px solid #E9E2F4;border-radius:14px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;text-align:' + (LANG==='ar' ? 'right' : 'left') + ';color:#4A4458;transition:all .2s;min-height:48px;';
-    btn.textContent = item.label;
-    btn.onmouseover = function(){ this.style.borderColor='#7B9E89'; this.style.background='#F6F9FC'; };
-    btn.onmouseout = function(){ this.style.borderColor='#E9E2F4'; this.style.background='#fff'; };
-    btn.onclick = item.fn;
-    div.appendChild(btn);
-  });
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
 }
 function openAsstMH() {
   var p = document.getElementById('asstPanel');
@@ -1297,23 +998,6 @@ function asstSend() {
   if (!text) return;
   inp.value = '';
   asstSay(text);
-  var lowerText = text.toLowerCase();
-  var harmPhrases = ['انتحار', 'أضر بنفسي', 'أريد الموت', 'لا أريد العيش', 'suicide', 'kill myself', 'want to die', 'harm myself', 'end my life', 'end it all', 'أموت', 'أ完结', 'أتمنى الموت'];
-  var isHarm = harmPhrases.some(function(p){ return lowerText.indexOf(p) !== -1; });
-  if (isHarm) {
-    var lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
-    var harmMsg = lang === 'ar'
-      ? '🚨 أنت لست وحدك. أرجوك تواصل مع خط مساندة الصحة النفسية الآن على الرقم 937 أو الطوارئ 997. الحياة ثمينة وهناك من يساعدك.'
-      : '🚨 You are not alone. Please reach out to the mental health support line now at 937 or emergency services at 997. Your life is precious and help is available.';
-    var harmBtns = lang === 'ar'
-      ? '<div style="margin-top:10px;"><a href="tel:937" style="display:inline-block;background:#7B9E89;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px;">📞 اتصال بخط 937</a><a href="tel:997" style="display:inline-block;background:#DC2626;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px;">🚑 الطوارئ 997</a></div>'
-      : '<div style="margin-top:10px;"><a href="tel:937" style="display:inline-block;background:#7B9E89;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px;">📞 Call 937</a><a href="tel:997" style="display:inline-block;background:#DC2626;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px;">🚑 Emergency 997</a></div>';
-    var d = document.createElement('div');
-    d.className = 'asst-msg asst-bot';
-    d.innerHTML = harmMsg + harmBtns;
-    document.getElementById('asstBody').appendChild(d);
-    return;
-  }
   var hist = [];
   try { hist = JSON.parse(sessionStorage.getItem('asst_hist') || '[]'); } catch(e) {}
   hist.push({ role: 'user', content: text });
@@ -1685,10 +1369,6 @@ L = {
         "nav_myhistory": "سجلي",
         "nav_privacy": "الخصوصية",
         "nav_logout": "تسجيل الخروج",
-        "bnav_home": "الرئيسية",
-        "bnav_chat": "التحليل",
-        "bnav_psych": "النفسي",
-        "bnav_profile": "ملفي",
         "title_login": "SymptoSense — تسجيل الدخول",
         "title_register": "SymptoSense — إنشاء حساب",
         "title_settings": "SymptoSense — إعدادات الخصوصية",
@@ -1740,95 +1420,6 @@ L = {
         "profile_cancel": "إلغاء",
         "profile_deleted": "تم حذف المعلومات بنجاح",
         "profile_activity": "مستوى النشاط",
-        "profile_completion": "اكتمال ملفك",
-        "profile_completion_sub": "إكمال المعلومات يساعد على تحليل أكثر دقة",
-        "profile_next_incomplete": "بقيت بعض المعلومات في ملفك",
-        "profile_next_incomplete_sub": "إكمالها يساعد SymptoSense على تخصيص التحليل لك",
-        "profile_next_complete": "معلوماتك جاهزة",
-        "profile_next_complete_sub": "يمكنك الآن بدء تحليل الأعراض",
-        "profile_next_start": "ابدأ تحليل الأعراض 🩺",
-        "profile_next_continue": "أكمل معلوماتي ✨",
-        "profile_history_title": "📊 تحليلاتي السابقة",
-        "profile_history_empty": "لم تجرِ أي تحليلات بعد",
-        "profile_symptoms_changed": "🔄 تغيّرت الأعراض؟",
-        "profile_symptoms_changed_sub": "هل تغيرت الأعراض منذ آخر مرة استخدمت فيها SymptoSense؟",
-        "profile_reassess": "إعادة التقييم 🔄",
-        "preparing_analysis": "جاري تحضير ملخص التحليل...",
-        "prereview_title": "مراجعة قبل التحليل",
-        "prereview_sub": "تأكد من صحة المعلومات قبل بدء التحليل الذكي:",
-        "prereview_symptoms": "📋 الأعراض:",
-        "prereview_age": "🎂 العمر:",
-        "prereview_gender": "⚧ الجنس:",
-        "prereview_duration": "⏱️ المدة:",
-        "prereview_notes": "📝 ملاحظات:",
-        "prereview_height": "📏 الطول:",
-        "prereview_weight": "⚖️ الوزن:",
-        "prereview_meds": "💊 الأدوية:",
-        "prereview_allergies": "⚠️ الحساسيات:",
-        "prereview_conditions": "🩺 الأمراض:",
-        "prereview_missing": "غير مكتمل",
-        "prereview_start": "ابدأ التحليل",
-        "prereview_edit": "تعديل معلوماتي",
-        "prereview_editing": "تم فتح وضع التعديل",
-        "prereview_add_info": "أضيف معلومات إضافية",
-        "prereview_adding": "ما المعلومات الإضافية؟",
-        "prereview_edit_hint": "يمكنك تعديل معلوماتك من صفحة البروفايل",
-        "prereview_more_q": "أي معلومات تريد إضافتها؟",
-        "prereview_more_meds": "💊 الأدوية التي أتناولها",
-        "prereview_more_allergies": "⚠️ الحساسيات",
-        "prereview_more_weight": "⚖️ الوزن والطول",
-        "prereview_more_done": "✅ لا شكراً، المعلومات كافية",
-        "prereview_meds_ask": "ما هي الأدوية التي تتناولها حالياً؟",
-        "prereview_meds_hint": "اكتب الأدوية بالاسم أو الاستخدام",
-        "prereview_allergies_ask": "هل لديك أي حساسيات؟",
-        "prereview_allergies_hint": "اكتب أنواع الحساسية إن وُجدت",
-        "prereview_weight_ask": "ما وزنك وطولك؟",
-        "prereview_weight_hint": "مثال: وزني ٧٥ كجم وطول ١٧٠ سم",
-        "why_title": "لماذا هذه النتيجة؟",
-        "action_title": "ماذا تفعل الآن؟",
-        "action_high_1": "寻求急诊医疗 - لا تنتظر",
-        "action_high_2": "اطلب سيارة إسعاف فوراً",
-        "action_high_3": "لا تتأخر في زيارة المستشفى",
-        "action_med_1": "حدد موعد مع طبيبك في أقرب وقت",
-        "action_med_2": "راقب الأعراض وسجّل أي تغييرات",
-        "action_med_3": "اتبع نصائح العناية المنزلية",
-        "action_low_1": "يمكنك العناية بنفسك في المنزل",
-        "action_low_2": "اشرب السوائل واسترح",
-        "action_low_3": "إذا ساءت الأعراض، راجع الطبيب",
-        "assess_title": "تقييم SymptoSense",
-        "assess_safety": "🏥 السلامة:",
-        "assess_completion": "📊 اكتمال المعلومات:",
-        "assess_followup": "📅 المتابعة:",
-        "assess_followup_default": "تابع الأعراض عند تغيرها",
-        "assess_missing": "معلومات ناقصة",
-        "questions_title": "أسئلة قد ترغب بطرحها",
-        "questions_sub": "اضغط على أي سؤال لفتح المساعد:",
-        "q_urgent_1": "ماذا أفعل الآن؟",
-        "q_urgent_2": "هل أحتاج للمستشفى؟",
-        "q_med_1": "متى أراجع الطبيب؟",
-        "q_med_2": "ماذا أفعل في المنزل؟",
-        "q_low_1": "كم من الوقت يستغرق الشفاء؟",
-        "q_low_2": "متى أقلق؟",
-        "q通用_1": "هل يمكنك شرح هذه النتيجة أكثر؟",
-        "q通用_2": "ما الأسئلة التي يجب أن أسأل طبيبي؟",
-        "save_profile": "💾 حفظ في ملفي الصحي",
-        "save_login_required": "يجب تسجيل الدخول أولاً لحفظ المعلومات. سجّل الدخول من القائمة.",
-        "save_nothing_new": "لا توجد معلومات جديدة لحفظها.",
-        "save_success": "✅ تم حفظ المعلومات في ملفك الصحي بنجاح!",
-        "save_error": "❌ حدث خطأ أثناء الحفظ، حاول مرة أخرى.",
-        "incomplete_title": "🧪 خلينا نتأكد من شيء قبل ما أعطيك نتيجة.",
-        "incomplete_q_age": "كم عمرك بالضبط؟ هذا يساعدنا على فهم حالتك بشكل أفضل.",
-        "incomplete_q_gender": "ما الجنس؟ هذا مهم للتحليل الطبي.",
-        "incomplete_q_duration": "متى بدأت الأعراض بالضبط؟",
-        "incomplete_q_notes": "هل فيه شي ثاني تبي تضيفه؟",
-        "incomplete_q_general": "محتاج معلومة إضافية صغيرة ل giving نتيجة أدق.",
-        "incomplete_today": "اليوم",
-        "incomplete_yesterday": "أمس",
-        "incomplete_days": "عدة أيام",
-        "incomplete_week": "أكثر من أسبوع",
-        "incomplete_skip": "ما أتذكر بالضبط",
-        "incomplete_reanalyzing": "🔄 جاري إعادة التحليل بالمعلومات الجديدة...",
-        "incomplete_done": "✅ تمام، الآن عندي معلومات أفضل لفهم حالتك.",
         "activity_low": "قليل",
         "activity_moderate": "متوسط",
         "activity_high": "كثير",
@@ -2072,10 +1663,6 @@ L = {
         "nav_myhistory": "My History",
         "nav_privacy": "Privacy",
         "nav_logout": "Logout",
-        "bnav_home": "Home",
-        "bnav_chat": "Analyze",
-        "bnav_psych": "Mental",
-        "bnav_profile": "Profile",
         "title_login": "SymptoSense — Login",
         "title_register": "SymptoSense — Register",
         "title_settings": "SymptoSense — Privacy Settings",
@@ -2127,95 +1714,6 @@ L = {
         "profile_cancel": "Cancel",
         "profile_deleted": "Information deleted successfully",
         "profile_activity": "Activity Level",
-        "profile_completion": "Profile Completion",
-        "profile_completion_sub": "Completing your info helps generate more accurate analysis",
-        "profile_next_incomplete": "Some info is missing from your profile",
-        "profile_next_incomplete_sub": "Completing it helps SymptoSense personalize your analysis",
-        "profile_next_complete": "Your profile is ready",
-        "profile_next_complete_sub": "You can now start symptom analysis",
-        "profile_next_start": "Start symptom analysis 🩺",
-        "profile_next_continue": "Complete my info ✨",
-        "profile_history_title": "📊 My Previous Analyses",
-        "profile_history_empty": "No analyses yet",
-        "profile_symptoms_changed": "🔄 Symptoms changed?",
-        "profile_symptoms_changed_sub": "Have your symptoms changed since you last used SymptoSense?",
-        "profile_reassess": "Reassess 🔄",
-        "preparing_analysis": "Preparing analysis summary...",
-        "prereview_title": "Review Before Analysis",
-        "prereview_sub": "Confirm your information before starting the smart analysis:",
-        "prereview_symptoms": "📋 Symptoms:",
-        "prereview_age": "🎂 Age:",
-        "prereview_gender": "⚧ Gender:",
-        "prereview_duration": "⏱️ Duration:",
-        "prereview_notes": "📝 Notes:",
-        "prereview_height": "📏 Height:",
-        "prereview_weight": "⚖️ Weight:",
-        "prereview_meds": "💊 Medications:",
-        "prereview_allergies": "⚠️ Allergies:",
-        "prereview_conditions": "🩺 Conditions:",
-        "prereview_missing": "Not provided",
-        "prereview_start": "Start Analysis",
-        "prereview_edit": "Edit My Info",
-        "prereview_editing": "Edit mode opened",
-        "prereview_add_info": "Add More Info",
-        "prereview_adding": "What info would you like to add?",
-        "prereview_edit_hint": "You can edit your info from the profile page",
-        "prereview_more_q": "Which info would you like to add?",
-        "prereview_more_meds": "💊 Medications I take",
-        "prereview_more_allergies": "⚠️ Allergies",
-        "prereview_more_weight": "⚖️ Weight & Height",
-        "prereview_more_done": "✅ No thanks, info is complete",
-        "prereview_meds_ask": "What medications are you currently taking?",
-        "prereview_meds_hint": "Type medication names or usage",
-        "prereview_allergies_ask": "Do you have any allergies?",
-        "prereview_allergies_hint": "Type allergy types if any",
-        "prereview_weight_ask": "What is your weight and height?",
-        "prereview_weight_hint": "Example: I weigh 75kg and 170cm tall",
-        "why_title": "Why This Result?",
-        "action_title": "What To Do Now",
-        "action_high_1": "Seek emergency medical care now",
-        "action_high_2": "Call an ambulance immediately",
-        "action_high_3": "Do not delay hospital visit",
-        "action_med_1": "Schedule a doctor appointment soon",
-        "action_med_2": "Monitor symptoms and record changes",
-        "action_med_3": "Follow home care tips below",
-        "action_low_1": "You can manage with home care",
-        "action_low_2": "Rest and stay hydrated",
-        "action_low_3": "See a doctor if symptoms worsen",
-        "assess_title": "SymptoSense Assessment",
-        "assess_safety": "🏥 Safety:",
-        "assess_completion": "📊 Info Completeness:",
-        "assess_followup": "📅 Follow-up:",
-        "assess_followup_default": "Monitor symptoms if they change",
-        "assess_missing": "Missing information",
-        "questions_title": "Questions You Might Ask",
-        "questions_sub": "Click any question to open the assistant:",
-        "q_urgent_1": "What should I do right now?",
-        "q_urgent_2": "Do I need to go to the hospital?",
-        "q_med_1": "When should I see a doctor?",
-        "q_med_2": "What can I do at home?",
-        "q_low_1": "How long will recovery take?",
-        "q_low_2": "When should I worry?",
-        "q通用_1": "Can you explain more about this result?",
-        "q通用_2": "What questions should I ask my doctor?",
-        "save_profile": "💾 Save to My Profile",
-        "save_login_required": "Please log in first to save information. Log in from the menu.",
-        "save_nothing_new": "No new information to save.",
-        "save_success": "✅ Information saved to your health profile!",
-        "save_error": "❌ Error saving. Please try again.",
-        "incomplete_title": "🧪 Let me make sure I have enough info before giving you a result.",
-        "incomplete_q_age": "How old are you exactly? This helps us understand your condition better.",
-        "incomplete_q_gender": "What is your gender? This is important for medical analysis.",
-        "incomplete_q_duration": "When exactly did the symptoms start?",
-        "incomplete_q_notes": "Is there anything else you'd like to add?",
-        "incomplete_q_general": "I need a small piece of info to give you a more accurate result.",
-        "incomplete_today": "Today",
-        "incomplete_yesterday": "Yesterday",
-        "incomplete_days": "Several days ago",
-        "incomplete_week": "More than a week ago",
-        "incomplete_skip": "I don't remember exactly",
-        "incomplete_reanalyzing": "🔄 Re-analyzing with the new information...",
-        "incomplete_done": "✅ Great, now I have better info to understand your condition.",
         "activity_low": "Low",
         "activity_moderate": "Moderate",
         "activity_high": "High",
@@ -2352,10 +1850,6 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__CSS__", BASE_CSS + extra_css)
         .replace("__NAV__", "" if bare else _nav())
         .replace("__FOOTER__", "" if bare else _footer())
-        .replace("__BNAV_HOME__", _t("bnav_home"))
-        .replace("__BNAV_CHAT__", _t("bnav_chat"))
-        .replace("__BNAV_PSYCH__", _t("bnav_psych"))
-        .replace("__BNAV_PROFILE__", _t("bnav_profile"))
         .replace("__AST_TITLE__", ast["asst_title"])
         .replace("__AST_SUB__", ast["asst_sub"])
         .replace("__AST_GREET__", ast["asst_greet"])
@@ -3167,10 +2661,10 @@ def chat_page():
       </div>
       <div class="chat-body" id="chatBody"></div>
       <div class="chat-options" id="chatOptions"></div>
-      <div class="chat-input" id="chatInput" style="display:none;" role="search" aria-label="Message input">
-        <input type="text" id="textInp" placeholder="__INPUT_PH__" autocomplete="off" aria-label="Type your message">
-        <button onclick="startVoice()" id="micBtn" title="__MIC_TITLE__" aria-label="Voice input">🎙️</button>
-        <button onclick="submitText()" aria-label="Send message">__SEND__</button>
+      <div class="chat-input" id="chatInput" style="display:none;">
+        <input type="text" id="textInp" placeholder="__INPUT_PH__" autocomplete="off">
+        <button onclick="startVoice()" id="micBtn" title="__MIC_TITLE__">🎙️</button>
+        <button onclick="submitText()">__SEND__</button>
       </div>
     </div>
     <div class="muted" style="text-align:center;margin-top:10px;">__MUTED__</div>
@@ -3468,47 +2962,7 @@ def chat_page():
     }
     function nextClarNode() {
       if (clarIndex < clarQueue.length) walkClarNode(clarQueue[clarIndex++]);
-      else showReviewScreen();
-    }
-    function showReviewScreen() {
-      add(TT('preparing_analysis'), 'bot');
-      var html = '<div class="ss-prereview"><h3>🔍 ' + TT('prereview_title') + '</h3><p style="color:#475569;font-size:14px;margin-bottom:12px;">' + TT('prereview_sub') + '</p>';
-      html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_symptoms') + '</span><span class="pv">' + esc(state.symptoms.join(', ')) + '</span></div>';
-      if (state.age) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_age') + '</span><span class="pv">' + esc(state.age) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_age') + '</span><span class="pv missing">' + TT('prereview_missing') + '</span></div>';
-      if (state.gender) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_gender') + '</span><span class="pv">' + esc(state.gender) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_gender') + '</span><span class="pv missing">' + TT('prereview_missing') + '</span></div>';
-      if (state.duration) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_duration') + '</span><span class="pv">' + esc(state.duration) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_duration') + '</span><span class="pv missing">-</span></div>';
-      if (state.notes) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_notes') + '</span><span class="pv">' + esc(state.notes) + '</span></div>';
-      if (window.__USER_INFO__) {
-        var u = window.__USER_INFO__;
-        if (u.height) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_height') + '</span><span class="pv">' + esc(u.height) + ' cm</span></div>';
-        if (u.weight) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_weight') + '</span><span class="pv">' + esc(u.weight) + ' kg</span></div>';
-        if (u.medications) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_meds') + '</span><span class="pv">' + esc(u.medications) + '</span></div>';
-        if (u.allergies) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_allergies') + '</span><span class="pv">' + esc(u.allergies) + '</span></div>';
-        if (u.health_conditions) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_conditions') + '</span><span class="pv">' + esc(u.health_conditions) + '</span></div>';
-      }
-      html += '</div>';
-      addHtml(html, 'bot');
-      setTimeout(function(){ showOpts([
-        {label: '🚀 ' + TT('prereview_start'), cls: 'opt-primary', fn: function(){ clearOpts(); runAnalysis(); }},
-        {label: '✏️ ' + TT('prereview_edit'), fn: function(){ add(TT('prereview_editing'), 'user'); clearOpts(); showEdit(); }},
-        {label: '➕ ' + TT('prereview_add_info'), fn: function(){ add(TT('prereview_adding'), 'user'); clearOpts(); askMoreInfo(); }}
-      ]); }, 600);
-    }
-    function showEdit() {
-      if (typeof editMode !== 'undefined') { editMode = true; viewMode.style.display = 'none'; editMode2.style.display = 'block'; return; }
-      add(TT('prereview_edit_hint'), 'bot');
-    }
-    function askMoreInfo() {
-      addQ(TT('prereview_more_q'));
-      showOpts([
-        {label: TT('prereview_more_meds'), fn: function(){ add(TT('prereview_more_meds'), 'user'); addQ(TT('prereview_meds_ask')); showText(TT('prereview_meds_hint'), true); }},
-        {label: TT('prereview_more_allergies'), fn: function(){ add(TT('prereview_more_allergies'), 'user'); addQ(TT('prereview_allergies_ask')); showText(TT('prereview_allergies_hint'), true); }},
-        {label: TT('prereview_more_weight'), fn: function(){ add(TT('prereview_more_weight'), 'user'); addQ(TT('prereview_weight_ask')); showText(TT('prereview_weight_hint'), true); }},
-        {label: TT('prereview_more_done'), fn: function(){ add(TT('prereview_more_done'), 'user'); clearOpts(); showReviewScreen(); }}
-      ]);
+      else runAnalysis();
     }
     function walkClarNode(node) {
       if (!node) { nextClarNode(); return; }
@@ -3650,7 +3104,6 @@ def chat_page():
         if (!n || n < 1 || n > 120) { add(TT('age_invalid'), 'bot'); showText(TT('age_ph')); return; }
         state.age = n; askGender();
       } else if (state.step === 'symptoms') {
-        if (checkAmbiguous(v)) return;
         state.symptoms.push(v);
         add(TT('added_n'), 'bot');
         askSymptoms();
@@ -3663,106 +3116,6 @@ def chat_page():
       } else if (state.step === 'followup') {
         submitFollowup(v);
       }
-    }
-    var AMBIG_PATTERNS = [
-      {re:/(شوي كثير|كثير شوي|شوية كثير|كثير شوية)/i, type:'severity', opts:[
-        {label:'🟢 خفيف', val:'خفيف', en:'Mild'},
-        {label:'🟡 متوسط', val:'متوسط', en:'Moderate'},
-        {label:'🔴 شديد', val:'شديد', en:'Severe'}
-      ]},
-      {re:/(دوخة لما أقوم|دوخة عند الوقوف|دوخة وأقوم)/i, type:'timing', opts:[
-        {label:'🪑 حتى وأنا جالس', val:'مستمرة حتى بالجلوس', en:'Even while sitting'},
-        {label:'🚶 فقط عند الوقوف', val:'فقط عند الوقوف', en:'Only when standing'},
-        {label:'🔄 الاثنين', val:'الاثنين', en:'Both'},
-        {label:'🤷 مو متأكد', val:'غير متأكد', en:'Not sure'}
-      ]},
-      {re:/(يعورني شوي|قليلاً|شوية|خفيف شوي)/i, type:'severity_mild', opts:[
-        {label:'🟢 خفيف', val:'خفيف', en:'Mild'},
-        {label:'🟡 متوسط', val:'متوسط', en:'Moderate'},
-        {label:'🔴 شديد', val:'شديد', en:'Severe'}
-      ]},
-      {re:/(ألم صدر|胸口痛|chest pain)/i, type:'chest', opts:[
-        {label:'🔴 شديد جداً', val:'شديد جداً', en:'Very severe'},
-        {label:'🟡 متوسط', val:'متوسط', en:'Moderate'},
-        {label:'🟢 خفيف', val:'خفيف', en:'Mild'}
-      ]},
-      {re:/(أحياناً|أكيد أحياناً|بعض الأحيان|من حين لآخر)/i, type:'frequency', opts:[
-        {label:'📅 يومياً', val:'يومياً', en:'Daily'},
-        {label:'📅 عدة مرات بالأسبوع', val:'عدة مرات بالأسبوع', en:'Several times a week'},
-        {label:'📅 نادراً', val:'نادراً', en:'Rarely'}
-      ]},
-      {re:/(أحس بـ|أشعر بـ|عندي شعور)/i, type:'vague_feeling', opts:[
-        {label:'😣 ألم', val:'ألم', en:'Pain'},
-        {label:'😰 ضيق', val:'ضيق', en:'Tightness'},
-        {label:'🤢 غثيان', val:'غثيان', en:'Nausea'},
-        {label:'🔥 حرقة', val:'حرقة', en:'Burning'}
-      ]},
-      {re:/(تعبان|تعبانة|متأثر|متأثرة|مو تمام|مو بخير)/i, type:'general', opts:[
-        {label:'🤕 رأس', val:'صداع', en:'Headache'},
-        {label:'🤒 حرارة', val:'حرارة', en:'Fever'},
-        {label:'🤢 بطن', val:'ألم بطن', en:'Stomach'},
-        {label:'💪 عضلات', val:'ألم عضلات', en:'Muscles'},
-        {label:'🫁 تنفس', val:'ضيق تنفس', en:'Breathing'}
-      ]}
-    ];
-    var _ambigState = null;
-    function checkAmbiguous(text) {
-      for (var i = 0; i < AMBIG_PATTERNS.length; i++) {
-        var p = AMBIG_PATTERNS[i];
-        if (p.re.test(text)) {
-          _ambigState = {pattern: p, original: text};
-          showClarifyUI(p, text);
-          return true;
-        }
-      }
-      return false;
-    }
-    function showClarifyUI(pattern, originalText) {
-      var clarMsg = LANG === 'ar'
-        ? '🤍 أبي أتأكد إني فهمتك صح.\n\nلما تقول **"' + esc(originalText) + '"**، تقصد:'
-        : '🤍 I want to make sure I understand you.\n\nWhen you say **"' + esc(originalText) + '"**, you mean:';
-      var clarMsgShort = LANG === 'ar'
-        ? 'بس خليني أتأكد من نقطة صغيرة 🤍\nوش تقصد أكثر؟'
-        : 'Just making sure I understand 🤍\nWhat do you mean exactly?';
-      add(clarMsg, 'bot');
-      var items = pattern.opts.map(function(o) {
-        return {
-          label: o.label,
-          fn: function() {
-            add(o.label, 'user');
-            clearOpts();
-            var resolved = o.val;
-            if (pattern.type === 'severity' || pattern.type === 'severity_mild') {
-              var symptomPart = originalText.replace(/(شوي كثير|كثير شوي|شوية كثير|كثير شوية|يعورني شوي|قليلاً|شوية|خفيف شوي)/gi, '').trim();
-              if (symptomPart) resolved = symptomPart + ' ' + o.val;
-              else resolved = o.val;
-            } else if (pattern.type === 'timing') {
-              resolved = 'دوخة ' + o.val;
-            } else if (pattern.type === 'chest') {
-              resolved = 'ألم صدر ' + o.val;
-            } else if (pattern.type === 'general') {
-              resolved = o.val;
-            } else if (pattern.type === 'vague_feeling') {
-              var bodyPart = originalText.replace(/(أحس بـ|أشعر بـ|عندي شعور)/gi, '').trim();
-              resolved = o.val + (bodyPart ? ' ' + bodyPart : '');
-            }
-            state.symptoms.push(resolved);
-            add(TT('added_n'), 'bot');
-            _ambigState = null;
-            askSymptoms();
-          }
-        };
-      });
-      items.push({
-        label: TT('write_yourself_n'),
-        fn: function() {
-          add(TT('write_yourself_n'), 'user');
-          clearOpts();
-          addQ(TT('custom_n'));
-          showText(TT('syms_hint'), true);
-        }
-      });
-      showOpts(items);
     }
     async function runAnalysis() {
       hideText();
@@ -3792,17 +3145,13 @@ def chat_page():
         if (d.ok) {
           if (d.emergency) { showEmergency(d); }
           else {
-            if (d.low_confidence || (d.ml_predictions && d.ml_predictions.length && d.ml_predictions[0].probability < 0.35)) {
-              showIncompleteResult(d);
-            } else {
-              renderResult(d);
-              if (useSaved && profileMissing.length > 0 && userInfo && userInfo.profile) {
-                var missingLabels = profileMissing.map(function(m){ return m.label; }).join(', ');
-                var msg = LANG === 'ar'
-                  ? '💡 ملاحظة: لم تتم إضافة ' + missingLabels + ' بعد. يمكنك إضافتها من <a href="/profile" style="color:#1677E8;font-weight:700;">ملفي الصحي</a> لجعل النتائج أكثر دقة.'
-                  : '💡 Note: ' + missingLabels + ' were not included. Add them in your <a href="/profile" style="color:#1677E8;font-weight:700;">health profile</a> for more accurate results.';
-                add(msg, 'bot');
-              }
+            renderResult(d);
+            if (useSaved && profileMissing.length > 0 && userInfo && userInfo.profile) {
+              var missingLabels = profileMissing.map(function(m){ return m.label; }).join(', ');
+              var msg = LANG === 'ar'
+                ? '💡 ملاحظة: لم تتم إضافة ' + missingLabels + ' بعد. يمكنك إضافتها من <a href="/profile" style="color:#1677E8;font-weight:700;">ملفي الصحي</a> لجعل النتائج أكثر دقة.'
+                : '💡 Note: ' + missingLabels + ' were not included. Add them in your <a href="/profile" style="color:#1677E8;font-weight:700;">health profile</a> for more accurate results.';
+              add(msg, 'bot');
             }
           }
         }
@@ -3828,132 +3177,10 @@ def chat_page():
         done();
       }
     }
-    function showIncompleteResult(d) {
-      add(TT('incomplete_title'), 'bot');
-      var qText = '';
-      if (!state.age) qText = TT('incomplete_q_age');
-      else if (!state.gender) qText = TT('incomplete_q_gender');
-      else if (!state.duration) qText = TT('incomplete_q_duration');
-      else if (!state.notes) qText = TT('incomplete_q_notes');
-      else qText = TT('incomplete_q_general');
-      setTimeout(function(){
-        add('🤍 ' + qText, 'bot');
-        showOpts([
-          {label:'📅 ' + TT('incomplete_today'), fn:function(){
-            add(TT('incomplete_today'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'اليوم' : 'Today';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_yesterday'), fn:function(){
-            add(TT('incomplete_yesterday'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'أمس' : 'Yesterday';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_days'), fn:function(){
-            add(TT('incomplete_days'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'عدة أيام' : 'Several days';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_week'), fn:function(){
-            add(TT('incomplete_week'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'أكثر من أسبوع' : 'More than a week';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'🤷 ' + TT('incomplete_skip'), fn:function(){
-            add(TT('incomplete_skip'), 'user'); clearOpts();
-            renderResult(d);
-          }}
-        ]);
-      }, 500);
-    }
-    function reAnalyzeWithMoreInfo(previousD) {
-      add(TT('incomplete_reanalyzing'), 'bot');
-      clearOpts();
-      var payload = Object.assign({}, state, {lang: LANG});
-      payload.member_id = (state.member && state.member.id) ? state.member.id : 0;
-      fetch('/api/analyze', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      }).then(function(r){return r.json();}).then(function(d2){
-        if (d2.ok && !d2.emergency) {
-          add(TT('incomplete_done'), 'bot');
-          renderResult(d2);
-        } else if (d2.emergency) {
-          showEmergency(d2);
-        } else {
-          renderResult(previousD);
-        }
-      }).catch(function(){ renderResult(previousD); });
-    }
     function closeEmergency() {
       document.getElementById('emOverlay').style.display = 'none';
       if (lastResult && lastResult._clar) { lastResult = null; nextClarNode(); return; }
       if (lastResult) renderResult(lastResult);
-    }
-    function askQuestionFromResult(q) {
-      add('💬 ' + q, 'user');
-      clearOpts();
-      fetch('/api/chat', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({msg:q, lang:LANG, symptoms:state.symptoms, context:lastResult})
-      }).then(function(r){return r.json();}).then(function(d){
-        if (d.ok) add(d.reply || TT('fallback_chat'), 'bot');
-        else add(TT('err'), 'bot');
-        showOpts([
-          {label:TT('ask_more'), fn:askFollowup},
-          {label:TT('new_analysis'), fn:function(){ clearOpts(); reset(); start(); }},
-          {label:TT('save_profile'), fn:saveMissingToProfile}
-        ]);
-      }).catch(function(){ add(TT('conn_err'), 'bot'); });
-    }
-    function addMissingInfo() {
-      add(TT('trans_adding'), 'user');
-      clearOpts();
-      addQ(TT('trans_add_q'));
-      showOpts([
-        {label:'📅 ' + TT('trans_add_duration'), fn:function(){
-          add(TT('trans_add_duration'), 'user'); clearOpts();
-          showOpts([
-            {label:'📅 ' + TT('incomplete_today'), fn:function(){ state.duration = LANG==='ar'?'اليوم':'Today'; reAnalyzeWithMoreInfo(lastResult); }},
-            {label:'📅 ' + TT('incomplete_yesterday'), fn:function(){ state.duration = LANG==='ar'?'أمس':'Yesterday'; reAnalyzeWithMoreInfo(lastResult); }},
-            {label:'📅 ' + TT('incomplete_days'), fn:function(){ state.duration = LANG==='ar'?'عدة أيام':'Several days'; reAnalyzeWithMoreInfo(lastResult); }},
-            {label:'📅 ' + TT('incomplete_week'), fn:function(){ state.duration = LANG==='ar'?'أكثر من أسبوع':'More than a week'; reAnalyzeWithMoreInfo(lastResult); }}
-          ]);
-        }},
-        {label:'💊 ' + TT('trans_add_meds'), fn:function(){
-          add(TT('trans_add_meds'), 'user'); clearOpts();
-          addQ(TT('trans_add_meds_q')); showText(TT('trans_add_meds_hint'), true);
-        }},
-        {label:'📝 ' + TT('trans_add_notes'), fn:function(){
-          add(TT('trans_add_notes'), 'user'); clearOpts();
-          addQ(TT('trans_add_notes_q')); showText(TT('trans_add_notes_hint'), true);
-        }},
-        {label:'✅ ' + TT('trans_add_done'), fn:function(){
-          add(TT('trans_add_done'), 'user'); clearOpts();
-        }}
-      ]);
-    }
-    function saveMissingToProfile() {
-      if (!window.__USER_INFO__ || !window.__USER_INFO__.logged_in) {
-        add(TT('save_login_required'), 'bot');
-        return;
-      }
-      var updates = {};
-      if (state.age && !window.__USER_INFO__.profile?.age) updates.age = state.age;
-      if (state.gender && !window.__USER_INFO__.profile?.gender) updates.gender = state.gender;
-      if (state.weight && !window.__USER_INFO__.profile?.weight) updates.weight = state.weight;
-      if (state.height && !window.__USER_INFO__.profile?.height) updates.height = state.height;
-      if (Object.keys(updates).length === 0) {
-        add(TT('save_nothing_new'), 'bot');
-        return;
-      }
-      fetch('/api/health-profile', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(updates)
-      }).then(function(r){return r.json();}).then(function(d){
-        if (d.ok) add(TT('save_success'), 'bot');
-        else add(TT('save_error'), 'bot');
-      }).catch(function(){ add(TT('conn_err'), 'bot'); });
     }
     function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
     function NAME(x, arKey, enKey) { return LANG === 'en' ? (x[enKey] || x[arKey]) : (x[arKey] || x[enKey]); }
@@ -4009,108 +3236,8 @@ def chat_page():
       if (d.medication_guidance) h += '<div class="rc-title">' + TT('med_guid') + '</div><div class="res-sec">' + esc(d.medication_guidance) + '</div>';
       if (d.questions_for_doctor) h += '<div class="rc-title">' + TT('q_doc') + '</div><div class="res-sec">' + esc(d.questions_for_doctor) + '</div>';
       h += '</div>';
-
-      // ENHANCED: Why this result
-      h += '<div class="res-why"><div class="res-why-h">🧠 ' + TT('why_title') + '</div>';
-      var whyText = d.why_result || '';
-      if (!whyText) {
-        var syms = (state.symptoms || []).join(', ');
-        var uLabel = u === 'high' ? TT('urg_high') : (u === 'medium' ? TT('urg_medium') : TT('urg_low'));
-        whyText = LANG === 'ar'
-          ? 'بناءً على أعراضك (' + syms + ') وتقييم ' + uLabel + '، تم التحليل باستخدام قاعدة بيانات طبية تشمل أكثر من 500 حالة.'
-          : 'Based on your symptoms (' + syms + ') and ' + uLabel + ' assessment, analysis was performed using a medical database of 500+ conditions.';
-      }
-      h += '<div class="res-why-body">' + esc(whyText) + '</div></div>';
-
-      // ENHANCED: What to do now
-      h += '<div class="res-action"><div class="res-action-h">🧭 ' + TT('action_title') + '</div>';
-      var actionColor = u === 'high' ? '#DC2626' : (u === 'medium' ? '#F59E0B' : '#16A34A');
-      var actionBg = u === 'high' ? '#FEF2F2' : (u === 'medium' ? '#FFFBEB' : '#F0FDF4');
-      var actionBorder = u === 'high' ? '#FECACA' : (u === 'medium' ? '#FDE68A' : '#BBF7D0');
-      var actionItems = [];
-      if (u === 'high') {
-        actionItems.push(TT('action_high_1') || 'seek_emergency');
-        actionItems.push(TT('action_high_2') || 'call_doctor');
-        actionItems.push(TT('action_high_3') || 'do_not_wait');
-      } else if (u === 'medium') {
-        actionItems.push(TT('action_med_1') || 'schedule_appointment');
-        actionItems.push(TT('action_med_2') || 'monitor_symptoms');
-        actionItems.push(TT('action_med_3') || 'home_care_tips');
-      } else {
-        actionItems.push(TT('action_low_1') || 'self_care');
-        actionItems.push(TT('action_low_2') || 'rest_hydrate');
-        actionItems.push(TT('action_low_3') || 'see_doctor_if_worse');
-      }
-      h += '<div style="background:' + actionBg + ';border-left:4px solid ' + actionColor + ';border-radius:0 12px 12px 0;padding:14px 16px;margin-top:10px;">';
-      actionItems.forEach(function(item){ h += '<div style="padding:4px 0;color:' + actionColor + ';font-weight:600;">• ' + esc(item) + '</div>'; });
-      h += '</div></div>';
-
-      // ENHANCED: Assessment card
-      h += '<div class="res-assess"><div class="res-assess-h">📋 ' + TT('assess_title') + '</div>';
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_safety') + '</span><span class="pill2 ' + pcls + '">' + uEmoji + ' ' + esc(uVal) + '</span></div>';
-      var completionPct = 100;
-      if (profileMissing && profileMissing.length > 0) completionPct = Math.max(40, 100 - profileMissing.length * 15);
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_completion') + '</span><span style="font-weight:700;color:#16A34A;">' + completionPct + '%</span></div>';
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_followup') + '</span><span style="font-weight:600;">' + esc(d.when_to_seek_care || TT('assess_followup_default')) + '</span></div>';
-      if (useSaved && profileMissing.length > 0) {
-        h += '<div style="margin-top:10px;padding:10px;background:#FFF7ED;border-radius:8px;border:1px solid #FDE68A;"><span style="font-weight:600;color:#92400E;">⚠️ ' + TT('assess_missing') + ':</span> <span style="color:#78350F;">' + esc(profileMissing.map(function(m){return m.label}).join(', ')) + '</span></div>';
-      }
-      h += '</div>';
-
-      // ENHANCED: Questions you might ask
-      h += '<div class="res-questions"><div class="res-questions-h">💡 ' + TT('questions_title') + '</div>';
-      h += '<div class="res-questions-body">' + TT('questions_sub') + '</div>';
-      h += '<div id="suggestedQuestions"></div></div>';
-
-      // ENHANCED: What I Know / Don't Know
-      h += '<div class="res-transparency">';
-      h += '<div class="res-trans-h">🧠 ' + TT('transparency_title') + '</div>';
-      h += '<div class="res-trans-body">' + TT('transparency_sub') + '</div>';
-      // Known (green)
-      h += '<div class="trans-card trans-known"><div class="trans-card-h"><span class="trans-dot trans-dot-green"></span> ' + TT('trans_known') + '</div>';
-      var knownItems = [];
-      if (state.symptoms && state.symptoms.length) state.symptoms.forEach(function(s){ knownItems.push('✓ ' + s); });
-      if (state.age) knownItems.push('✓ ' + (LANG==='ar'?'العمر: ':'Age: ') + state.age);
-      if (state.gender) knownItems.push('✓ ' + (LANG==='ar'?'الجنس: ':'Gender: ') + state.gender);
-      if (state.duration) knownItems.push('✓ ' + (LANG==='ar'?'المدة: ':'Duration: ') + state.duration);
-      if (window.__USER_INFO__ && window.__USER_INFO__.profile) {
-        var p = window.__USER_INFO__.profile;
-        if (p.height) knownItems.push('🔵 ' + (LANG==='ar'?'الطول: ':'Height: ') + p.height + ' cm');
-        if (p.weight) knownItems.push('🔵 ' + (LANG==='ar'?'الوزن: ':'Weight: ') + p.weight + ' kg');
-        if (p.medications) knownItems.push('🔵 ' + (LANG==='ar'?'الأدوية: ':'Meds: ') + p.medications);
-      }
-      if (!knownItems.length) knownItems.push(TT('trans_known_none') || 'No confirmed information');
-      h += '<div class="trans-items">' + knownItems.map(function(i){ return '<div class="trans-item">' + esc(i) + '</div>'; }).join('') + '</div></div>';
-      // Unclear (yellow)
-      h += '<div class="trans-card trans-unclear"><div class="trans-card-h"><span class="trans-dot trans-dot-yellow"></span> ' + TT('trans_unclear') + '</div>';
-      var unclearItems = [];
-      if (d.low_confidence) unclearItems.push(TT('trans_unclear_confidence') || 'Low confidence in analysis');
-      if (!state.duration) unclearItems.push(TT('trans_unclear_duration') || 'Duration not specified');
-      if (state.notes && state.notes.length < 5) unclearItems.push(TT('trans_unclear_notes') || 'Notes are too brief');
-      if (!unclearItems.length) unclearItems.push(TT('trans_unclear_none') || 'No unclear information');
-      h += '<div class="trans-items">' + unclearItems.map(function(i){ return '<div class="trans-item">' + esc(i) + '</div>'; }).join('') + '</div>';
-      h += '<button class="trans-add-btn" onclick="addMissingInfo()">➕ ' + (TT('trans_add_info') || 'Add more info') + '</button></div>';
-      // Not asked (gray)
-      h += '<div class="trans-card trans-notasked"><div class="trans-card-h"><span class="trans-dot trans-dot-gray"></span> ' + TT('trans_notasked') + '</div>';
-      var notaskedItems = [TT('trans_notasked_sleep') || 'Sleep pattern', TT('trans_notasked_appetite') || 'Appetite changes', TT('trans_notasked_stress') || 'Recent stress', TT('trans_notasked_family') || 'Family history'];
-      h += '<div class="trans-items">' + notaskedItems.map(function(i){ return '<div class="trans-item trans-item-gray">○ ' + esc(i) + '</div>'; }).join('') + '</div>';
-      h += '<div class="trans-note">' + TT('trans_notasked_note') + '</div></div>';
-      h += '</div>';
-
       h += '</div>';
       addHtml(h, 'result');
-      // Populate suggested questions
-      setTimeout(function(){
-        var sq = document.getElementById('suggestedQuestions');
-        if (!sq) return;
-        var qList = [];
-        if (u === 'high') { qList.push(TT('q_urgent_1') || 'What should I do right now?'); qList.push(TT('q_urgent_2') || 'Do I need to go to the hospital?'); }
-        else if (u === 'medium') { qList.push(TT('q_med_1') || 'When should I see a doctor?'); qList.push(TT('q_med_2') || 'What can I do at home?'); }
-        else { qList.push(TT('q_low_1') || 'How long will recovery take?'); qList.push(TT('q_low_2') || 'When should I worry?'); }
-        qList.push(TT('q通用_1') || 'Can you explain more about this result?');
-        qList.push(TT('q通用_2') || 'What questions should I ask my doctor?');
-        sq.innerHTML = qList.map(function(q){ return '<button class="opt" onclick="askQuestionFromResult(\'' + esc(q).replace(/'/g, "\\'") + '\')" style="margin:4px;">💬 ' + esc(q) + '</button>'; }).join('');
-      }, 100);
       addHtml('<div style="margin-top:10px;text-align:center;"><button class="opt" onclick="speakResult()">' + TT('listen_all') + '</button></div>', 'result');
       addHtml('<div class="sec-title">' + TT('fb_title') + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">' +
         '<button class="opt" data-v="1" onclick="fb(this.dataset.v)">' + TT('fb_excellent') + '</button>' +
@@ -4440,71 +3567,6 @@ CT = {
         "asst_br_in": "تنفّس",
         "asst_br_hold": "احبس",
         "asst_br_out": "أخرج",
-        "asst_mh_opt_night": "🌙 Night Calm",
-        "asst_mh_opt_night_d": "وضع هادئ للراحة قبل النوم.",
-        "night_calm_title": "🌙 Night Calm",
-        "night_calm_greet": "خلينا نخلي كل شيء أهدأ شوي.\nما تحتاج تحل كل شيء الليلة. 🤍",
-        "night_calm_q": "وش تحتاج الآن؟",
-        "night_calm_opt_calm": "🌿 أحتاج أهدأ",
-        "night_calm_opt_listen": "🫂 أبي أحد يسمعني",
-        "night_calm_opt_think": "💭 أفكاري كثيرة",
-        "night_calm_opt_sleep": "😴 أبي أستعد للنوم",
-        "night_calm_calm_reply": "حاضر 🤍\nما نحتاج نسوي شيء كبير الآن.\nخلينا نركز على اللحظة اللي أنت فيها.",
-        "night_calm_calm_step": "🌿 خذ نفسًا مريحًا.\nلا تحاول تأخذ نفسًا عميقًا بالقوة.\nفقط خذه بهدوء.\n\nأنا معك. 🤍",
-        "night_calm_next": "جاهز/ة للخطوة التالية",
-        "night_calm_listen_reply": "أنا هنا 🤍\nاحكِ لي اللي بخاطرك، حتى لو ما عرفت/ي ترتبه.",
-        "night_calm_think_reply": "أفهمك 🤍\nأحيانًا لما تتجمع الأشياء كلها في الرأس، حتى الشيء الصغير يصير ثقيل.\n\nوش أكثر فكرة قاعدة تضغط عليك الآن؟",
-        "night_calm_sleep_reply": "خلينا نهدّي اليوم شوي.\n\nهل تبغى:\n🫂 تتكلم عن يومك\n🌿 جلسة تهدئة قصيرة\n💭 أفرغ أفكاري\n🤍 شيء بسيط يساعدني أهدأ",
-        "night_calm_safety": "🤍 أنا سامعك، وكلامك مهم.\nلكن لأنك قلت شيئًا يجعلني قلقًا على سلامتك، خلينا نركز عليك الآن قبل أي شيء آخر.\n\nهل أنت في خطر مباشر الآن؟",
-        "night_calm_safety_call": "📞 اتصال بخط 937 | 🚑 الطوارئ 997",
-        "memory_title": "🧠 ذاكرتي مع SymptoSense",
-        "memory_subtitle": "المعلومات التي تسمح للمساعد باستخدامها لتخصيص تجربتك.",
-        "memory_control": "أنت المتحكم — تستطيع رؤية أي معلومة محفوظة، تعديلها أو حذفها في أي وقت.",
-        "memory_add": "➕ إضافة معلومة",
-        "memory_manage": "🧹 إدارة ذاكرتي",
-        "memory_source_profile": "من ملفك الشخصي",
-        "memory_source_chat": "ذكرتها في هذه المحادثة",
-        "memory_source_memory": "حفظتها في ذاكرتي",
-        "memory_source_unknown": "غير معروفة",
-        "memory_empty": "لا توجد معلومات محفوظة بعد.",
-        "memory_empty_sub": "عندما تشارك معلومات مع المساعد، يمكن حفظها هنا.",
-        "manage_title": "إدارة معلوماتي",
-        "manage_subtitle": "تحكم بالمعلومات المحفوظة في حسابك. يمكنك تعديلها أو حذف أي معلومة في أي وقت.",
-        "manage_edit": "تعديل",
-        "manage_delete": "حذف",
-        "manage_not_set": "غير محدد",
-        "manage_saved": "✅ تم الحفظ بنجاح",
-        "manage_error": "❌ حدث خطأ",
-        "manage_deleted": "✅ تم الحذف بنجاح",
-        "manage_delete_all": "🧹 حذف جميع معلوماتي",
-        "manage_delete_confirm": "هل أنت متأكد؟ سيؤدي ذلك إلى حذف جميع المعلومات الصحية المحفوظة.",
-        "manage_delete_type": "اكتب 'حذف' للتأكيد",
-        "transparency_title": "وش نعرف عن حالتك؟",
-        "transparency_sub": "هذه المعلومات التي استخدمناها في التحليل:",
-        "trans_known": "نعرف",
-        "trans_known_none": "لا توجد معلومات مؤكدة",
-        "trans_unclear": "غير واضح",
-        "trans_unclear_confidence": "ثقة تحليل منخفضة",
-        "trans_unclear_duration": "لم تحدد المدة",
-        "trans_unclear_notes": "ملاحظات قصيرة جداً",
-        "trans_unclear_none": "لا توجد معلومات غير واضحة",
-        "trans_notasked": "لم نسأل عنه",
-        "trans_notasked_sleep": "نمط النوم",
-        "trans_notasked_appetite": "تغيرات الشهية",
-        "trans_notasked_stress": "التوتر الأخير",
-        "trans_notasked_family": "التاريخ العائلي",
-        "trans_notasked_note": "💡 مو كل معلومة ناقصة تعني أن هناك مشكلة. بعض المعلومات قد لا تكون ضرورية لتحليلك الحالي.",
-        "trans_add_info": "➕ إضافة معلومة",
-        "trans_add_q": "وش المعلومة اللي تبي تضيفها؟",
-        "trans_add_duration": "المدة",
-        "trans_add_meds": "الأدوية",
-        "trans_add_meds_q": "وش الأدوية اللي تتناولها حالياً؟",
-        "trans_add_meds_hint": "اكتب الأدوية بالاسم أو الاستخدام",
-        "trans_add_notes": "ملاحظات إضافية",
-        "trans_add_notes_q": "وش الملاحظة اللي تبي تضيفها؟",
-        "trans_add_notes_hint": "اكتب أي معلومة إضافية",
-        "trans_add_done": "✅ شكراً، المعلومات كافية",
-        "trans_adding": "أبي أضيف معلومة إضافية",
         "asst_calc_greet": "🤍 أنا هنا إذا احتجتني\nعندك سؤال عن إحدى الحاسبات؟ اسألني.",
         "asst_calc_bmi_greet": "⚖️ ظهرت لك نتيجة BMI؟\nأقدر أشرح لك معناها بطريقة بسيطة.",
         "asst_calc_sug_greet": "🩸 تبغى تفهم قراءة السكر؟\nأقدر أوضح لك معنى النتيجة حسب نوع القياس.",
@@ -4909,71 +3971,6 @@ CT = {
         "asst_br_in": "Breathe in",
         "asst_br_hold": "Hold",
         "asst_br_out": "Breathe out",
-        "asst_mh_opt_night": "🌙 Night Calm",
-        "asst_mh_opt_night_d": "A calm mode for rest before sleep.",
-        "night_calm_title": "🌙 Night Calm",
-        "night_calm_greet": "Let's make everything a little calmer.\nYou don't have to figure everything out tonight. 🤍",
-        "night_calm_q": "What do you need right now?",
-        "night_calm_opt_calm": "🌿 I need to calm down",
-        "night_calm_opt_listen": "🫂 I need someone to listen",
-        "night_calm_opt_think": "💭 My thoughts are racing",
-        "night_calm_opt_sleep": "😴 Help me prepare for sleep",
-        "night_calm_calm_reply": "Of course 🤍\nWe don't need to do anything big right now.\nLet's focus on this moment you're in.",
-        "night_calm_calm_step": "🌿 Take a comfortable breath.\nDon't force a deep breath.\nJust breathe gently.\n\nI'm here with you. 🤍",
-        "night_calm_next": "Ready for the next step",
-        "night_calm_listen_reply": "I'm here 🤍\nTell me what's on your mind, even if you can't organize it.",
-        "night_calm_think_reply": "I understand 🤍\nSometimes when everything piles up in your head, even small things feel heavy.\n\nWhat thought is weighing on you the most right now?",
-        "night_calm_sleep_reply": "Let's wind down the day a little.\n\nWould you like to:\n🫂 Talk about your day\n🌿 A short calming session\n💭 Empty my thoughts\n🤍 Something simple to help me relax",
-        "night_calm_safety": "🤍 I hear you, and what you're saying matters.\nBut because you said something that worries me about your safety, let's focus on you right now.\n\nAre you in immediate danger?",
-        "night_calm_safety_call": "📞 Call support line 937 | 🚑 Emergency 997",
-        "memory_title": "🧠 My Memory With You",
-        "memory_subtitle": "Information you allow the assistant to use to personalize your experience.",
-        "memory_control": "You're in control — see any saved info, edit or delete it anytime.",
-        "memory_add": "➕ Add Information",
-        "memory_manage": "🧹 Manage My Memory",
-        "memory_source_profile": "From your profile",
-        "memory_source_chat": "Mentioned in this chat",
-        "memory_source_memory": "Saved in my memory",
-        "memory_source_unknown": "Unknown",
-        "memory_empty": "No saved information yet.",
-        "memory_empty_sub": "When you share information with the assistant, it can be saved here.",
-        "manage_title": "Manage My Info",
-        "manage_subtitle": "Control the information saved in your account. Edit or delete any info anytime.",
-        "manage_edit": "Edit",
-        "manage_delete": "Delete",
-        "manage_not_set": "Not set",
-        "manage_saved": "✅ Saved successfully",
-        "manage_error": "❌ Error occurred",
-        "manage_deleted": "✅ Deleted successfully",
-        "manage_delete_all": "🧹 Delete All My Info",
-        "manage_delete_confirm": "Are you sure? This will delete all saved health information.",
-        "manage_delete_type": "Type 'delete' to confirm",
-        "transparency_title": "What We Know About Your Condition",
-        "transparency_sub": "This is the information we used in the analysis:",
-        "trans_known": "Known",
-        "trans_known_none": "No confirmed information",
-        "trans_unclear": "Unclear",
-        "trans_unclear_confidence": "Low analysis confidence",
-        "trans_unclear_duration": "Duration not specified",
-        "trans_unclear_notes": "Notes too brief",
-        "trans_unclear_none": "No unclear information",
-        "trans_notasked": "Not Asked",
-        "trans_notasked_sleep": "Sleep pattern",
-        "trans_notasked_appetite": "Appetite changes",
-        "trans_notasked_stress": "Recent stress",
-        "trans_notasked_family": "Family history",
-        "trans_notasked_note": "💡 Not every missing piece means a problem. Some information may not be necessary for your current analysis.",
-        "trans_add_info": "➕ Add More Info",
-        "trans_add_q": "What information would you like to add?",
-        "trans_add_duration": "Duration",
-        "trans_add_meds": "Medications",
-        "trans_add_meds_q": "What medications are you currently taking?",
-        "trans_add_meds_hint": "Type medication names or usage",
-        "trans_add_notes": "Additional notes",
-        "trans_add_notes_q": "What note would you like to add?",
-        "trans_add_notes_hint": "Type any additional information",
-        "trans_add_done": "✅ Thanks, the info is sufficient",
-        "trans_adding": "I want to add more information",
         "asst_calc_greet": "🤍 I'm here if you need me\nGot a question about one of the calculators? Ask me.",
         "asst_calc_bmi_greet": "⚖️ Got a BMI result?\nI can explain what it means simply.",
         "asst_calc_sug_greet": "🩸 Want to understand a sugar reading?\nI can clarify the result based on the measurement type.",
@@ -6804,41 +5801,14 @@ def profile_page():
     for val, label in [("low", t.get("activity_low", "Low")), ("moderate", t.get("activity_moderate", "Moderate")), ("high", t.get("activity_high", "High"))]:
         sel = ' selected' if hp.get("activity_level") == val else ""
         act_opts += '<option value="%s"%s>%s</option>' % (val, sel, label)
-    # Calculate completion
-    required_fields = {"dob": 20, "gender": 15, "height": 15, "weight": 15, "medications": 10, "allergies": 10, "health_conditions": 15}
-    total_score = sum(required_fields.values())
-    current_score = sum(w for f, w in required_fields.items() if hp.get(f))
-    completion_pct = int((current_score / total_score) * 100) if total_score else 0
-    # Get recent analyses
-    recent_records = []
-    try:
-        uid_for_records = _user_id()
-        records = db.get_records(uid_for_records, limit=5) if hasattr(db, 'get_records') else []
-        if records:
-            recent_records = records[:5]
-    except Exception:
-        pass
     body = """
-    <div style="max-width:640px;margin:0 auto;padding:0;">
+    <div style="max-width:640px;margin:0 auto;padding:0 18px;">
       <div class="ss-profile-card" style="text-align:center;">
         <div style="font-size:42px;margin-bottom:8px;">👤</div>
         <h2 style="justify-content:center;">__H__</h2>
         <p class="muted">__SUB__</p>
         <p style="margin-top:8px;font-size:14px;color:#0B2E6B;"><b>__WELCOME__</b> __NAME__ 💙</p>
       </div>
-
-      <!-- COMPLETION BAR -->
-      <div class="ss-completion">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div><b style="font-size:15px;color:#0B2E6B;">__COMPL_TITLE__</b><div class="bar-label">__COMPL_PCT__%</div></div>
-          <div style="font-size:28px;font-weight:900;color:#16A34A;">__COMPL_PCT__%</div>
-        </div>
-        <div class="bar-track"><div class="bar-fill-green" style="width:__COMPL_PCT__%;"></div></div>
-        <div class="bar-label">__COMPL_SUB__</div>
-      </div>
-
-      <!-- SMART NEXT STEP -->
-      __NEXT_STEP_HTML__
 
       <!-- READ ONLY VIEW -->
       <div id="viewMode">
@@ -6935,19 +5905,6 @@ def profile_page():
         <div id="hpMsg" class="ss-msg" style="display:none;"></div>
       </form>
 
-      <!-- ANALYSIS HISTORY -->
-      <div class="ss-profile-card" id="historySection">
-        <h2>📊 __HISTORY_TITLE__</h2>
-        <div id="historyList">__HISTORY_HTML__</div>
-      </div>
-
-      <!-- SYMPTOMS CHANGED -->
-      <div class="ss-next-step" style="background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border-color:#FDE68A;">
-        <h3>🔄 __CHANGED_TITLE__</h3>
-        <p>__CHANGED_SUB__</p>
-        <a href="/chat" class="ss-btn-primary" style="text-decoration:none;background:#F59E0B;color:#fff;">__REASSESS_BTN__</a>
-      </div>
-
       <div style="margin-top:16px;text-align:center;">
         <button onclick="deleteProfile()" class="ss-btn-danger">__DELETE_BTN__</button>
       </div>
@@ -7002,25 +5959,6 @@ def profile_page():
       m.className = d.ok ? 'ss-msg' : 'ss-msg error';
       if (d.ok) setTimeout(function(){ location.reload(); }, 1000);
     });
-    // Fetch analysis history from API
-    (async function(){
-      try {
-        var r = await fetch('/api/analysis-history');
-        var d = await r.json();
-        if (d.ok && d.records && d.records.length) {
-          var list = document.getElementById('historyList');
-          var html = '';
-          d.records.forEach(function(rec){
-            var syms = (rec.symptoms || []).join(', ').substring(0, 60);
-            var urg = rec.urgency || '';
-            var urgCls = urg === 'high' ? 'pill-high' : (urg === 'medium' ? 'pill-med' : 'pill-low');
-            var ts = (rec.timestamp || '').substring(0, 10);
-            html += '<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#0B2E6B;">' + esc(ts) + '</span><span class="pill ' + urgCls + '">' + esc(urg) + '</span></div><div class="muted" style="margin-top:4px;">' + esc(syms) + '</div></div>';
-          });
-          list.innerHTML = html;
-        }
-      } catch(e) {}
-    })();
     async function deleteProfile() {
       var c = LANG==='ar' ? 'هل أنت متأكد من حذف جميع معلوماتك الصحية؟' : 'Are you sure you want to delete all your health information?';
       if (confirm(c)) {
@@ -7070,40 +6008,6 @@ def profile_page():
     body = body.replace("__DELETE_CONFIRM__", t["profile_delete_confirm"])
     body = body.replace("__MSG_OK__", t["profile_saved"]).replace("__MSG_ERR__", t.get("profile_error", "Error"))
     body = body.replace("__VAL_OK__", "حسنًا، سأكمل المعلومات" if _lang() == "ar" else "OK, I'll complete it")
-    # Completion
-    body = body.replace("__COMPL_TITLE__", t.get("profile_completion", "Profile Completion"))
-    body = body.replace("__COMPL_PCT__", str(completion_pct))
-    body = body.replace("__COMPL_SUB__", t.get("profile_completion_sub", "Completing your info helps generate more accurate analysis"))
-    # Next step
-    if completion_pct < 100:
-        next_html = ('<div class="ss-next-step">'
-                     '<h3>📋 %s</h3><p>%s</p>'
-                     '<a href="#viewMode" class="ss-btn-primary" style="text-decoration:none;" onclick="showEdit();return false;">✨ %s</a>'
-                     '</div>') % (t.get("profile_next_incomplete", "Some info is missing"), t.get("profile_next_incomplete_sub", "Completing it helps personalize your analysis"), t.get("profile_next_continue", "Complete my info"))
-    else:
-        next_html = ('<div class="ss-next-step">'
-                     '<h3>🩺 %s</h3><p>%s</p>'
-                     '<a href="/chat" class="ss-btn-primary" style="text-decoration:none;">🩺 %s</a>'
-                     '</div>') % (t.get("profile_next_complete", "Your profile is ready"), t.get("profile_next_complete_sub", "You can now start symptom analysis"), t.get("profile_next_start", "Start symptom analysis"))
-    body = body.replace("__NEXT_STEP_HTML__", next_html)
-    # History
-    body = body.replace("__HISTORY_TITLE__", t.get("profile_history_title", "My Previous Analyses"))
-    if recent_records:
-        hist_html = ""
-        for r in recent_records:
-            sym = (r.get("symptoms", "") or "")[:60]
-            urg = r.get("urgency", "")
-            urg_cls = "pill-high" if urg == "high" else ("pill-med" if urg == "medium" else "pill-low")
-            ts = (r.get("timestamp", "") or "")[:10]
-            hist_html += ('<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#0B2E6B;">%s</span><span class="pill %s">%s</span></div>'
-                          '<div class="muted" style="margin-top:4px;">%s</div></div>') % (esc(ts), urg_cls, esc(urg), esc(sym))
-        body = body.replace("__HISTORY_HTML__", hist_html)
-    else:
-        body = body.replace("__HISTORY_HTML__", '<p class="muted" style="text-align:center;padding:12px;">%s</p>' % t.get("profile_history_empty", "No analyses yet"))
-    # Symptoms changed
-    body = body.replace("__CHANGED_TITLE__", t.get("profile_symptoms_changed", "Symptoms changed?"))
-    body = body.replace("__CHANGED_SUB__", t.get("profile_symptoms_changed_sub", "Have your symptoms changed since your last analysis?"))
-    body = body.replace("__REASSESS_BTN__", t.get("profile_reassess", "Reassess"))
     body = body.replace("__LANG__", "en" if _lang() == "en" else "ar")
     body = body.replace("__L_DOB_JSON__", json.dumps(t["profile_dob"], ensure_ascii=False))
     body = body.replace("__L_GENDER_JSON__", json.dumps(t["profile_gender"], ensure_ascii=False))
@@ -7326,229 +6230,6 @@ def calculators():
 @app.route("/profile")
 def profile():
     return profile_page()
-
-
-@app.route("/manage")
-@login_required
-def manage_page():
-    db.init_db()
-    uid = _ss_user_id()
-    user = db.get_ss_user(uid)
-    hp = db.load_health_profile(uid) or {}
-    lang = _lang()
-    t = L.get(lang, L["ar"])
-    def esc(s):
-        return (str(s) or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    age = ""
-    if hp.get("dob"):
-        try:
-            from datetime import date
-            born = date.fromisoformat(hp["dob"])
-            today = date.today()
-            age = str(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
-        except Exception:
-            pass
-    gender_map = {"male": "ذكر", "female": "أنثى", "ذكر": "ذكر", "أنثى": "أنثى"}
-    gender_label = gender_map.get(hp.get("gender", ""), hp.get("gender", ""))
-    fields = [
-        {"key": "display_name", "icon": "📛", "label": t.get("profile_name", "الاسم"), "value": hp.get("display_name", user.get("name", ""))},
-        {"key": "dob", "icon": "🎂", "label": t.get("profile_dob", "تاريخ الميلاد"), "value": hp.get("dob", "") + (" (%s سنة)" % age if age else "")},
-        {"key": "gender", "icon": "⚧", "label": t.get("profile_gender", "الجنس"), "value": gender_label},
-        {"key": "height", "icon": "📏", "label": t.get("profile_height", "الطول"), "value": hp.get("height", "") + (" cm" if hp.get("height") else "")},
-        {"key": "weight", "icon": "⚖️", "label": t.get("profile_weight", "الوزن"), "value": hp.get("weight", "") + (" kg" if hp.get("weight") else "")},
-        {"key": "medications", "icon": "💊", "label": t.get("profile_meds", "الأدوية"), "value": hp.get("medications", "")},
-        {"key": "allergies", "icon": "⚠️", "label": t.get("profile_allergies", "الحساسيات"), "value": hp.get("allergies", "")},
-        {"key": "health_conditions", "icon": "🩺", "label": t.get("profile_conditions", "الحالات الصحية"), "value": hp.get("health_conditions", "")},
-        {"key": "extra_info", "icon": "📝", "label": t.get("profile_extra", "معلومات إضافية"), "value": hp.get("extra_info", "")},
-    ]
-    cards_html = ""
-    for f in fields:
-        val_display = esc(f["value"]) if f["value"] else '<span style="color:#94A3B8;font-style:italic;">' + (t.get("manage_not_set", "غير محدد") if lang == "ar" else "Not set") + '</span>'
-        cards_html += '''<div class="manage-card" id="card_%s">
-        <div class="manage-card-head"><span class="manage-icon">%s</span><span class="manage-label">%s</span></div>
-        <div class="manage-val" id="val_%s">%s</div>
-        <div class="manage-actions">
-          <button class="manage-edit-btn" onclick="editField('%s')">✏️ %s</button>
-          <button class="manage-del-btn" onclick="deleteField('%s', '%s')">🗑️ %s</button>
-        </div>
-      </div>''' % (f["key"], f["icon"], esc(f["label"]), f["key"], val_display, f["key"], t.get("manage_edit", "تعديل") if lang == "ar" else "Edit", f["key"], esc(f["label"]), t.get("manage_delete", "حذف") if lang == "ar" else "Delete")
-    title = t.get("manage_title", "إدارة معلوماتي") if lang == "ar" else "Manage My Info"
-    subtitle = t.get("manage_subtitle", "تحكم بالمعلومات المحفوظة في حسابك. يمكنك تعديلها أو حذف أي معلومة في أي وقت.") if lang == "ar" else "Control the information saved in your account. Edit or delete any info anytime."
-    delete_all_btn = t.get("manage_delete_all", "🧹 حذف جميع معلوماتي") if lang == "ar" else "🧹 Delete All My Info"
-    delete_confirm = t.get("manage_delete_confirm", "هل أنت متأكد؟ سيؤدي ذلك إلى حذف جميع المعلومات الصحية المحفوظة.") if lang == "ar" else "Are you sure? This will delete all saved health information."
-    delete_type = t.get("manage_delete_type", "اكتب 'حذف' للتأكيد") if lang == "ar" else "Type 'delete' to confirm"
-    save_msg_ok = t.get("manage_saved", "✅ تم الحفظ بنجاح") if lang == "ar" else "✅ Saved successfully"
-    save_msg_err = t.get("manage_error", "❌ حدث خطأ") if lang == "ar" else "❌ Error occurred"
-    deleted_msg = t.get("manage_deleted", "✅ تم الحذف بنجاح") if lang == "ar" else "✅ Deleted successfully"
-    html = BASE_CSS + PAGE_FRAME.replace('__PAGE__', '''
-    <div style="max-width:640px;margin:0 auto;padding:0;">
-      <div class="ss-profile-card" style="text-align:center;">
-        <div style="font-size:42px;margin-bottom:8px;">🧹</div>
-        <h2 style="justify-content:center;">''' + title + '''</h2>
-        <p class="muted">''' + subtitle + '''</p>
-      </div>
-      <div id="manageCards">''' + cards_html + '''</div>
-      <div style="margin-top:24px;padding:20px;background:#FEF2F2;border-radius:16px;border:1px solid #FECACA;">
-        <h3 style="color:#DC2626;margin:0 0 8px 0;">''' + delete_all_btn + '''</h3>
-        <p style="color:#7F1D1D;font-size:14px;margin:0 0 12px 0;">''' + delete_confirm + '''</p>
-        <button onclick="showDeleteAll()" class="ss-btn-danger" style="width:100%;">''' + delete_all_btn + '''</button>
-      </div>
-      <div id="deleteAllModal" style="display:none;position:fixed;inset:0;z-index:1003;background:rgba(15,23,42,.55);align-items:center;justify-content:center;padding:18px;">
-        <div style="background:#fff;border-radius:18px;padding:24px;max-width:400px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.35);">
-          <h3 style="margin:0 0 12px;color:#DC2626;">⚠️ ''' + delete_confirm + '''</h3>
-          <p style="color:#64748B;font-size:14px;">''' + delete_type + '''</p>
-          <input type="text" id="deleteConfirmInput" style="width:100%;padding:12px;border:2px solid #E2E8F0;border-radius:12px;margin:12px 0;font-size:16px;" placeholder="''' + ('حذف' if lang == 'ar' else 'delete') + '''">
-          <div style="display:flex;gap:8px;">
-            <button onclick="closeDeleteAll()" style="flex:1;padding:12px;border:2px solid #E2E8F0;border-radius:12px;background:#fff;font-weight:600;cursor:pointer;">''' + (t.get("profile_cancel", "إلغاء") if lang == "ar" else "Cancel") + '''</button>
-            <button onclick="confirmDeleteAll()" id="deleteAllConfirmBtn" disabled style="flex:1;padding:12px;border:none;border-radius:12px;background:#DC2626;color:#fff;font-weight:600;cursor:pointer;opacity:0.5;">''' + (t.get("profile_delete_btn", "حذف") if lang == "ar" else "Delete") + '''</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>
-    var LANG_M = "''' + lang + '''";
-    var FIELDS_M = ''' + str([{"key": f["key"], "label": f["label"]} for f in fields]) + ''';
-    function editField(key) {
-      var valEl = document.getElementById('val_' + key);
-      var current = valEl.textContent.trim();
-      if (current === ' ''' + (t.get("manage_not_set", "غير محدد") if lang == "ar" else "Not set") + '''') current = '';
-      valEl.innerHTML = '<input type="text" id="edit_' + key + '" value="' + current.replace(/"/g, '&quot;') + '" style="width:100%;padding:10px;border:2px solid #1677E8;border-radius:10px;font-size:15px;margin:4px 0;">' +
-        '<div style="display:flex;gap:8px;margin-top:8px;">' +
-        '<button onclick="saveField(\\'' + key + '\\')" style="flex:1;padding:10px;background:#1677E8;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;">✅ ' + (LANG_M==='ar'?'حفظ':'Save') + '</button>' +
-        '<button onclick="cancelEdit(\\'' + key + '\\', \\'' + current.replace(/'/g, "\\\\'") + '\\')" style="flex:1;padding:10px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;font-weight:600;cursor:pointer;">✕ ' + (LANG_M==='ar'?'إلغاء':'Cancel') + '</button>' +
-        '</div>';
-      document.getElementById('edit_' + key).focus();
-    }
-    function cancelEdit(key, orig) {
-      var valEl = document.getElementById('val_' + key);
-      valEl.innerHTML = orig || '<span style="color:#94A3B8;font-style:italic;">''' + (t.get("manage_not_set", "غير محدد") if lang == "ar" else "Not set") + '''</span>';
-    }
-    async function saveField(key) {
-      var inp = document.getElementById('edit_' + key);
-      var val = inp ? inp.value.trim() : '';
-      var r = await fetch('/api/health-profile/field', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({field:key, value:val})});
-      var d = await r.json();
-      if (d.ok) {
-        var valEl = document.getElementById('val_' + key);
-        valEl.innerHTML = val || '<span style="color:#94A3B8;font-style:italic;">''' + (t.get("manage_not_set", "غير محدد") if lang == "ar" else "Not set") + '''</span>';
-        showManageMsg("''' + save_msg_ok + '''", "success");
-      } else {
-        showManageMsg("''' + save_msg_err + '''", "error");
-      }
-    }
-    async function deleteField(key, label) {
-      var c = LANG_M==='ar' ? 'هل أنت متأكد من حذف ' + label + '؟' : 'Are you sure you want to delete ' + label + '?';
-      if (!confirm(c)) return;
-      var r = await fetch('/api/health-profile/field/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({field:key})});
-      var d = await r.json();
-      if (d.ok) {
-        var valEl = document.getElementById('val_' + key);
-        valEl.innerHTML = '<span style="color:#94A3B8;font-style:italic;">''' + (t.get("manage_not_set", "غير محدد") if lang == "ar" else "Not set") + '''</span>';
-        showManageMsg("''' + deleted_msg + '''", "success");
-      }
-    }
-    function showDeleteAll() { document.getElementById('deleteAllModal').style.display = 'flex'; }
-    function closeDeleteAll() { document.getElementById('deleteAllModal').style.display = 'none'; document.getElementById('deleteConfirmInput').value = ''; document.getElementById('deleteAllConfirmBtn').disabled = true; document.getElementById('deleteAllConfirmBtn').style.opacity = '0.5'; }
-    document.addEventListener('DOMContentLoaded', function(){
-      var inp = document.getElementById('deleteConfirmInput');
-      if (inp) inp.addEventListener('input', function(){
-        var btn = document.getElementById('deleteAllConfirmBtn');
-        var match = LANG_M==='ar' ? (this.value.trim()==='حذف') : (this.value.trim().toLowerCase()==='delete');
-        btn.disabled = !match;
-        btn.style.opacity = match ? '1' : '0.5';
-      });
-    });
-    async function confirmDeleteAll() {
-      var r = await fetch('/api/health-profile/delete', {method:'POST'});
-      var d = await r.json();
-      if (d.ok) { window.location.href = '/profile'; }
-    }
-    function showManageMsg(msg, type) {
-      var d = document.createElement('div');
-      d.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;' + (type==='success' ? 'background:#DCFCE7;color:#166534;border:1px solid #BBF7D0;' : 'background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;');
-      d.textContent = msg;
-      document.body.appendChild(d);
-      setTimeout(function(){ d.remove(); }, 2000);
-    }
-    </script>
-    ''')
-    return html
-
-
-@app.route("/memory")
-@login_required
-def memory_page():
-    db.init_db()
-    uid = _ss_user_id()
-    user = db.get_ss_user(uid)
-    hp = db.load_health_profile(uid) or {}
-    privacy = db.load_privacy_settings(uid) or {}
-    lang = _lang()
-    t = L.get(lang, L["ar"])
-    def esc(s):
-        return (str(s) or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    title = t.get("memory_title", "ذاكرتي مع SymptoSense") if lang == "ar" else "My Memory With You"
-    subtitle = t.get("memory_subtitle", "المعلومات التي تسمح للمساعد باستخدامها لتخصيص تجربتك.") if lang == "ar" else "Information you allow the assistant to use to personalize your experience."
-    control_text = t.get("memory_control", "أنت المتحكم — تستطيع رؤية أي معلومة محفوظة، تعديلها أو حذفها في أي وقت.") if lang == "ar" else "You're in control — see any saved info, edit or delete it anytime."
-    add_btn = t.get("memory_add", "➕ إضافة معلومة") if lang == "ar" else "➕ Add Information"
-    manage_btn = t.get("memory_manage", "🧹 إدارة ذاكرتي") if lang == "ar" else "🧹 Manage My Memory"
-    source_profile = t.get("memory_source_profile", "من ملفك الشخصي") if lang == "ar" else "From your profile"
-    source_chat = t.get("memory_source_chat", "ذكرتها في هذه المحادثة") if lang == "ar" else "Mentioned in this chat"
-    source_memory = t.get("memory_source_memory", "حفظتها في ذاكرتي") if lang == "ar" else "Saved in my memory"
-    source_unknown = t.get("memory_source_unknown", "غير معروفة") if lang == "ar" else "Unknown"
-    items_html = ""
-    mem_items = []
-    fields_map = [
-        ("display_name", "📛", t.get("profile_name", "الاسم")),
-        ("dob", "🎂", t.get("profile_dob", "تاريخ الميلاد")),
-        ("gender", "⚧", t.get("profile_gender", "الجنس")),
-        ("height", "📏", t.get("profile_height", "الطول")),
-        ("weight", "⚖️", t.get("profile_weight", "الوزن")),
-        ("medications", "💊", t.get("profile_meds", "الأدوية")),
-        ("allergies", "⚠️", t.get("profile_allergies", "الحساسيات")),
-        ("health_conditions", "🩺", t.get("profile_conditions", "الحالات الصحية")),
-        ("extra_info", "📝", t.get("profile_extra", "معلومات إضافية")),
-    ]
-    for key, icon, label in fields_map:
-        val = hp.get(key, "")
-        if val:
-            source = source_profile
-            source_color = "#1677E8"
-            source_bg = "#EFF6FF"
-            mem_items.append({"key": key, "icon": icon, "label": label, "value": val, "source": source, "source_color": source_color, "source_bg": source_bg})
-    for item in mem_items:
-        items_html += '''<div class="memory-card">
-        <div class="memory-card-head"><span class="memory-icon">%s</span><span class="memory-label">%s</span></div>
-        <div class="memory-val">%s</div>
-        <div class="memory-source" style="color:%s;background:%s;">🔵 %s</div>
-        <div class="memory-actions">
-          <a href="/manage" style="flex:1;text-align:center;padding:10px;border:2px solid #E2E8F0;border-radius:10px;text-decoration:none;font-weight:600;color:#334155;font-size:14px;">✏️ %s</a>
-        </div>
-      </div>''' % (item["icon"], esc(item["label"]), esc(item["value"]), item["source_color"], item["source_bg"], item["source"], t.get("manage_edit", "تعديل") if lang == "ar" else "Edit")
-    if not mem_items:
-        items_html = '<div style="text-align:center;padding:32px;color:#94A3B8;"><p style="font-size:40px;margin-bottom:8px;">🧠</p><p>' + (t.get("memory_empty", "لا توجد معلومات محفوظة بعد.") if lang == "ar" else "No saved information yet.") + '</p><p style="font-size:13px;">' + (t.get("memory_empty_sub", "عندما تشارك معلومات مع المساعد، يمكن حفظها هنا.") if lang == "ar" else "When you share information with the assistant, it can be saved here.") + '</p></div>'
-    legend_html = '''<div class="memory-legend">
-      <div class="memory-legend-item"><span class="memory-dot" style="background:#1677E8;"></span> %s</div>
-      <div class="memory-legend-item"><span class="memory-dot" style="background:#16A34A;"></span> %s</div>
-      <div class="memory-legend-item"><span class="memory-dot" style="background:#7C3AED;"></span> %s</div>
-      <div class="memory-legend-item"><span class="memory-dot" style="background:#94A3B8;"></span> %s</div>
-    </div>''' % (source_profile, source_chat, source_memory, source_unknown)
-    html = BASE_CSS + PAGE_FRAME.replace('__PAGE__', '''
-    <div style="max-width:640px;margin:0 auto;padding:0;">
-      <div class="ss-profile-card" style="text-align:center;">
-        <div style="font-size:42px;margin-bottom:8px;">🧠</div>
-        <h2 style="justify-content:center;">''' + title + '''</h2>
-        <p class="muted">''' + subtitle + '''</p>
-        <div style="margin-top:12px;padding:12px 16px;background:#F0F7FF;border-radius:12px;border:1px solid #BFDDFF;font-size:13px;color:#0B2E6B;">🔐 ''' + control_text + '''</div>
-      </div>
-      ''' + legend_html + '''
-      <div id="memoryItems">''' + items_html + '''</div>
-      <div style="margin-top:16px;text-align:center;">
-        <a href="/manage" style="display:inline-block;padding:14px 24px;background:#1677E8;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;width:100%;text-align:center;">''' + manage_btn + '''</a>
-      </div>
-    </div>
-    ''')
-    return html
 
 
 @app.route("/history")
@@ -7798,45 +6479,6 @@ def api_delete_health_profile():
         return jsonify({"ok": False, "error": str(e)[:200]})
 
 
-@app.route("/api/health-profile/field", methods=["POST"])
-@login_required
-def api_update_health_field():
-    db.init_db()
-    uid = _ss_user_id()
-    data = request.get_json(force=True)
-    field = data.get("field", "")
-    value = data.get("value", "")
-    allowed = {"display_name", "dob", "gender", "height", "weight", "activity_level", "medications", "allergies", "health_conditions", "extra_info", "lang"}
-    if field not in allowed:
-        return jsonify({"ok": False, "error": "Invalid field"})
-    try:
-        existing = db.load_health_profile(uid) or {}
-        existing[field] = value
-        db.save_health_profile(uid, existing)
-        return jsonify({"ok": True})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
-
-
-@app.route("/api/health-profile/field/delete", methods=["POST"])
-@login_required
-def api_delete_health_field():
-    db.init_db()
-    uid = _ss_user_id()
-    data = request.get_json(force=True)
-    field = data.get("field", "")
-    allowed = {"display_name", "dob", "gender", "height", "weight", "activity_level", "medications", "allergies", "health_conditions", "extra_info"}
-    if field not in allowed:
-        return jsonify({"ok": False, "error": "Invalid field"})
-    try:
-        existing = db.load_health_profile(uid) or {}
-        existing[field] = ""
-        db.save_health_profile(uid, existing)
-        return jsonify({"ok": True})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
-
-
 @app.route("/api/privacy", methods=["GET", "POST"])
 @login_required
 def api_privacy():
@@ -7937,17 +6579,6 @@ def api_user_info():
         "available_fields": available,
         "has_profile": bool(profile),
     })
-
-
-@app.route("/api/analysis-history", methods=["GET"])
-def api_analysis_history():
-    """Return the logged-in user's recent analyses for profile page."""
-    db.init_db()
-    uid = _ss_user_id()
-    if not uid:
-        return jsonify({"ok": True, "records": [], "logged_in": False})
-    records = db.get_records(str(uid), limit=10)
-    return jsonify({"ok": True, "records": records, "logged_in": True})
 
 
 @app.route("/admin")
