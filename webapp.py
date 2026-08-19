@@ -10,10 +10,7 @@ import base64
 import secrets
 import hashlib
 import random
-import threading
-import time
-from datetime import datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
@@ -1437,7 +1434,6 @@ function smartCtxAction(action) {
   smartCtxCallback = null;
 }
 </script>
-<script>__PUSH_CLIENT_JS__</script>
 </body>
 </html>
 """
@@ -2391,7 +2387,6 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__AST_EXPLAIN_ASK__", ast["asst_explain_ask"])
         .replace("__AST_T__", json.dumps(ast, ensure_ascii=False))
         .replace("__BODY__", body)
-        .replace("__PUSH_CLIENT_JS__", PUSH_CLIENT_JS)
     )
 
 
@@ -3337,7 +3332,7 @@ def chat_page():
     })();
     function switchFamilyMember(val) {
       state.member_id = parseInt(val) || 0;
-      state.member_name = famSelect.options[famSelect.selectedIndex].textContent.replace(/^[^\s]+\s*/, '');
+      state.member_name = famSelect.options[famSelect.selectedIndex].textContent.replace(/^[^\\s]+\\s*/, '');
       state.age = null; state.gender = null;
     }
 
@@ -3362,7 +3357,7 @@ def chat_page():
     }
     function speakText(txt) {
       if (!('speechSynthesis' in window)) return;
-      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\w\s.,!?()\-%/،؟]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
       const t = clean(txt);
       if (!t) return;
       speechSynthesis.cancel();
@@ -3625,7 +3620,7 @@ def chat_page():
         else { add(TT('age_invalid'), 'bot'); setVoiceState('listening'); }
       } else if (state.step === 'symptoms') {
         const lowerText = text.toLowerCase();
-        const matched = SYMS.filter(function(s) { return lowerText.includes(s.replace(/[^\u0600-\u06FF\w\s]/g,'').trim().toLowerCase()); });
+        const matched = SYMS.filter(function(s) { return lowerText.includes(s.replace(/[^\u0600-\u06FF\\w\\s]/g,'').trim().toLowerCase()); });
         if (matched.length) { state.symptoms = matched; add(TT('chosen') + matched.join(', '), 'user'); setVoiceState('idle'); askDuration(); }
         else { state.symptoms = [text]; add(TT('chosen') + text, 'user'); setVoiceState('idle'); askDuration(); }
       } else if (state.step === 'duration') {
@@ -3652,7 +3647,7 @@ def chat_page():
       _origAdd(msg, cls);
       if (voiceMode && cls === 'bot') {
         setVoiceState('speaking');
-        const clean = s => String(s || '').replace(/[^\u0600-\u06FF\w\s.,!?()\-%/،؟]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+        const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
         const t = clean(msg);
         if (t && 'speechSynthesis' in window) {
           speechSynthesis.cancel();
@@ -4392,7 +4387,7 @@ def chat_page():
     function speakResult() {
       if (!lastResult) return;
       if (!('speechSynthesis' in window)) { add(TT('no_speech'), 'bot'); return; }
-      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\w\s.,!?()\-%/،؟]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
       const d = lastResult;
       const u = d.urgency;
       const pill = u==='high' ? TT('urg_high') : (u==='medium' ? TT('urg_medium') : TT('urg_low'));
@@ -5592,180 +5587,6 @@ def blood_page():
     return _page(_t("title_blood"), body)
 
 
-# ---------------------------------------------------------------- Web Push notifications
-VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
-VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
-VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "mailto:admin@symptosense.com").strip()
-PUSH_WORKER_STARTED = False
-PUSH_WORKER_LOCK = threading.Lock()
-
-
-def _push_ready():
-    return bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY)
-
-
-SERVICE_WORKER_JS = """const CACHE_NAME = 'symptosense-push-v1';
-self.addEventListener('install', event => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
-self.addEventListener('push', event => {
-  let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'SymptoSense', body: event.data ? event.data.text() : '' }; }
-  const title = data.title || '💊 SymptoSense';
-  const options = { body: data.body || 'لديك تذكير صحي', icon: data.icon || '/favicon.ico', badge: data.badge || '/favicon.ico', tag: data.tag || 'symptosense-medication', renotify: true, data: { url: data.url || '/meds' } };
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/meds';
-  event.waitUntil((async () => {
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of clients) { if ('focus' in client) { try { await client.navigate(url); } catch (e) {} return client.focus(); } }
-    if (self.clients.openWindow) return self.clients.openWindow(url);
-  })());
-});
-"""
-
-
-def _send_web_push(subscription, title, body, url='/meds', tag='symptosense-medication'):
-    if not _push_ready():
-        return False, 'vapid_not_configured'
-    try:
-        from pywebpush import webpush
-        payload = json.dumps({'title': title, 'body': body, 'url': url, 'tag': tag}, ensure_ascii=False)
-        webpush(subscription_info={'endpoint': subscription['endpoint'], 'keys': {'p256dh': subscription['p256dh'], 'auth': subscription['auth']}}, data=payload, vapid_private_key=VAPID_PRIVATE_KEY, vapid_claims={'sub': VAPID_CLAIMS_EMAIL})
-        return True, None
-    except Exception as exc:
-        return False, f'{type(exc).__name__}: {str(exc)[:180]}'
-
-
-def _push_worker_cycle():
-    if not _push_ready():
-        return
-    subs = db.list_push_subscriptions(active_only=True)
-    plans = db.list_active_med_plans_for_push()
-    if not subs or not plans:
-        return
-    plans_by_user = {}
-    for p in plans:
-        plans_by_user.setdefault(p['user_hash'], []).append(p)
-    now_utc = datetime.now(timezone.utc)
-    for sub in subs:
-        user_plans = plans_by_user.get(sub['user_hash']) or []
-        if not user_plans:
-            continue
-        try:
-            now_local = now_utc.astimezone(ZoneInfo(sub.get('timezone') or 'Asia/Riyadh'))
-        except Exception:
-            now_local = now_utc.astimezone(ZoneInfo('Asia/Riyadh'))
-        local_date = now_local.date().isoformat()
-        local_time = now_local.strftime('%H:%M')
-        for p in user_plans:
-            if local_time not in p['times']:
-                continue
-            if p.get('start_date') and local_date < p['start_date']:
-                continue
-            if p.get('days'):
-                try:
-                    start = datetime.strptime(p['start_date'], '%Y-%m-%d').date()
-                    if now_local.date() > start + timedelta(days=int(p['days']) - 1):
-                        continue
-                except Exception:
-                    pass
-            if not db.claim_push_delivery(sub['endpoint'], p['id'], local_date, local_time):
-                continue
-            ar = sub.get('lang') != 'en'
-            title = '💊 تذكير الدواء' if ar else '💊 Medication reminder'
-            body = ('حان الآن وقت تناول: ' if ar else 'Time to take: ') + p['med_name']
-            ok, err = _send_web_push(sub, title, body, '/meds', f"med-{p['id']}-{local_time}")
-            if not ok:
-                if err and any(code in err for code in ('404', '410', 'NotRegistered', 'Gone')):
-                    db.mark_push_subscription_inactive(sub['endpoint'])
-                else:
-                    db.release_push_delivery(sub['endpoint'], p['id'], local_date, local_time)
-
-
-def _push_worker_loop():
-    while True:
-        try:
-            _push_worker_cycle()
-        except Exception as exc:
-            app.logger.warning('Push worker cycle failed: %s', exc)
-        time.sleep(30)
-
-
-def start_push_worker():
-    global PUSH_WORKER_STARTED
-    if PUSH_WORKER_STARTED or not _push_ready():
-        return
-    with PUSH_WORKER_LOCK:
-        if PUSH_WORKER_STARTED:
-            return
-        threading.Thread(target=_push_worker_loop, name='symptosense-push-worker', daemon=True).start()
-        PUSH_WORKER_STARTED = True
-
-
-@app.route('/service-worker.js')
-def service_worker():
-    return Response(SERVICE_WORKER_JS, mimetype='application/javascript', headers={'Cache-Control': 'no-cache'})
-
-
-@app.route('/api/push/config')
-def api_push_config():
-    return jsonify({'ok': True, 'enabled': _push_ready(), 'public_key': VAPID_PUBLIC_KEY or None})
-
-
-@app.route('/api/push/subscribe', methods=['POST'])
-def api_push_subscribe():
-    try:
-        if not _push_ready():
-            return jsonify({'ok': False, 'error': 'Web Push is not configured on the server'}), 503
-        data = request.get_json(force=True) or {}
-        subscription = data.get('subscription') or {}
-        timezone_name = str(data.get('timezone') or 'Asia/Riyadh')[:100]
-        lang = 'en' if data.get('lang') == 'en' else 'ar'
-        db.init_db()
-        db.save_push_subscription(_user_id(), subscription, timezone_name, lang)
-        start_push_worker()
-        return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'ok': False, 'error': f'{type(e).__name__}: {str(e)[:200]}'}), 400
-
-
-@app.route('/api/push/unsubscribe', methods=['POST'])
-def api_push_unsubscribe():
-    try:
-        data = request.get_json(silent=True) or {}
-        db.init_db()
-        db.delete_push_subscription(_user_id(), str(data.get('endpoint') or '').strip() or None)
-        return jsonify({'ok': True})
-    except Exception as e:
-        return jsonify({'ok': False, 'error': f'{type(e).__name__}: {str(e)[:200]}'})
-
-
-PUSH_CLIENT_JS = """async function registerSymptoSensePush() {
-  try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return {ok:false, reason:'unsupported'};
-    const cfg = await fetch('/api/push/config', {cache:'no-store'}).then(r=>r.json());
-    if (!cfg.enabled || !cfg.public_key) return {ok:false, reason:'server_disabled'};
-    const reg = await navigator.serviceWorker.register('/service-worker.js', {scope:'/'});
-    let permission = Notification.permission;
-    if (permission === 'default') permission = await Notification.requestPermission();
-    if (permission !== 'granted') return {ok:false, reason:'permission_denied'};
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:pushBase64ToUint8Array(cfg.public_key)});
-    await fetch('/api/push/subscribe', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({subscription: sub.toJSON ? sub.toJSON() : sub, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Riyadh', lang: document.documentElement.lang === 'en' ? 'en' : 'ar'})});
-    return {ok:true};
-  } catch (e) { return {ok:false, reason:String(e)}; }
-}
-function pushBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64); const outputArray = new Uint8Array(rawData.length);
-  for (let i=0; i<rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-  return outputArray;
-}
-"""
-
 # ---------------------------------------------------------------- meds
 def meds_page():
     t = CT["en" if _lang() == "en" else "ar"]
@@ -5800,7 +5621,6 @@ def meds_page():
         </div>
         <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn" onclick="addReminder()">__RSAVE__</button>
-          <button class="btn sec" type="button" onclick="enablePushReminders()">🔔 تفعيل إشعارات حتى لو قفلت الموقع</button>
           <span id="remMsg" style="font-weight:600;color:#1976D2;"></span>
         </div>
       </div>
@@ -5893,17 +5713,6 @@ def meds_page():
         '<div class="drug-note">' + esc(TT('meds_disc')) + '</div>' +
         '</div>';
     }
-    async function enablePushReminders(showMessage=true) {
-      const box = document.getElementById('remMsg');
-      const res = await registerSymptoSensePush();
-      if (showMessage) {
-        if (res.ok) { box.textContent='✅ تم تفعيل الإشعارات حتى لو أغلقت الموقع.'; box.style.color='#16A34A'; }
-        else if (res.reason === 'permission_denied') { box.textContent='فعّلي إذن الإشعارات من إعدادات المتصفح.'; box.style.color='#B91C1C'; }
-        else { box.textContent='تعذر تفعيل إشعارات الخلفية الآن.'; box.style.color='#B91C1C'; }
-      }
-      return !!res.ok;
-    }
-
     function addReminder() {
       const name = document.getElementById('remName').value.trim();
       const tval = document.getElementById('remTimes').value.trim();
@@ -5919,9 +5728,9 @@ def meds_page():
         box.textContent = TT('saved'); box.style.color = '#1976D2';
         document.getElementById('remName').value=''; document.getElementById('remTimes').value=''; document.getElementById('pDose').value=''; document.getElementById('pDays').value='';
         loadPlans();
-        enablePushReminders(false).then(ok => {
-          if (ok) { box.textContent='✅ تم حفظ التذكير وتفعيل الإشعارات حتى لو أغلقت الموقع.'; box.style.color='#16A34A'; }
-          else { box.textContent='✅ تم حفظ التذكير. فعّلي إشعارات الخلفية من زر 🔔.'; }
+        if (!('Notification' in window)) { box.textContent = TT('no_notif'); return; }
+        Notification.requestPermission().then(perm => {
+          if (perm !== 'granted') { box.textContent = TT('enable_notif'); }
         });
       });
     }
@@ -9337,7 +9146,6 @@ def api_blood():
 
 def run_webapp():
     db.init_db()
-    start_push_worker()
     port = int(os.environ.get("PORT", 5000))
     try:
         from waitress import serve
