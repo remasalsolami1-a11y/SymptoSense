@@ -405,6 +405,8 @@ def init_db():
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_ml_plan ON med_logs(plan_id, log_date)")
+        # ---- Web Push notification tables ----
+        _create_push_tables(c)
         # ---- Smart Account System tables ----
         _create_ss_tables(c)
         conn.commit()
@@ -415,6 +417,66 @@ def init_db():
         conn.commit()
     finally:
         conn.close()
+
+
+def _create_push_tables(c):
+    """Create Web Push subscription and delivery de-duplication tables."""
+    if USE_POSTGRES:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_hash TEXT NOT NULL,
+                endpoint TEXT UNIQUE NOT NULL,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                timezone TEXT DEFAULT 'Asia/Riyadh',
+                lang TEXT DEFAULT 'ar',
+                active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_hash)")
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_delivery_log (
+                id SERIAL PRIMARY KEY,
+                endpoint TEXT NOT NULL,
+                plan_id INTEGER NOT NULL,
+                local_date TEXT NOT NULL,
+                local_time TEXT NOT NULL,
+                sent_at TEXT NOT NULL,
+                UNIQUE(endpoint, plan_id, local_date, local_time)
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_delivery_plan ON push_delivery_log(plan_id)")
+    else:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_hash TEXT NOT NULL,
+                endpoint TEXT UNIQUE NOT NULL,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                timezone TEXT DEFAULT 'Asia/Riyadh',
+                lang TEXT DEFAULT 'ar',
+                active INTEGER DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_hash)")
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS push_delivery_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                endpoint TEXT NOT NULL,
+                plan_id INTEGER NOT NULL,
+                local_date TEXT NOT NULL,
+                local_time TEXT NOT NULL,
+                sent_at TEXT NOT NULL,
+                UNIQUE(endpoint, plan_id, local_date, local_time)
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_push_delivery_plan ON push_delivery_log(plan_id)")
 
 
 def _create_ss_tables(c):
@@ -633,6 +695,122 @@ def get_subscribers():
         c = conn.cursor()
         c.execute("SELECT user_id, lang FROM subscribers WHERE subscribed=1")
         return c.fetchall()
+    finally:
+        conn.close()
+
+
+def save_push_subscription(user_id, subscription, timezone_name='Asia/Riyadh', lang='ar'):
+    endpoint = str(subscription.get('endpoint') or '').strip()
+    keys = subscription.get('keys') or {}
+    p256dh = str(keys.get('p256dh') or '').strip()
+    auth = str(keys.get('auth') or '').strip()
+    if not endpoint or not p256dh or not auth:
+        raise ValueError('Invalid push subscription')
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        if USE_POSTGRES:
+            c.execute(
+                f"INSERT INTO push_subscriptions (user_hash, endpoint, p256dh, auth, timezone, lang, active, created_at, updated_at) VALUES ({PH},{PH},{PH},{PH},{PH},{PH},1,{PH},{PH}) "
+                f"ON CONFLICT(endpoint) DO UPDATE SET user_hash=EXCLUDED.user_hash, p256dh=EXCLUDED.p256dh, auth=EXCLUDED.auth, timezone=EXCLUDED.timezone, lang=EXCLUDED.lang, active=1, updated_at=EXCLUDED.updated_at",
+                (_hash_user(user_id), endpoint, p256dh, auth, timezone_name or 'Asia/Riyadh', lang or 'ar', now, now),
+            )
+        else:
+            c.execute(
+                f"INSERT INTO push_subscriptions (user_hash, endpoint, p256dh, auth, timezone, lang, active, created_at, updated_at) VALUES ({PH},{PH},{PH},{PH},{PH},{PH},1,{PH},{PH}) "
+                f"ON CONFLICT(endpoint) DO UPDATE SET user_hash=excluded.user_hash, p256dh=excluded.p256dh, auth=excluded.auth, timezone=excluded.timezone, lang=excluded.lang, active=1, updated_at=excluded.updated_at",
+                (_hash_user(user_id), endpoint, p256dh, auth, timezone_name or 'Asia/Riyadh', lang or 'ar', now, now),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_push_subscription(user_id, endpoint=None):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        if endpoint:
+            c.execute(f"UPDATE push_subscriptions SET active=0, updated_at={PH} WHERE user_hash={PH} AND endpoint={PH}", (datetime.now(timezone.utc).isoformat(), _hash_user(user_id), endpoint))
+        else:
+            c.execute(f"UPDATE push_subscriptions SET active=0, updated_at={PH} WHERE user_hash={PH}", (datetime.now(timezone.utc).isoformat(), _hash_user(user_id)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def list_push_subscriptions(user_id=None, active_only=True):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        where, params = [], []
+        if user_id is not None:
+            where.append(f"user_hash={PH}")
+            params.append(_hash_user(user_id))
+        if active_only:
+            where.append("active=1")
+        sql = "SELECT user_hash, endpoint, p256dh, auth, timezone, lang, active FROM push_subscriptions"
+        if where:
+            sql += " WHERE " + " AND ".join(where)
+        c.execute(sql, tuple(params))
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    return [{'user_hash': r[0], 'endpoint': r[1], 'p256dh': r[2], 'auth': r[3], 'timezone': r[4] or 'Asia/Riyadh', 'lang': r[5] or 'ar', 'active': bool(r[6])} for r in rows]
+
+
+def mark_push_subscription_inactive(endpoint):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(f"UPDATE push_subscriptions SET active=0, updated_at={PH} WHERE endpoint={PH}", (datetime.now(timezone.utc).isoformat(), endpoint))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def list_active_med_plans_for_push():
+    import json as _json
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id, user_hash, member_id, med_name, dose, times, start_date, days, active FROM med_plans WHERE active=1")
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    out = []
+    for r in rows:
+        try:
+            times = _json.loads(r[5])
+        except Exception:
+            times = []
+        out.append({'id': r[0], 'user_hash': r[1], 'member_id': r[2], 'med_name': r[3], 'dose': r[4] or '', 'times': [str(x) for x in times], 'start_date': r[6] or '', 'days': r[7], 'active': bool(r[8])})
+    return out
+
+
+def release_push_delivery(endpoint, plan_id, local_date, local_time):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(f"DELETE FROM push_delivery_log WHERE endpoint={PH} AND plan_id={PH} AND local_date={PH} AND local_time={PH}", (endpoint, int(plan_id), local_date, local_time))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def claim_push_delivery(endpoint, plan_id, local_date, local_time):
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        try:
+            c.execute(f"INSERT INTO push_delivery_log (endpoint, plan_id, local_date, local_time, sent_at) VALUES ({PH},{PH},{PH},{PH},{PH})", (endpoint, int(plan_id), local_date, local_time, now))
+            conn.commit()
+            return True
+        except Exception:
+            conn.rollback()
+            return False
     finally:
         conn.close()
 
