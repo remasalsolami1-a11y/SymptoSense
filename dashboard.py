@@ -27,7 +27,7 @@ DASHBOARD_HTML = """
     --primary-pale: #B8D8F8;
     --primary-light: #EAF4FF;
     --text-body: #40566F;
-    --text-muted: #718096;
+    --text-muted: #5F7185;
     --bg-page: #F5F9FF;
     --bg-card: #FFFFFF;
     --border-card: #DCEBFA;
@@ -168,8 +168,8 @@ async function loadAll() {
         datasets: [{ data: [d.stats.total_visits||0, d.stats.unique_visitors||0, d.stats.visits_this_period||0], backgroundColor: ['#123B70','#1976D2','#64B5F6'], borderRadius: 8 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#718096', font: { size: 11 } }, grid: { color: '#DCEBFA' } },
-                   y: { beginAtZero:true, ticks: { color: '#718096', stepSize: 1 }, grid: { color: '#DCEBFA' } } } }
+        scales: { x: { ticks: { color: '#5F7185', font: { size: 11 } }, grid: { color: '#DCEBFA' } },
+                   y: { beginAtZero:true, ticks: { color: '#5F7185', stepSize: 1 }, grid: { color: '#DCEBFA' } } } }
     });
 
     // Feedback chart
@@ -192,7 +192,7 @@ async function loadAll() {
         const emoji = {bad:'😞', ok:'😐', good:'🙂', great:'😍', 1:'😍', 2:'🙂', 3:'😐', 4:'😞'}[c.rating] || '⭐';
         const ts = (c.timestamp || '').replace('T', ' ').slice(0, 16);
         return '<div style="padding:11px 13px;margin:7px 0;background:#F5F9FF;border:1px solid #DCEBFA;border-radius:11px;">'
-             + '<div style="color:#718096;font-size:11px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
+             + '<div style="color:#5F7185;font-size:11px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
              + '<div style="color:#40566F;font-size:13px;">' + (c.comment || '') + '</div></div>';
       }).join('');
     }
