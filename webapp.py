@@ -8666,7 +8666,7 @@ def api_stats():
         elif a <= 45: age_groups["31-45"] += 1
         elif a <= 60: age_groups["46-60"] += 1
         else: age_groups["60+"] += 1
-    feedback = dict(db.fetchall("SELECT rating, COUNT(*) FROM feedback GROUP BY rating"))
+    feedback = db.feedback_counts()
     fb_comments = db.fetchall(
         "SELECT rating, comment, timestamp FROM feedback "
         "WHERE comment IS NOT NULL AND comment != '' ORDER BY timestamp DESC LIMIT 20"

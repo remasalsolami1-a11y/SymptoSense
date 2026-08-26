@@ -95,54 +95,32 @@ DASHBOARD_HTML = """
 <div class="container">
 
   <div class="page-intro">
-    <div><h2>نظرة عامة</h2><p>إحصاءات مختصرة وواضحة تساعدك على متابعة استخدام SymptoSense.</p></div>
+    <div><h2>الزوار والتقييمات</h2><p>ملخص واضح لعدد زوار SymptoSense وآرائهم فقط.</p></div>
   </div>
 
-  <!-- إحصائيات عامة -->
-  <div class="section-title">📌 المؤشرات الرئيسية</div>
+  <div class="section-title">👥 الزوار</div>
   <div class="stats-grid" id="stats-grid">
     <div class="stat-card"><div class="number" id="total-visits">-</div><div class="label">إجمالي الزيارات</div><div class="sub">Total Visits</div></div>
     <div class="stat-card"><div class="number" id="unique-visitors">-</div><div class="label">مستخدمون فريدون</div><div class="sub">Unique Users</div></div>
-    <div class="stat-card"><div class="number" id="total-sessions">-</div><div class="label">تحليلات مكتملة</div><div class="sub">Completed Sessions</div></div>
-    <div class="stat-card"><div class="number" id="week-sessions">-</div><div class="label">آخر 7 أيام</div><div class="sub">Last 7 Days</div></div>
+    <div class="stat-card"><div class="number" id="week-visits">-</div><div class="label">زيارات آخر 7 أيام</div><div class="sub">Visits in 7 Days</div></div>
+  </div>
+
+  <div class="section-title">⭐ التقييمات</div>
+  <div class="stats-grid">
     <div class="stat-card"><div class="number" id="total-feedback">-</div><div class="label">التقييمات</div><div class="sub">Feedback</div></div>
-    <div class="stat-card"><div class="number" id="asst-satisfaction">-</div><div class="label">رضا إجابات المساعد</div><div class="sub">Assistant Satisfaction</div></div>
+    <div class="stat-card"><div class="number" id="positive-feedback">-</div><div class="label">التقييمات الإيجابية</div><div class="sub">Positive Ratings</div></div>
+    <div class="stat-card"><div class="number" id="average-feedback">-</div><div class="label">متوسط التقييم</div><div class="sub">Average Rating</div></div>
   </div>
 
-  <!-- مستويات الخطورة -->
-  <div class="section-title">🚦 توزيع مستويات الخطورة</div>
-  <div class="urgency-grid" id="urgency-grid">
-    <div class="urgency-card low"><div class="num" id="urg-low">-</div><div class="lbl">🟢 بسيط</div></div>
-    <div class="urgency-card medium"><div class="num" id="urg-med">-</div><div class="lbl">🟡 يحتاج موعد</div></div>
-    <div class="urgency-card high"><div class="num" id="urg-high">-</div><div class="lbl">🔴 طوارئ</div></div>
-  </div>
-
-  <!-- الرسوم البيانية -->
-  <div class="section-title">📊 التحليلات والاتجاهات</div>
+  <div class="section-title">📊 ملخص مرئي</div>
   <div class="charts-grid">
     <div class="chart-card">
-      <h3>📊 أكثر الأعراض انتشاراً (آخر 7 أيام)</h3>
-      <div class="chart-wrap"><canvas id="symptomsChart"></canvas></div>
+      <h3>👥 ملخص الزوار</h3>
+      <div class="chart-wrap"><canvas id="visitorsChart"></canvas></div>
     </div>
     <div class="chart-card">
-      <h3>🌐 توزيع اللغة</h3>
-      <div class="chart-wrap"><canvas id="langChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>📈 مستويات الخطورة</h3>
-      <div class="chart-wrap"><canvas id="urgencyChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>👥 توزيع الأعمار</h3>
-      <div class="chart-wrap"><canvas id="ageChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>💬 التقييمات</h3>
+      <h3>⭐ توزيع التقييمات</h3>
       <div class="chart-wrap"><canvas id="feedbackChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>🤖 جودة إجابات المساعد</h3>
-      <div class="chart-wrap"><canvas id="asstFbChart"></canvas></div>
     </div>
   </div>
 
@@ -154,21 +132,13 @@ DASHBOARD_HTML = """
     </div>
   </div>
 
-  <!-- أسباب عدم رضا المساعد -->
-  <div class="chart-card" style="margin-bottom:28px;">
-    <h3>📉 أسباب عدم رضا إجابات المساعد</h3>
-    <div id="asst-reasons">
-      <p class="empty">لا توجد أسباب مسجلة بعد</p>
-    </div>
-  </div>
-
   <div class="last-updated" id="last-updated"></div>
 </div>
 
 <div class="footer">SymptoSense © 2026 — ريماس السلمي | للتوعية الصحية فقط</div>
 
 <script>
-let symptomsChart, langChart, urgencyChart, ageChart, feedbackChart, asstFbChart;
+let visitorsChart, feedbackChart;
 
 async function loadAll() {
   try {
@@ -178,59 +148,26 @@ async function loadAll() {
     // Stats
     document.getElementById('total-visits').textContent = d.stats.total_visits;
     document.getElementById('unique-visitors').textContent = d.stats.unique_visitors;
-    document.getElementById('total-sessions').textContent = d.stats.total_sessions;
-    document.getElementById('week-sessions').textContent = d.stats.sessions_this_period;
+    document.getElementById('week-visits').textContent = d.stats.visits_this_period;
     const fbCount = (d.feedback.great||0) + (d.feedback.good||0) + (d.feedback.ok||0) + (d.feedback.bad||0);
+    const positiveCount = (d.feedback.great||0) + (d.feedback.good||0);
+    const positivePct = fbCount ? Math.round((positiveCount / fbCount) * 100) : 0;
+    const average = fbCount
+      ? (((d.feedback.great||0)*4 + (d.feedback.good||0)*3 + (d.feedback.ok||0)*2 + (d.feedback.bad||0)) / fbCount).toFixed(1)
+      : '0.0';
     document.getElementById('total-feedback').textContent = fbCount;
-    const af = d.assistant_feedback || { total:0, useful:0, partial:0, not_useful:0, satisfaction:0 };
-    document.getElementById('asst-satisfaction').textContent = af.satisfaction + '%';
-    
-    // Urgency
-    document.getElementById('urg-low').textContent = d.urgency.low || 0;
-    document.getElementById('urg-med').textContent = d.urgency.medium || 0;
-    document.getElementById('urg-high').textContent = d.urgency.high || 0;
-    
-    // Symptoms chart
-    const symLabels = d.symptoms.map(s => s[0]);
-    const symData = d.symptoms.map(s => s[1]);
-    if (symptomsChart) symptomsChart.destroy();
-    symptomsChart = new Chart(document.getElementById('symptomsChart'), {
+    document.getElementById('positive-feedback').textContent = positivePct + '%';
+    document.getElementById('average-feedback').textContent = average + '/4';
+
+    if (visitorsChart) visitorsChart.destroy();
+    visitorsChart = new Chart(document.getElementById('visitorsChart'), {
       type: 'bar',
-      data: { labels: symLabels, datasets: [{ data: symData, backgroundColor: '#1976D2', borderRadius: 7 }] },
+      data: {
+        labels: ['إجمالي الزيارات', 'زوار فريدون', 'آخر 7 أيام'],
+        datasets: [{ data: [d.stats.total_visits||0, d.stats.unique_visitors||0, d.stats.visits_this_period||0], backgroundColor: ['#1976D2','#64B5F6','#22A06B'], borderRadius: 8 }]
+      },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
         scales: { x: { ticks: { color: '#64748B', font: { size: 11 } }, grid: { color: '#EDF3FA' } },
-                   y: { beginAtZero:true, ticks: { color: '#64748B', stepSize: 1 }, grid: { color: '#EDF3FA' } } } }
-    });
-    
-    // Language chart
-    if (langChart) langChart.destroy();
-    langChart = new Chart(document.getElementById('langChart'), {
-      type: 'doughnut',
-      data: { labels: ['العربية 🇸🇦', 'English 🇺🇸'],
-              datasets: [{ data: [d.lang.ar || 0, d.lang.en || 0], backgroundColor: ['#1976D2', '#7BB8F0'], borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
-    });
-    
-    // Urgency chart
-    if (urgencyChart) urgencyChart.destroy();
-    urgencyChart = new Chart(document.getElementById('urgencyChart'), {
-      type: 'doughnut',
-      data: { labels: ['بسيط 🟢', 'يحتاج موعد 🟡', 'طوارئ 🔴'],
-              datasets: [{ data: [d.urgency.low||0, d.urgency.medium||0, d.urgency.high||0],
-                           backgroundColor: ['#4caf50','#ff9800','#f44336'], borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
-    });
-
-    // Age chart
-    if (ageChart) ageChart.destroy();
-    ageChart = new Chart(document.getElementById('ageChart'), {
-      type: 'bar',
-      data: { labels: d.age_groups.map(a => a[0]),
-              datasets: [{ data: d.age_groups.map(a => a[1]), backgroundColor: '#1976D2', borderRadius: 7 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#64748B' }, grid: { color: '#EDF3FA' } },
                    y: { beginAtZero:true, ticks: { color: '#64748B', stepSize: 1 }, grid: { color: '#EDF3FA' } } } }
     });
 
@@ -245,42 +182,13 @@ async function loadAll() {
         plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
     });
 
-    // Assistant feedback chart
-    if (asstFbChart) asstFbChart.destroy();
-    asstFbChart = new Chart(document.getElementById('asstFbChart'), {
-      type: 'doughnut',
-      data: { labels: ['مفيدة 👍', 'جزئياً 😐', 'غير مفيدة 👎'],
-              datasets: [{ data: [af.useful||0, af.partial||0, af.not_useful||0],
-                           backgroundColor: ['#4caf50', '#ff9800', '#f44336'], borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
-    });
-
-    // Assistant feedback reasons (sorted by frequency)
-    const arBox = document.getElementById('asst-reasons');
-    const ars = (af.reasons || []).filter(x => x.count > 0);
-    if (!ars.length) {
-      arBox.innerHTML = '<p class="empty">لا توجد أسباب مسجلة بعد</p>';
-    } else {
-      const maxN = Math.max.apply(null, ars.map(x => x.count));
-      arBox.innerHTML = ars.map(x => {
-        const w = Math.round((x.count / maxN) * 100);
-        return '<div style="padding:11px 13px;margin:7px 0;background:#F8FBFF;border:1px solid #DCEBFA;border-radius:11px;">'
-             + '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">'
-             + '<span style="color:#40566F;font-size:13px;">' + (x.reason || '—') + '</span>'
-             + '<b style="color:#1976D2;font-size:14px;">' + x.count + '</b></div>'
-             + '<div style="height:6px;background:#E7EEF7;border-radius:6px;">'
-             + '<div style="height:100%;width:' + w + '%;background:linear-gradient(90deg,#EF4444,#F59E0B);border-radius:6px;"></div></div></div>';
-      }).join('');
-    }
-
     // Feedback comments
     const fbBox = document.getElementById('feedback-comments');
     if (!d.fb_comments.length) {
       fbBox.innerHTML = '<p class="empty">لا توجد ملاحظات بعد</p>';
     } else {
       fbBox.innerHTML = d.fb_comments.map(c => {
-        const emoji = {bad:'😞', ok:'😐', good:'🙂', great:'😍'}[c.rating] || '⭐';
+        const emoji = {bad:'😞', ok:'😐', good:'🙂', great:'😍', 1:'😍', 2:'🙂', 3:'😐', 4:'😞'}[c.rating] || '⭐';
         const ts = (c.timestamp || '').replace('T', ' ').slice(0, 16);
         return '<div style="padding:11px 13px;margin:7px 0;background:#F8FBFF;border:1px solid #DCEBFA;border-radius:11px;">'
              + '<div style="color:#718096;font-size:11px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
@@ -326,7 +234,7 @@ def api_stats():
         elif a <= 60: age_groups["46-60"] += 1
         else: age_groups["60+"] += 1
 
-    feedback = dict(db.fetchall("SELECT rating, COUNT(*) FROM feedback GROUP BY rating"))
+    feedback = db.feedback_counts()
     fb_comments = db.fetchall(
         "SELECT rating, comment, timestamp FROM feedback "
         "WHERE comment IS NOT NULL AND comment != '' ORDER BY timestamp DESC LIMIT 20"

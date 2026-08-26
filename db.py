@@ -1283,6 +1283,26 @@ def save_feedback(user_id, record_id, rating, comment=None):
         conn.close()
 
 
+def feedback_counts():
+    """Return dashboard feedback using stable names across old and new releases."""
+    raw = dict(fetchall("SELECT rating, COUNT(*) FROM feedback GROUP BY rating"))
+
+    def count(*keys):
+        total = 0
+        for key in keys:
+            total += int(raw.get(key, 0) or 0)
+            if not isinstance(key, str):
+                total += int(raw.get(str(key), 0) or 0)
+        return total
+
+    return {
+        "great": count("great", 1),
+        "good": count("good", 2),
+        "ok": count("ok", 3),
+        "bad": count("bad", 4),
+    }
+
+
 def update_feedback_comment(user_id, record_id, comment):
     """Attaches a free-text comment to the latest feedback row for this record."""
     conn = _conn()
