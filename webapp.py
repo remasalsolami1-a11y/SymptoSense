@@ -75,6 +75,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ss-msg { padding: 12px 16px; border-radius: 14px; font-size: 14px; font-weight: 600; margin-top: 10px; }
 .ss-msg.success { background: #EAF8F0; color: #166534; border: 1px solid #BBF7D0; }
 .ss-msg.error { background: #FFF0F0; color: #991B1B; border: 1px solid #FECACA; }
+.hp-account-hero { background: linear-gradient(135deg, #123B70, #1976D2); color: #fff; border-radius: 22px; padding: 24px; margin-bottom: 16px; box-shadow: 0 16px 36px rgba(25,118,210,.22); }
+.hp-account-head { display: flex; align-items: center; gap: 15px; }
+.hp-avatar { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 20px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 32px; border: 1px solid rgba(255,255,255,.28); }
+.hp-account-name { font-size: 22px; font-weight: 800; line-height: 1.35; }
+.hp-account-email { font-size: 13px; opacity: .9; direction: ltr; text-align: start; }
+.hp-secure { margin-inline-start: auto; align-self: flex-start; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 6px 11px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.hp-stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+.hp-stat { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 15px 10px; text-align: center; box-shadow: var(--shadow-card); }
+.hp-stat-icon { display: block; font-size: 22px; margin-bottom: 3px; }
+.hp-stat-value { display: block; font-size: 22px; line-height: 1.2; color: var(--primary-dark); font-weight: 900; }
+.hp-stat-label { display: block; color: var(--text-muted); font-size: 11px; font-weight: 700; margin-top: 4px; }
+.hp-overview { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; margin-bottom: 16px; }
+.hp-panel { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 18px; padding: 18px; box-shadow: var(--shadow-card); }
+.hp-panel h3 { color: var(--primary-dark); font-size: 16px; margin-bottom: 11px; display: flex; align-items: center; gap: 7px; }
+.hp-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.hp-chip { background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--border-card); border-radius: 999px; padding: 6px 11px; font-size: 13px; font-weight: 700; }
+.hp-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; color: var(--text-muted); font-size: 12px; }
+.hp-meta span { background: #F8FAFC; border-radius: 999px; padding: 4px 8px; border: 1px solid #E2E8F0; }
+.hp-essential { padding: 9px 0; border-bottom: 1px solid #EEF2F6; }
+.hp-essential:last-child { border-bottom: 0; }
+.hp-essential b { color: var(--primary-dark); font-size: 12px; display: block; margin-bottom: 2px; }
+.hp-essential span { color: var(--text-body); font-size: 13px; }
+.hp-quick-links { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 9px; margin-bottom: 16px; }
+.hp-quick-link { min-height: 82px; padding: 12px 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 5px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 15px; color: var(--primary-dark); font-size: 12px; font-weight: 800; box-shadow: var(--shadow-card); }
+.hp-quick-link span { font-size: 23px; }
+.hp-quick-link:hover { border-color: var(--primary); transform: translateY(-2px); }
 /* Mobile Bottom Navigation */
 .ss-bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-top: 1px solid #DCEBFA; box-shadow: 0 -4px 18px rgba(25,118,210,.08); padding: 6px 0 var(--safe-bottom); padding-bottom: calc(6px + var(--safe-bottom)); }
 @media (max-width: 768px) { .ss-bnav { display: flex; justify-content: space-around; align-items: center; } .nav { display: none; } }
@@ -750,6 +776,14 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .auth-card { padding: 28px 18px; border-radius: 18px; }
   .footer { padding: 30px 16px calc(var(--bnav-h) + var(--safe-bottom) + 20px); }
   .auth-gate-actions a { flex: 1 1 150px; }
+  .hp-account-hero { padding: 19px 16px; border-radius: 18px; }
+  .hp-account-head { align-items: flex-start; }
+  .hp-avatar { width: 52px; height: 52px; flex-basis: 52px; border-radius: 16px; font-size: 26px; }
+  .hp-account-name { font-size: 18px; }
+  .hp-secure { display: none; }
+  .hp-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .hp-overview { grid-template-columns: 1fr; }
+  .hp-quick-links { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 360px) {
   .container { padding-inline: 10px; }
@@ -1685,6 +1719,21 @@ def _safe_next_url(default="/home"):
     return target
 
 
+@app.before_request
+def require_first_language_choice():
+    """Keep first-time visitors on the neutral language picker before any page UI."""
+    if request.method != "GET":
+        return None
+    if request.cookies.get("lang") in {"ar", "en"} or request.args.get("lang") in {"ar", "en"}:
+        return None
+    path = request.path or "/"
+    public_paths = {"/", "/manifest.webmanifest", "/service-worker.js", "/favicon.ico", "/offline", "/robots.txt", "/sitemap.xml"}
+    if path in public_paths or path.startswith("/api/") or path.startswith("/icons/"):
+        return None
+    target = request.full_path.rstrip("?")
+    return redirect(url_for("index", next=target))
+
+
 def _site_url():
     return os.environ.get("SITE_URL", "https://symptosense.up.railway.app").rstrip("/")
 
@@ -2515,7 +2564,7 @@ def _nav():
     else:
         html += '<a href="/login" class="dd-btn" style="text-decoration:none;">%s</a>' % _t("nav_login")
     html += ('<div class="lang-sw"><a href="#" onclick="setLang(&#39;ar&#39;);return false;" class="%s">العربية</a>'
-             '<a href="#" onclick="setLang(&#39;en&#39;);return false;" class="%s">English</a></div>' %
+             '<a href="#" onclick="setLang(&#39;en&#39;);return false;" class="%s">English (UK)</a></div>' %
              ("on" if lang == "ar" else "", "on" if lang == "en" else ""))
     html += '</div></nav>'
     return html
@@ -2754,146 +2803,83 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 """
 
 
+LANG_PICKER_CSS = """
+html, body { min-height: 100%; background: #F7FAFF !important; color: #123B70; }
+body { font-family: 'Poppins', 'Cairo', 'Segoe UI', sans-serif; }
+.container { max-width: none; padding: 0; min-height: 100vh; min-height: 100dvh; }
+.ss-bnav, .asst-fab, .asst-panel, .expl-bg, .asst-modal-bg, .ss-modal-overlay, .pwa-install { display: none !important; }
+.first-lang { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 38%, #EAF4FF 0, #F7FAFF 45%, #FFFFFF 100%); }
+.first-lang-head { min-height: 82px; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(255,255,255,.88); border-bottom: 1px solid #DCEBFA; }
+.first-lang-logo { display: inline-flex; align-items: center; gap: 10px; color: #123B70; font-size: clamp(20px,3vw,28px); font-weight: 900; letter-spacing: -.4px; }
+.first-lang-logo em { color: #1976D2; font-style: normal; }
+.first-lang-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 34px 18px; }
+.first-lang-card { width: min(760px,100%); background: rgba(255,255,255,.94); border: 1px solid #DCEBFA; border-radius: 28px; padding: clamp(28px,5vw,54px); text-align: center; box-shadow: 0 22px 60px rgba(25,118,210,.12); }
+.first-lang-icon { width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 43px; background: linear-gradient(135deg,#EAF4FF,#D7EBFF); box-shadow: 0 12px 28px rgba(25,118,210,.15); }
+.first-lang-card h1 { color: #123B70; font-size: clamp(25px,4.2vw,38px); line-height: 1.45; margin-bottom: 4px; }
+.first-lang-card h2 { color: #123B70; font-size: clamp(21px,3.4vw,31px); line-height: 1.35; margin-bottom: 22px; }
+.first-lang-prompt-ar { color: #40566F; font-size: clamp(17px,2.7vw,21px); font-weight: 700; direction: rtl; }
+.first-lang-prompt-en { color: #718096; font-size: 15px; margin: 2px 0 24px; }
+.first-lang-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.first-lang-option { min-height: 112px; display: flex; align-items: center; justify-content: center; gap: 13px; padding: 20px; background: #FFFFFF; color: #123B70; border: 2px solid #DCEBFA; border-radius: 19px; font: 800 clamp(18px,3vw,23px) inherit; cursor: pointer; box-shadow: 0 6px 18px rgba(25,118,210,.06); transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+.first-lang-option:hover { transform: translateY(-3px); border-color: #1976D2; background: #F7FBFF; box-shadow: 0 13px 28px rgba(25,118,210,.14); }
+.first-lang-option:active { transform: scale(.98); }
+.first-lang-option:focus-visible { outline: 4px solid rgba(25,118,210,.24); outline-offset: 3px; }
+.first-lang-flag { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #EAF4FF; color: #1976D2; font-size: 14px; font-weight: 900; letter-spacing: .5px; }
+.first-lang-note { margin-top: 22px; color: #718096; font-size: 12.5px; line-height: 1.8; }
+.first-lang-loading { opacity: .7; pointer-events: none; }
+@media (max-width: 600px) {
+  .first-lang-head { min-height: 68px; }
+  .first-lang-main { align-items: flex-start; padding: 24px 14px; }
+  .first-lang-card { border-radius: 22px; padding: 28px 18px; }
+  .first-lang-icon { width: 72px; height: 72px; border-radius: 22px; font-size: 35px; }
+  .first-lang-options { grid-template-columns: 1fr; gap: 12px; }
+  .first-lang-option { min-height: 78px; justify-content: flex-start; padding-inline: 26px; }
+}
+@media (max-width: 360px) { .first-lang-card { padding-inline: 14px; } .first-lang-option { padding-inline: 18px; } }
+@media (prefers-reduced-motion: reduce) { .first-lang-option { transition: none; } }
+"""
+
+
 def welcome_page():
-    cur = request.cookies.get("lang") or request.args.get("lang")
-    if cur == "en":
-        a0, a1, c0, c1, animate = "", " active", "", " sel", "false"
-    elif cur == "ar":
-        a0, a1, c0, c1, animate = " active", "", " sel", "", "false"
-    else:
-        a0, a1, c0, c1, animate = " active", "", " sel", "", "true"
-    tiles = "".join(
-        '<button class="lang-tile__C%s__" onclick="ssGo(\'%s\',this)"><span class="ck">✓</span><span class="fl">%s</span><span class="lt">%s</span><span class="ld">%s</span></button>'
-        % (i, code, flag, label, desc)
-        for i, (flag, label, code, desc) in enumerate(WELCOME_LANGS)
-    )
+    next_target = _safe_next_url("/home")
     body = """
-    <div class="w-container">
-      <div class="w-nav">
-        <div class="w-logo"><span style="font-size:24px;">❤️‍🩹</span><span><span class="sympto">Sympto</span><span class="sense">Sense</span></span></div>
-        <div class="w-links" id="wLinks">
-          <a href="/home" class="on">Home</a>
-          <a href="/about">About</a>
-          <a href="/home">Features</a>
-          <a href="/home">How it works</a>
-          <a href="/home">Contact</a>
-        </div>
-        <button class="w-menu-btn" id="wMenuBtn" onclick="toggleWNav(event)" aria-label="Menu" aria-expanded="false">☰</button>
-      </div>
-
-      <div class="hero-wrap">
-        <div class="hero-card">
-          <div class="hero-left">
-            <span class="badge">🔵 AI-Powered Health Assistant</span>
-            <div class="wmsg" id="wmsg">
-              <div class="wmsg-item__A0__">
-                <h1><span class="wflag">🇸🇦</span> مرحبًا بك في <span class="brand-big">SymptoSense</span> 🩺</h1>
-                <div class="pulse-line"><span class="ln"></span>❤️<span class="ln"></span></div>
-                <p class="hero-sub">مساعدك الذكي لفهم الأعراض الصحية</p>
-              </div>
-              <div class="wmsg-item__A1__">
-                <h1><span class="wflag"><span class="flag-badge sm">UK</span></span> Welcome to <span class="brand-big">SymptoSense</span> 🩺</h1>
-                <div class="pulse-line"><span class="ln"></span>❤️<span class="ln"></span></div>
-                <p class="hero-sub">Your smart assistant for understanding your symptoms</p>
-              </div>
-            </div>
-            <div class="mini-features">
-              <div class="mf"><div class="ic">🧠</div><span>Smart Analysis</span></div>
-              <div class="mf"><div class="ic">🛡️</div><span>Reliable Information</span></div>
-              <div class="mf"><div class="ic">🔒</div><span>Private &amp; Secure</span></div>
-              <div class="mf"><div class="ic">❤️</div><span>Health First</span></div>
-            </div>
+    <main class="first-lang" aria-labelledby="languageTitle">
+      <header class="first-lang-head">
+        <div class="first-lang-logo" aria-label="SymptoSense"><span aria-hidden="true">❤️‍🩹</span><span>Sympto<em>Sense</em></span></div>
+      </header>
+      <section class="first-lang-main">
+        <div class="first-lang-card">
+          <div class="first-lang-icon" aria-hidden="true">🌐</div>
+          <h1 dir="rtl">مرحبًا بك في SymptoSense</h1>
+          <h2 lang="en">Welcome to SymptoSense</h2>
+          <p class="first-lang-prompt-ar" id="languageTitle">اختر لغتك للمتابعة</p>
+          <p class="first-lang-prompt-en" lang="en">Choose your language to continue</p>
+          <div class="first-lang-options" role="group" aria-labelledby="languageTitle">
+            <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
+              <span class="first-lang-flag" aria-hidden="true">SA</span><span dir="rtl">العربية</span>
+            </button>
+            <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Continue in English UK">
+              <span class="first-lang-flag" aria-hidden="true">UK</span><span lang="en">English (UK)</span>
+            </button>
           </div>
-          <div class="hero-right">
-            <div class="globe"></div>
-            <span class="float-ic f1">🩺</span>
-            <span class="float-ic f2">➕</span>
-            <span class="float-ic f3">❤️</span>
-            <span class="float-ic f4">🛡️</span>
-            <span class="float-ic f5">🌱</span>
-            <span class="float-ic f6">🌍</span>
-            <div class="phone">
-              <div class="phone-screen">
-                <div class="phone-heart">❤️</div>
-                <p>Understand your symptoms.<br>Take care of your health.</p>
-              </div>
-            </div>
-          </div>
+          <p class="first-lang-note"><span dir="rtl">يمكنك تغيير اللغة لاحقًا من داخل الموقع</span><br><span lang="en">You can change the language later</span></p>
         </div>
-      </div>
-
-      <div class="lang-section">
-        <h2>🌐 اختر لغة الموقع</h2>
-        <p class="muted">Choose your language</p>
-        <div class="lang-grid">""" + tiles + """</div>
-      </div>
-    </div>
-
-    <div class="w-footer">
-      <div class="fl">Sympto<em>Sense</em> ❤️‍🩹</div>
-      <p>Your health is our priority.</p>
-      <div class="wfl"><a href="/about">Privacy Policy</a><a href="/about">Terms</a><a href="/home">Contact</a></div>
-      <div class="copy">© 2026 SymptoSense. All rights reserved.</div>
-    </div>
-
-    <div class="exit-curtain" id="exitCurtain"></div>
+      </section>
+    </main>
     <script>
-    function toggleWNav(ev) {
-      if (ev) ev.stopPropagation();
-      var links = document.getElementById('wLinks');
-      var btn = document.getElementById('wMenuBtn');
-      var open = links.classList.toggle('open');
-      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (btn) btn.textContent = open ? '✕' : '☰';
-    }
-    document.addEventListener('click', function(ev) {
-      var links = document.getElementById('wLinks');
-      var btn = document.getElementById('wMenuBtn');
-      if (!links || !links.classList.contains('open')) return;
-      if (ev.target.closest('#wLinks') || ev.target.closest('#wMenuBtn')) return;
-      links.classList.remove('open');
-      if (btn) { btn.setAttribute('aria-expanded', 'false'); btn.textContent = '☰'; }
-    });
-    (function(){
-      var links = document.getElementById('wLinks');
-      if (!links) return;
-      links.querySelectorAll('a').forEach(function(a){
-        a.addEventListener('click', function(){ links.classList.remove('open'); });
-      });
-    })();
-    function ssGo(code, el) {
-      var tiles = document.querySelectorAll('.lang-tile');
-      for (var i = 0; i < tiles.length; i++) tiles[i].classList.remove('sel');
-      if (el) el.classList.add('sel');
-      var lang = (code === 'ar') ? 'ar' : 'en';
+    var SS_NEXT_PAGE = __NEXT__;
+    function ssChooseLanguage(code, button) {
+      var lang = code === 'en' ? 'en' : 'ar';
+      document.querySelectorAll('.first-lang-option').forEach(function(el){ el.classList.add('first-lang-loading'); el.disabled = true; });
+      if (button) { button.style.borderColor = '#1976D2'; button.setAttribute('aria-pressed','true'); }
       document.cookie = 'lang=' + lang + ';path=/;max-age=31536000;SameSite=Lax';
       try { localStorage.setItem('ss_lang', lang); } catch(e) {}
-      document.getElementById('exitCurtain').classList.add('open');
-      setTimeout(function(){ location.href = '/home'; }, 850);
+      window.setTimeout(function(){ window.location.href = SS_NEXT_PAGE || '/home'; }, 180);
     }
-    (function(){
-      var items = document.querySelectorAll('.wmsg-item');
-      if (items.length < 2) return;
-      var i = 0;
-      for (var k = 0; k < items.length; k++) {
-        if (items[k].classList.contains('active')) i = k;
-      }
-      if (!__ANIM__) return;
-      setInterval(function(){
-        items[i].classList.remove('active');
-        i = (i + 1) % items.length;
-        items[i].classList.add('active');
-      }, 2600);
-    })();
     </script>
     """
-    html = _page(_t("title_landing"), body, bare=True, extra_css=WELCOME_CSS)
-    html = (html
-            .replace("wmsg-item__A0__", "wmsg-item" + a0)
-            .replace("wmsg-item__A1__", "wmsg-item" + a1)
-            .replace("lang-tile__C0__", "lang-tile" + c0)
-            .replace("lang-tile__C1__", "lang-tile" + c1)
-            .replace("__ANIM__", animate))
+    body = body.replace("__NEXT__", json.dumps(next_target))
+    html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
     return html.replace('dir="rtl"', 'dir="ltr"').replace('lang="ar"', 'lang="en"')
 
 
@@ -3913,7 +3899,7 @@ def chat_page():
         if (num >= 1 && num <= 5) { state.severity = num; setVoiceState('idle'); askConditions(); }
         else { state.severity = 3; setVoiceState('idle'); askConditions(); }
       } else if (state.step === 'conditions') {
-        state.conditions = text; setVoiceState('idle'); askMedications();
+        state.conditions = text; setVoiceState('idle'); askMeds();
       } else if (state.step === 'medications') {
         state.medications = text; setVoiceState('idle'); askNotes();
       } else if (state.step === 'notes') {
@@ -4208,11 +4194,11 @@ def chat_page():
     }
     function showClarifyUI(pattern, originalText) {
       var clarMsg = LANG === 'ar'
-        ? '🤍 أبي أتأكد إني فهمتك صح.\n\nلما تقول **"' + esc(originalText) + '"**، تقصد:'
-        : '🤍 I want to make sure I understand you.\n\nWhen you say **"' + esc(originalText) + '"**, you mean:';
+        ? '🤍 أبي أتأكد إني فهمتك صح.\\n\\nلما تقول **"' + esc(originalText) + '"**، تقصد:'
+        : '🤍 I want to make sure I understand you.\\n\\nWhen you say **"' + esc(originalText) + '"**, you mean:';
       var clarMsgShort = LANG === 'ar'
-        ? 'بس خليني أتأكد من نقطة صغيرة 🤍\nوش تقصد أكثر؟'
-        : 'Just making sure I understand 🤍\nWhat do you mean exactly?';
+        ? 'بس خليني أتأكد من نقطة صغيرة 🤍\\nوش تقصد أكثر؟'
+        : 'Just making sure I understand 🤍\\nWhat do you mean exactly?';
       add(clarMsg, 'bot');
       var items = pattern.opts.map(function(o) {
         return {
@@ -4390,7 +4376,7 @@ def chat_page():
         else add(TT('err'), 'bot');
         showOpts([
           {label:TT('ask_more'), fn:askFollowup},
-          {label:TT('new_analysis'), fn:function(){ clearOpts(); reset(); start(); }},
+          {label:TT('new_analysis'), fn:function(){ restart(); }},
           {label:TT('save_profile'), fn:saveMissingToProfile}
         ]);
       }).catch(function(){ add(TT('conn_err'), 'bot'); });
@@ -4598,7 +4584,7 @@ def chat_page():
         else { qList.push(TT('q_low_1') || 'How long will recovery take?'); qList.push(TT('q_low_2') || 'When should I worry?'); }
         qList.push(TT('q通用_1') || 'Can you explain more about this result?');
         qList.push(TT('q通用_2') || 'What questions should I ask my doctor?');
-        sq.innerHTML = qList.map(function(q){ return '<button class="opt" onclick="askQuestionFromResult(\'' + esc(q).replace(/'/g, "\\'") + '\')" style="margin:4px;">💬 ' + esc(q) + '</button>'; }).join('');
+        sq.innerHTML = qList.map(function(q){ return '<button class="opt" data-q="' + esc(q) + '" onclick="askQuestionFromResult(this.dataset.q)" style="margin:4px;">💬 ' + esc(q) + '</button>'; }).join('');
       }, 100);
       addHtml('<div style="margin-top:10px;text-align:center;"><button class="opt" onclick="speakResult()">' + TT('listen_all') + '</button></div>', 'result');
       addHtml('<div class="sec-title">' + TT('fb_title') + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">' +
@@ -7326,22 +7312,115 @@ def profile_page():
     total_score = sum(required_fields.values())
     current_score = sum(w for f, w in required_fields.items() if hp.get(f))
     completion_pct = int((current_score / total_score) * 100) if total_score else 0
-    # Get recent analyses
-    recent_records = []
+    # Account dashboard data. Personal records use member_id=0, while family files
+    # stay in their own pages and never get mixed into the account owner's history.
+    data_owner = _data_user_id()
+    personal_records = []
+    blood_tests = []
+    family_members = []
+    active_med_plans = []
     try:
-        uid_for_records = _data_user_id()
-        records = db.get_records(uid_for_records, limit=5) if hasattr(db, 'get_records') else []
-        if records:
-            recent_records = records[:5]
+        personal_records = db.get_records(data_owner, limit=500, member_id=0)
     except Exception:
-        pass
+        personal_records = []
+    try:
+        blood_tests = db.get_blood_tests(data_owner, limit=100, member_id=0)
+    except Exception:
+        blood_tests = []
+    try:
+        family_members = db.list_members(data_owner)
+    except Exception:
+        family_members = []
+    try:
+        active_med_plans = db.list_med_plans(data_owner, member_id=0, active_only=True)
+    except Exception:
+        active_med_plans = []
+    recent_records = personal_records[:5]
+    latest_record = recent_records[0] if recent_records else None
+    lang_is_ar = _lang() == "ar"
+
+    def bi(ar, en):
+        return ar if lang_is_ar else en
+
+    if latest_record:
+        latest_symptoms = latest_record.get("symptoms") or []
+        if not isinstance(latest_symptoms, list):
+            latest_symptoms = [str(latest_symptoms)]
+        symptoms_html = '<div class="hp-chips">' + "".join(
+            '<span class="hp-chip">%s</span>' % esc(symptom) for symptom in latest_symptoms
+        ) + '</div>'
+        urgency_raw = (latest_record.get("urgency") or "").lower()
+        urgency_label = {
+            "high": bi("عالية", "High"),
+            "medium": bi("متوسطة", "Medium"),
+            "low": bi("منخفضة", "Low"),
+        }.get(urgency_raw, latest_record.get("urgency") or "—")
+        latest_meta = (
+            '<div class="hp-meta"><span>📅 %s</span><span>⏱️ %s</span><span>📊 %s/5</span><span>🟢 %s</span></div>'
+            % (
+                esc((latest_record.get("timestamp") or "")[:10] or "—"),
+                esc(str(latest_record.get("duration") or "—")),
+                esc(str(latest_record.get("severity") or "—")),
+                esc(str(urgency_label)),
+            )
+        )
+    else:
+        symptoms_html = '<p class="muted">%s</p>' % bi("لا توجد أعراض مسجلة حتى الآن.", "No symptoms have been recorded yet.")
+        latest_meta = ''
+
+    planned_names = [p.get("med_name", "") for p in active_med_plans if p.get("med_name")]
+    meds_overview = hp.get("medications", "") or ", ".join(planned_names[:4])
+    essentials_html = "".join([
+        '<div class="hp-essential"><b>⚠️ %s</b><span>%s</span></div>' % (
+            bi("الحساسية", "Allergies"), esc(hp.get("allergies", "") or bi("غير مضافة", "Not added"))),
+        '<div class="hp-essential"><b>🩺 %s</b><span>%s</span></div>' % (
+            bi("الحالات الصحية", "Health conditions"), esc(hp.get("health_conditions", "") or bi("غير مضافة", "Not added"))),
+        '<div class="hp-essential"><b>💊 %s</b><span>%s</span></div>' % (
+            bi("الأدوية الحالية", "Current medications"), esc(meds_overview or bi("غير مضافة", "Not added"))),
+    ])
     body = """
     <div style="max-width:640px;margin:0 auto;padding:0;">
+      <section class="hp-account-hero" aria-labelledby="healthProfileTitle">
+        <div class="hp-account-head">
+          <div class="hp-avatar" aria-hidden="true">👤</div>
+          <div style="min-width:0;flex:1;">
+            <div id="healthProfileTitle" class="hp-account-name">__WELCOME__ __NAME__</div>
+            <div class="hp-account-email">__EMAIL__</div>
+            <div style="font-size:12.5px;opacity:.88;margin-top:5px;">__SUB__</div>
+          </div>
+          <div class="hp-secure">🔒 __PRIVATE__</div>
+        </div>
+      </section>
+
+      <section class="hp-stats" aria-label="__SUMMARY_ARIA__">
+        <div class="hp-stat"><span class="hp-stat-icon">🩺</span><span class="hp-stat-value">__ANALYSIS_COUNT__</span><span class="hp-stat-label">__ANALYSIS_LABEL__</span></div>
+        <div class="hp-stat"><span class="hp-stat-icon">💊</span><span class="hp-stat-value">__MED_COUNT__</span><span class="hp-stat-label">__MED_LABEL__</span></div>
+        <div class="hp-stat"><span class="hp-stat-icon">🩸</span><span class="hp-stat-value">__BLOOD_COUNT__</span><span class="hp-stat-label">__BLOOD_LABEL__</span></div>
+        <div class="hp-stat"><span class="hp-stat-icon">👨‍👩‍👧</span><span class="hp-stat-value">__FAMILY_COUNT__</span><span class="hp-stat-label">__FAMILY_LABEL__</span></div>
+      </section>
+
+      <section class="hp-overview">
+        <div class="hp-panel">
+          <h3>🩺 __LATEST_SYMPTOMS__</h3>
+          __LATEST_SYMPTOMS_HTML__
+          __LATEST_META__
+        </div>
+        <div class="hp-panel">
+          <h3>❤️ __IMPORTANT_HEALTH__</h3>
+          __ESSENTIALS_HTML__
+        </div>
+      </section>
+
+      <nav class="hp-quick-links" aria-label="__QUICK_ARIA__">
+        <a class="hp-quick-link" href="/chat"><span>➕</span>__NEW_ANALYSIS__</a>
+        <a class="hp-quick-link" href="/meds"><span>💊</span>__MY_MEDS__</a>
+        <a class="hp-quick-link" href="/blood"><span>🩸</span>__MY_BLOOD__</a>
+        <a class="hp-quick-link" href="/family"><span>👨‍👩‍👧</span>__MY_FAMILY__</a>
+      </nav>
+
       <div class="ss-profile-card" style="text-align:center;">
-        <div style="font-size:42px;margin-bottom:8px;">👤</div>
         <h2 style="justify-content:center;">__H__</h2>
-        <p class="muted">__SUB__</p>
-        <p style="margin-top:8px;font-size:14px;color:#123B70;"><b>__WELCOME__</b> __NAME__ 💙</p>
+        <p class="muted">__DASHBOARD_NOTE__</p>
       </div>
 
       <!-- COMPLETION BAR -->
@@ -7482,6 +7561,11 @@ def profile_page():
     <script>
     var LANG = '__LANG__';
     var VAL_LABELS = {dob:__L_DOB_JSON__,gender:__L_GENDER_JSON__,height:__L_HEIGHT_JSON__,weight:__L_WEIGHT_JSON__};
+    function esc(s) { var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+    function historyUrgency(u) {
+      if (LANG === 'ar') return u === 'high' ? 'عالية' : (u === 'medium' ? 'متوسطة' : 'منخفضة');
+      return u === 'high' ? 'High' : (u === 'medium' ? 'Medium' : 'Low');
+    }
     function showEdit() { document.getElementById('viewMode').style.display='none'; document.getElementById('hpForm').style.display='block'; window.scrollTo(0,0); }
     function showView() { document.getElementById('viewMode').style.display='block'; document.getElementById('hpForm').style.display='none'; }
     document.getElementById('hpForm').addEventListener('submit', async function(e){
@@ -7532,7 +7616,7 @@ def profile_page():
             var urg = rec.urgency || '';
             var urgCls = urg === 'high' ? 'pill-high' : (urg === 'medium' ? 'pill-med' : 'pill-low');
             var ts = (rec.timestamp || '').substring(0, 10);
-            html += '<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#123B70;">' + esc(ts) + '</span><span class="pill ' + urgCls + '">' + esc(urg) + '</span></div><div class="muted" style="margin-top:4px;">' + esc(syms) + '</div></div>';
+            html += '<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#123B70;">' + esc(ts) + '</span><span class="pill ' + urgCls + '">' + esc(historyUrgency(urg)) + '</span></div><div class="muted" style="margin-top:4px;">' + esc(syms) + '</div></div>';
           });
           list.innerHTML = html;
         }
@@ -7552,6 +7636,27 @@ def profile_page():
     body = body.replace("__H__", t["profile_h"]).replace("__SUB__", t["profile_sub"])
     body = body.replace("__BASIC__", t["profile_basic"]).replace("__HEALTH__", t["profile_health"])
     body = body.replace("__WELCOME__", welcome_text).replace("__NAME__", esc(user.get("name", "")))
+    body = body.replace("__EMAIL__", esc(user.get("email", "")))
+    body = body.replace("__PRIVATE__", bi("ملف صحي خاص", "Private health file"))
+    body = body.replace("__SUMMARY_ARIA__", bi("ملخص الملف الصحي", "Health profile summary"))
+    body = body.replace("__ANALYSIS_COUNT__", str(len(personal_records)))
+    body = body.replace("__MED_COUNT__", str(len(active_med_plans)))
+    body = body.replace("__BLOOD_COUNT__", str(len(blood_tests)))
+    body = body.replace("__FAMILY_COUNT__", str(len(family_members)))
+    body = body.replace("__ANALYSIS_LABEL__", bi("سجل أعراض", "Symptom records"))
+    body = body.replace("__MED_LABEL__", bi("دواء نشط", "Active medicines"))
+    body = body.replace("__BLOOD_LABEL__", bi("فحص دم", "Blood tests"))
+    body = body.replace("__FAMILY_LABEL__", bi("فرد عائلة", "Family members"))
+    body = body.replace("__LATEST_SYMPTOMS__", bi("آخر الأعراض المسجلة", "Latest recorded symptoms"))
+    body = body.replace("__LATEST_SYMPTOMS_HTML__", symptoms_html).replace("__LATEST_META__", latest_meta)
+    body = body.replace("__IMPORTANT_HEALTH__", bi("المعلومات الصحية المهمة", "Important health information"))
+    body = body.replace("__ESSENTIALS_HTML__", essentials_html)
+    body = body.replace("__QUICK_ARIA__", bi("اختصارات الملف الصحي", "Health profile shortcuts"))
+    body = body.replace("__NEW_ANALYSIS__", bi("تحليل جديد", "New analysis"))
+    body = body.replace("__MY_MEDS__", bi("أدويتي", "My medicines"))
+    body = body.replace("__MY_BLOOD__", bi("فحوصاتي", "My blood tests"))
+    body = body.replace("__MY_FAMILY__", bi("ملفات العائلة", "Family profiles"))
+    body = body.replace("__DASHBOARD_NOTE__", bi("راجعي معلوماتك وعدّليها متى احتجتِ؛ تُستخدم فقط وفق إعدادات الخصوصية.", "Review and update your information anytime; it is used only according to your privacy settings."))
     body = body.replace("__EDIT_BTN__", t.get("profile_edit_btn", "Edit my info"))
     body = body.replace("__CANCEL__", t.get("profile_cancel", "Cancel"))
     body = body.replace("__ROW_NAME__", field_row("📛", t["profile_name"], hp.get("display_name", user.get("name", ""))))
@@ -7608,12 +7713,18 @@ def profile_page():
     if recent_records:
         hist_html = ""
         for r in recent_records:
-            sym = (r.get("symptoms", "") or "")[:60]
+            raw_symptoms = r.get("symptoms") or []
+            sym = ", ".join(raw_symptoms) if isinstance(raw_symptoms, list) else str(raw_symptoms)
+            sym = sym[:100]
             urg = r.get("urgency", "")
             urg_cls = "pill-high" if urg == "high" else ("pill-med" if urg == "medium" else "pill-low")
+            urg_label = {"high": bi("عالية", "High"), "medium": bi("متوسطة", "Medium"), "low": bi("منخفضة", "Low")}.get(urg, urg or "—")
             ts = (r.get("timestamp", "") or "")[:10]
+            severity_text = bi("الشدة", "Severity") + ": " + str(r.get("severity") or "—") + "/5"
+            duration_text = bi("المدة", "Duration") + ": " + str(r.get("duration") or "—")
             hist_html += ('<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#123B70;">%s</span><span class="pill %s">%s</span></div>'
-                          '<div class="muted" style="margin-top:4px;">%s</div></div>') % (esc(ts), urg_cls, esc(urg), esc(sym))
+                          '<div style="font-weight:700;color:#334155;margin-top:6px;">%s</div><div class="muted" style="margin-top:4px;">%s • %s</div></div>') % (
+                              esc(ts), urg_cls, esc(urg_label), esc(sym), esc(severity_text), esc(duration_text))
         body = body.replace("__HISTORY_HTML__", hist_html)
     else:
         body = body.replace("__HISTORY_HTML__", '<p class="muted" style="text-align:center;padding:12px;">%s</p>' % t.get("profile_history_empty", "No analyses yet"))
@@ -7633,7 +7744,7 @@ def profile_page():
 def history_page():
     db.init_db()
     t = L["en" if _lang() == "en" else "ar"]
-    rows = db.get_records(_data_user_id(), limit=25)
+    rows = db.get_records(_data_user_id(), limit=25, member_id=0)
     if not rows:
         body = """
         <div class="card" style="max-width:640px;margin:0 auto;text-align:center;">
@@ -7800,6 +7911,8 @@ def offline():
 # ---------------------------------------------------------------- routes
 @app.route("/")
 def index():
+    if request.cookies.get("lang") in {"ar", "en"} and request.args.get("choose") != "1":
+        return redirect(_safe_next_url("/home"))
     return welcome_page()
 
 
@@ -8116,13 +8229,13 @@ def login():
     lang = _lang()
     t = L["en" if lang == "en" else "ar"]
     error = None
-    next_param = _safe_next_url("/home")
+    next_param = _safe_next_url("/profile")
     if next_param.startswith("/family"):
         reason = "سجّلي الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang == "ar" else "Sign in to securely save and access family profiles on any device."
     elif next_param.startswith("/meds"):
         reason = "سجّلي الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang == "ar" else "Sign in to save medication reminders to your account."
     else:
-        reason = ""
+        reason = "بعد تسجيل الدخول سيفتح ملفك الصحي الخاص: الأعراض والتحليلات والأدوية والفحوصات والعائلة في مكان واحد." if lang == "ar" else "After signing in, your private health file opens with symptoms, analyses, medicines, tests, and family profiles in one place."
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
@@ -8508,7 +8621,7 @@ def api_analysis_history():
     uid = _ss_user_id()
     if not uid:
         return jsonify({"ok": True, "records": [], "logged_in": False})
-    records = db.get_records(_data_user_id(), limit=10)
+    records = db.get_records(_data_user_id(), limit=10, member_id=0)
     return jsonify({"ok": True, "records": records, "logged_in": True})
 
 
@@ -8853,9 +8966,24 @@ def api_timeline():
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     try:
-        data = request.get_json(force=True)
+        db.init_db()
+        data = request.get_json(silent=True) or {}
         lang = "en" if data.get("lang") == "en" else "ar"
-        member_id = data.get("member_id") or 0
+        symptoms = data.get("symptoms") or []
+        if isinstance(symptoms, str):
+            symptoms = [symptoms]
+        symptoms = [str(s).strip() for s in symptoms if str(s).strip()][:20]
+        if not symptoms:
+            msg = "يرجى اختيار عرض واحد على الأقل قبل بدء التحليل." if lang == "ar" else "Please select at least one symptom before starting the assessment."
+            return jsonify({"ok": False, "error": msg}), 400
+        try:
+            member_id = int(data.get("member_id") or 0)
+        except (TypeError, ValueError):
+            member_id = 0
+        try:
+            severity = max(1, min(5, int(data.get("severity") or 1)))
+        except (TypeError, ValueError):
+            severity = 1
         use_saved = data.get("use_saved", False)
         member = None
         if member_id:
@@ -8867,13 +8995,13 @@ def api_analyze():
             "user_id": _data_user_id(),
             "age": data.get("age"),
             "gender": data.get("gender"),
-            "symptoms": data.get("symptoms", []),
+            "symptoms": symptoms,
             "duration": data.get("duration"),
-            "severity": data.get("severity", 1),
+            "severity": severity,
             "conditions": data.get("conditions", ""),
             "medications": data.get("medications", ""),
-            "notes": data.get("notes", ""),
-            "member_id": int(member_id or 0),
+            "notes": str(data.get("notes") or "")[:2000],
+            "member_id": member_id,
         }
         if member:
             patient["member_name"] = member.get("name", "")

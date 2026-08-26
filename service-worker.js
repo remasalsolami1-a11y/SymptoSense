@@ -1,4 +1,4 @@
-const CACHE_NAME = 'symptosense-shell-v2';
+const CACHE_NAME = 'symptosense-shell-v3';
 const APP_SHELL = [
   '/offline',
   '/manifest.webmanifest',

@@ -4,6 +4,7 @@ import json
 import logging
 import sqlite3
 import hashlib
+import hmac
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 
@@ -1789,9 +1790,36 @@ def all_conversations():
 import re as _re
 
 def _hash_password(password):
-    """Hash password with SHA-256 + salt."""
-    salt = os.environ.get("HASH_SALT", "symptosense")
-    return hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
+    """Hash a password with a unique salt and a deliberately slow KDF."""
+    iterations = 600_000
+    salt = os.urandom(16).hex()
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", (password or "").encode("utf-8"), bytes.fromhex(salt), iterations
+    ).hex()
+    return f"pbkdf2_sha256${iterations}${salt}${digest}"
+
+
+def _verify_password(password, stored_hash):
+    """Return ``(valid, needs_upgrade)`` and keep old accounts working."""
+    stored_hash = stored_hash or ""
+    if stored_hash.startswith("pbkdf2_sha256$"):
+        try:
+            _, iterations, salt, expected = stored_hash.split("$", 3)
+            actual = hashlib.pbkdf2_hmac(
+                "sha256",
+                (password or "").encode("utf-8"),
+                bytes.fromhex(salt),
+                int(iterations),
+            ).hex()
+            return hmac.compare_digest(actual, expected), False
+        except (TypeError, ValueError):
+            return False, False
+
+    # Backward compatibility for accounts created by older releases.
+    legacy_salt = os.environ.get("HASH_SALT", "symptosense")
+    legacy = hashlib.sha256(f"{legacy_salt}:{password or ''}".encode()).hexdigest()
+    valid = hmac.compare_digest(legacy, stored_hash)
+    return valid, valid
 
 
 def create_ss_user(email, name, password):
@@ -1844,10 +1872,17 @@ def authenticate_ss_user(email, password):
         if not row:
             return None
         user_id, stored_hash = row
-        if _hash_password(password) != stored_hash:
+        valid, needs_upgrade = _verify_password(password, stored_hash)
+        if not valid:
             return None
         now = datetime.now(timezone.utc).isoformat()
-        c.execute("UPDATE ss_users SET last_login=%s WHERE id=%s" % (PH, PH), (now, user_id))
+        if needs_upgrade:
+            c.execute(
+                "UPDATE ss_users SET password_hash=%s, last_login=%s WHERE id=%s" % (PH, PH, PH),
+                (_hash_password(password), now, user_id),
+            )
+        else:
+            c.execute("UPDATE ss_users SET last_login=%s WHERE id=%s" % (PH, PH), (now, user_id))
         conn.commit()
         return user_id
     finally:

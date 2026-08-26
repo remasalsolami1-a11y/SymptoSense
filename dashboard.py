@@ -19,60 +19,87 @@ DASHBOARD_HTML = """
 <title>SymptoSense Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1b2a; color: #e0e0e0; }
-  
-  .header { background: #112240; padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #00b4d8; }
-  .header h1 { font-size: 22px; color: #fff; }
-  .header h1 span { color: #00b4d8; }
-  .live-badge { background: #00b4d8; color: #0d1b2a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-  
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
-  
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .stat-card { background: #112240; border-radius: 14px; padding: 20px; border: 1px solid #1e3a5f; text-align: center; }
-  .stat-card .number { font-size: 36px; font-weight: 700; color: #00b4d8; }
-  .stat-card .label { font-size: 13px; color: #90caf9; margin-top: 6px; }
-  .stat-card .sub { font-size: 11px; color: #546e7a; margin-top: 4px; }
-
-  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
-  @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
-  
-  .chart-card { background: #112240; border-radius: 14px; padding: 20px; border: 1px solid #1e3a5f; }
-  .chart-card h3 { font-size: 15px; color: #90caf9; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #1e3a5f; }
-  .chart-wrap { position: relative; height: 260px; }
-
-  .urgency-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
-  .urgency-card { background: #112240; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #1e3a5f; }
-  .urgency-card.low { border-top: 3px solid #4caf50; }
-  .urgency-card.medium { border-top: 3px solid #ff9800; }
-  .urgency-card.high { border-top: 3px solid #f44336; }
-  .urgency-card .num { font-size: 28px; font-weight: 700; }
-  .urgency-card.low .num { color: #4caf50; }
-  .urgency-card.medium .num { color: #ff9800; }
-  .urgency-card.high .num { color: #f44336; }
-  .urgency-card .lbl { font-size: 12px; color: #90caf9; margin-top: 4px; }
-
-  .footer { text-align: center; padding: 20px; color: #37474f; font-size: 12px; }
-  .refresh-btn { background: #1e3a5f; border: 1px solid #00b4d8; color: #00b4d8; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-  .refresh-btn:hover { background: #00b4d8; color: #0d1b2a; }
-  .last-updated { font-size: 11px; color: #546e7a; margin-top: 6px; }
+  body { font-family: 'Cairo','Segoe UI',Tahoma,sans-serif; background: #F5F9FF; color: #243B53; min-height: 100vh; }
+  button { font-family: inherit; }
+  .header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); padding: 14px clamp(16px,4vw,42px); display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #DCEBFA; box-shadow: 0 4px 18px rgba(25,118,210,.06); }
+  .brand-wrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .brand-icon { width: 45px; height: 45px; border-radius: 14px; background: #EAF4FF; display: flex; align-items: center; justify-content: center; font-size: 23px; }
+  .header h1 { font-size: clamp(17px,3vw,22px); color: #123B70; line-height: 1.35; }
+  .header h1 span { color: #1976D2; }
+  .header-sub { color: #718096; font-size: 11.5px; margin-top: 1px; }
+  .header-actions { display: flex; align-items: center; gap: 9px; }
+  .live-badge { background: #EAF8F0; color: #166534; border: 1px solid #BBF7D0; padding: 6px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+  .container { max-width: 1240px; margin: 0 auto; padding: 28px 20px 42px; }
+  .page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .page-intro h2 { color: #123B70; font-size: clamp(22px,4vw,31px); margin-bottom: 3px; }
+  .page-intro p { color: #718096; font-size: 13px; }
+  .section-title { color: #123B70; font-size: 16px; font-weight: 800; margin: 4px 0 11px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { position: relative; overflow: hidden; background: #FFFFFF; border-radius: 18px; padding: 19px; border: 1px solid #DCEBFA; box-shadow: 0 6px 20px rgba(25,118,210,.06); text-align: start; }
+  .stat-card::after { content:''; position:absolute; inset-inline-end:-26px; top:-26px; width:78px; height:78px; border-radius:50%; background:#EAF4FF; }
+  .stat-card .number { position:relative; z-index:1; font-size: 31px; line-height: 1.2; font-weight: 900; color: #1976D2; }
+  .stat-card .label { font-size: 13px; color: #123B70; font-weight: 800; margin-top: 6px; }
+  .stat-card .sub { font-size: 10.5px; color: #94A3B8; margin-top: 2px; }
+  .urgency-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin-bottom: 24px; }
+  .urgency-card { background: #FFFFFF; border-radius: 16px; padding: 16px 18px; display:flex; align-items:center; justify-content:space-between; gap:10px; border: 1px solid #DCEBFA; box-shadow: 0 5px 16px rgba(25,118,210,.05); }
+  .urgency-card.low { border-inline-start: 5px solid #22A06B; }
+  .urgency-card.medium { border-inline-start: 5px solid #F59E0B; }
+  .urgency-card.high { border-inline-start: 5px solid #EF4444; }
+  .urgency-card .num { font-size: 27px; font-weight: 900; order:2; }
+  .urgency-card.low .num { color: #178A59; }
+  .urgency-card.medium .num { color: #D97706; }
+  .urgency-card.high .num { color: #DC2626; }
+  .urgency-card .lbl { font-size: 12px; color: #40566F; font-weight: 700; }
+  .charts-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: #FFFFFF; border-radius: 18px; padding: 19px; border: 1px solid #DCEBFA; box-shadow: 0 6px 20px rgba(25,118,210,.06); }
+  .chart-card h3 { font-size: 14px; color: #123B70; margin-bottom: 15px; padding-bottom: 11px; border-bottom: 1px solid #EDF3FA; }
+  .chart-wrap { position: relative; height: 250px; }
+  .footer { text-align: center; padding: 24px; color: #94A3B8; font-size: 11px; }
+  .refresh-btn { background: #1976D2; border: 0; color: #FFFFFF; min-height: 40px; padding: 8px 16px; border-radius: 11px; cursor: pointer; font-size: 12px; font-weight: 800; box-shadow: 0 7px 16px rgba(25,118,210,.18); }
+  .refresh-btn:hover { background: #1565C0; }
+  .refresh-btn:focus-visible { outline: 3px solid rgba(25,118,210,.28); outline-offset: 3px; }
+  .last-updated { font-size: 11px; color: #718096; margin-top: 8px; text-align:center; }
+  .empty { color:#94A3B8; text-align:center; padding:18px; font-size:13px; }
+  @media (max-width: 850px) { .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .charts-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .header { align-items:flex-start; padding:12px 14px; }
+    .header-sub, .live-badge { display:none; }
+    .brand-icon { width:40px; height:40px; border-radius:12px; }
+    .container { padding:20px 12px 34px; }
+    .page-intro { align-items:flex-start; flex-direction:column; }
+    .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; }
+    .stat-card { padding:15px 13px; border-radius:15px; }
+    .stat-card .number { font-size:25px; }
+    .urgency-grid { grid-template-columns: 1fr; }
+    .chart-card { padding:15px 12px; border-radius:16px; }
+    .chart-wrap { height:230px; }
+  }
+  @media (max-width: 350px) { .stats-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Sympto<span>Sense</span> Dashboard</h1>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <span class="live-badge">🟢 LIVE</span>
+  <div class="brand-wrap">
+    <div class="brand-icon">❤️‍🩹</div>
+    <div><h1>Sympto<span>Sense</span></h1><div class="header-sub">لوحة إدارة المنصة الصحية</div></div>
+  </div>
+  <div class="header-actions">
+    <span class="live-badge">● مباشر</span>
     <button class="refresh-btn" onclick="loadAll()">🔄 تحديث</button>
   </div>
 </div>
 
 <div class="container">
 
+  <div class="page-intro">
+    <div><h2>نظرة عامة</h2><p>إحصاءات مختصرة وواضحة تساعدك على متابعة استخدام SymptoSense.</p></div>
+  </div>
+
   <!-- إحصائيات عامة -->
+  <div class="section-title">📌 المؤشرات الرئيسية</div>
   <div class="stats-grid" id="stats-grid">
     <div class="stat-card"><div class="number" id="total-visits">-</div><div class="label">إجمالي الزيارات</div><div class="sub">Total Visits</div></div>
     <div class="stat-card"><div class="number" id="unique-visitors">-</div><div class="label">مستخدمون فريدون</div><div class="sub">Unique Users</div></div>
@@ -83,6 +110,7 @@ DASHBOARD_HTML = """
   </div>
 
   <!-- مستويات الخطورة -->
+  <div class="section-title">🚦 توزيع مستويات الخطورة</div>
   <div class="urgency-grid" id="urgency-grid">
     <div class="urgency-card low"><div class="num" id="urg-low">-</div><div class="lbl">🟢 بسيط</div></div>
     <div class="urgency-card medium"><div class="num" id="urg-med">-</div><div class="lbl">🟡 يحتاج موعد</div></div>
@@ -90,6 +118,7 @@ DASHBOARD_HTML = """
   </div>
 
   <!-- الرسوم البيانية -->
+  <div class="section-title">📊 التحليلات والاتجاهات</div>
   <div class="charts-grid">
     <div class="chart-card">
       <h3>📊 أكثر الأعراض انتشاراً (آخر 7 أيام)</h3>
@@ -121,7 +150,7 @@ DASHBOARD_HTML = """
   <div class="chart-card" style="margin-bottom:28px;">
     <h3>📝 ملاحظات المستخدمين على التقييم السلبي</h3>
     <div id="feedback-comments">
-      <p style="color:#546e7a;">لا توجد ملاحظات بعد</p>
+      <p class="empty">لا توجد ملاحظات بعد</p>
     </div>
   </div>
 
@@ -129,7 +158,7 @@ DASHBOARD_HTML = """
   <div class="chart-card" style="margin-bottom:28px;">
     <h3>📉 أسباب عدم رضا إجابات المساعد</h3>
     <div id="asst-reasons">
-      <p style="color:#546e7a;">لا توجد أسباب مسجلة بعد</p>
+      <p class="empty">لا توجد أسباب مسجلة بعد</p>
     </div>
   </div>
 
@@ -167,10 +196,10 @@ async function loadAll() {
     if (symptomsChart) symptomsChart.destroy();
     symptomsChart = new Chart(document.getElementById('symptomsChart'), {
       type: 'bar',
-      data: { labels: symLabels, datasets: [{ data: symData, backgroundColor: '#00b4d8', borderRadius: 6 }] },
+      data: { labels: symLabels, datasets: [{ data: symData, backgroundColor: '#1976D2', borderRadius: 7 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#90caf9', font: { size: 11 } }, grid: { color: '#1e3a5f' } },
-                   y: { ticks: { color: '#90caf9', stepSize: 1 }, grid: { color: '#1e3a5f' } } } }
+        scales: { x: { ticks: { color: '#64748B', font: { size: 11 } }, grid: { color: '#EDF3FA' } },
+                   y: { beginAtZero:true, ticks: { color: '#64748B', stepSize: 1 }, grid: { color: '#EDF3FA' } } } }
     });
     
     // Language chart
@@ -178,9 +207,9 @@ async function loadAll() {
     langChart = new Chart(document.getElementById('langChart'), {
       type: 'doughnut',
       data: { labels: ['العربية 🇸🇦', 'English 🇺🇸'],
-              datasets: [{ data: [d.lang.ar || 0, d.lang.en || 0], backgroundColor: ['#00b4d8', '#1565c0'], borderWidth: 0 }] },
+              datasets: [{ data: [d.lang.ar || 0, d.lang.en || 0], backgroundColor: ['#1976D2', '#7BB8F0'], borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#90caf9' } } } }
+        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
     });
     
     // Urgency chart
@@ -191,7 +220,7 @@ async function loadAll() {
               datasets: [{ data: [d.urgency.low||0, d.urgency.medium||0, d.urgency.high||0],
                            backgroundColor: ['#4caf50','#ff9800','#f44336'], borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#90caf9' } } } }
+        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
     });
 
     // Age chart
@@ -199,10 +228,10 @@ async function loadAll() {
     ageChart = new Chart(document.getElementById('ageChart'), {
       type: 'bar',
       data: { labels: d.age_groups.map(a => a[0]),
-              datasets: [{ data: d.age_groups.map(a => a[1]), backgroundColor: '#1565c0', borderRadius: 6 }] },
+              datasets: [{ data: d.age_groups.map(a => a[1]), backgroundColor: '#1976D2', borderRadius: 7 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#90caf9' }, grid: { color: '#1e3a5f' } },
-                   y: { ticks: { color: '#90caf9', stepSize: 1 }, grid: { color: '#1e3a5f' } } } }
+        scales: { x: { ticks: { color: '#64748B' }, grid: { color: '#EDF3FA' } },
+                   y: { beginAtZero:true, ticks: { color: '#64748B', stepSize: 1 }, grid: { color: '#EDF3FA' } } } }
     });
 
     // Feedback chart
@@ -211,9 +240,9 @@ async function loadAll() {
       type: 'doughnut',
       data: { labels: ['ممتاز 😍', 'جيد 🙂', 'عادي 😐', 'لا 😞'],
               datasets: [{ data: [d.feedback.great||0, d.feedback.good||0, d.feedback.ok||0, d.feedback.bad||0],
-                           backgroundColor: ['#4caf50', '#00b4d8', '#ff9800', '#f44336'], borderWidth: 0 }] },
+                           backgroundColor: ['#22A06B', '#1976D2', '#F59E0B', '#EF4444'], borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#90caf9' } } } }
+        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
     });
 
     // Assistant feedback chart
@@ -224,38 +253,38 @@ async function loadAll() {
               datasets: [{ data: [af.useful||0, af.partial||0, af.not_useful||0],
                            backgroundColor: ['#4caf50', '#ff9800', '#f44336'], borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#90caf9' } } } }
+        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
     });
 
     // Assistant feedback reasons (sorted by frequency)
     const arBox = document.getElementById('asst-reasons');
     const ars = (af.reasons || []).filter(x => x.count > 0);
     if (!ars.length) {
-      arBox.innerHTML = '<p style="color:#546e7a;">لا توجد أسباب مسجلة بعد</p>';
+      arBox.innerHTML = '<p class="empty">لا توجد أسباب مسجلة بعد</p>';
     } else {
       const maxN = Math.max.apply(null, ars.map(x => x.count));
       arBox.innerHTML = ars.map(x => {
         const w = Math.round((x.count / maxN) * 100);
-        return '<div style="padding:10px 12px;margin:6px 0;background:#0d1b2a;border:1px solid #1e3a5f;border-radius:8px;">'
+        return '<div style="padding:11px 13px;margin:7px 0;background:#F8FBFF;border:1px solid #DCEBFA;border-radius:11px;">'
              + '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">'
-             + '<span style="color:#e0e0e0;font-size:14px;">' + (x.reason || '—') + '</span>'
-             + '<b style="color:#00b4d8;font-size:14px;">' + x.count + '</b></div>'
-             + '<div style="height:6px;background:#1e3a5f;border-radius:6px;">'
-             + '<div style="height:100%;width:' + w + '%;background:linear-gradient(90deg,#f44336,#ff9800);border-radius:6px;"></div></div></div>';
+             + '<span style="color:#40566F;font-size:13px;">' + (x.reason || '—') + '</span>'
+             + '<b style="color:#1976D2;font-size:14px;">' + x.count + '</b></div>'
+             + '<div style="height:6px;background:#E7EEF7;border-radius:6px;">'
+             + '<div style="height:100%;width:' + w + '%;background:linear-gradient(90deg,#EF4444,#F59E0B);border-radius:6px;"></div></div></div>';
       }).join('');
     }
 
     // Feedback comments
     const fbBox = document.getElementById('feedback-comments');
     if (!d.fb_comments.length) {
-      fbBox.innerHTML = '<p style="color:#546e7a;">لا توجد ملاحظات بعد</p>';
+      fbBox.innerHTML = '<p class="empty">لا توجد ملاحظات بعد</p>';
     } else {
       fbBox.innerHTML = d.fb_comments.map(c => {
         const emoji = {bad:'😞', ok:'😐', good:'🙂', great:'😍'}[c.rating] || '⭐';
         const ts = (c.timestamp || '').replace('T', ' ').slice(0, 16);
-        return '<div style="padding:10px 12px;margin:6px 0;background:#0d1b2a;border:1px solid #1e3a5f;border-radius:8px;">'
-             + '<div style="color:#90caf9;font-size:12px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
-             + '<div style="color:#e0e0e0;font-size:14px;">' + (c.comment || '') + '</div></div>';
+        return '<div style="padding:11px 13px;margin:7px 0;background:#F8FBFF;border:1px solid #DCEBFA;border-radius:11px;">'
+             + '<div style="color:#718096;font-size:11px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
+             + '<div style="color:#40566F;font-size:13px;">' + (c.comment || '') + '</div></div>';
       }).join('');
     }
 
