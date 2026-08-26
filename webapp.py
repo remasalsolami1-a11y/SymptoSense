@@ -782,7 +782,7 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
 .auth-only.is-locked { display: none !important; }
 
 /* Responsive safety net shared by every page. */
-@media (max-width: 1340px) {
+@media (max-width: 1500px) {
   .nav { display: none; }
   .ss-mobile-head { display: flex; }
   .ss-bnav { display: flex; justify-content: space-evenly; align-items: center; }
@@ -1015,7 +1015,7 @@ __GSC_TAG__
 .pwa-install button { border: 0; border-radius: 10px; padding: 9px 12px; min-height: 40px; font-family: inherit; font-weight: 800; cursor: pointer; }
 .pwa-install .pwa-primary { background: #1976D2; color: #fff; }
 .pwa-install .pwa-later { background: #EAF4FF; color: #123B70; }
-@media (min-width: 1341px) { .pwa-install { bottom: 20px; } }
+@media (min-width: 1501px) { .pwa-install { bottom: 20px; } }
 @media (max-width: 480px) { .pwa-install { align-items: flex-start; } .pwa-install-actions { flex-direction: column; } }
 </style>
 </head>
@@ -1965,9 +1965,9 @@ L = {
         "about_us_p4": "أؤمن أن أعظم أثر للتقنية هو أن تجعل حياة الإنسان أبسط، ووعيه أكبر، وقراراته أذكى.",
         "about_us_name": "ريماس حميد السلمي",
         "about_us_role": "طالبة علوم البيانات وتحليلها ومؤسسة SymptoSense",
-        "about_us_contact": "للتواصل: Telegram —",
-        "about_us_img1_alt": "طالبة علوم بيانات تعمل على بناء حل تقني صحي",
-        "about_us_img2_alt": "قلب من البيانات بين يدين يرمز إلى التقنية القريبة من الإنسان",
+        "about_us_contact": "للتواصل:",
+        "about_us_img1_alt": "هاتف ذكي تحيط به رموز صحية يعبّر عن فهم الأعراض والعناية بالصحة",
+        "about_us_img2_alt": "تصميم صحي تقني يرمز إلى SymptoSense",
         "ab_p1": "SymptoSense مساعد صحي توعوي يعتمد على الذكاء الاصطناعي لمساعدتك في فهم أعراضك والحصول على تقييم أولي مبني على مصادر طبية موثوقة (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "يوفّر الموقع: تحليل الأعراض مع تقييم الخطورة، تحذيرات الأدوية وتفاعلاتها، أقرب المستشفيات بناءً على موقعك، تحليل فحوصات الدم، الإسعافات الأولية، ونصائح صحية يومية.",
         "ab_p3": "يتم التحليل عبر نموذج ذكاء اصطناعي (Llama عبر Groq) مع طبقة تحقق بالقواعد ونموذج تعلم آلي لتقدير الاحتمالات — وكل ذلك كأداة توعية مساعدة.",
@@ -2364,9 +2364,9 @@ L = {
         "about_us_p4": "I believe technology has its greatest impact when it makes people's lives simpler, their awareness greater, and their decisions smarter.",
         "about_us_name": "Remas Hameed Al-Sulami",
         "about_us_role": "Data Science and Analytics student and founder of SymptoSense",
-        "about_us_contact": "Contact: Telegram —",
-        "about_us_img1_alt": "A data science student building a digital health solution",
-        "about_us_img2_alt": "A data heart held by human hands, symbolizing human-centered technology",
+        "about_us_contact": "Contact:",
+        "about_us_img1_alt": "A smartphone surrounded by health symbols representing symptom understanding and health awareness",
+        "about_us_img2_alt": "A digital health illustration representing SymptoSense",
         "ab_p1": "SymptoSense is an AI-powered health awareness assistant that helps you understand your symptoms and get an initial assessment based on trusted medical sources (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "The site provides: symptom analysis with urgency assessment, medication warnings and interactions, nearest hospitals based on your location, blood test analysis, first aid, and daily health tips.",
         "ab_p3": "Analysis runs through an AI model (Llama via Groq) with a rule-based verification layer and a machine-learning model for probabilities — all as a supportive awareness tool.",
@@ -2658,9 +2658,8 @@ def _nav():
              '<a href="/chat">%s</a>'
              '<a href="/emergency#geo">%s</a>'
              '<a href="/about-us">%s</a>'
-             '<a href="/about">%s</a>'
              '</div></div>') % (_t("nav_explore"), _t("nav_search"), _t("nav_tips"), _t("nav_q"), _t("nav_geo"),
-                                 _t("nav_about"), _t("nav_aware"))
+                                 _t("nav_about"))
     html += '</div>'
     html += '<div style="display:flex;align-items:center;gap:8px;">'
     if user:
@@ -2691,9 +2690,9 @@ def _nav():
         )
     else:
         html += '<a href="/login" class="dd-btn" style="text-decoration:none;">%s</a>' % _t("nav_login")
-    html += ('<div class="lang-sw"><a href="#" onclick="setLang(&#39;ar&#39;);return false;" class="%s">العربية</a>'
-             '<a href="#" onclick="setLang(&#39;en&#39;);return false;" class="%s">English (UK)</a></div>' %
-             ("on" if lang == "ar" else "", "on" if lang == "en" else ""))
+    lang_picker_href = "/?choose=1&amp;next=" + escape(path)
+    desktop_lang_label = "🌐 اختيار اللغة" if lang == "ar" else "🌐 Choose language"
+    html += '<div class="lang-sw"><a href="%s" class="on">%s</a></div>' % (lang_picker_href, desktop_lang_label)
     html += '</div></nav>'
     if user:
         short_name = (user.get("name") or ("ملفي" if lang == "ar" else "Profile")).strip().split()[0]
@@ -2704,18 +2703,17 @@ def _nav():
         mobile_account_label = "دخول" if lang == "ar" else "Sign in"
         mobile_account_href = "/login?next=/profile"
         mobile_account_aria = "تسجيل الدخول" if lang == "ar" else "Sign in"
-    other_lang = "en" if lang == "ar" else "ar"
-    lang_label = "EN" if lang == "ar" else "AR"
-    lang_aria = "Switch to English" if lang == "ar" else "التبديل إلى العربية"
+    lang_label = "اللغة" if lang == "ar" else "Language"
+    lang_aria = "اختيار لغة الموقع" if lang == "ar" else "Choose site language"
     html += (
         '<header class="ss-mobile-head">'
         '<a href="/home" class="ss-mobile-logo" dir="ltr" aria-label="SymptoSense home">'
         '<span aria-hidden="true">🩺</span><b>Sympto<span>Sense</span></b></a>'
         '<div class="ss-mobile-actions">'
-        '<button type="button" class="ss-mobile-lang" onclick="setLang(\'%s\')" aria-label="%s">%s</button>'
+        '<a class="ss-mobile-lang" href="%s" aria-label="%s"><span aria-hidden="true">🌐</span><span>%s</span></a>'
         '<a class="ss-mobile-account" href="%s" aria-label="%s"><span aria-hidden="true">👤</span><span>%s</span></a>'
         '</div></header>'
-    ) % (other_lang, lang_aria, lang_label, mobile_account_href, mobile_account_aria, mobile_account_label)
+    ) % (lang_picker_href, lang_aria, lang_label, mobile_account_href, mobile_account_aria, mobile_account_label)
     return html
 
 
@@ -3237,47 +3235,35 @@ def _tools_html(t):
 
 
 ABOUT_US_CSS = """
-.about-us-page { display: grid; gap: clamp(18px, 3vw, 28px); }
-.about-us-hero { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(430px, 60vw, 610px); display: flex; align-items: center; padding: clamp(24px, 6vw, 64px); border: 1px solid #C8E3FA; border-radius: 30px; box-shadow: 0 24px 62px rgba(18,59,112,.17); }
-.about-us-hero::before { content: ''; position: absolute; inset: 0; z-index: -2; background: url('/icons/about-us-concept-v3.webp') center / cover no-repeat; }
-[dir='rtl'] .about-us-hero::before { transform: scaleX(-1); }
-.about-us-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(247,252,255,.99) 0%, rgba(247,252,255,.96) 42%, rgba(247,252,255,.58) 70%, rgba(247,252,255,.14) 100%); }
-[dir='rtl'] .about-us-hero::after { background: linear-gradient(270deg, rgba(247,252,255,.99) 0%, rgba(247,252,255,.96) 42%, rgba(247,252,255,.58) 70%, rgba(247,252,255,.14) 100%); }
-.au-hero-copy { width: min(660px, 68%); }
-.au-kicker { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 7px 14px; border: 1px solid #A9D4F6; border-radius: 999px; background: rgba(255,255,255,.78); color: var(--primary-dark); font-size: 13px; font-weight: 900; box-shadow: 0 8px 22px rgba(25,118,210,.08); }
-.au-kicker-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 5px rgba(25,118,210,.13); }
-.au-hero-copy h1 { margin: 0; color: var(--primary-dark); font-size: clamp(34px, 6vw, 58px); line-height: 1.25; }
-.au-question { max-width: 620px; margin: 18px 0 0; color: #1E4D80; font-size: clamp(19px, 2.7vw, 27px); font-weight: 800; line-height: 1.8; }
-.au-story-shell { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .55fr); gap: 20px; align-items: stretch; }
-.au-story { position: relative; overflow: hidden; padding: clamp(23px, 4vw, 38px); border: 1px solid var(--border-card); border-radius: 24px; background: #fff; box-shadow: var(--shadow-soft); }
-.au-story::after { content: ''; position: absolute; width: 180px; height: 180px; inset-inline-end: -95px; bottom: -115px; border-radius: 50%; background: var(--primary-light); opacity: .75; }
-.au-story p { position: relative; z-index: 1; color: var(--text-body); font-size: clamp(15px, 1.8vw, 17px); line-height: 2.05; margin-bottom: 18px; }
-.au-story p:last-child { margin-bottom: 0; }
-.au-belief { padding: 17px 18px; border-inline-start: 4px solid var(--primary); border-radius: 14px; background: var(--primary-light); color: var(--primary-dark) !important; font-weight: 900; }
-.au-founder { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 4vw, 34px); border: 1px solid #A9D4F6; border-radius: 24px; background: linear-gradient(160deg, #123B70 0%, #1559A5 54%, #1976D2 100%); color: #fff; box-shadow: 0 18px 40px rgba(18,59,112,.2); }
-.au-founder-mark { width: 72px; height: 72px; display: grid; place-items: center; margin-bottom: 18px; border: 1px solid rgba(255,255,255,.35); border-radius: 22px; background: rgba(255,255,255,.12); color: #fff; font-size: 31px; font-weight: 900; backdrop-filter: blur(8px); }
-.au-founder h2 { margin: 0; color: #fff; font-size: clamp(20px, 2.5vw, 24px); line-height: 1.55; }
-.au-role { margin: 8px 0 23px; color: #E8F3FF; font-size: 14px; line-height: 1.8; }
-.au-contact { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 15px; border: 1px solid rgba(255,255,255,.55); border-radius: 14px; background: #fff; color: var(--primary-dark); font-size: 13px; font-weight: 800; transition: transform .18s ease, box-shadow .18s ease; }
-.au-contact b { color: var(--primary); font-size: 15px; white-space: nowrap; }
-.au-contact:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(6,34,75,.22); }
+.about-us-page { width: min(1040px, 100%); margin: 0 auto; }
+.au-page-title { margin: 2px 0 18px; color: var(--primary-dark); font-size: clamp(31px, 5vw, 46px); line-height: 1.35; text-align: center; }
+.au-card { display: grid; grid-template-columns: minmax(290px, .72fr) minmax(0, 1.28fr); overflow: hidden; border: 1px solid var(--border-card); border-radius: 26px; background: #fff; box-shadow: 0 18px 46px rgba(18,59,112,.12); }
+.au-visual { display: flex; align-items: stretch; justify-content: center; background: #EDF6FF; border-inline-end: 1px solid var(--border-card); }
+.au-visual img { width: 100%; height: 100%; min-height: 610px; display: block; object-fit: cover; object-position: center; }
+.au-copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(26px, 4.5vw, 48px); }
+.au-copy p { color: var(--text-body); font-size: clamp(15px, 1.55vw, 17px); line-height: 2; margin: 0 0 17px; }
+.au-copy .au-opening { padding: 15px 17px; border-inline-start: 4px solid var(--primary); border-radius: 13px; background: var(--primary-light); color: var(--primary-dark); font-size: clamp(17px, 2vw, 21px); font-weight: 900; line-height: 1.9; }
+.au-copy .au-belief { margin-bottom: 21px; color: var(--primary-dark); font-weight: 800; }
+.au-signoff { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-card); }
+.au-name { display: block; color: var(--primary-dark); font-size: 19px; font-weight: 900; line-height: 1.6; }
+.au-role { display: block; margin: 2px 0 14px; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+.au-contact { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; padding: 10px 16px; border: 1px solid var(--primary-pale); border-radius: 13px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 8px 20px rgba(25,118,210,.16); transition: transform .16s ease, background .16s ease; }
+.au-contact span[dir='ltr'] { direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+.au-contact:hover { background: var(--primary-hover); transform: translateY(-2px); }
 @media (max-width: 820px) {
-  .about-us-hero { min-height: 500px; align-items: flex-end; }
-  .about-us-hero::before, [dir='rtl'] .about-us-hero::before { transform: none; background-position: 64% center; }
-  .about-us-hero::after, [dir='rtl'] .about-us-hero::after { background: linear-gradient(180deg, rgba(247,252,255,.16) 0%, rgba(247,252,255,.78) 42%, rgba(247,252,255,.99) 72%, #F7FCFF 100%); }
-  .au-hero-copy { width: 100%; }
-  .au-story-shell { grid-template-columns: 1fr; }
+  .au-card { grid-template-columns: 1fr; }
+  .au-visual { border-inline-end: 0; border-bottom: 1px solid var(--border-card); }
+  .au-visual img { width: min(100%, 520px); height: auto; min-height: 0; max-height: 430px; object-fit: contain; }
+  .au-copy { justify-content: flex-start; }
 }
 @media (max-width: 520px) {
-  .about-us-page { gap: 15px; }
-  .about-us-hero { min-height: 470px; padding: 24px 18px; border-radius: 22px; }
-  .about-us-hero::before, [dir='rtl'] .about-us-hero::before { background-position: 66% center; }
-  .au-hero-copy h1 { font-size: 34px; }
-  .au-question { font-size: 18px; line-height: 1.75; }
-  .au-story, .au-founder { padding: 21px 17px; border-radius: 19px; }
-  .au-story p { font-size: 15px; line-height: 1.95; }
-  .au-founder-mark { width: 62px; height: 62px; border-radius: 19px; }
-  .au-contact { width: 100%; flex-wrap: wrap; }
+  .au-page-title { margin-bottom: 13px; font-size: 31px; }
+  .au-card { border-radius: 19px; }
+  .au-visual img { max-height: none; }
+  .au-copy { padding: 21px 17px 23px; }
+  .au-copy p { font-size: 14.5px; line-height: 1.9; margin-bottom: 14px; }
+  .au-copy .au-opening { padding: 13px 14px; font-size: 17px; line-height: 1.8; }
+  .au-contact { width: 100%; padding-inline: 10px; font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .au-contact { transition: none; }
@@ -3288,34 +3274,30 @@ ABOUT_US_CSS = """
 def about_us_page():
     t = _t
     body = """
-    <main class="about-us-page">
-      <section class="about-us-hero" aria-labelledby="aboutUsTitle">
-        <div class="au-hero-copy">
-          <span class="au-kicker"><span class="au-kicker-dot" aria-hidden="true"></span>%s</span>
-          <h1 id="aboutUsTitle">%s</h1>
-          <p class="au-question">%s</p>
-        </div>
-      </section>
-
-      <section class="au-story-shell" aria-label="%s">
-        <article class="au-story">
+    <main class="about-us-page" aria-labelledby="aboutUsTitle">
+      <h1 class="au-page-title" id="aboutUsTitle">%s</h1>
+      <section class="au-card">
+        <figure class="au-visual">
+          <img src="/icons/about-us-phone.webp" alt="%s" width="621" height="677" loading="eager">
+        </figure>
+        <article class="au-copy">
+          <p class="au-opening">%s</p>
           <p>%s</p>
           <p>%s</p>
           <p class="au-belief">%s</p>
+          <footer class="au-signoff">
+            <strong class="au-name">%s</strong>
+            <span class="au-role">%s</span>
+            <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
+              <span>📩 %s</span><span dir="ltr">https://t.me/rms_2o</span>
+            </a>
+          </footer>
         </article>
-        <aside class="au-founder">
-          <div class="au-founder-mark" aria-hidden="true">ر</div>
-          <h2>%s</h2>
-          <p class="au-role">%s</p>
-          <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
-            <span>📩 %s</span><b dir="ltr">@rms_2o</b>
-          </a>
-        </aside>
       </section>
     </main>
     """ % (
-        t("about_us_kicker"), t("about_us_title"), t("about_us_p1"),
-        t("about_us_title"), t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
+        t("about_us_title"), t("about_us_img1_alt"), t("about_us_p1"),
+        t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
         t("about_us_name"), t("about_us_role"), t("about_us_contact"),
     )
     return _page(_t("title_about_us"), body, desc=t("about_us_p1"), extra_css=ABOUT_US_CSS)
