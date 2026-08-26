@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
 from functools import wraps
-from flask import Flask, request, jsonify, render_template_string, session, send_file, Response, redirect, url_for
+from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for
 
 import db
 import ml_diagnosis
@@ -33,6 +33,7 @@ from dashboard import DASHBOARD_HTML
 app = Flask(__name__)
 app.secret_key = os.environ.get("WEB_SECRET", "symptosense-dev-secret-change-me")
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
@@ -45,6 +46,10 @@ img, svg, video, iframe, canvas { max-width: 100%; height: auto; }
 table { max-width: 100%; }
 h1, h2, h3, h4, p, span, a, button, label { overflow-wrap: break-word; word-break: break-word; }
 button, input, select, textarea { max-width: 100%; font-family: inherit; }
+html { scroll-behavior: smooth; }
+body { min-height: 100vh; min-height: 100dvh; line-height: 1.65; text-rendering: optimizeLegibility; }
+button, .btn, .opt, .fam-chip, .mini-btn, .ss-bnav a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid rgba(25,118,210,.35); outline-offset: 3px; }
 .nav { background: #FFFFFF; color: #123B70; display: flex; align-items: center; justify-content: space-between; padding: 15px 26px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 14px rgba(25,118,210,.05); flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #DCEBFA; }
 .nav .logo { font-size: 22px; font-weight: 800; letter-spacing: .3px; color: #123B70; display: flex; align-items: center; gap: 6px; }
 .nav .logo span { color: #1976D2; }
@@ -699,6 +704,62 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
 .ss-modal .ss-modal-btn.secondary { background: var(--primary-light); color: var(--text-body); border: 1px solid var(--border-card); }
 .ss-modal .ss-modal-btn.secondary:hover { background: #E2E8F0; }
 .ss-modal .ss-modal-btn.tertiary { background: transparent; color: var(--text-muted); }
+/* Account gate used for private, cross-device features. */
+.auth-gate-card { border: 1.5px solid var(--border-card); border-radius: 20px; padding: clamp(22px, 4vw, 34px); text-align: center; background: linear-gradient(145deg, var(--primary-light), var(--bg-card)); box-shadow: var(--shadow-card); }
+.auth-gate-card .gate-icon { width: 64px; height: 64px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 18px; background: var(--bg-card); font-size: 30px; box-shadow: 0 8px 22px rgba(25,118,210,.12); }
+.auth-gate-card h3 { color: var(--primary-dark); font-size: clamp(18px, 3vw, 22px); margin-bottom: 6px; }
+.auth-gate-card p { color: var(--text-body); font-size: 14px; line-height: 1.8; max-width: 540px; margin: 0 auto; }
+.auth-gate-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.auth-gate-actions a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 11px 22px; border-radius: 12px; font-weight: 800; }
+.auth-gate-actions .gate-login { background: var(--primary); color: #fff; }
+.auth-gate-actions .gate-register { background: var(--bg-card); color: var(--primary); border: 1.5px solid var(--primary); }
+.auth-only.is-locked { display: none !important; }
+
+/* Responsive safety net shared by every page. */
+@media (max-width: 1024px) {
+  .nav { padding: 12px 16px; }
+  .nav .links a { padding: 8px 10px; font-size: 13.5px; }
+}
+@media (max-width: 900px) {
+  .nav { display: none; }
+  .ss-bnav { display: flex; justify-content: space-around; align-items: center; }
+  .container { padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 28px); }
+  .asst-fab { bottom: calc(var(--bnav-h) + var(--safe-bottom) + 12px); left: 12px; width: 54px; height: 54px; padding: 0; justify-content: center; }
+  [dir="rtl"] .asst-fab { left: 12px; right: auto; }
+  .asst-fab .asst-fab-lb { display: none; }
+  .asst-panel { left: 12px; right: 12px; bottom: calc(var(--bnav-h) + var(--safe-bottom) + 76px); width: auto; height: min(72dvh, 600px); }
+  [dir="rtl"] .asst-panel { left: 12px; right: 12px; }
+}
+@media (max-width: 640px) {
+  .container { padding: 14px 12px; padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 24px); }
+  .card, .ss-profile-card, .fam-form { padding: 16px; border-radius: 16px; margin-bottom: 14px; }
+  .hero { padding: 30px 18px; border-radius: 18px; }
+  .hero h1 { font-size: clamp(27px, 9vw, 34px); }
+  .grid2, .ss-grid2, .pr-grid { grid-template-columns: 1fr; gap: 10px; }
+  input.inp, select.inp, textarea.inp, .card input, .card select, .auth-card .auth-field input { min-height: 48px; font-size: 16px; }
+  .btn, .ss-btn-primary, .ss-btn-danger { min-height: 46px; }
+  .ss-btn-row > .btn, .ss-btn-row > .ss-btn-primary, .ss-btn-row > .ss-btn-danger { flex: 1 1 100%; justify-content: center; text-align: center; }
+  .drop { padding: 26px 14px; }
+  table.tbl { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  .chat-wrap { height: calc(100dvh - var(--bnav-h) - var(--safe-bottom) - 28px); border-radius: 16px; }
+  .chat-body { padding: 12px; }
+  .bubble { max-width: 94%; font-size: 14px; }
+  .chat-input { padding: 10px; }
+  .chat-input input { min-height: 46px; font-size: 16px; }
+  .auth-wrap { min-height: auto; padding: 10px 0 24px; }
+  .auth-card { padding: 28px 18px; border-radius: 18px; }
+  .footer { padding: 30px 16px calc(var(--bnav-h) + var(--safe-bottom) + 20px); }
+  .auth-gate-actions a { flex: 1 1 150px; }
+}
+@media (max-width: 360px) {
+  .container { padding-inline: 10px; }
+  .quick-grid, .care-grid, .tools-grid { grid-template-columns: 1fr !important; }
+  .ss-bnav a { min-width: 48px; font-size: 9px; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .chat-wrap { height: calc(100dvh - 16px); }
+  .asst-panel { height: calc(100dvh - var(--bnav-h) - 32px); }
+}
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   .auth-card, .ss-modal, .ss-profile-card { animation: none !important; transition: none !important; }
@@ -711,6 +772,13 @@ PAGE_FRAME = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SymptoSense">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -832,9 +900,27 @@ __GSC_TAG__
 .asst-reasons { display: flex; flex-direction: column; gap: 8px; }
 .asst-reason { border: 1px solid var(--border-card); background: var(--primary-light); border-radius: 12px; padding: 11px 14px; font-size: 14px; cursor: pointer; font-family: inherit; text-align: start; color: var(--text-body); }
 .asst-reason:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.pwa-install { position: fixed; z-index: 1300; left: 50%; bottom: calc(var(--bnav-h) + var(--safe-bottom) + 14px); transform: translateX(-50%); width: min(520px, calc(100vw - 24px)); display: none; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: #fff; color: #123B70; border: 1px solid #DCEBFA; box-shadow: 0 18px 48px rgba(18,59,112,.22); }
+.pwa-install.show { display: flex; }
+.pwa-install-icon { width: 48px; height: 48px; border-radius: 13px; flex: 0 0 auto; }
+.pwa-install-copy { flex: 1; font-size: 13px; line-height: 1.6; font-weight: 700; }
+.pwa-install-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.pwa-install button { border: 0; border-radius: 10px; padding: 9px 12px; min-height: 40px; font-family: inherit; font-weight: 800; cursor: pointer; }
+.pwa-install .pwa-primary { background: #1976D2; color: #fff; }
+.pwa-install .pwa-later { background: #EAF4FF; color: #123B70; }
+@media (min-width: 769px) { .pwa-install { bottom: 20px; } }
+@media (max-width: 480px) { .pwa-install { align-items: flex-start; } .pwa-install-actions { flex-direction: column; } }
 </style>
 </head>
 <body>
+<div class="pwa-install" id="pwaInstall" role="dialog" aria-live="polite" aria-label="Install SymptoSense">
+  <img class="pwa-install-icon" src="/icons/icon-192.png" alt="">
+  <div class="pwa-install-copy" id="pwaInstallText"></div>
+  <div class="pwa-install-actions">
+    <button class="pwa-primary" id="pwaInstallBtn" type="button" onclick="pwaInstallNow()"></button>
+    <button class="pwa-later" id="pwaLaterBtn" type="button" onclick="pwaDismiss()"></button>
+  </div>
+</div>
 <script>
 function setLang(l) {
   document.cookie = 'lang=' + l + ';path=/;max-age=31536000;SameSite=Lax';
@@ -1448,6 +1534,77 @@ function smartCtxAction(action) {
   smartCtxCallback = null;
 }
 </script>
+<script>
+(function () {
+  var deferredPrompt = null;
+  var box = document.getElementById('pwaInstall');
+  var text = document.getElementById('pwaInstallText');
+  var installBtn = document.getElementById('pwaInstallBtn');
+  var laterBtn = document.getElementById('pwaLaterBtn');
+  var isArabic = document.documentElement.lang === 'ar';
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function recentlyDismissed() {
+    try {
+      var value = Number(localStorage.getItem('ss_pwa_dismissed') || 0);
+      return value && (Date.now() - value < 7 * 24 * 60 * 60 * 1000);
+    } catch (e) { return false; }
+  }
+  function show(mode) {
+    if (!box || isStandalone() || recentlyDismissed()) return;
+    box.dataset.mode = mode;
+    if (mode === 'ios') {
+      text.textContent = isArabic
+        ? 'لتثبيت SymptoSense: اضغطي مشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».'
+        : 'To install SymptoSense, tap Share ⬆️ then “Add to Home Screen”.';
+      installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
+    } else {
+      text.textContent = isArabic
+        ? 'ثبّتي SymptoSense كتطبيق على جهازك للوصول إليه بسرعة.'
+        : 'Install SymptoSense on your device for quick access.';
+      installBtn.textContent = isArabic ? 'تثبيت' : 'Install';
+    }
+    laterBtn.textContent = isArabic ? 'لاحقًا' : 'Later';
+    box.classList.add('show');
+  }
+
+  window.pwaDismiss = function () {
+    if (box) box.classList.remove('show');
+    try { localStorage.setItem('ss_pwa_dismissed', String(Date.now())); } catch (e) {}
+  };
+  window.pwaInstallNow = async function () {
+    if (box && box.dataset.mode === 'ios') {
+      box.classList.remove('show');
+      return;
+    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (e) {}
+    deferredPrompt = null;
+    if (box) box.classList.remove('show');
+  };
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' }).catch(function () {});
+    });
+  }
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    deferredPrompt = event;
+    show('native');
+  });
+  window.addEventListener('appinstalled', function () {
+    if (box) box.classList.remove('show');
+  });
+  window.addEventListener('load', function () {
+    var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isiOS && !isStandalone()) window.setTimeout(function () { show('ios'); }, 1200);
+  });
+})();
+</script>
 </body>
 </html>
 """
@@ -1462,6 +1619,12 @@ def _user_id():
 def _ss_user_id():
     """Get the logged-in SymptoSense user ID from session, or None."""
     return session.get("ss_user_id")
+
+
+def _data_user_id():
+    """Stable owner key for health records; falls back to the browser session for public use."""
+    account_id = _ss_user_id()
+    return "account-%s" % account_id if account_id else _user_id()
 
 
 def _ss_user():
@@ -1493,9 +1656,33 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not _ss_user_id():
-            return redirect("/login?next=" + request.path)
+            next_url = request.full_path.rstrip("?")
+            return redirect(url_for("login", next=next_url))
         return f(*args, **kwargs)
     return decorated
+
+
+def api_login_required(f):
+    """JSON-friendly login guard for private family and medication APIs."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not _ss_user_id():
+            destination = "/family" if request.path.startswith("/api/family") else "/meds"
+            return jsonify({
+                "ok": False,
+                "error": "login_required",
+                "login_url": url_for("login", next=destination),
+            }), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+def _safe_next_url(default="/home"):
+    """Accept only local redirects after login or registration."""
+    target = (request.args.get("next") or default).strip()
+    if not target.startswith("/") or target.startswith("//"):
+        return default
+    return target
 
 
 def _site_url():
@@ -5686,6 +5873,8 @@ def blood_page():
 # ---------------------------------------------------------------- meds
 def meds_page():
     t = CT["en" if _lang() == "en" else "ar"]
+    logged_in = bool(_ss_user_id())
+    ar = _lang() == "ar"
     body = """
     <div class="card">
       <h2>__MH__</h2>
@@ -5699,7 +5888,16 @@ def meds_page():
         <div id="medRes" style="margin-top:16px;"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:16px;">
+    <div class="auth-gate-card" style="__GATE_STYLE__">
+      <div class="gate-icon">🔐</div>
+      <h3>__GATE_TITLE__</h3>
+      <p>__GATE_TEXT__</p>
+      <div class="auth-gate-actions">
+        <a class="gate-login" href="/login?next=/meds">__GATE_LOGIN__</a>
+        <a class="gate-register" href="/register?next=/meds">__GATE_REGISTER__</a>
+      </div>
+    </div>
+    <div class="card auth-only __AUTH_ONLY__" style="margin-top:16px;">
       <h2>__RH__</h2>
       <p class="muted">__RSUB__</p>
       <label class="lbl">__FAMPERSON__</label>
@@ -5721,7 +5919,7 @@ def meds_page():
         </div>
       </div>
     </div>
-    <div class="card" style="margin-top:16px;">
+    <div class="card auth-only __AUTH_ONLY__" style="margin-top:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <b style="color:#134E4A;">__WADH__</b>
         <b style="color:#1976D2;" id="adhVal">—</b>
@@ -5732,6 +5930,7 @@ def meds_page():
     <div class="warn" style="margin-top:16px;">__MWARN2__</div>
     <script>
     const T = __PT__;
+    const LOGGED_IN = __LOGGED_IN__;
     function TT(k) { return T[k] || k; }
     function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
     const EMO = {'me':'👤','mother':'👩','father':'👨','daughter':'👧','son':'👦','grandparent':'👵','other':'🧑'};
@@ -5810,6 +6009,7 @@ def meds_page():
         '</div>';
     }
     function addReminder() {
+      if (!LOGGED_IN) { location.href = '/login?next=/meds'; return; }
       const name = document.getElementById('remName').value.trim();
       const tval = document.getElementById('remTimes').value.trim();
       const box = document.getElementById('remMsg');
@@ -5820,6 +6020,7 @@ def meds_page():
         member_id: selMember, med_name: name, dose: document.getElementById('pDose').value.trim(),
         times: times, days: document.getElementById('pDays').value || null
       })}).then(r=>r.json()).then(d=>{
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/meds'; return; }
         if (!d.ok) { box.textContent = TT('fam_err') + (d.error||''); box.style.color='#B91C1C'; return; }
         box.textContent = TT('saved'); box.style.color = '#1976D2';
         document.getElementById('remName').value=''; document.getElementById('remTimes').value=''; document.getElementById('pDose').value=''; document.getElementById('pDays').value='';
@@ -5850,10 +6051,12 @@ def meds_page():
         });
       }).catch(()=>{});
     }
-    setInterval(checkTimes, 30000);
-    loadMemb();
-    loadPlans();
-    loadAdh();
+    if (LOGGED_IN) {
+      setInterval(checkTimes, 30000);
+      loadMemb();
+      loadPlans();
+      loadAdh();
+    }
     </script>
     """
     repl = [
@@ -5870,6 +6073,13 @@ def meds_page():
     ]
     for k, v in repl:
         body = body.replace(k, v)
+    body = body.replace("__LOGGED_IN__", "true" if logged_in else "false")
+    body = body.replace("__AUTH_ONLY__", "" if logged_in else "is-locked")
+    body = body.replace("__GATE_STYLE__", "display:none;" if logged_in else "")
+    body = body.replace("__GATE_TITLE__", "تسجيل الدخول مطلوب للتذكيرات" if ar else "Sign in to use reminders")
+    body = body.replace("__GATE_TEXT__", "يمكنك البحث عن الأدوية بدون حساب. ولحفظ التذكيرات وربطها بملفات العائلة والوصول إليها من أي جهاز، سجّلي الدخول أولًا." if ar else "Medication search is available without an account. Sign in to save reminders, connect family profiles, and access them on any device.")
+    body = body.replace("__GATE_LOGIN__", "تسجيل الدخول" if ar else "Sign in")
+    body = body.replace("__GATE_REGISTER__", "إنشاء حساب" if ar else "Create account")
     return _page(_t("title_meds"), body, extra_css=FAM_CSS)
 
 
@@ -5965,6 +6175,7 @@ def family_page():
     function pickRel(r) { rel = r; renderChips(); }
     function loadFam() {
       fetch('/api/family').then(r=>r.json()).then(d=>{
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
         const box = document.getElementById('famGrid');
         if (!d.ok || !d.members.length) { box.innerHTML = '<div class="muted">' + TT('fam_empty') + '</div>'; return; }
         let h = '<div class="fam-card" onclick="location.href=\\'/profile\\'"><div class="fam-av">👤</div><div class="fam-name">' + TT('me_short') + '</div><div class="fam-meta">' + TT('fam_rel_me') + '</div></div>';
@@ -5992,6 +6203,7 @@ def family_page():
         medications: document.getElementById('fMeds').value.trim(),
         allergies: document.getElementById('fAll').value.trim()
       })}).then(r=>r.json()).then(d=>{
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
         if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
         msg.textContent = TT('fam_saved'); msg.style.color = '#1976D2';
         ['fName','fAge','fCond','fMeds','fAll'].forEach(i=>document.getElementById(i).value='');
@@ -6020,7 +6232,7 @@ def family_page():
 def family_detail_page(mid):
     ar = _lang() == "ar"
     t = CT["en" if _lang() == "en" else "ar"]
-    uid = _user_id()
+    uid = _data_user_id()
     member = db.get_member(uid, mid) if mid else None
     if not member:
         body = ('<div class="card" style="max-width:520px;margin:40px auto;text-align:center;">'
@@ -7117,7 +7329,7 @@ def profile_page():
     # Get recent analyses
     recent_records = []
     try:
-        uid_for_records = _user_id()
+        uid_for_records = _data_user_id()
         records = db.get_records(uid_for_records, limit=5) if hasattr(db, 'get_records') else []
         if records:
             recent_records = records[:5]
@@ -7421,7 +7633,7 @@ def profile_page():
 def history_page():
     db.init_db()
     t = L["en" if _lang() == "en" else "ar"]
-    rows = db.get_records(_user_id(), limit=25)
+    rows = db.get_records(_data_user_id(), limit=25)
     if not rows:
         body = """
         <div class="card" style="max-width:640px;margin:0 auto;text-align:center;">
@@ -7552,6 +7764,39 @@ def _pdf_report(record, lang):
     return buf
 
 
+# ---------------------------------------------------------------- PWA files
+@app.route("/manifest.webmanifest")
+def pwa_manifest():
+    response = send_from_directory(BASE_DIR, "manifest.webmanifest", mimetype="application/manifest+json")
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@app.route("/service-worker.js")
+def pwa_service_worker():
+    response = send_from_directory(BASE_DIR, "service-worker.js", mimetype="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
+
+
+@app.route("/icons/<path:filename>")
+def pwa_icon(filename):
+    response = send_from_directory(os.path.join(BASE_DIR, "icons"), filename)
+    response.headers["Cache-Control"] = "public, max-age=2592000"
+    return response
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(BASE_DIR, "favicon.ico", mimetype="image/x-icon")
+
+
+@app.route("/offline")
+def offline():
+    return send_from_directory(BASE_DIR, "offline.html")
+
+
 # ---------------------------------------------------------------- routes
 @app.route("/")
 def index():
@@ -7609,11 +7854,13 @@ def checkin():
 
 
 @app.route("/family")
+@login_required
 def family():
     return family_page()
 
 
 @app.route("/family/<int:mid>")
+@login_required
 def family_detail(mid):
     return family_detail_page(mid)
 
@@ -7869,22 +8116,28 @@ def login():
     lang = _lang()
     t = L["en" if lang == "en" else "ar"]
     error = None
+    next_param = _safe_next_url("/home")
+    if next_param.startswith("/family"):
+        reason = "سجّلي الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang == "ar" else "Sign in to securely save and access family profiles on any device."
+    elif next_param.startswith("/meds"):
+        reason = "سجّلي الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang == "ar" else "Sign in to save medication reminders to your account."
+    else:
+        reason = ""
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
         if user_id:
             session["ss_user_id"] = user_id
-            next_url = request.args.get("next") or "/home"
-            return redirect(next_url)
+            return redirect(next_param)
         error = t["login_error"]
-    next_param = request.args.get("next", "")
     body = """
     <div class="auth-wrap">
       <div class="auth-card">
         <div class="auth-icon">💙</div>
         <h1>__H__</h1>
         <p class="auth-sub">__SUB__</p>
+        <div class="auth-reason" style="__REASON_STYLE__">🔐 __REASON__</div>
         <div class="auth-error __ERR_CLASS__">__ERR__</div>
         <form method="POST" action="/login?next=__NEXT__">
           <div class="auth-field">
@@ -7897,7 +8150,7 @@ def login():
           </div>
           <button type="submit" class="auth-btn">__BTN__</button>
         </form>
-        <p class="auth-link">__NOACCT__ <a href="/register">__REG__</a></p>
+        <p class="auth-link">__NOACCT__ <a href="/register?next=__NEXT__">__REG__</a></p>
       </div>
     </div>
     """
@@ -7906,7 +8159,8 @@ def login():
     body = body.replace("__EMAIL__", t["login_email"]).replace("__PASS__", t["login_pass"])
     body = body.replace("__BTN__", t["login_btn"]).replace("__NOACCT__", t["login_noaccount"])
     body = body.replace("__REG__", t["login_register"])
-    body = body.replace("__NEXT__", escape(next_param or "/home"))
+    body = body.replace("__NEXT__", escape(next_param))
+    body = body.replace("__REASON__", reason).replace("__REASON_STYLE__", "margin:0 0 16px;padding:11px 13px;border-radius:12px;background:#EAF4FF;color:#123B70;font-size:13px;font-weight:700;line-height:1.7;" if reason else "display:none;")
     if error:
         body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
     else:
@@ -7920,6 +8174,7 @@ def register():
     lang = _lang()
     t = L["en" if lang == "en" else "ar"]
     error = None
+    next_param = _safe_next_url("/profile")
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip()
@@ -7931,7 +8186,7 @@ def register():
             user_id, err = db.create_ss_user(email, name, password)
             if user_id:
                 session["ss_user_id"] = user_id
-                return redirect("/profile")
+                return redirect(next_param)
             error = t["register_error"]
     body = """
     <div class="auth-wrap">
@@ -7940,7 +8195,7 @@ def register():
         <h1>__H__</h1>
         <p class="auth-sub">__SUB__</p>
         <div class="auth-error __ERR_CLASS__">__ERR__</div>
-        <form method="POST" action="/register">
+        <form method="POST" action="/register?next=__NEXT__">
           <div class="auth-field">
             <label>__NAME__</label>
             <input type="text" name="name" required placeholder="___" autocomplete="name">
@@ -7959,7 +8214,7 @@ def register():
           </div>
           <button type="submit" class="auth-btn">__BTN__</button>
         </form>
-        <p class="auth-link">__HASACCT__ <a href="/login">__LOGIN__</a></p>
+        <p class="auth-link">__HASACCT__ <a href="/login?next=__NEXT__">__LOGIN__</a></p>
       </div>
     </div>
     """
@@ -7968,6 +8223,8 @@ def register():
     body = body.replace("__PASS__", t["register_pass"]).replace("__CONFIRM__", t["register_confirm"])
     body = body.replace("__BTN__", t["register_btn"]).replace("__HASACCT__", t["register_hasaccount"])
     body = body.replace("__LOGIN__", t["register_login"])
+    from html import escape
+    body = body.replace("__NEXT__", escape(next_param))
     if error:
         body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
     else:
@@ -8251,7 +8508,7 @@ def api_analysis_history():
     uid = _ss_user_id()
     if not uid:
         return jsonify({"ok": True, "records": [], "logged_in": False})
-    records = db.get_records(str(uid), limit=10)
+    records = db.get_records(_data_user_id(), limit=10)
     return jsonify({"ok": True, "records": records, "logged_in": True})
 
 
@@ -8417,7 +8674,7 @@ def api_blood_history():
     try:
         db.init_db()
         member_id = request.args.get("member")
-        tests = db.get_blood_tests(_user_id(), limit=8,
+        tests = db.get_blood_tests(_data_user_id(), limit=8,
                                    member_id=int(member_id) if member_id else None)
         out = []
         for bt in tests:
@@ -8435,10 +8692,11 @@ def api_blood_history():
 
 
 @app.route("/api/family", methods=["GET", "POST"])
+@api_login_required
 def api_family():
     try:
         db.init_db()
-        uid = _user_id()
+        uid = _data_user_id()
         if request.method == "POST":
             data = request.get_json(force=True)
             mid = db.save_member(
@@ -8463,10 +8721,11 @@ def api_family():
 
 
 @app.route("/api/family/<int:mid>", methods=["POST", "DELETE"])
+@api_login_required
 def api_family_one(mid):
     try:
         db.init_db()
-        uid = _user_id()
+        uid = _data_user_id()
         if request.method == "DELETE":
             db.delete_member(uid, mid)
             return jsonify({"ok": True})
@@ -8488,10 +8747,11 @@ def api_family_one(mid):
 
 
 @app.route("/api/meds/plan", methods=["GET", "POST"])
+@api_login_required
 def api_meds_plan():
     try:
         db.init_db()
-        uid = _user_id()
+        uid = _data_user_id()
         if request.method == "POST":
             data = request.get_json(force=True)
             times = [str(t).strip() for t in (data.get("times") or []) if str(t).strip()]
@@ -8522,20 +8782,22 @@ def api_meds_plan():
 
 
 @app.route("/api/meds/plan/<int:pid>", methods=["DELETE"])
+@api_login_required
 def api_meds_plan_delete(pid):
     try:
         db.init_db()
-        db.delete_med_plan(_user_id(), pid)
+        db.delete_med_plan(_data_user_id(), pid)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
 @app.route("/api/meds/today", methods=["GET"])
+@api_login_required
 def api_meds_today():
     try:
         db.init_db()
-        uid = _user_id()
+        uid = _data_user_id()
         plans = db.med_plans_today(uid)
         members = {m["id"]: m["name"] for m in db.list_members(uid)}
         for p in plans:
@@ -8546,6 +8808,7 @@ def api_meds_today():
 
 
 @app.route("/api/meds/log", methods=["POST"])
+@api_login_required
 def api_meds_log():
     try:
         db.init_db()
@@ -8556,30 +8819,32 @@ def api_meds_log():
         log_date = str(data.get("date") or datetime.now(timezone.utc).date().isoformat())
         if not plan_id or not log_time or status not in ("taken", "skipped", "deferred"):
             return jsonify({"ok": False, "error": "بيانات غير مكتملة"})
-        db.log_med_status(_user_id(), int(data.get("member_id") or 0), plan_id, log_date, log_time, status)
+        db.log_med_status(_data_user_id(), int(data.get("member_id") or 0), plan_id, log_date, log_time, status)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
 @app.route("/api/meds/weekly", methods=["GET"])
+@api_login_required
 def api_meds_weekly():
     try:
         db.init_db()
         member_id = request.args.get("member")
-        a = db.med_adherence(_user_id(), member_id=int(member_id) if member_id else None)
+        a = db.med_adherence(_data_user_id(), member_id=int(member_id) if member_id else None)
         return jsonify({"ok": True, **a})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
 @app.route("/api/timeline", methods=["GET"])
+@api_login_required
 def api_timeline():
     try:
         db.init_db()
         member_id = int(request.args.get("member") or 0)
         days = int(request.args.get("days") or 30)
-        events = db.member_timeline(_user_id(), member_id, days)
+        events = db.member_timeline(_data_user_id(), member_id, days)
         return jsonify({"ok": True, "events": events})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
@@ -8595,11 +8860,11 @@ def api_analyze():
         member = None
         if member_id:
             try:
-                member = db.get_member(_user_id(), int(member_id))
+                member = db.get_member(_data_user_id(), int(member_id))
             except Exception:
                 member = None
         patient = {
-            "user_id": _user_id(),
+            "user_id": _data_user_id(),
             "age": data.get("age"),
             "gender": data.get("gender"),
             "symptoms": data.get("symptoms", []),
@@ -8615,7 +8880,7 @@ def api_analyze():
         blood_id = data.get("blood_id")
         if blood_id:
             try:
-                bt = db.get_blood_test(_user_id(), blood_id)
+                bt = db.get_blood_test(_data_user_id(), blood_id)
                 if bt and bt.get("data"):
                     patient["blood"] = bt["data"]
             except Exception:
@@ -8656,7 +8921,7 @@ def api_analyze():
                     if not patient["medications"]:
                         patient["medications"] = member.get("medications") or ""
                 else:
-                    p = db.load_profile(_user_id())
+                    p = db.load_profile(_data_user_id())
                     if p:
                         if not patient["age"]:
                             patient["age"] = p.get("age") or None
@@ -8704,7 +8969,7 @@ def api_profile():
         db.init_db()
         data = request.get_json(force=True)
         db.save_profile(
-            _user_id(),
+            _data_user_id(),
             "en" if data.get("lang") == "en" else "ar",
             str(data.get("age") or "").strip(),
             str(data.get("gender") or "").strip(),
@@ -8720,7 +8985,7 @@ def api_profile():
 @app.route("/api/analyze/export/<int:record_id>")
 def api_export_pdf(record_id):
     db.init_db()
-    result = db.load_result(_user_id(), record_id)
+    result = db.load_result(_data_user_id(), record_id)
     if not result:
         lang = _lang()
         t = L["en" if lang == "en" else "ar"]
@@ -8912,14 +9177,14 @@ def api_assistant_feedback():
         message = (data.get("message") or "")[:1000]
         reason = (data.get("reason") or "").strip()[:200] or None
         db.init_db()
-        db.save_assistant_feedback(_user_id(), message, rating, reason)
+        db.save_assistant_feedback(_data_user_id(), message, rating, reason)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
 def api_checkin():
-    uid = _user_id()
+    uid = _data_user_id()
     if request.method == "POST":
         try:
             data = request.get_json(force=True)
@@ -8949,7 +9214,7 @@ def api_feedback():
         rating = data.get("rating")
         comment = (data.get("comment") or "").strip()[:500]
         db.init_db()
-        db.save_feedback(_user_id(), None, rating, comment or None)
+        db.save_feedback(_data_user_id(), None, rating, comment or None)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
@@ -9164,7 +9429,7 @@ def api_blood():
     member = None
     if member_id:
         try:
-            member = db.get_member(_user_id(), int(member_id))
+            member = db.get_member(_data_user_id(), int(member_id))
         except Exception:
             member = None
     try:
@@ -9221,7 +9486,7 @@ def api_blood():
         }
         blood_id = None
         try:
-            blood_id = db.save_blood_test(_user_id(), payload, int(member_id or 0))
+            blood_id = db.save_blood_test(_data_user_id(), payload, int(member_id or 0))
         except Exception:
             blood_id = None
         return jsonify({
