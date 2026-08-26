@@ -308,7 +308,8 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .footer .f-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px; max-width: 860px; margin: 24px auto 8px; text-align: start; }
 .footer .f-sec h4 { color: #FFFFFF; font-size: 13px; font-weight: 800; margin: 0 0 8px; letter-spacing: .2px; }
 .footer .f-sec p { color: #B9CCE8; line-height: 1.8; font-size: 12.8px; margin: 0; }
-.footer .f-sec .f-owner { font-size: 13.5px; color: #EAF4FF; line-height: 1.9; }
+.footer .f-sec .f-owner { display: block; font-size: 13.5px; color: #EAF4FF; line-height: 1.9; }
+.footer .f-sec .f-owner:hover { color: #FFFFFF; }
 .footer .f-tg { display: inline-flex; align-items: center; gap: 8px; background: #1976D2; color: #FFFFFF; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 999px; text-decoration: none; margin-top: 2px; }
 .footer .f-tg:hover { background: #1565C0; color: #FFFFFF; }
 .footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 18px 0 22px; font-size: 13px; }
@@ -1838,7 +1839,7 @@ L = {
         "nav_firstaid": "الإسعافات", "nav_tips": "النصائح", "nav_relax": "الاسترخاء",
         "nav_calculators": "الحاسبات الصحية",
         "nav_search": "البحث الصحي",
-        "nav_admin": "لوحة التحكم", "nav_about": "عن الموقع",
+        "nav_admin": "لوحة التحكم", "nav_about": "من نحن",
         "nav_how": "كيف يعمل", "nav_features": "المميزات", "nav_contact": "تواصل معنا",
         "nav_profile": "ملفي", "nav_history": "سجلّي",
         "nav_explore": "الاستكشاف", "nav_q": "الأسئلة الطبية", "nav_geo": "أقرب مستشفى",
@@ -1853,9 +1854,9 @@ L = {
         "footer_slogan": "مساعدك الصحي الذكي",
         "footer_synopsis_t": "عن المشروع",
         "footer_synopsis_d": "SymptoSense منصة صحية ذكية تهدف إلى تبسيط الوصول إلى المعلومات والأدوات الصحية ومساعدة المستخدم على فهم حالته بشكل أوضح.",
-        "footer_owner_t": "صاحبة المشروع",
-        "footer_owner_name": "ريماس 🤍",
-        "footer_owner_role": "مصممة ومطورة SymptoSense",
+        "footer_owner_t": "من نحن",
+        "footer_owner_name": "ريماس حميد السلمي 🤍",
+        "footer_owner_role": "طالبة علوم البيانات وتحليلها ومؤسسة SymptoSense",
         "footer_contact_t": "للتواصل",
         "footer_wa_btn": "💬 تواصل معي على تيليجرام",
         "footer_love": "صُنع بكل حب 🤍 بواسطة",
@@ -1872,7 +1873,7 @@ L = {
         "title_emergency": "SymptoSense — أرقام الطوارئ",
         "title_checkin": "SymptoSense — متابعة الحالة اليومية",
         "title_calculators": "SymptoSense — الحاسبات الصحية",
-        "title_about": "SymptoSense — عن الموقع",
+        "title_about": "SymptoSense — من نحن",
         "desc": "مساعدك الذكي لتحليل الأعراض وتقييم الحالة الصحية الأولي بناءً على مصادر طبية موثوقة.",
         "w_title": "أهلاً بك في SymptoSense 👋",
         "w_sub": "مساعدك الذكي لتحليل الأعراض وتقييم الحالة الصحية. اختر اللغة للمتابعة.",
@@ -1955,6 +1956,15 @@ L = {
         "home_step3_p": "احصل على معلومات وإرشادات تساعدك على معرفة الخطوة التالية.",
         "home_warn2": "<b>تنبيه:</b> المعلومات المقدمة في SymptoSense للتوعية الصحية وليست بديلًا عن استشارة الطبيب. في الحالات الطارئة أو الأعراض الشديدة، يرجى التواصل مع خدمات الطوارئ أو مراجعة أقرب منشأة صحية.",
         "ab_t1": "ما هو SymptoSense؟",
+        "about_us_kicker": "قصتنا",
+        "about_us_title": "من نحن",
+        "about_us_p1": "بدأ شغفي من سؤال بسيط: كيف يمكن للتقنية أن تكون أقرب للإنسان؟",
+        "about_us_p2": "أنا ريماس حميد السلمي، طالبة في تخصص علوم البيانات وتحليلها، وشغوفة ببناء الحلول التقنية التي تحمل أثرًا حقيقيًا في حياة الناس.",
+        "about_us_p3": "ومن هنا جاءت فكرتي؛ أن أوظّف ما أتعلمه في علوم البيانات والتقنية لبناء حل يساعد على فهم الأعراض الصحية بصورة أوضح وأسهل. لم يكن هدفي إنشاء موقع فقط، بل صناعة تجربة تمنح المستخدم معرفة أولية تساعده على فهم ما يشعر به واتخاذ الخطوة المناسبة بوعي.",
+        "about_us_p4": "أؤمن أن أعظم أثر للتقنية هو أن تجعل حياة الإنسان أبسط، ووعيه أكبر، وقراراته أذكى.",
+        "about_us_name": "ريماس حميد السلمي",
+        "about_us_role": "طالبة علوم البيانات وتحليلها ومؤسسة SymptoSense",
+        "about_us_contact": "للتواصل: Telegram —",
         "ab_p1": "SymptoSense مساعد صحي توعوي يعتمد على الذكاء الاصطناعي لمساعدتك في فهم أعراضك والحصول على تقييم أولي مبني على مصادر طبية موثوقة (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "يوفّر الموقع: تحليل الأعراض مع تقييم الخطورة، تحذيرات الأدوية وتفاعلاتها، أقرب المستشفيات بناءً على موقعك، تحليل فحوصات الدم، الإسعافات الأولية، ونصائح صحية يومية.",
         "ab_p3": "يتم التحليل عبر نموذج ذكاء اصطناعي (Llama عبر Groq) مع طبقة تحقق بالقواعد ونموذج تعلم آلي لتقدير الاحتمالات — وكل ذلك كأداة توعية مساعدة.",
@@ -2225,7 +2235,7 @@ L = {
         "nav_firstaid": "First Aid", "nav_tips": "Tips", "nav_relax": "Relax",
         "nav_calculators": "Health Calculators",
         "nav_search": "Health Search",
-        "nav_admin": "Dashboard", "nav_about": "About",
+        "nav_admin": "Dashboard", "nav_about": "About us",
         "nav_how": "How it works", "nav_features": "Features", "nav_contact": "Contact",
         "nav_profile": "My profile", "nav_history": "My history",
         "nav_explore": "Explore", "nav_q": "Medical questions", "nav_geo": "Nearest hospital",
@@ -2240,9 +2250,9 @@ L = {
         "footer_slogan": "Your smart health assistant",
         "footer_synopsis_t": "About the project",
         "footer_synopsis_d": "SymptoSense is a smart health platform that simplifies access to reliable health information and tools, helping you understand your condition more clearly.",
-        "footer_owner_t": "Project owner",
-        "footer_owner_name": "Remas 🤍",
-        "footer_owner_role": "SymptoSense Designer & Developer",
+        "footer_owner_t": "About us",
+        "footer_owner_name": "Remas Hameed Al-Sulami 🤍",
+        "footer_owner_role": "Data Science and Analytics student and founder of SymptoSense",
         "footer_contact_t": "Contact",
         "footer_wa_btn": "💬 Chat with me on Telegram",
         "footer_love": "Made with love 🤍 by",
@@ -2259,7 +2269,7 @@ L = {
         "title_emergency": "SymptoSense — Emergency Numbers",
         "title_checkin": "SymptoSense — Daily Tracking",
         "title_calculators": "SymptoSense — Health Calculators",
-        "title_about": "SymptoSense — About",
+        "title_about": "SymptoSense — About us",
         "desc": "Your smart assistant for analyzing symptoms and getting an initial health assessment based on trusted medical sources.",
         "w_title": "Welcome to SymptoSense 👋",
         "w_sub": "Your smart assistant for analyzing symptoms and assessing your health. Choose your language to continue.",
@@ -2342,6 +2352,15 @@ L = {
         "home_step3_p": "Get information and guidance that help you know the next step.",
         "home_warn2": "<b>Note:</b> The information provided in SymptoSense is for health awareness and is not a substitute for a doctor's consultation. In emergency cases or severe symptoms, please contact emergency services or visit the nearest health facility.",
         "ab_t1": "What is SymptoSense?",
+        "about_us_kicker": "Our story",
+        "about_us_title": "About us",
+        "about_us_p1": "My passion began with a simple question: How can technology feel closer to people?",
+        "about_us_p2": "I am Remas Hameed Al-Sulami, a Data Science and Analytics student who is passionate about building technology solutions that make a genuine difference in people's lives.",
+        "about_us_p3": "That is where my idea began: to use what I learn in data science and technology to build a solution that makes health symptoms clearer and easier to understand. My goal was not simply to create a website, but to design an experience that gives people initial knowledge, helps them understand what they are feeling, and supports them in choosing the right next step with greater awareness.",
+        "about_us_p4": "I believe technology has its greatest impact when it makes people's lives simpler, their awareness greater, and their decisions smarter.",
+        "about_us_name": "Remas Hameed Al-Sulami",
+        "about_us_role": "Data Science and Analytics student and founder of SymptoSense",
+        "about_us_contact": "Contact: Telegram —",
         "ab_p1": "SymptoSense is an AI-powered health awareness assistant that helps you understand your symptoms and get an initial assessment based on trusted medical sources (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "The site provides: symptom analysis with urgency assessment, medication warnings and interactions, nearest hospitals based on your location, blood test analysis, first aid, and daily health tips.",
         "ab_p3": "Analysis runs through an AI model (Llama via Groq) with a rule-based verification layer and a machine-learning model for probabilities — all as a supportive awareness tool.",
@@ -2701,7 +2720,7 @@ def _footer():
         '<p class="f-tag">%s</p>'
         '<div class="f-grid">'
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
-        '<div class="f-sec"><h4>%s</h4><p class="f-owner">%s<br>%s</p></div>'
+        '<div class="f-sec"><h4>%s</h4><a href="/about#about-us" class="f-owner">%s<br>%s</a></div>'
         '<div class="f-sec"><h4>%s</h4>'
         '<a class="f-tg" href="%s" target="_blank" rel="noopener">%s</a>'
         '</div>'
@@ -3210,9 +3229,69 @@ def _tools_html(t):
     """
 
 
+ABOUT_CSS = """
+.about-us-card { position: relative; isolation: isolate; overflow: hidden; padding: clamp(26px, 5vw, 52px); margin-bottom: 24px; border-radius: 28px; background: linear-gradient(135deg, #123B70 0%, #1559A5 52%, #1976D2 100%); color: #fff; box-shadow: 0 22px 54px rgba(18,59,112,.24); }
+.about-us-card::before, .about-us-card::after { content: ''; position: absolute; z-index: -1; border-radius: 50%; background: rgba(255,255,255,.08); }
+.about-us-card::before { width: 280px; height: 280px; inset-inline-end: -100px; top: -130px; }
+.about-us-card::after { width: 190px; height: 190px; inset-inline-start: -85px; bottom: -110px; }
+.au-heading { margin-bottom: 24px; }
+.au-kicker { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 8px; padding: 6px 13px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.11); color: #EAF4FF; font-size: 12px; font-weight: 800; }
+.au-heading h1 { color: #fff; font-size: clamp(28px, 5vw, 42px); line-height: 1.3; }
+.au-question { max-width: 820px; margin-top: 9px; color: #fff; font-size: clamp(19px, 3.2vw, 26px); font-weight: 800; line-height: 1.75; }
+.au-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(250px, .55fr); align-items: stretch; gap: 18px; }
+.au-story { padding: clamp(20px, 3.5vw, 30px); border: 1px solid rgba(255,255,255,.18); border-radius: 20px; background: rgba(255,255,255,.10); backdrop-filter: blur(8px); }
+.au-story p { color: #F4F8FF; font-size: clamp(14px, 2vw, 16px); line-height: 2.05; margin-bottom: 16px; }
+.au-story p:last-child { margin-bottom: 0; }
+.au-belief { padding: 14px 16px; border-inline-start: 4px solid #90CAF9; border-radius: 12px; background: rgba(255,255,255,.10); font-weight: 800; }
+.au-founder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 20px; border: 1px solid rgba(255,255,255,.45); border-radius: 20px; background: #fff; color: var(--primary-dark); text-align: center; box-shadow: 0 16px 36px rgba(10,45,92,.18); }
+.au-avatar { width: 76px; height: 76px; display: grid; place-items: center; margin-bottom: 14px; border-radius: 24px; background: linear-gradient(145deg, var(--primary-light), #D7EBFF); color: var(--primary); font-size: 32px; font-weight: 900; box-shadow: 0 10px 24px rgba(25,118,210,.16); }
+.au-founder h2 { color: var(--primary-dark); font-size: 20px; line-height: 1.6; }
+.au-role { color: var(--text-body); font-size: 13px; line-height: 1.8; margin: 5px 0 18px; }
+.au-contact { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 13px; background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary-pale); font-size: 12px; font-weight: 700; }
+.au-contact b { color: var(--primary); font-size: 14px; white-space: nowrap; }
+.au-contact:hover { background: #DCEEFF; border-color: var(--primary); }
+@media (max-width: 760px) {
+  .au-layout { grid-template-columns: 1fr; }
+  .au-founder { align-items: flex-start; text-align: start; }
+  .au-avatar { width: 64px; height: 64px; border-radius: 20px; }
+  .au-contact { width: auto; }
+}
+@media (max-width: 480px) {
+  .about-us-card { padding: 23px 16px; border-radius: 21px; }
+  .au-question { font-size: 18px; }
+  .au-story, .au-founder { padding: 18px 15px; border-radius: 16px; }
+  .au-story p { font-size: 14px; line-height: 1.95; }
+  .au-contact { width: 100%; flex-wrap: wrap; }
+}
+"""
+
+
 def about_page():
     t = _t
     body = """
+    <section class="about-us-card" id="about-us" aria-labelledby="aboutUsTitle">
+      <div class="au-heading">
+        <span class="au-kicker">💙 %s</span>
+        <h1 id="aboutUsTitle">%s</h1>
+        <p class="au-question">%s</p>
+      </div>
+      <div class="au-layout">
+        <div class="au-story">
+          <p>%s</p>
+          <p>%s</p>
+          <p class="au-belief">%s</p>
+        </div>
+        <aside class="au-founder" aria-label="%s">
+          <div class="au-avatar" aria-hidden="true">ر</div>
+          <h2>%s</h2>
+          <p class="au-role">%s</p>
+          <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
+            <span>📩 %s</span><b dir="ltr">@rms_2o</b>
+          </a>
+        </aside>
+      </div>
+    </section>
+
     <div class="card">
       <h2>%s</h2>
       <h3 class="ab-sub">%s</h3>
@@ -3259,6 +3338,9 @@ def about_page():
       <p style="line-height:1.9;">%s</p>
     </div>
     """ % (
+        t("about_us_kicker"), t("about_us_title"), t("about_us_p1"),
+        t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
+        t("about_us_name"), t("about_us_name"), t("about_us_role"), t("about_us_contact"),
         t("ab_t1"), t("ab_hero_sub"), t("ab_hero_p"), t("ab_alert"),
         t("ab_services_h"),
         t("ab_sv1_t"), t("ab_sv1_p"), t("ab_sv2_t"), t("ab_sv2_p"),
@@ -3272,7 +3354,7 @@ def about_page():
         t("ab_srcs_h"), t("ab_srcs_p2"),
         t("ab_priv_h"), t("ab_priv_p"),
     )
-    return _page(_t("title_about"), body)
+    return _page(_t("title_about"), body, extra_css=ABOUT_CSS)
 
 
 # ---------------------------------------------------------------- chat
