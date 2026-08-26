@@ -477,6 +477,36 @@ body.page-exit { transition: opacity .45s ease, transform .45s ease; opacity: 0;
 .dd-menu a { display: block; padding: 10px 13px; border-radius: 10px; color: var(--text-body); font-size: 14px; font-weight: 600; }
 .dd-menu a:hover { background: var(--primary-light); color: var(--primary); }
 html[dir="ltr"] .dd-menu { right: auto; left: 0; }
+.account-dd { display: flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--border-card); border-radius: 14px; background: var(--primary-light); }
+.account-profile-link { display: flex; align-items: center; gap: 8px; padding: 3px 7px; border-radius: 10px; color: var(--primary-dark); min-width: 0; }
+.account-profile-link:hover { background: var(--bg-card); }
+.account-avatar { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 11px; background: var(--bg-card); color: var(--primary); border: 1px solid var(--border-card); font-size: 17px; }
+.account-btn-copy { min-width: 0; line-height: 1.25; text-align: start; }
+.account-name { display: block; max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--primary-dark); font-size: 12.5px; font-weight: 800; }
+.account-label { display: block; color: var(--text-muted); font-size: 10px; font-weight: 700; margin-top: 2px; }
+.account-menu-toggle { width: 32px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--primary); font-size: 11px; cursor: pointer; }
+.account-menu-toggle:hover, .account-menu-toggle[aria-expanded="true"] { background: var(--bg-card); }
+.account-menu { min-width: 270px; padding: 8px; }
+.account-menu-head { display: flex; align-items: center; gap: 10px; padding: 11px; margin-bottom: 6px; border-radius: 11px; background: var(--primary-light); border: 1px solid var(--border-card); }
+.account-menu-head .account-avatar { width: 40px; height: 40px; flex-basis: 40px; font-size: 20px; }
+.account-menu-head strong { display: block; max-width: 175px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--primary-dark); font-size: 13px; }
+.account-menu-head small { display: block; max-width: 175px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 10.5px; direction: ltr; text-align: start; }
+.account-menu a { display: flex; align-items: center; gap: 9px; }
+.account-menu a.account-logout { color: #B91C1C; border-top: 1px solid var(--border-card); border-radius: 0 0 9px 9px; margin-top: 5px; padding-top: 11px; }
+.account-menu a.account-logout:hover { background: #FEF2F2; color: #991B1B; }
+@media (prefers-color-scheme: dark) {
+  .dd-btn, .account-dd { background: #1E293B; border-color: #334155; color: #93C5FD; }
+  .dd-menu { background: #1E293B; border-color: #334155; }
+  .dd-menu a { color: #CBD5E1; }
+  .dd-menu a:hover { background: #1E3A5F; color: #93C5FD; }
+  .account-profile-link:hover, .account-menu-toggle:hover, .account-menu-toggle[aria-expanded="true"] { background: #0F172A; }
+  .account-avatar { background: #0F172A; border-color: #334155; color: #60A5FA; }
+  .account-name, .account-menu-head strong { color: #E2E8F0; }
+  .account-label, .account-menu-head small { color: #94A3B8; }
+  .account-menu-head { background: #0F172A; border-color: #334155; }
+  .account-menu a.account-logout { border-color: #334155; color: #FCA5A5; }
+  .account-menu a.account-logout:hover { background: #450A0A; color: #FCA5A5; }
+}
 .nav .links a.on { background: var(--primary-light); color: var(--primary); }
 .cbc { font-size: 15px; font-weight: 700; color: var(--primary-dark); margin-bottom: 6px; }
 .field-box { display: flex; align-items: center; gap: 12px; background: var(--primary-light); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px; }
@@ -963,12 +993,27 @@ function setLang(l) {
 }
 function toggleDD(ev) {
   ev.stopPropagation();
-  const m = document.querySelector('.dd-menu');
-  if (m) m.classList.toggle('open');
+  const current = ev.currentTarget ? ev.currentTarget.closest('.dd') : null;
+  const menu = current ? current.querySelector('.dd-menu') : null;
+  if (!menu) return;
+  const willOpen = !menu.classList.contains('open');
+  document.querySelectorAll('.dd-menu.open').forEach(function(other) {
+    other.classList.remove('open');
+    const trigger = other.parentElement ? other.parentElement.querySelector('button[aria-haspopup="menu"]') : null;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  });
+  menu.classList.toggle('open', willOpen);
+  ev.currentTarget.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 }
 document.addEventListener('click', function(ev) {
-  const m = document.querySelector('.dd-menu');
-  if (m && !ev.target.closest('.dd')) m.classList.remove('open');
+  if (ev.target.closest('.dd')) return;
+  document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
+  document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
+});
+document.addEventListener('keydown', function(ev) {
+  if (ev.key !== 'Escape') return;
+  document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
+  document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
 });
 (function(){
   var p = location.pathname;
@@ -2527,6 +2572,7 @@ def _t(key):
 
 
 def _nav():
+    from html import escape
     lang = _lang()
     path = request.path
     links = [
@@ -2537,8 +2583,8 @@ def _nav():
     for href, key in links:
         cls = ' class="on"' if path == href else ""
         html += '<a href="%s"%s>%s</a>' % (href, cls, _t(key))
-    html += ('<div class="dd"><button class="dd-btn" onclick="toggleDD(event)">%s <span style="font-size:11px;">▼</span></button>'
-             '<div class="dd-menu">'
+    html += ('<div class="dd"><button type="button" class="dd-btn" aria-haspopup="menu" aria-expanded="false" onclick="toggleDD(event)">%s <span style="font-size:11px;">▼</span></button>'
+             '<div class="dd-menu" role="menu">'
              '<a href="/search">%s</a>'
              '<a href="/tips">%s</a>'
              '<a href="/chat">%s</a>'
@@ -2550,16 +2596,30 @@ def _nav():
     html += '<div style="display:flex;align-items:center;gap:8px;">'
     user = _ss_user()
     if user:
-        html += ('<div class="dd"><button class="dd-btn" onclick="toggleDD(event)">👤 %s <span style="font-size:11px;">▼</span></button>'
-                 '<div class="dd-menu">'
-                 '<a href="/profile">👤 %s</a>'
-                 '<a href="/history">📋 %s</a>'
-                 '<a href="/settings">⚙️ %s</a>'
-                 '<a href="/logout">🚪 %s</a>'
+        user_name = escape(user.get("name") or _t("nav_profile"))
+        user_email = escape(user.get("email") or "")
+        profile_label = "ملفي الشخصي" if lang == "ar" else "My profile"
+        health_label = "بياناتي الصحية" if lang == "ar" else "My health information"
+        family_label = "ملفات العائلة" if lang == "ar" else "Family profiles"
+        html += ('<div class="dd account-dd">'
+                 '<a href="/profile" class="account-profile-link" aria-label="%s">'
+                 '<span class="account-avatar" aria-hidden="true">👤</span>'
+                 '<span class="account-btn-copy"><span class="account-name">%s</span><span class="account-label">%s</span></span>'
+                 '</a>'
+                 '<button type="button" class="account-menu-toggle" aria-label="%s" aria-haspopup="menu" aria-expanded="false" onclick="toggleDD(event)">▼</button>'
+                 '<div class="dd-menu account-menu" role="menu">'
+                 '<div class="account-menu-head"><span class="account-avatar" aria-hidden="true">👤</span><div><strong>%s</strong><small>%s</small></div></div>'
+                 '<a href="/profile" role="menuitem">👤 %s</a>'
+                 '<a href="/manage" role="menuitem">📝 %s</a>'
+                 '<a href="/history" role="menuitem">📋 %s</a>'
+                 '<a href="/family" role="menuitem">👨‍👩‍👧 %s</a>'
+                 '<a href="/settings" role="menuitem">⚙️ %s</a>'
+                 '<a href="/logout" role="menuitem" class="account-logout">🚪 %s</a>'
                  '</div></div>') % (
-            user.get("name", ""),
-            _t("nav_health_profile"), _t("nav_myhistory"),
-            _t("nav_privacy"), _t("nav_logout"),
+            profile_label, user_name, profile_label,
+            ("خيارات الحساب" if lang == "ar" else "Account options"),
+            user_name, user_email, profile_label, health_label,
+            _t("nav_myhistory"), family_label, _t("nav_privacy"), _t("nav_logout"),
         )
     else:
         html += '<a href="/login" class="dd-btn" style="text-decoration:none;">%s</a>' % _t("nav_login")
@@ -7297,7 +7357,7 @@ def profile_page():
     has_data = any([hp.get("dob"), hp.get("gender"), hp.get("height"), hp.get("weight"), hp.get("medications"), hp.get("allergies"), hp.get("health_conditions")])
     def field_row(icon, label, value):
         v = esc(value) if value else '<span style="color:#94A3B8;">—</span>'
-        return '<div class="ss-field"><div class="ss-f-icon">%s</div><div style="flex:1;"><label>%s</label><div style="font-size:15px;font-weight:600;color:#1e293b;padding:4px 0;">%s</div></div></div>' % (icon, label, v)
+        return '<div class="ss-field"><div class="ss-f-icon">%s</div><div style="flex:1;"><label>%s</label><div style="font-size:15px;font-weight:600;color:#40566F;padding:4px 0;">%s</div></div></div>' % (icon, label, v)
     gen_opts = {
         "male": '<option value="male" selected>' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
         "female": '<option value="male">' + t["profile_male"] + '</option><option value="female" selected>' + t["profile_female"] + '</option>',
@@ -7427,7 +7487,7 @@ def profile_page():
       <div class="ss-completion">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div><b style="font-size:15px;color:#123B70;">__COMPL_TITLE__</b><div class="bar-label">__COMPL_PCT__%</div></div>
-          <div style="font-size:28px;font-weight:900;color:#16A34A;">__COMPL_PCT__%</div>
+          <div style="font-size:28px;font-weight:900;color:#1976D2;">__COMPL_PCT__%</div>
         </div>
         <div class="bar-track"><div class="bar-fill-green" style="width:__COMPL_PCT__%;"></div></div>
         <div class="bar-label">__COMPL_SUB__</div>
@@ -8424,7 +8484,7 @@ def api_register():
         user_id, err = db.create_ss_user(email, name, password)
         if user_id:
             session["ss_user_id"] = user_id
-            return jsonify({"ok": True})
+            return jsonify({"ok": True, "redirect_url": "/profile"})
         return jsonify({"ok": False, "error": err})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
@@ -8440,7 +8500,7 @@ def api_login():
         user_id = db.authenticate_ss_user(email, password)
         if user_id:
             session["ss_user_id"] = user_id
-            return jsonify({"ok": True})
+            return jsonify({"ok": True, "redirect_url": "/profile"})
         return jsonify({"ok": False, "error": "invalid_credentials"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
