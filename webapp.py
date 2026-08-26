@@ -1873,7 +1873,8 @@ L = {
         "title_emergency": "SymptoSense — أرقام الطوارئ",
         "title_checkin": "SymptoSense — متابعة الحالة اليومية",
         "title_calculators": "SymptoSense — الحاسبات الصحية",
-        "title_about": "SymptoSense — من نحن",
+        "title_about": "SymptoSense — عن الموقع",
+        "title_about_us": "SymptoSense — من نحن",
         "desc": "مساعدك الذكي لتحليل الأعراض وتقييم الحالة الصحية الأولي بناءً على مصادر طبية موثوقة.",
         "w_title": "أهلاً بك في SymptoSense 👋",
         "w_sub": "مساعدك الذكي لتحليل الأعراض وتقييم الحالة الصحية. اختر اللغة للمتابعة.",
@@ -1965,6 +1966,8 @@ L = {
         "about_us_name": "ريماس حميد السلمي",
         "about_us_role": "طالبة علوم البيانات وتحليلها ومؤسسة SymptoSense",
         "about_us_contact": "للتواصل: Telegram —",
+        "about_us_img1_alt": "طالبة علوم بيانات تعمل على بناء حل تقني صحي",
+        "about_us_img2_alt": "قلب من البيانات بين يدين يرمز إلى التقنية القريبة من الإنسان",
         "ab_p1": "SymptoSense مساعد صحي توعوي يعتمد على الذكاء الاصطناعي لمساعدتك في فهم أعراضك والحصول على تقييم أولي مبني على مصادر طبية موثوقة (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "يوفّر الموقع: تحليل الأعراض مع تقييم الخطورة، تحذيرات الأدوية وتفاعلاتها، أقرب المستشفيات بناءً على موقعك، تحليل فحوصات الدم، الإسعافات الأولية، ونصائح صحية يومية.",
         "ab_p3": "يتم التحليل عبر نموذج ذكاء اصطناعي (Llama عبر Groq) مع طبقة تحقق بالقواعد ونموذج تعلم آلي لتقدير الاحتمالات — وكل ذلك كأداة توعية مساعدة.",
@@ -2269,7 +2272,8 @@ L = {
         "title_emergency": "SymptoSense — Emergency Numbers",
         "title_checkin": "SymptoSense — Daily Tracking",
         "title_calculators": "SymptoSense — Health Calculators",
-        "title_about": "SymptoSense — About us",
+        "title_about": "SymptoSense — About the site",
+        "title_about_us": "SymptoSense — About us",
         "desc": "Your smart assistant for analyzing symptoms and getting an initial health assessment based on trusted medical sources.",
         "w_title": "Welcome to SymptoSense 👋",
         "w_sub": "Your smart assistant for analyzing symptoms and assessing your health. Choose your language to continue.",
@@ -2361,6 +2365,8 @@ L = {
         "about_us_name": "Remas Hameed Al-Sulami",
         "about_us_role": "Data Science and Analytics student and founder of SymptoSense",
         "about_us_contact": "Contact: Telegram —",
+        "about_us_img1_alt": "A data science student building a digital health solution",
+        "about_us_img2_alt": "A data heart held by human hands, symbolizing human-centered technology",
         "ab_p1": "SymptoSense is an AI-powered health awareness assistant that helps you understand your symptoms and get an initial assessment based on trusted medical sources (Mayo Clinic, NHS, WHO, CDC).",
         "ab_p2": "The site provides: symptom analysis with urgency assessment, medication warnings and interactions, nearest hospitals based on your location, blood test analysis, first aid, and daily health tips.",
         "ab_p3": "Analysis runs through an AI model (Llama via Groq) with a rule-based verification layer and a machine-learning model for probabilities — all as a supportive awareness tool.",
@@ -2651,9 +2657,10 @@ def _nav():
              '<a href="/tips">%s</a>'
              '<a href="/chat">%s</a>'
              '<a href="/emergency#geo">%s</a>'
+             '<a href="/about-us">%s</a>'
              '<a href="/about">%s</a>'
              '</div></div>') % (_t("nav_explore"), _t("nav_search"), _t("nav_tips"), _t("nav_q"), _t("nav_geo"),
-                                 _t("nav_aware"))
+                                 _t("nav_about"), _t("nav_aware"))
     html += '</div>'
     html += '<div style="display:flex;align-items:center;gap:8px;">'
     if user:
@@ -2720,13 +2727,13 @@ def _footer():
         '<p class="f-tag">%s</p>'
         '<div class="f-grid">'
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
-        '<div class="f-sec"><h4>%s</h4><a href="/about#about-us" class="f-owner">%s<br>%s</a></div>'
+        '<div class="f-sec"><h4>%s</h4><a href="/about-us" class="f-owner">%s<br>%s</a></div>'
         '<div class="f-sec"><h4>%s</h4>'
         '<a class="f-tg" href="%s" target="_blank" rel="noopener">%s</a>'
         '</div>'
         '</div>'
         '<div class="f-links">'
-        '<a href="/about">%s</a>'
+        '<a href="/about-us">%s</a>'
         '<a href="/about">%s</a>'
         '<a href="/about">%s</a>'
         '<a href="/admin">%s</a>'
@@ -3229,69 +3236,94 @@ def _tools_html(t):
     """
 
 
-ABOUT_CSS = """
-.about-us-card { position: relative; isolation: isolate; overflow: hidden; padding: clamp(26px, 5vw, 52px); margin-bottom: 24px; border-radius: 28px; background: linear-gradient(135deg, #123B70 0%, #1559A5 52%, #1976D2 100%); color: #fff; box-shadow: 0 22px 54px rgba(18,59,112,.24); }
-.about-us-card::before, .about-us-card::after { content: ''; position: absolute; z-index: -1; border-radius: 50%; background: rgba(255,255,255,.08); }
-.about-us-card::before { width: 280px; height: 280px; inset-inline-end: -100px; top: -130px; }
-.about-us-card::after { width: 190px; height: 190px; inset-inline-start: -85px; bottom: -110px; }
-.au-heading { margin-bottom: 24px; }
-.au-kicker { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 8px; padding: 6px 13px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.11); color: #EAF4FF; font-size: 12px; font-weight: 800; }
-.au-heading h1 { color: #fff; font-size: clamp(28px, 5vw, 42px); line-height: 1.3; }
-.au-question { max-width: 820px; margin-top: 9px; color: #fff; font-size: clamp(19px, 3.2vw, 26px); font-weight: 800; line-height: 1.75; }
-.au-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(250px, .55fr); align-items: stretch; gap: 18px; }
-.au-story { padding: clamp(20px, 3.5vw, 30px); border: 1px solid rgba(255,255,255,.18); border-radius: 20px; background: rgba(255,255,255,.10); backdrop-filter: blur(8px); }
-.au-story p { color: #F4F8FF; font-size: clamp(14px, 2vw, 16px); line-height: 2.05; margin-bottom: 16px; }
+ABOUT_US_CSS = """
+.about-us-page { display: grid; gap: clamp(18px, 3vw, 28px); }
+.about-us-hero { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(430px, 60vw, 610px); display: flex; align-items: center; padding: clamp(24px, 6vw, 64px); border: 1px solid #C8E3FA; border-radius: 30px; box-shadow: 0 24px 62px rgba(18,59,112,.17); }
+.about-us-hero::before { content: ''; position: absolute; inset: 0; z-index: -2; background: url('/icons/about-us-concept-v3.webp') center / cover no-repeat; }
+[dir='rtl'] .about-us-hero::before { transform: scaleX(-1); }
+.about-us-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(247,252,255,.99) 0%, rgba(247,252,255,.96) 42%, rgba(247,252,255,.58) 70%, rgba(247,252,255,.14) 100%); }
+[dir='rtl'] .about-us-hero::after { background: linear-gradient(270deg, rgba(247,252,255,.99) 0%, rgba(247,252,255,.96) 42%, rgba(247,252,255,.58) 70%, rgba(247,252,255,.14) 100%); }
+.au-hero-copy { width: min(660px, 68%); }
+.au-kicker { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 7px 14px; border: 1px solid #A9D4F6; border-radius: 999px; background: rgba(255,255,255,.78); color: var(--primary-dark); font-size: 13px; font-weight: 900; box-shadow: 0 8px 22px rgba(25,118,210,.08); }
+.au-kicker-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 5px rgba(25,118,210,.13); }
+.au-hero-copy h1 { margin: 0; color: var(--primary-dark); font-size: clamp(34px, 6vw, 58px); line-height: 1.25; }
+.au-question { max-width: 620px; margin: 18px 0 0; color: #1E4D80; font-size: clamp(19px, 2.7vw, 27px); font-weight: 800; line-height: 1.8; }
+.au-story-shell { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .55fr); gap: 20px; align-items: stretch; }
+.au-story { position: relative; overflow: hidden; padding: clamp(23px, 4vw, 38px); border: 1px solid var(--border-card); border-radius: 24px; background: #fff; box-shadow: var(--shadow-soft); }
+.au-story::after { content: ''; position: absolute; width: 180px; height: 180px; inset-inline-end: -95px; bottom: -115px; border-radius: 50%; background: var(--primary-light); opacity: .75; }
+.au-story p { position: relative; z-index: 1; color: var(--text-body); font-size: clamp(15px, 1.8vw, 17px); line-height: 2.05; margin-bottom: 18px; }
 .au-story p:last-child { margin-bottom: 0; }
-.au-belief { padding: 14px 16px; border-inline-start: 4px solid #90CAF9; border-radius: 12px; background: rgba(255,255,255,.10); font-weight: 800; }
-.au-founder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 20px; border: 1px solid rgba(255,255,255,.45); border-radius: 20px; background: #fff; color: var(--primary-dark); text-align: center; box-shadow: 0 16px 36px rgba(10,45,92,.18); }
-.au-avatar { width: 76px; height: 76px; display: grid; place-items: center; margin-bottom: 14px; border-radius: 24px; background: linear-gradient(145deg, var(--primary-light), #D7EBFF); color: var(--primary); font-size: 32px; font-weight: 900; box-shadow: 0 10px 24px rgba(25,118,210,.16); }
-.au-founder h2 { color: var(--primary-dark); font-size: 20px; line-height: 1.6; }
-.au-role { color: var(--text-body); font-size: 13px; line-height: 1.8; margin: 5px 0 18px; }
-.au-contact { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 13px; background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary-pale); font-size: 12px; font-weight: 700; }
-.au-contact b { color: var(--primary); font-size: 14px; white-space: nowrap; }
-.au-contact:hover { background: #DCEEFF; border-color: var(--primary); }
-@media (max-width: 760px) {
-  .au-layout { grid-template-columns: 1fr; }
-  .au-founder { align-items: flex-start; text-align: start; }
-  .au-avatar { width: 64px; height: 64px; border-radius: 20px; }
-  .au-contact { width: auto; }
+.au-belief { padding: 17px 18px; border-inline-start: 4px solid var(--primary); border-radius: 14px; background: var(--primary-light); color: var(--primary-dark) !important; font-weight: 900; }
+.au-founder { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 4vw, 34px); border: 1px solid #A9D4F6; border-radius: 24px; background: linear-gradient(160deg, #123B70 0%, #1559A5 54%, #1976D2 100%); color: #fff; box-shadow: 0 18px 40px rgba(18,59,112,.2); }
+.au-founder-mark { width: 72px; height: 72px; display: grid; place-items: center; margin-bottom: 18px; border: 1px solid rgba(255,255,255,.35); border-radius: 22px; background: rgba(255,255,255,.12); color: #fff; font-size: 31px; font-weight: 900; backdrop-filter: blur(8px); }
+.au-founder h2 { margin: 0; color: #fff; font-size: clamp(20px, 2.5vw, 24px); line-height: 1.55; }
+.au-role { margin: 8px 0 23px; color: #E8F3FF; font-size: 14px; line-height: 1.8; }
+.au-contact { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 15px; border: 1px solid rgba(255,255,255,.55); border-radius: 14px; background: #fff; color: var(--primary-dark); font-size: 13px; font-weight: 800; transition: transform .18s ease, box-shadow .18s ease; }
+.au-contact b { color: var(--primary); font-size: 15px; white-space: nowrap; }
+.au-contact:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(6,34,75,.22); }
+@media (max-width: 820px) {
+  .about-us-hero { min-height: 500px; align-items: flex-end; }
+  .about-us-hero::before, [dir='rtl'] .about-us-hero::before { transform: none; background-position: 64% center; }
+  .about-us-hero::after, [dir='rtl'] .about-us-hero::after { background: linear-gradient(180deg, rgba(247,252,255,.16) 0%, rgba(247,252,255,.78) 42%, rgba(247,252,255,.99) 72%, #F7FCFF 100%); }
+  .au-hero-copy { width: 100%; }
+  .au-story-shell { grid-template-columns: 1fr; }
 }
-@media (max-width: 480px) {
-  .about-us-card { padding: 23px 16px; border-radius: 21px; }
-  .au-question { font-size: 18px; }
-  .au-story, .au-founder { padding: 18px 15px; border-radius: 16px; }
-  .au-story p { font-size: 14px; line-height: 1.95; }
+@media (max-width: 520px) {
+  .about-us-page { gap: 15px; }
+  .about-us-hero { min-height: 470px; padding: 24px 18px; border-radius: 22px; }
+  .about-us-hero::before, [dir='rtl'] .about-us-hero::before { background-position: 66% center; }
+  .au-hero-copy h1 { font-size: 34px; }
+  .au-question { font-size: 18px; line-height: 1.75; }
+  .au-story, .au-founder { padding: 21px 17px; border-radius: 19px; }
+  .au-story p { font-size: 15px; line-height: 1.95; }
+  .au-founder-mark { width: 62px; height: 62px; border-radius: 19px; }
   .au-contact { width: 100%; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .au-contact { transition: none; }
 }
 """
 
 
-def about_page():
+def about_us_page():
     t = _t
     body = """
-    <section class="about-us-card" id="about-us" aria-labelledby="aboutUsTitle">
-      <div class="au-heading">
-        <span class="au-kicker">💙 %s</span>
-        <h1 id="aboutUsTitle">%s</h1>
-        <p class="au-question">%s</p>
-      </div>
-      <div class="au-layout">
-        <div class="au-story">
+    <main class="about-us-page">
+      <section class="about-us-hero" aria-labelledby="aboutUsTitle">
+        <div class="au-hero-copy">
+          <span class="au-kicker"><span class="au-kicker-dot" aria-hidden="true"></span>%s</span>
+          <h1 id="aboutUsTitle">%s</h1>
+          <p class="au-question">%s</p>
+        </div>
+      </section>
+
+      <section class="au-story-shell" aria-label="%s">
+        <article class="au-story">
           <p>%s</p>
           <p>%s</p>
           <p class="au-belief">%s</p>
-        </div>
-        <aside class="au-founder" aria-label="%s">
-          <div class="au-avatar" aria-hidden="true">ر</div>
+        </article>
+        <aside class="au-founder">
+          <div class="au-founder-mark" aria-hidden="true">ر</div>
           <h2>%s</h2>
           <p class="au-role">%s</p>
           <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
             <span>📩 %s</span><b dir="ltr">@rms_2o</b>
           </a>
         </aside>
-      </div>
-    </section>
+      </section>
+    </main>
+    """ % (
+        t("about_us_kicker"), t("about_us_title"), t("about_us_p1"),
+        t("about_us_title"), t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
+        t("about_us_name"), t("about_us_role"), t("about_us_contact"),
+    )
+    return _page(_t("title_about_us"), body, desc=t("about_us_p1"), extra_css=ABOUT_US_CSS)
 
+
+def about_page():
+    t = _t
+    body = """
     <div class="card">
       <h2>%s</h2>
       <h3 class="ab-sub">%s</h3>
@@ -3338,9 +3370,6 @@ def about_page():
       <p style="line-height:1.9;">%s</p>
     </div>
     """ % (
-        t("about_us_kicker"), t("about_us_title"), t("about_us_p1"),
-        t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
-        t("about_us_name"), t("about_us_name"), t("about_us_role"), t("about_us_contact"),
         t("ab_t1"), t("ab_hero_sub"), t("ab_hero_p"), t("ab_alert"),
         t("ab_services_h"),
         t("ab_sv1_t"), t("ab_sv1_p"), t("ab_sv2_t"), t("ab_sv2_p"),
@@ -3354,7 +3383,7 @@ def about_page():
         t("ab_srcs_h"), t("ab_srcs_p2"),
         t("ab_priv_h"), t("ab_priv_p"),
     )
-    return _page(_t("title_about"), body, extra_css=ABOUT_CSS)
+    return _page(_t("title_about"), body)
 
 
 # ---------------------------------------------------------------- chat
@@ -8132,6 +8161,11 @@ def about():
     return about_page()
 
 
+@app.route("/about-us")
+def about_us():
+    return about_us_page()
+
+
 @app.route("/chat")
 def chat():
     return chat_page()
@@ -8846,7 +8880,7 @@ def robots_txt():
 @app.route("/sitemap.xml")
 def sitemap_xml():
     base = _site_url()
-    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about", "/login", "/register", "/settings"]
+    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about", "/about-us", "/login", "/register", "/settings"]
     urls = "\n".join(
         "  <url><loc>%s</loc><changefreq>weekly</changefreq><priority>%.1f</priority></url>"
         % (base + p, 1.0 if p == "/" else 0.7)
