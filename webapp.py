@@ -2421,7 +2421,7 @@ L = {
         "footer_synopsis_t": "About the project",
         "footer_synopsis_d": "SymptoSense is a smart health platform that simplifies access to reliable health information and tools, helping you understand your condition more clearly.",
         "footer_owner_t": "About us",
-        "footer_owner_name": "Remas Hameed Al-Sulami 🤍",
+        "footer_owner_name": "Remas Hameed Alsolami 🤍",
         "footer_owner_role": "Data Science and Analytics student and founder of SymptoSense",
         "footer_contact_t": "Contact",
         "footer_wa_btn": "💬 Chat with me on Telegram",
@@ -2526,10 +2526,10 @@ L = {
         "about_us_kicker": "Our story",
         "about_us_title": "About us",
         "about_us_p1": "My passion began with a simple question: How can technology feel closer to people?",
-        "about_us_p2": "I am Remas Hameed Al-Sulami, a Data Science and Analytics student who is passionate about building technology solutions that make a genuine difference in people's lives.",
+        "about_us_p2": "I am Remas Hameed Alsolami, a Data Science and Analytics student who is passionate about building technology solutions that make a genuine difference in people's lives.",
         "about_us_p3": "That is where my idea began: to use what I learn in data science and technology to build a solution that makes health symptoms clearer and easier to understand. My goal was not simply to create a website, but to design an experience that gives people initial knowledge, helps them understand what they are feeling, and supports them in choosing the right next step with greater awareness.",
         "about_us_p4": "I believe technology has its greatest impact when it makes people's lives simpler, their awareness greater, and their decisions smarter.",
-        "about_us_name": "Remas Hameed Al-Sulami",
+        "about_us_name": "Remas Hameed Alsolami",
         "about_us_role": "Data Science and Analytics student and founder of SymptoSense",
         "about_us_contact": "Contact:",
         "about_us_img1_alt": "A smartphone surrounded by health symbols representing symptom understanding and health awareness",
@@ -3343,91 +3343,221 @@ def _tools_html(t):
 
 
 ABOUT_US_CSS = """
-.about-us-page { width: min(1060px, 100%); display: grid; gap: clamp(18px, 3vw, 26px); margin: 0 auto; }
-.au-hero { min-height: 360px; display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(22px, 4vw, 40px); overflow: hidden; padding: clamp(22px, 3.5vw, 34px); border: 1px solid #CFE4F8; border-radius: 27px; background: linear-gradient(135deg, #EAF4FF 0%, #F7FBFF 58%, #FFFFFF 100%); box-shadow: 0 15px 38px rgba(18,59,112,.10); }
-.au-hero-visual { min-height: 310px; display: flex; align-items: center; justify-content: center; padding: 12px; border: 1px solid rgba(25,118,210,.13); border-radius: 22px; background: #EDF6FF; }
-.au-hero-visual img { width: min(100%, 380px); max-height: 330px; display: block; object-fit: contain; border: 1px solid rgba(25,118,210,.12); border-radius: 18px; box-shadow: 0 10px 26px rgba(18,59,112,.10); }
-.au-hero-copy { max-width: 520px; }
-.au-hero-copy h1 { margin: 0 0 14px; color: var(--primary-dark); font-size: clamp(34px, 5vw, 49px); line-height: 1.28; }
-.au-hero-line { width: 58px; height: 4px; margin-bottom: 18px; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--primary-mid)); }
-.au-hero-copy p { max-width: 39ch; margin: 0; color: #315B84; font-size: clamp(17px, 2vw, 21px); font-weight: 700; line-height: 1.9; }
-.au-details { display: grid; grid-template-columns: minmax(245px, .62fr) minmax(0, 1.38fr); align-items: center; gap: clamp(22px, 4vw, 38px); padding: clamp(22px, 4vw, 38px); border: 1px solid var(--border-card); border-radius: 25px; background: #fff; box-shadow: var(--shadow-card); }
-.au-profile { align-self: center; padding: 25px 21px; border: 1px solid rgba(255,255,255,.25); border-radius: 20px; background: linear-gradient(150deg, var(--primary-dark) 0%, #1559A5 56%, var(--primary) 100%); color: #fff; box-shadow: 0 14px 30px rgba(18,59,112,.18); }
-.au-profile-mark { width: 62px; height: 62px; display: grid; place-items: center; margin-bottom: 15px; border: 1px solid rgba(255,255,255,.32); border-radius: 18px; background: rgba(255,255,255,.13); color: #fff; font-size: 27px; font-weight: 900; }
-.au-name { display: block; color: #fff; font-size: 20px; font-weight: 900; line-height: 1.55; }
-.au-role { display: block; margin: 5px 0 18px; color: #E6F2FF; font-size: 13px; line-height: 1.75; }
-.au-contact { min-height: 48px; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; width: 100%; max-width: 100%; padding: 10px 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 13px; background: #fff; color: var(--primary-dark); font-size: 12.5px; font-weight: 800; transition: transform .16s ease, box-shadow .16s ease; }
-.au-contact span[dir='ltr'] { direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
-.au-contact:hover { transform: translateY(-2px); box-shadow: 0 9px 20px rgba(7,35,74,.22); }
-.au-story { max-width: 680px; }
-.au-story p { margin: 0 0 17px; color: var(--text-body); font-size: clamp(15px, 1.55vw, 17px); line-height: 2; }
-.au-story p:last-of-type { margin-bottom: 0; }
-.au-belief { margin-top: 20px !important; padding: 16px 18px; border-inline-start: 4px solid var(--primary); border-radius: 13px; background: var(--primary-light); color: var(--primary-dark) !important; font-weight: 900; line-height: 1.9 !important; }
-@media (max-width: 820px) {
-  .au-hero, .au-details { grid-template-columns: 1fr; }
-  .au-hero { min-height: 0; gap: 19px; }
-  .au-hero-visual { min-height: 0; order: -1; }
-  .au-hero-visual img { width: min(100%, 430px); max-height: 360px; }
-  .au-hero-copy { max-width: none; }
-  .au-hero-copy p, .au-story { max-width: none; }
-  .au-profile { width: min(100%, 430px); justify-self: center; }
-}
-@media (max-width: 520px) {
-  .about-us-page { gap: 15px; }
-  .au-hero, .au-details { padding: 16px; border-radius: 19px; }
-  .au-hero-visual { padding: 8px; border-radius: 16px; }
-  .au-hero-visual img { max-height: none; border-radius: 13px; }
-  .au-hero-copy h1 { margin-bottom: 10px; font-size: 32px; }
-  .au-hero-line { margin-bottom: 13px; }
-  .au-hero-copy p { font-size: 16.5px; line-height: 1.8; }
-  .au-details { gap: 20px; }
-  .au-profile { width: 100%; padding: 21px 17px; border-radius: 17px; }
-  .au-story p { margin-bottom: 14px; font-size: 14.5px; line-height: 1.9; }
-  .au-belief { margin-top: 17px !important; padding: 14px; }
-  .au-contact { padding-inline: 9px; font-size: 12px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .au-contact { transition: none; }
-}
+.about-us-page{width:min(1180px,100%);margin:0 auto;display:grid;gap:clamp(22px,4vw,42px);padding-bottom:18px}
+.au-section{position:relative;overflow:hidden;border:1px solid var(--v2-line);border-radius:26px;background:#fff;box-shadow:var(--v2-shadow)}
+.au-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--v2-blue);font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.au-title{margin:0 0 12px;color:var(--v2-blue-dark);font-size:clamp(24px,3.4vw,36px);line-height:1.35}
+.au-copy{max-width:620px}.au-copy p{margin:0;color:var(--v2-text);font-size:clamp(14.5px,1.35vw,16.5px);line-height:2}
+.au-copy p+p{margin-top:12px}.au-muted{color:var(--v2-muted)!important}.au-strong{color:var(--v2-blue-dark)!important;font-weight:800}
+.au-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.88fr);gap:clamp(24px,5vw,62px);align-items:center;padding:clamp(24px,5vw,54px);direction:ltr}
+.au-split>.au-copy{direction:rtl;text-align:right}.au-split>.au-visual{direction:ltr}.au-split.au-story-layout{grid-template-areas:'copy visual'}.au-split.au-story-layout>.au-copy{grid-area:copy}.au-split.au-story-layout>.au-visual{grid-area:visual}
+.au-split.au-idea-layout{grid-template-areas:'visual copy'}.au-split.au-idea-layout>.au-copy{grid-area:copy}.au-split.au-idea-layout>.au-visual{grid-area:visual}
+html[dir='ltr'] .au-split>.au-copy{direction:ltr;text-align:left}.au-section::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:#EAF5FC;filter:blur(2px);opacity:.55;pointer-events:none;inset:auto -120px -125px auto}
+
+/* Hero / About me */
+.au-hero{min-height:520px;display:grid;grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(30px,5vw,66px);padding:clamp(28px,5vw,60px);direction:ltr;background:linear-gradient(135deg,#F8FCFF 0%,#EFF8FE 56%,#FFFFFF 100%)}
+.au-hero-copy{direction:rtl;text-align:right;position:relative;z-index:2}.au-hero-copy h1{margin:0 0 8px;color:var(--v2-blue-dark);font-size:clamp(32px,4.6vw,52px);line-height:1.28}.au-role-line{margin:0 0 18px!important;color:var(--v2-blue)!important;font-weight:800!important;font-size:clamp(15px,1.7vw,18px)!important;line-height:1.6!important}.au-hero-copy .au-lead{max-width:56ch;color:var(--v2-text);font-size:clamp(15px,1.5vw,17px);line-height:2}.au-contact-link{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:9px 12px;border:1px solid #CFE2F1;border-radius:12px;background:#fff;color:var(--v2-blue-dark);font-size:12px;font-weight:800;text-decoration:none}.au-contact-link:hover{border-color:#9FC8DE;background:#F8FCFE}
+html[dir='ltr'] .au-hero-copy{direction:ltr;text-align:left}.au-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.au-tag{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #CFE2F1;border-radius:999px;background:#fff;color:var(--v2-blue-dark);font-size:12px;font-weight:800}
+.au-hero-visual{position:relative;min-height:385px;display:grid;place-items:center;isolation:isolate}.au-hero-visual::before{content:'';position:absolute;width:min(390px,92%);aspect-ratio:1;border-radius:42% 58% 52% 48%/48% 46% 54% 52%;background:#DDEFFA;transform:rotate(-7deg);z-index:-2}.au-hero-visual::after{content:'';position:absolute;width:min(330px,78%);aspect-ratio:1;border:1px solid #BFDDEC;border-radius:50%;z-index:-1}
+.au-abstract-card{width:min(380px,94%);min-height:300px;padding:22px;border:1px solid rgba(255,255,255,.85);border-radius:28px;background:rgba(255,255,255,.9);box-shadow:0 18px 45px rgba(31,86,127,.10);backdrop-filter:blur(8px);display:grid;grid-template-rows:auto 1fr auto;gap:18px}.au-abstract-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.au-avatar-mark{width:62px;height:62px;border-radius:20px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900;box-shadow:0 10px 22px rgba(40,127,193,.18)}.au-dots{display:flex;gap:6px}.au-dots i{width:7px;height:7px;border-radius:50%;background:#C8DFED}.au-dots i:nth-child(2){background:#8FC7E8}.au-dots i:nth-child(3){background:#58A8D7}
+.au-data-net{position:relative;min-height:146px;border:1px dashed #BED8E8;border-radius:20px;background:#F8FCFE;overflow:hidden}.au-data-net .node{position:absolute;width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:#fff;border:1px solid #D4E6F1;box-shadow:0 7px 16px rgba(31,86,127,.07);font-size:25px}.au-data-net .n1{top:16px;left:18px}.au-data-net .n2{top:48px;left:50%;transform:translateX(-50%)}.au-data-net .n3{right:20px;bottom:18px}.au-data-net .n4{left:28%;bottom:12px}.au-data-net svg{position:absolute;inset:0;width:100%;height:100%}.au-abstract-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.au-mini-stat{padding:10px 7px;border-radius:13px;background:#EEF7FC;color:var(--v2-blue-dark);text-align:center;font-size:11px;font-weight:800}
+
+/* Story */
+.au-story-card{background:#fff}.au-story-visual{min-height:330px;display:grid;place-items:center}.au-story-orbit{position:relative;width:min(330px,90%);aspect-ratio:1;border-radius:50%;border:1px solid #CDE3F0;background:radial-gradient(circle at center,#fff 0 31%,#F1F8FC 32% 59%,#fff 60%);box-shadow:inset 0 0 0 18px rgba(234,245,252,.55)}.au-story-orbit .center{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:34px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;text-align:center;font-weight:900;line-height:1.3;box-shadow:0 14px 28px rgba(40,127,193,.18)}.au-story-orbit .orb{position:absolute;width:58px;height:58px;border-radius:18px;background:#fff;border:1px solid #D4E6F1;display:grid;place-items:center;box-shadow:0 8px 18px rgba(31,86,127,.08);font-size:25px}.au-story-orbit .o1{top:4%;left:43%}.au-story-orbit .o2{right:3%;top:42%}.au-story-orbit .o3{left:41%;bottom:3%}.au-story-orbit .o4{left:2%;top:42%}
+.au-timeline{margin-top:24px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:relative}.au-timeline::before{content:'';position:absolute;left:8%;right:8%;top:20px;height:1px;background:#CFE1EC}.au-step{position:relative;z-index:1;padding-top:0;text-align:center}.au-step-num{width:42px;height:42px;margin:0 auto 9px;border-radius:14px;background:#fff;border:1px solid #BED8E8;color:var(--v2-blue);display:grid;place-items:center;font-size:12px;font-weight:900;box-shadow:0 5px 13px rgba(31,86,127,.06)}.au-step b{display:block;color:var(--v2-blue-dark);font-size:12px;line-height:1.5}
+
+/* Idea */
+.au-idea-visual{min-height:330px;display:grid;place-items:center}.au-product-visual{position:relative;width:min(360px,94%);padding:14px;border:1px solid #CFE3EE;border-radius:28px;background:#F3F9FD;box-shadow:0 14px 32px rgba(31,86,127,.09)}.au-product-visual img{width:100%;display:block;border-radius:20px;object-fit:cover}.au-image-chip{position:absolute;padding:7px 10px;border:1px solid #D5E6EF;border-radius:999px;background:rgba(255,255,255,.94);color:var(--v2-blue-dark);font-size:10.5px;font-weight:900;box-shadow:0 7px 16px rgba(31,86,127,.07)}.au-image-chip.c1{top:24px;left:-20px}.au-image-chip.c2{right:-20px;top:47%}.au-image-chip.c3{bottom:26px;left:-13px}.au-triad{position:relative;width:min(390px,96%);height:300px}.au-triad-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:136px;height:136px;border-radius:42px;background:var(--v2-blue-dark);color:#fff;display:grid;place-items:center;text-align:center;font-size:15px;font-weight:900;box-shadow:0 16px 34px rgba(22,59,92,.18)}.au-triad-node{position:absolute;width:102px;height:102px;border-radius:30px;background:#fff;border:1px solid #CDE3F0;display:grid;place-items:center;text-align:center;color:var(--v2-blue-dark);font-size:12px;font-weight:900;line-height:1.35;box-shadow:0 10px 24px rgba(31,86,127,.08)}.au-triad-node span{display:block;font-size:29px;margin-bottom:4px}.au-triad-node.t1{top:0;left:50%;transform:translateX(-50%)}.au-triad-node.t2{bottom:8px;left:18px}.au-triad-node.t3{bottom:8px;right:18px}.au-triad-line{position:absolute;height:1px;background:#AFCFDF;transform-origin:left center}.au-triad-line.l1{width:84px;left:50%;top:101px;transform:translateX(-50%) rotate(90deg)}.au-triad-line.l2{width:110px;left:29%;top:60%;transform:rotate(28deg)}.au-triad-line.l3{width:110px;right:29%;top:60%;transform:rotate(-28deg);transform-origin:right center}
+
+/* Why / diagram */
+.au-diagram-section{padding:clamp(28px,5vw,54px);text-align:center;background:#F9FCFE}.au-diagram-section .au-copy{max-width:780px;margin:0 auto 28px;text-align:center}.au-diagram{max-width:820px;margin:0 auto;display:grid;gap:12px;justify-items:center}.au-diagram-box{min-width:190px;padding:15px 22px;border-radius:16px;border:1px solid #CDE3F0;background:#fff;color:var(--v2-blue-dark);font-weight:900;box-shadow:0 7px 18px rgba(31,86,127,.06)}.au-diagram-box.primary{background:var(--v2-blue);border-color:var(--v2-blue);color:#fff}.au-diagram-arrow{color:#7BAFCB;font-size:22px;line-height:1}.au-diagram-mid{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.au-diagram-mid .au-diagram-box{min-width:0}.au-plus{color:var(--v2-blue);font-size:20px;font-weight:900;display:none}
+
+/* Technologies */
+.au-tech-section{padding:clamp(28px,5vw,54px)}.au-tech-head{display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:24px}.au-tech-head .au-copy{max-width:620px}.au-tech-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.au-tech{min-height:118px;padding:18px;border:1px solid #D3E5EF;border-radius:18px;background:#fff;display:flex;flex-direction:column;gap:10px;justify-content:center;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.au-tech:hover{transform:translateY(-3px);border-color:#A8CEE2;box-shadow:0 10px 22px rgba(31,86,127,.08)}.au-tech-icon{width:42px;height:42px;border-radius:13px;background:#EAF5FC;display:grid;place-items:center;font-size:21px}.au-tech b{color:var(--v2-blue-dark);font-size:14px}.au-tech small{color:var(--v2-muted);font-size:11.5px;line-height:1.55}
+
+/* Live project showcase */
+.au-project{padding:clamp(28px,5vw,54px);background:linear-gradient(180deg,#fff,#F8FCFE)}.au-project-head{max-width:760px;margin:0 auto 26px;text-align:center}.au-project-head p{color:var(--v2-muted);line-height:1.9}.au-live-label{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 10px;border:1px solid #CFE1EC;border-radius:999px;background:#fff;color:var(--v2-blue-dark);font-size:11px;font-weight:800}.au-live-dot{width:7px;height:7px;border-radius:50%;background:#4FA97C;box-shadow:0 0 0 4px #E7F5EE}.au-device-stage{display:flex;justify-content:center;align-items:flex-end;gap:20px;direction:ltr}.au-laptop{width:min(800px,85%)}.au-laptop-screen{position:relative;aspect-ratio:16/9;padding:10px;border-radius:20px 20px 12px 12px;background:#163B5C;box-shadow:0 24px 50px rgba(22,59,92,.18)}.au-laptop-screen iframe{width:100%;height:100%;border:0;border-radius:11px;background:#fff;pointer-events:none}.au-laptop-base{width:108%;height:15px;margin-left:-4%;border-radius:4px 4px 18px 18px;background:#D5E0E8;box-shadow:0 8px 15px rgba(22,59,92,.12)}.au-phone-preview{width:150px;flex:0 0 150px;margin-bottom:-4px;padding:8px;border-radius:28px;background:#163B5C;box-shadow:0 18px 36px rgba(22,59,92,.18)}.au-phone-preview iframe{width:100%;aspect-ratio:9/18.5;border:0;border-radius:21px;background:#fff;pointer-events:none}
+
+/* Goal */
+.au-goal-visual{min-height:300px;display:grid;place-items:center}.au-goal-board{position:relative;width:min(340px,92%);aspect-ratio:1;border-radius:42px;background:#F1F8FC;border:1px solid #CFE3EE;display:grid;place-items:center}.au-target{width:180px;height:180px;border-radius:50%;border:18px solid #D5EAF5;box-shadow:inset 0 0 0 18px #B8DCEC;display:grid;place-items:center;background:#fff}.au-target::after{content:'🎯';font-size:48px}.au-rise{position:absolute;right:24px;top:28px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #D4E6F1;color:#267A52;font-size:21px;box-shadow:0 8px 18px rgba(31,86,127,.07)}.au-bulb{position:absolute;left:22px;bottom:24px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #D4E6F1;font-size:21px;box-shadow:0 8px 18px rgba(31,86,127,.07)}
+
+/* Future roadmap */
+.au-future{padding:clamp(28px,5vw,54px);background:#FBFDFE}.au-future-head{max-width:760px;margin-bottom:26px}.au-roadmap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;position:relative}.au-roadmap::before{content:'';position:absolute;left:5%;right:5%;top:28px;height:1px;background:#C8DFEB}.au-road{position:relative;z-index:1;text-align:center}.au-road-dot{width:56px;height:56px;margin:0 auto 10px;border-radius:18px;background:#fff;border:1px solid #BCD8E8;display:grid;place-items:center;font-size:23px;box-shadow:0 7px 17px rgba(31,86,127,.07)}.au-road b{display:block;color:var(--v2-blue-dark);font-size:12px;line-height:1.5;min-height:38px}.au-road span{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:999px;background:#EEF7FC;color:var(--v2-blue);font-size:9.5px;font-weight:900}
+
+/* Personal */
+.au-personal{padding:clamp(28px,5vw,54px);display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;align-items:center;background:#fff}.au-personal-visual{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.au-personal-pill{min-height:112px;border:1px solid #D3E5EF;border-radius:22px;background:#F8FCFE;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--v2-blue-dark);font-weight:900;font-size:12px}.au-personal-pill span{font-size:27px}.au-personal-pill:nth-child(2),.au-personal-pill:nth-child(3){background:#EEF7FC}
+
+/* Final CTA */
+.au-final{padding:clamp(36px,6vw,66px);text-align:center;background:linear-gradient(135deg,#F4FAFE,#FFFFFF);border-color:#C9E1EF}.au-final-inner{max-width:780px;margin:0 auto;position:relative;z-index:1}.au-final-mark{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:#fff;border:1px solid #CFE3EE;display:grid;place-items:center;font-size:36px;box-shadow:0 10px 24px rgba(31,86,127,.08)}.au-final h2{font-size:clamp(28px,4vw,42px);margin-bottom:12px}.au-final p{max-width:640px;margin:0 auto 22px;color:var(--v2-text);font-size:clamp(15px,1.6vw,18px);line-height:1.9}.au-final .btn{display:inline-flex;align-items:center;justify-content:center;min-width:190px;text-decoration:none}
+
+/* Motion */
+.au-reveal{opacity:0;transform:translateY(18px);animation:auEnter .62s ease forwards}.au-reveal:nth-child(2){animation-delay:.05s}.au-reveal:nth-child(3){animation-delay:.08s}.au-reveal:nth-child(4){animation-delay:.11s}@keyframes auEnter{to{opacity:1;transform:none}}
+.au-hero-visual,.au-story-orbit,.au-goal-board{animation:auFloat 6s ease-in-out infinite}@keyframes auFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+@media(max-width:960px){.au-hero,.au-split,.au-personal{grid-template-columns:1fr}.au-hero{min-height:0}.au-hero-visual{order:-1;min-height:350px}.au-personal-visual{width:min(430px,100%);margin:auto}.au-tech-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.au-roadmap{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:24px}.au-roadmap::before{display:none}.au-device-stage{align-items:center}.au-laptop{width:100%}.au-phone-preview{display:none}.au-split.au-story-layout,.au-split.au-idea-layout{grid-template-areas:'visual' 'copy'}.au-copy{max-width:none}}
+@media(max-width:640px){.about-us-page{gap:16px}.au-section{border-radius:20px}.au-hero,.au-split,.au-diagram-section,.au-tech-section,.au-project,.au-future,.au-personal,.au-final{padding:21px}.au-hero-visual{min-height:300px}.au-abstract-card{min-height:270px;padding:16px}.au-avatar-mark{width:54px;height:54px;border-radius:17px}.au-data-net .node{width:47px;height:47px;border-radius:15px;font-size:21px}.au-tags{gap:6px}.au-tag{padding:7px 9px;font-size:11px}.au-timeline{grid-template-columns:1fr;gap:8px;margin-top:20px}.au-timeline::before{left:20px;right:auto;top:15px;bottom:15px;width:1px;height:auto}.au-step{display:grid;grid-template-columns:42px 1fr;align-items:center;gap:10px;text-align:start}.au-step-num{margin:0}.au-step b{font-size:12.5px}.au-story-orbit{width:min(290px,92%)}.au-diagram-mid{grid-template-columns:1fr}.au-plus{display:block}.au-tech-grid{grid-template-columns:1fr}.au-tech{min-height:94px}.au-device-stage{display:block}.au-laptop{width:100%}.au-laptop-screen{padding:6px;border-radius:13px 13px 8px 8px}.au-roadmap{grid-template-columns:1fr}.au-road{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;text-align:start}.au-road-dot{margin:0}.au-road b{min-height:0}.au-road span{justify-self:start}.au-personal{gap:22px}.au-personal-visual{grid-template-columns:repeat(2,1fr)}.au-personal-pill{min-height:92px;border-radius:17px}.au-final .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.au-reveal,.au-hero-visual,.au-story-orbit,.au-goal-board{animation:none;opacity:1;transform:none}.au-tech{transition:none}}
 """
 
 
 def about_us_page():
+    from html import escape
     t = _t
+    ar = _lang() == "ar"
+    bi = lambda a, e: a if ar else e
+    tx = lambda key: escape(t(key))
+
     body = """
     <main class="about-us-page" aria-labelledby="aboutUsTitle">
-      <section class="au-hero">
-        <figure class="au-hero-visual">
-          <img src="/icons/about-us-phone.webp" alt="%s" width="621" height="677" loading="eager">
-        </figure>
+      <section class="au-section au-hero au-reveal">
+        <div class="au-hero-visual" aria-hidden="true">
+          <div class="au-abstract-card">
+            <div class="au-abstract-top">
+              <div class="au-avatar-mark">R</div>
+              <div class="au-dots"><i></i><i></i><i></i></div>
+            </div>
+            <div class="au-data-net">
+              <svg viewBox="0 0 320 150" preserveAspectRatio="none" focusable="false"><path d="M43 43 C90 20 120 85 165 74 S250 45 280 110" fill="none" stroke="#AFCFDF" stroke-width="1.4" stroke-dasharray="5 5"/><path d="M75 124 C118 92 180 116 255 80" fill="none" stroke="#C6DFEB" stroke-width="1.2"/></svg>
+              <span class="node n1">📊</span><span class="node n2">🤖</span><span class="node n3">🩺</span><span class="node n4">💻</span>
+            </div>
+            <div class="au-abstract-foot"><span class="au-mini-stat">DATA</span><span class="au-mini-stat">AI</span><span class="au-mini-stat">HEALTH</span></div>
+          </div>
+        </div>
         <div class="au-hero-copy">
-          <h1 id="aboutUsTitle">%s</h1>
-          <div class="au-hero-line" aria-hidden="true"></div>
-          <p>%s</p>
+          <span class="au-eyebrow">👩🏻‍💻 __ABOUT_ME__</span>
+          <h1 id="aboutUsTitle">__HELLO__</h1>
+          <p class="au-role-line" dir="ltr">Data Science Student &amp; Creator of SymptoSense</p>
+          <p class="au-lead">__P2__</p>
+          <div class="au-tags" aria-label="Interests"><span class="au-tag">📊 Data Science</span><span class="au-tag">🤖 AI</span><span class="au-tag">🩺 Healthcare</span><span class="au-tag">💻 Technology</span></div>
+          <a class="au-contact-link" href="https://t.me/rms_2o" target="_blank" rel="noopener">📩 __CONTACT__ <span dir="ltr">@rms_2o</span></a>
         </div>
       </section>
 
-      <section class="au-details" aria-label="%s">
-        <aside class="au-profile">
-          <div class="au-profile-mark" aria-hidden="true">ر</div>
-          <strong class="au-name">%s</strong>
-          <span class="au-role">%s</span>
-          <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
-            <span>📩 %s</span><span dir="ltr">https://t.me/rms_2o</span>
-          </a>
-        </aside>
-        <article class="au-story">
-          <p>%s</p>
-          <p>%s</p>
-          <p class="au-belief">%s</p>
-        </article>
+      <section class="au-section au-split au-story-layout au-story-card au-reveal">
+        <div class="au-copy">
+          <span class="au-eyebrow">💡 __MY_STORY__</span>
+          <h2 class="au-title">__STORY_TITLE__</h2>
+          <p class="au-strong">__P1__</p>
+          <p>__P3__</p>
+          <div class="au-timeline" role="list" aria-label="__TIMELINE_LABEL__">
+            <div class="au-step" role="listitem"><span class="au-step-num">01</span><b>__STEP1__</b></div>
+            <div class="au-step" role="listitem"><span class="au-step-num">02</span><b>__STEP2__</b></div>
+            <div class="au-step" role="listitem"><span class="au-step-num">03</span><b>__STEP3__</b></div>
+            <div class="au-step" role="listitem"><span class="au-step-num">04</span><b>__STEP4__</b></div>
+          </div>
+        </div>
+        <div class="au-visual au-story-visual" aria-hidden="true">
+          <div class="au-story-orbit"><div class="center">DATA<br>+ AI</div><span class="orb o1">💡</span><span class="orb o2">📊</span><span class="orb o3">🩺</span><span class="orb o4">💻</span></div>
+        </div>
+      </section>
+
+      <section class="au-section au-split au-idea-layout au-reveal">
+        <div class="au-visual au-idea-visual">
+          <figure class="au-product-visual">
+            <img src="/icons/about-us-phone.webp" alt="__IMG_ALT__" width="621" height="677" loading="lazy">
+            <span class="au-image-chip c1" aria-hidden="true">📊 DATA</span><span class="au-image-chip c2" aria-hidden="true">🤖 AI</span><span class="au-image-chip c3" aria-hidden="true">🩺 HEALTH</span>
+          </figure>
+        </div>
+        <div class="au-copy">
+          <span class="au-eyebrow">🩺 __WHAT_KICK__</span>
+          <h2 class="au-title">__WHAT_TITLE__</h2>
+          <p>__WHAT_TEXT__</p>
+        </div>
+      </section>
+
+      <section class="au-section au-diagram-section au-reveal">
+        <div class="au-copy">
+          <span class="au-eyebrow">🧠 __WHY_KICK__</span>
+          <h2 class="au-title">__WHY_TITLE__</h2>
+          <p>__WHY_TEXT__</p>
+        </div>
+        <div class="au-diagram" aria-label="__DIAGRAM_LABEL__">
+          <div class="au-diagram-box primary">REEMAS</div><div class="au-diagram-arrow">↓</div>
+          <div class="au-diagram-mid"><div class="au-diagram-box">📊 DATA</div><span class="au-plus">+</span><div class="au-diagram-box">🤖 AI</div><span class="au-plus">+</span><div class="au-diagram-box">🩺 HEALTHCARE</div></div>
+          <div class="au-diagram-arrow">↓</div><div class="au-diagram-box primary">SYMPTOSENSE</div>
+        </div>
+      </section>
+
+      <section class="au-section au-tech-section au-reveal">
+        <div class="au-tech-head"><div class="au-copy"><span class="au-eyebrow">⚙️ __BUILD_KICK__</span><h2 class="au-title">__BUILD_TITLE__</h2><p>__BUILD_TEXT__</p></div></div>
+        <div class="au-tech-grid" role="list">
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">🐍</span><b>Python</b><small>__TECH_PY__</small></div>
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">🌐</span><b>Flask</b><small>__TECH_FLASK__</small></div>
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">🤖</span><b>AI · Llama / Groq</b><small>__TECH_AI__</small></div>
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">🧠</span><b>Machine Learning</b><small>__TECH_ML__</small></div>
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">🗄️</span><b>PostgreSQL / SQLite</b><small>__TECH_DB__</small></div>
+          <div class="au-tech" role="listitem"><span class="au-tech-icon">💻</span><b>Web Development</b><small>__TECH_WEB__</small></div>
+        </div>
+      </section>
+
+      <section class="au-section au-project au-reveal">
+        <div class="au-project-head"><span class="au-eyebrow">💻 __PROJECT_KICK__</span><h2 class="au-title">__PROJECT_TITLE__</h2><p>__P3__</p><span class="au-live-label"><i class="au-live-dot"></i>__LIVE_LABEL__</span></div>
+        <div class="au-device-stage" aria-label="__LIVE_ARIA__">
+          <div class="au-laptop"><div class="au-laptop-screen"><iframe src="/home" title="SymptoSense desktop preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-laptop-base" aria-hidden="true"></div></div>
+          <div class="au-phone-preview" aria-hidden="true"><iframe src="/home" title="SymptoSense mobile preview" loading="lazy" tabindex="-1"></iframe></div>
+        </div>
+      </section>
+
+      <section class="au-section au-split au-story-layout au-reveal">
+        <div class="au-copy"><span class="au-eyebrow">🎯 __GOAL_KICK__</span><h2 class="au-title">__GOAL_TITLE__</h2><p class="au-strong">__P4__</p></div>
+        <div class="au-visual au-goal-visual" aria-hidden="true"><div class="au-goal-board"><div class="au-target"></div><div class="au-rise">📈</div><div class="au-bulb">💡</div></div></div>
+      </section>
+
+      <section class="au-section au-future au-reveal">
+        <div class="au-future-head"><span class="au-eyebrow">🚀 __FUTURE_KICK__</span><h2 class="au-title">__FUTURE_TITLE__</h2><p class="au-muted">__FUTURE_TEXT__</p></div>
+        <div class="au-roadmap" role="list" aria-label="Future roadmap">
+          <div class="au-road" role="listitem"><span class="au-road-dot">📚</span><b>__ROAD1__</b><span>__COMING__</span></div>
+          <div class="au-road" role="listitem"><span class="au-road-dot">🔗</span><b>__ROAD2__</b><span>__COMING__</span></div>
+          <div class="au-road" role="listitem"><span class="au-road-dot">📈</span><b>__ROAD3__</b><span>__COMING__</span></div>
+          <div class="au-road" role="listitem"><span class="au-road-dot">🤖</span><b>__ROAD4__</b><span>__COMING__</span></div>
+          <div class="au-road" role="listitem"><span class="au-road-dot">🧠</span><b>__ROAD5__</b><span>__COMING__</span></div>
+          <div class="au-road" role="listitem"><span class="au-road-dot">🛡️</span><b>__ROAD6__</b><span>__ONGOING__</span></div>
+        </div>
+      </section>
+
+      <section class="au-section au-personal au-reveal">
+        <div class="au-copy"><span class="au-eyebrow">❤️ __PERSONAL_KICK__</span><h2 class="au-title">__PERSONAL_TITLE__</h2><p class="au-strong">__P4__</p></div>
+        <div class="au-personal-visual" aria-hidden="true"><div class="au-personal-pill"><span>📚</span>Learning</div><div class="au-personal-pill"><span>🌱</span>Growth</div><div class="au-personal-pill"><span>🚀</span>Future</div><div class="au-personal-pill"><span>💡</span>Innovation</div></div>
+      </section>
+
+      <section class="au-section au-final au-reveal">
+        <div class="au-final-inner"><div class="au-final-mark" aria-hidden="true">🩺</div><h2 class="au-title">__FINAL_TITLE__</h2><p>__FINAL_TEXT__</p><a class="btn pri" href="/chat">__CTA__</a></div>
       </section>
     </main>
-    """ % (
-        t("about_us_img1_alt"), t("about_us_title"), t("about_us_p1"),
-        t("about_us_title"), t("about_us_name"), t("about_us_role"), t("about_us_contact"),
-        t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
-    )
+    """
+
+    replacements = {
+        "__ABOUT_ME__": bi("عنّي", "About me"), "__CONTACT__": tx("about_us_contact"), "__IMG_ALT__": tx("about_us_img1_alt"),
+        "__HELLO__": bi("مرحبًا، أنا ريماس حميد السلمي 👋", "Hi, I'm Remas Hameed Alsolami 👋"),
+        "__P1__": tx("about_us_p1"), "__P2__": tx("about_us_p2"), "__P3__": tx("about_us_p3"), "__P4__": tx("about_us_p4"),
+        "__MY_STORY__": bi("قصتي", "My story"), "__STORY_TITLE__": bi("كيف بدأت فكرة SymptoSense؟", "How did SymptoSense begin?"),
+        "__TIMELINE_LABEL__": bi("المسار المختصر لقصة الفكرة", "A short timeline of the idea"),
+        "__STEP1__": bi("الفكرة", "The idea"), "__STEP2__": bi("الاهتمام بعلم البيانات والذكاء الاصطناعي", "Interest in data science and AI"),
+        "__STEP3__": bi("ظهور فكرة SymptoSense", "The SymptoSense concept"), "__STEP4__": bi("تطوير الفكرة إلى مشروع حقيقي", "Turning the idea into a real project"),
+        "__WHAT_KICK__": bi("الفكرة", "The idea"), "__WHAT_TITLE__": bi("ما هو SymptoSense؟", "What is SymptoSense?"), "__WHAT_TEXT__": tx("ab_p1"),
+        "__WHY_KICK__": bi("البيانات + الذكاء الاصطناعي", "Data + AI"), "__WHY_TITLE__": bi("لماذا علم البيانات والذكاء الاصطناعي؟", "Why data science and AI?"), "__WHY_TEXT__": tx("ab_p3"),
+        "__DIAGRAM_LABEL__": bi("ريماس ثم البيانات والذكاء الاصطناعي والصحة وصولًا إلى SymptoSense", "Remas, data, AI and healthcare leading to SymptoSense"),
+        "__BUILD_KICK__": bi("كيف بُني المشروع", "How I built it"), "__BUILD_TITLE__": bi("كيف بنيت SymptoSense؟", "How I built SymptoSense"),
+        "__BUILD_TEXT__": bi("التقنيات التالية مأخوذة من المشروع الحالي نفسه، وليست تقنيات مضافة لأغراض العرض.", "These technologies are taken from the current project itself, not added just for presentation."),
+        "__TECH_PY__": bi("اللغة الأساسية للمشروع", "Core project language"), "__TECH_FLASK__": bi("تطبيق الويب والـRoutes", "Web app and routes"),
+        "__TECH_AI__": bi("طبقة المساعد والتحليل الذكي", "AI assistant and analysis layer"), "__TECH_ML__": bi("نماذج مساعدة للتقدير", "Supporting estimation models"),
+        "__TECH_DB__": bi("تخزين البيانات محليًا وإنتاجيًا", "Local and production data storage"), "__TECH_WEB__": bi("واجهة متجاوبة عربية وإنجليزية", "Responsive Arabic and English interface"),
+        "__PROJECT_KICK__": bi("المشروع الحقيقي", "Real project showcase"), "__PROJECT_TITLE__": bi("من فكرة إلى مشروع حقيقي", "From an idea to a real project"),
+        "__LIVE_LABEL__": bi("عرض حي من الموقع الحالي", "Live preview from the current site"), "__LIVE_ARIA__": bi("معاينة حية لموقع SymptoSense على لابتوب وجوال", "Live SymptoSense preview on laptop and mobile"),
+        "__GOAL_KICK__": bi("هدفي", "My goal"), "__GOAL_TITLE__": bi("هدفي من SymptoSense", "My goal for SymptoSense"),
+        "__FUTURE_KICK__": bi("الرؤية المستقبلية", "Future vision"), "__FUTURE_TITLE__": bi("إلى أين أريد أن يصل SymptoSense؟", "Where I want SymptoSense to go"),
+        "__FUTURE_TEXT__": bi("هذه النقاط معروضة كتطوير مستقبلي واستمرار لما بُني بالفعل، وليست ادعاءً بأن كل تحسين مكتمل الآن.", "These items are presented as future development and continued improvement of what already exists—not as claims that every improvement is complete today."),
+        "__ROAD1__": bi("توسيع المعرفة الطبية", "Expand medical knowledge"), "__ROAD2__": bi("تعزيز ربط المصادر الموثوقة", "Strengthen trusted-source links"),
+        "__ROAD3__": bi("تحسين التحليل والتفسير", "Improve analysis and explanations"), "__ROAD4__": bi("تطوير المساعد الذكي", "Evolve the AI assistant"),
+        "__ROAD5__": bi("تطوير الدعم النفسي التوعوي", "Evolve mental-wellbeing support"), "__ROAD6__": bi("تعزيز الخصوصية والأمان", "Strengthen privacy and security"),
+        "__COMING__": bi("Future / Coming Next", "Future / Coming Next"), "__ONGOING__": bi("Ongoing Priority", "Ongoing Priority"),
+        "__PERSONAL_KICK__": bi("رسالة شخصية", "Personal message"), "__PERSONAL_TITLE__": bi("أكثر من مجرد مشروع", "More than just a project"),
+        "__FINAL_TITLE__": bi("هذا هو SymptoSense 🩺", "This is SymptoSense 🩺"),
+        "__FINAL_TEXT__": bi("فكرة بدأت من اهتمامي بالبيانات والذكاء الاصطناعي، وأطمح أن تتطور إلى حل أكثر فائدة وتأثيرًا.", "An idea that began from my interest in data and artificial intelligence, with the ambition to grow into a more useful and impactful solution."),
+        "__CTA__": bi("تجربة SymptoSense", "Try SymptoSense"),
+    }
+    for key, value in replacements.items():
+        body = body.replace(key, value)
     return _page(_t("title_about_us"), body, desc=t("about_us_p1"), extra_css=ABOUT_US_CSS)
 
 
