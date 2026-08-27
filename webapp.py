@@ -3235,35 +3235,48 @@ def _tools_html(t):
 
 
 ABOUT_US_CSS = """
-.about-us-page { width: min(1040px, 100%); margin: 0 auto; }
-.au-page-title { margin: 2px 0 18px; color: var(--primary-dark); font-size: clamp(31px, 5vw, 46px); line-height: 1.35; text-align: center; }
-.au-card { display: grid; grid-template-columns: minmax(290px, .72fr) minmax(0, 1.28fr); overflow: hidden; border: 1px solid var(--border-card); border-radius: 26px; background: #fff; box-shadow: 0 18px 46px rgba(18,59,112,.12); }
-.au-visual { display: flex; align-items: stretch; justify-content: center; background: #EDF6FF; border-inline-end: 1px solid var(--border-card); }
-.au-visual img { width: 100%; height: 100%; min-height: 610px; display: block; object-fit: cover; object-position: center; }
-.au-copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(26px, 4.5vw, 48px); }
-.au-copy p { color: var(--text-body); font-size: clamp(15px, 1.55vw, 17px); line-height: 2; margin: 0 0 17px; }
-.au-copy .au-opening { padding: 15px 17px; border-inline-start: 4px solid var(--primary); border-radius: 13px; background: var(--primary-light); color: var(--primary-dark); font-size: clamp(17px, 2vw, 21px); font-weight: 900; line-height: 1.9; }
-.au-copy .au-belief { margin-bottom: 21px; color: var(--primary-dark); font-weight: 800; }
-.au-signoff { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-card); }
-.au-name { display: block; color: var(--primary-dark); font-size: 19px; font-weight: 900; line-height: 1.6; }
-.au-role { display: block; margin: 2px 0 14px; color: var(--text-muted); font-size: 13px; line-height: 1.7; }
-.au-contact { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; padding: 10px 16px; border: 1px solid var(--primary-pale); border-radius: 13px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 8px 20px rgba(25,118,210,.16); transition: transform .16s ease, background .16s ease; }
+.about-us-page { width: min(1060px, 100%); display: grid; gap: clamp(18px, 3vw, 26px); margin: 0 auto; }
+.au-hero { min-height: 360px; display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr); align-items: center; gap: clamp(22px, 4vw, 40px); overflow: hidden; padding: clamp(22px, 3.5vw, 34px); border: 1px solid #CFE4F8; border-radius: 27px; background: linear-gradient(135deg, #EAF4FF 0%, #F7FBFF 58%, #FFFFFF 100%); box-shadow: 0 15px 38px rgba(18,59,112,.10); }
+.au-hero-visual { min-height: 310px; display: flex; align-items: center; justify-content: center; padding: 12px; border: 1px solid rgba(25,118,210,.13); border-radius: 22px; background: #EDF6FF; }
+.au-hero-visual img { width: min(100%, 380px); max-height: 330px; display: block; object-fit: contain; border: 1px solid rgba(25,118,210,.12); border-radius: 18px; box-shadow: 0 10px 26px rgba(18,59,112,.10); }
+.au-hero-copy { max-width: 520px; }
+.au-hero-copy h1 { margin: 0 0 14px; color: var(--primary-dark); font-size: clamp(34px, 5vw, 49px); line-height: 1.28; }
+.au-hero-line { width: 58px; height: 4px; margin-bottom: 18px; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--primary-mid)); }
+.au-hero-copy p { max-width: 39ch; margin: 0; color: #315B84; font-size: clamp(17px, 2vw, 21px); font-weight: 700; line-height: 1.9; }
+.au-details { display: grid; grid-template-columns: minmax(245px, .62fr) minmax(0, 1.38fr); align-items: center; gap: clamp(22px, 4vw, 38px); padding: clamp(22px, 4vw, 38px); border: 1px solid var(--border-card); border-radius: 25px; background: #fff; box-shadow: var(--shadow-card); }
+.au-profile { align-self: center; padding: 25px 21px; border: 1px solid rgba(255,255,255,.25); border-radius: 20px; background: linear-gradient(150deg, var(--primary-dark) 0%, #1559A5 56%, var(--primary) 100%); color: #fff; box-shadow: 0 14px 30px rgba(18,59,112,.18); }
+.au-profile-mark { width: 62px; height: 62px; display: grid; place-items: center; margin-bottom: 15px; border: 1px solid rgba(255,255,255,.32); border-radius: 18px; background: rgba(255,255,255,.13); color: #fff; font-size: 27px; font-weight: 900; }
+.au-name { display: block; color: #fff; font-size: 20px; font-weight: 900; line-height: 1.55; }
+.au-role { display: block; margin: 5px 0 18px; color: #E6F2FF; font-size: 13px; line-height: 1.75; }
+.au-contact { min-height: 48px; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; width: 100%; max-width: 100%; padding: 10px 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 13px; background: #fff; color: var(--primary-dark); font-size: 12.5px; font-weight: 800; transition: transform .16s ease, box-shadow .16s ease; }
 .au-contact span[dir='ltr'] { direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
-.au-contact:hover { background: var(--primary-hover); transform: translateY(-2px); }
+.au-contact:hover { transform: translateY(-2px); box-shadow: 0 9px 20px rgba(7,35,74,.22); }
+.au-story { max-width: 680px; }
+.au-story p { margin: 0 0 17px; color: var(--text-body); font-size: clamp(15px, 1.55vw, 17px); line-height: 2; }
+.au-story p:last-of-type { margin-bottom: 0; }
+.au-belief { margin-top: 20px !important; padding: 16px 18px; border-inline-start: 4px solid var(--primary); border-radius: 13px; background: var(--primary-light); color: var(--primary-dark) !important; font-weight: 900; line-height: 1.9 !important; }
 @media (max-width: 820px) {
-  .au-card { grid-template-columns: 1fr; }
-  .au-visual { border-inline-end: 0; border-bottom: 1px solid var(--border-card); }
-  .au-visual img { width: min(100%, 520px); height: auto; min-height: 0; max-height: 430px; object-fit: contain; }
-  .au-copy { justify-content: flex-start; }
+  .au-hero, .au-details { grid-template-columns: 1fr; }
+  .au-hero { min-height: 0; gap: 19px; }
+  .au-hero-visual { min-height: 0; order: -1; }
+  .au-hero-visual img { width: min(100%, 430px); max-height: 360px; }
+  .au-hero-copy { max-width: none; }
+  .au-hero-copy p, .au-story { max-width: none; }
+  .au-profile { width: min(100%, 430px); justify-self: center; }
 }
 @media (max-width: 520px) {
-  .au-page-title { margin-bottom: 13px; font-size: 31px; }
-  .au-card { border-radius: 19px; }
-  .au-visual img { max-height: none; }
-  .au-copy { padding: 21px 17px 23px; }
-  .au-copy p { font-size: 14.5px; line-height: 1.9; margin-bottom: 14px; }
-  .au-copy .au-opening { padding: 13px 14px; font-size: 17px; line-height: 1.8; }
-  .au-contact { width: 100%; padding-inline: 10px; font-size: 12.5px; }
+  .about-us-page { gap: 15px; }
+  .au-hero, .au-details { padding: 16px; border-radius: 19px; }
+  .au-hero-visual { padding: 8px; border-radius: 16px; }
+  .au-hero-visual img { max-height: none; border-radius: 13px; }
+  .au-hero-copy h1 { margin-bottom: 10px; font-size: 32px; }
+  .au-hero-line { margin-bottom: 13px; }
+  .au-hero-copy p { font-size: 16.5px; line-height: 1.8; }
+  .au-details { gap: 20px; }
+  .au-profile { width: 100%; padding: 21px 17px; border-radius: 17px; }
+  .au-story p { margin-bottom: 14px; font-size: 14.5px; line-height: 1.9; }
+  .au-belief { margin-top: 17px !important; padding: 14px; }
+  .au-contact { padding-inline: 9px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .au-contact { transition: none; }
@@ -3275,30 +3288,37 @@ def about_us_page():
     t = _t
     body = """
     <main class="about-us-page" aria-labelledby="aboutUsTitle">
-      <h1 class="au-page-title" id="aboutUsTitle">%s</h1>
-      <section class="au-card">
-        <figure class="au-visual">
+      <section class="au-hero">
+        <figure class="au-hero-visual">
           <img src="/icons/about-us-phone.webp" alt="%s" width="621" height="677" loading="eager">
         </figure>
-        <article class="au-copy">
-          <p class="au-opening">%s</p>
+        <div class="au-hero-copy">
+          <h1 id="aboutUsTitle">%s</h1>
+          <div class="au-hero-line" aria-hidden="true"></div>
+          <p>%s</p>
+        </div>
+      </section>
+
+      <section class="au-details" aria-label="%s">
+        <aside class="au-profile">
+          <div class="au-profile-mark" aria-hidden="true">ر</div>
+          <strong class="au-name">%s</strong>
+          <span class="au-role">%s</span>
+          <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
+            <span>📩 %s</span><span dir="ltr">https://t.me/rms_2o</span>
+          </a>
+        </aside>
+        <article class="au-story">
           <p>%s</p>
           <p>%s</p>
           <p class="au-belief">%s</p>
-          <footer class="au-signoff">
-            <strong class="au-name">%s</strong>
-            <span class="au-role">%s</span>
-            <a class="au-contact" href="https://t.me/rms_2o" target="_blank" rel="noopener">
-              <span>📩 %s</span><span dir="ltr">https://t.me/rms_2o</span>
-            </a>
-          </footer>
         </article>
       </section>
     </main>
     """ % (
-        t("about_us_title"), t("about_us_img1_alt"), t("about_us_p1"),
+        t("about_us_img1_alt"), t("about_us_title"), t("about_us_p1"),
+        t("about_us_title"), t("about_us_name"), t("about_us_role"), t("about_us_contact"),
         t("about_us_p2"), t("about_us_p3"), t("about_us_p4"),
-        t("about_us_name"), t("about_us_role"), t("about_us_contact"),
     )
     return _page(_t("title_about_us"), body, desc=t("about_us_p1"), extra_css=ABOUT_US_CSS)
 
