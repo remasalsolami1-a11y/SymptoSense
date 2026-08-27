@@ -604,6 +604,23 @@ def _migrate_ss_columns(conn, c):
             c.execute("ALTER TABLE ss_users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
         if "status" not in user_cols:
             c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+        # V3 RBAC: only two roles are supported. On the first V3 migration,
+        # demote every existing account to `user` so there is no inherited or
+        # accidental administrator. The project owner then claims the *current
+        # authenticated account* once through the server-side owner-claim flow.
+        # A migration marker keeps the later claimed admin intact on restarts.
+        c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        c.execute("SELECT value FROM ss_schema_meta WHERE key='rbac_v3_owner_admin'")
+        if c.fetchone() is None:
+            c.execute("UPDATE ss_users SET role='user'")
+            c.execute("INSERT INTO ss_schema_meta (key, value) VALUES ('rbac_v3_owner_admin', 'initialized')")
+        else:
+            c.execute("UPDATE ss_users SET role='user' WHERE role IS NULL OR role NOT IN ('user','admin')")
+        # Database-level invariant: at most one active Admin can exist, even if
+        # two owner-claim requests race at the same time. Supported by SQLite
+        # and PostgreSQL, the two database engines used by this project.
+        c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_single_admin ON ss_users(role) WHERE role='admin'")
         hp_cols = columns("ss_health_profiles")
         for col, default in [("extra_info", ""), ("activity_level", "")]:
             if col not in hp_cols:
@@ -1818,7 +1835,7 @@ def all_conversations():
 
 import re as _re
 
-_ADMIN_ROLES = {"super_admin", "content_admin", "medical_content_admin", "analytics_admin"}
+_ADMIN_ROLES = {"admin"}
 
 
 def _email_set(env_name):
@@ -1830,18 +1847,12 @@ def _email_set(env_name):
 
 
 def configured_admin_role(email):
-    """Return an environment-authorized role for an email, or ``user``.
+    """Legacy compatibility hook.
 
-    Environment allowlists are the secure bootstrap path for the first admin;
-    subsequent roles can be managed by a super admin in the dashboard.
+    Admin access is no longer derived from email allowlists.  The only
+    authoritative value is the persisted ``ss_users.role`` column, and the
+    first owner is promoted through the one-time, authenticated claim flow.
     """
-    email = (email or "").strip().lower()
-    if email in (_email_set("SUPER_ADMIN_EMAILS") | _email_set("ADMIN_EMAILS")):
-        return "super_admin"
-    if email in (_email_set("CONTENT_ADMIN_EMAILS") | _email_set("MEDICAL_CONTENT_ADMIN_EMAILS")):
-        return "content_admin"
-    if email in _email_set("ANALYTICS_ADMIN_EMAILS"):
-        return "analytics_admin"
     return "user"
 
 def _hash_password(password):
@@ -1893,7 +1904,7 @@ def create_ss_user(email, name, password):
         c = conn.cursor()
         now = datetime.now(timezone.utc).isoformat()
         pw_hash = _hash_password(password)
-        role = configured_admin_role(email)
+        role = "user"
         if USE_POSTGRES:
             c.execute(
                 "INSERT INTO ss_users (email, name, password_hash, role, created_at) VALUES (%s,%s,%s,%s,%s) RETURNING id",
@@ -1958,8 +1969,7 @@ def get_ss_user(user_id):
         row = c.fetchone()
         if not row:
             return None
-        configured = configured_admin_role(row[1])
-        role = configured if configured != "user" else (row[3] or "user")
+        role = "admin" if (row[3] or "user") == "admin" else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active"}
     finally:
         conn.close()
@@ -1975,8 +1985,7 @@ def get_ss_user_by_email(email):
         row = c.fetchone()
         if not row:
             return None
-        configured = configured_admin_role(row[1])
-        role = configured if configured != "user" else (row[3] or "user")
+        role = "admin" if (row[3] or "user") == "admin" else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active"}
     finally:
         conn.close()
@@ -1993,15 +2002,14 @@ def list_ss_admin_users():
         conn.close()
     out = []
     for row in rows:
-        configured = configured_admin_role(row[1])
-        role = configured if configured != "user" else (row[3] or "user")
+        role = "admin" if (row[3] or "user") == "admin" else "user"
         out.append({"id": row[0], "email": row[1], "name": row[2], "role": role,
                     "created_at": row[4], "last_login": row[5]})
     return out
 
 
 def set_ss_user_role(user_id, role):
-    """Persist an account role. Environment-authorized roles remain authoritative."""
+    """Persist an account role.  Internal server-side use only."""
     role = (role or "").strip()
     if role not in _ADMIN_ROLES | {"user"}:
         raise ValueError("invalid_role")
@@ -2011,6 +2019,46 @@ def set_ss_user_role(user_id, role):
         c.execute("UPDATE ss_users SET role=%s WHERE id=%s" % (PH, PH), (role, int(user_id)))
         conn.commit()
         return bool(c.rowcount)
+    finally:
+        conn.close()
+
+
+def admin_count():
+    """Return the number of persisted Admin accounts."""
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM ss_users WHERE role='admin'")
+        return int(c.fetchone()[0] or 0)
+    finally:
+        conn.close()
+
+
+def claim_current_user_as_admin(user_id):
+    """Atomically promote one already-authenticated active user.
+
+    This succeeds only when there is no active admin yet.  The caller must
+    enforce the server-side one-time claim secret before invoking it.
+    """
+    if not user_id:
+        return False
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "UPDATE ss_users SET role='admin' WHERE id=%s AND status='active' "
+            "AND NOT EXISTS (SELECT 1 FROM ss_users WHERE role='admin')" % PH,
+            (int(user_id),),
+        )
+        changed = bool(c.rowcount)
+        conn.commit()
+        return changed
+    except Exception:
+        # A database-level unique partial index also guarantees a single active
+        # Admin. In the extremely small race window, the losing claim safely
+        # rolls back and reports False instead of exposing a server error.
+        conn.rollback()
+        return False
     finally:
         conn.close()
 

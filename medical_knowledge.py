@@ -15,6 +15,8 @@ import time
 import unicodedata
 from datetime import datetime, timezone
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 import db
 
@@ -22,7 +24,7 @@ import db
 ACTIVE = "active"
 VALID_CONTENT_STATUS = {"active", "draft", "disabled"}
 VALID_VERIFICATION = {"verified", "needs_review", "disabled"}
-VALID_ROLES = {"super_admin", "medical_content_admin", "analytics_admin"}
+VALID_ROLES = {"admin"}
 VALID_SEVERITY = {"mild", "moderate", "severe"}
 VALID_RELIABILITY = {"high", "medium", "low"}
 VALID_SOURCE_LANGUAGES = {"ar", "en", "multiple"}
@@ -854,10 +856,64 @@ def delete_entity(kind, entity_id, admin):
     finally: conn.close()
 
 
-def categories():
+def categories(search="", include_inactive=True):
     init_schema(); conn=db._conn()
     try:
-        c=conn.cursor(); c.execute("SELECT id,slug,name_ar,name_en,status FROM mk_categories ORDER BY id"); return [dict(zip(["id","slug","name_ar","name_en","status"],r)) for r in c.fetchall()]
+        c=conn.cursor(); c.execute("SELECT id,slug,name_ar,name_en,status,created_at,updated_at FROM mk_categories ORDER BY id")
+        rows=[dict(zip(["id","slug","name_ar","name_en","status","created_at","updated_at"],r)) for r in c.fetchall()]
+        q=_normalize_text(search)
+        out=[]
+        for item in rows:
+            if not include_inactive and item.get("status") != "active": continue
+            if q and q not in _normalize_text(" ".join(str(item.get(k) or "") for k in ("slug","name_ar","name_en"))): continue
+            out.append(item)
+        return out
+    finally: conn.close()
+
+
+def save_category(data, admin, entity_id=None):
+    init_schema()
+    ar=str(data.get("name_ar") or "").strip(); en=str(data.get("name_en") or "").strip()
+    status=str(data.get("status") or "active").strip()
+    slug=str(data.get("slug") or _normalize_text(en).replace(" ","-")).strip().lower()
+    slug=re.sub(r"[^a-z0-9-]+","-",slug).strip("-")
+    if not ar or not en or not slug: raise ValueError("missing_required_fields")
+    if status not in VALID_CONTENT_STATUS: raise ValueError("invalid_status")
+    conn=db._conn()
+    try:
+        c=conn.cursor(); now=_now()
+        old=None
+        if entity_id:
+            c.execute(f"SELECT id,slug,name_ar,name_en,status,created_at,updated_at FROM mk_categories WHERE id={db.PH}",(int(entity_id),))
+            r=c.fetchone(); old=dict(zip(["id","slug","name_ar","name_en","status","created_at","updated_at"],r)) if r else None
+            if not old: raise ValueError("category_not_found")
+            c.execute(f"UPDATE mk_categories SET slug={db.PH},name_ar={db.PH},name_en={db.PH},status={db.PH},updated_at={db.PH} WHERE id={db.PH}",(slug,ar,en,status,now,int(entity_id)))
+            eid=int(entity_id)
+        else:
+            if db.USE_POSTGRES:
+                c.execute(f"INSERT INTO mk_categories (slug,name_ar,name_en,status,created_at,updated_at) VALUES ({','.join([db.PH]*6)}) RETURNING id",(slug,ar,en,status,now,now)); eid=int(c.fetchone()[0])
+            else:
+                c.execute(f"INSERT INTO mk_categories (slug,name_ar,name_en,status,created_at,updated_at) VALUES ({','.join([db.PH]*6)})",(slug,ar,en,status,now,now)); eid=int(c.lastrowid)
+        c.execute(f"SELECT id,slug,name_ar,name_en,status,created_at,updated_at FROM mk_categories WHERE id={db.PH}",(eid,))
+        r=c.fetchone(); new=dict(zip(["id","slug","name_ar","name_en","status","created_at","updated_at"],r))
+        _audit(c,admin,"updated" if old else "created","category",eid,old,new); conn.commit(); return new
+    except Exception:
+        conn.rollback(); raise
+    finally: conn.close()
+
+
+def delete_category(entity_id, admin):
+    init_schema(); conn=db._conn()
+    try:
+        c=conn.cursor(); c.execute(f"SELECT id,slug,name_ar,name_en,status,created_at,updated_at FROM mk_categories WHERE id={db.PH}",(int(entity_id),)); r=c.fetchone()
+        if not r: return False
+        old=dict(zip(["id","slug","name_ar","name_en","status","created_at","updated_at"],r))
+        c.execute(f"SELECT COUNT(*) FROM mk_diseases WHERE category_id={db.PH}",(int(entity_id),)); d=int(c.fetchone()[0] or 0)
+        c.execute(f"SELECT COUNT(*) FROM mk_symptoms WHERE category_id={db.PH}",(int(entity_id),)); sy=int(c.fetchone()[0] or 0)
+        if d or sy: raise ValueError("category_in_use_disable_instead")
+        c.execute(f"DELETE FROM mk_categories WHERE id={db.PH}",(int(entity_id),)); _audit(c,admin,"deleted","category",int(entity_id),old,None); conn.commit(); return True
+    except Exception:
+        conn.rollback(); raise
     finally: conn.close()
 
 
@@ -888,18 +944,34 @@ def statistics():
 
 
 def system_health():
+    """Run live, read-only health checks without exposing credentials."""
     init_schema(); checked=_now(); health={}
     start=time.perf_counter()
     try:
-        conn=db._conn(); c=conn.cursor(); c.execute("SELECT 1"); c.fetchone(); conn.close(); health["database"]={"status":"online","response_ms":round((time.perf_counter()-start)*1000,1),"error":None}
-    except Exception as e: health["database"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":str(e)[:160]}
-    start=time.perf_counter(); ai_configured=bool(os.environ.get("GROQ_API_KEY"))
-    health["ai_service"]={"status":"online" if ai_configured else "not_configured","response_ms":round((time.perf_counter()-start)*1000,1),"error":None if ai_configured else "GROQ_API_KEY is not configured"}
+        conn=db._conn(); c=conn.cursor(); c.execute("SELECT 1"); c.fetchone(); conn.close()
+        health["database"]={"status":"online","response_ms":round((time.perf_counter()-start)*1000,1),"error":None}
+    except Exception as e:
+        health["database"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":str(e)[:160]}
+
+    start=time.perf_counter(); key=os.environ.get("GROQ_API_KEY","").strip()
+    if not key:
+        health["ai_service"]={"status":"not_configured","response_ms":round((time.perf_counter()-start)*1000,1),"error":"GROQ_API_KEY is not configured"}
+    else:
+        try:
+            req=Request("https://api.groq.com/openai/v1/models",headers={"Authorization":"Bearer "+key,"User-Agent":"SymptoSense-HealthCheck/1.0"})
+            with urlopen(req, timeout=4) as response:
+                ok=200 <= int(getattr(response,"status",200)) < 300
+            health["ai_service"]={"status":"online" if ok else "offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":None if ok else "Unexpected AI service response"}
+        except HTTPError as e:
+            health["ai_service"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":f"HTTP {e.code}: {str(e.reason)[:100]}"}
+        except (URLError, TimeoutError, OSError) as e:
+            health["ai_service"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":str(getattr(e,"reason",e))[:160]}
+
     start=time.perf_counter()
     try:
-        conn=db._conn(); c=conn.cursor(); c.execute("SELECT COUNT(*) FROM ss_users"); c.fetchone(); conn.close()
+        conn=db._conn(); c=conn.cursor(); c.execute("SELECT id,status,role FROM ss_users LIMIT 1"); c.fetchone(); conn.close()
         health["authentication"]={"status":"online","response_ms":round((time.perf_counter()-start)*1000,1),"error":None}
     except Exception as e:
         health["authentication"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":str(e)[:160]}
-    start=time.perf_counter(); health["api"]={"status":"online","response_ms":round((time.perf_counter()-start)*1000,1),"error":None}
     return {"checked_at":checked,"components":health}
+

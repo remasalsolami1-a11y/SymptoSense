@@ -9,7 +9,7 @@
 - مسار تحليل أعراض من 7 خطوات مع ملخص نتيجة قابل للتفسير ومصادر مرتبطة.
 - مساعد بخمسة أوضاع، منها تجربة صحة نفسية توعوية، مع استرجاع قاعدة المعرفة ومنع اختلاق المصادر أو النسب.
 - تسجيل دخول اختياري، استعادة كلمة المرور، حذف الحساب والبيانات المحفوظة، وبوابة إدارة منفصلة.
-- لوحة Admin بصلاحيات Super Admin وContent Admin وAnalytics Admin، مع تحليلات مجمعة، إدارة محتوى، قائمة مستخدمين محدودة، Audit Log، Login Activity وSystem Health.
+- لوحة Admin موحدة مرتبطة بحساب مالكة المشروع الحالي (`role = admin`) مع تحليلات مجمعة، إدارة المحتوى والمعرفة الطبية والمصادر، قائمة مستخدمين محدودة، Audit Log وSystem Health. جميع الحسابات الأخرى تبقى `role = user`.
 - طبقة Medical Knowledge Base المنظمة ومحرك التطبيع والمطابقة وقواعد Red Flags المستقلة عن AI.
 
 ## الجداول الإضافية
@@ -26,19 +26,14 @@
 ## مسارات V2 الرئيسية
 
 - المستخدم: `/`, `/home`, `/chat`, `/privacy`, `/terms`, `/sources`, `/profile`, `/login`, `/register`, `/forgot-password`.
-- الإدارة: `/admin/login`, `/admin`, `/api/admin/v2/analytics`, `/api/admin/content`, `/api/admin/security/activity`, `/api/admin/security/audit`.
+- الإدارة: `/admin`, ومسار التفعيل الآمن لمرة واحدة `/admin/claim`، وواجهات `/api/admin/*` المحمية Server-side.
 - قاعدة المعرفة: واجهات القراءة `/api/diseases`, `/api/symptoms`, `/api/sources` وواجهات الإدارة الحالية تحت `/api/admin/*`.
 
 ## إعدادات الإنتاج المهمة
 
-اضبط قيمة طويلة عشوائية في `WEB_SECRET`، وفعّل `SESSION_COOKIE_SECURE=1` خلف HTTPS. الصلاحيات تقبل:
+اضبط قيمة طويلة عشوائية في `WEB_SECRET`، وفعّل `SESSION_COOKIE_SECURE=1` خلف HTTPS. لا تعتمد صلاحية Admin على بريد مكتوب في الكود أو قائمة بريد. عند أول نشر لهذه النسخة فقط، أضيفي `ADMIN_CLAIM_TOKEN` بقيمة خاصة طويلة (24 حرفًا على الأقل)، سجّلي الدخول بحسابك الحالي، ثم افتحي `/admin` وأكملي التفعيل لمرة واحدة. بعد نجاحه احذفي `ADMIN_CLAIM_TOKEN` من Railway.
 
-- `SUPER_ADMIN_EMAILS`
-- `CONTENT_ADMIN_EMAILS` (والاسم القديم `MEDICAL_CONTENT_ADMIN_EMAILS` للتوافق)
-- `ANALYTICS_ADMIN_EMAILS`
-- `ADMIN_SESSION_TIMEOUT_MINUTES` (30 افتراضيًا)
-
-البريد اختياري: `ADMIN_2FA_EMAIL=1`, `RESEND_API_KEY`, `RESEND_FROM`.
+يبقى البريد اختياريًا فقط لخدمات مثل الاستعادة: `RESEND_API_KEY`, `RESEND_FROM`.
 
 ## حدود طبية وخصوصية
 
@@ -51,6 +46,6 @@
 - تحليل الصداع/الغثيان/حساسية الضوء واسترجاع المصادر.
 - ألم الصدر مع صعوبة التنفس وإظهار الحالة العاجلة.
 - المساعد العام والصحة النفسية.
-- صلاحيات Super/Content/Analytics Admin وCSRF ومنع المستخدم العادي.
+- صلاحية Admin واحدة، CSRF، منع المستخدم العادي من `/admin` وواجهات Admin، ومنع تعديل الدور من Frontend/API.
 - إدارة المحتوى، Analytics، Login Activity، System Health.
 - صحة Python وJavaScript وManifest وService Worker.

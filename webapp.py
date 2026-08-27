@@ -1878,40 +1878,24 @@ def api_login_required(f):
 
 def _admin_role():
     user = _ss_user()
-    return (user or {}).get("role", "user")
+    if not user or user.get("status") != "active":
+        return "user"
+    return "admin" if user.get("role") == "admin" else "user"
 
 
-def _admin_allowed(scope="analytics"):
-    role = _admin_role()
-    if role == "super_admin":
-        return True
-    if scope == "access":
-        return role in {"analytics_admin", "content_admin", "medical_content_admin"}
-    if scope == "analytics":
-        return role == "analytics_admin"
-    if scope == "medical":
-        return role in {"content_admin", "medical_content_admin"}
-    return False
+def _admin_allowed(scope="access"):
+    """Single-owner RBAC: every admin capability requires role=admin."""
+    return _admin_role() == "admin"
 
 
 def _admin_session_valid(touch=True):
-    """Require the separate admin sign-in and enforce an inactivity timeout."""
-    if not session.get("admin_authenticated_at"):
+    """Validate the normal authenticated session against the database."""
+    user = _ss_user()
+    if not user or user.get("status") != "active" or user.get("role") != "admin":
         return False
-    try:
-        now = int(datetime.now(timezone.utc).timestamp())
-        last = int(session.get("admin_last_seen") or session["admin_authenticated_at"])
-        timeout = max(5, min(240, int(os.environ.get("ADMIN_SESSION_TIMEOUT_MINUTES", "30")))) * 60
-        if now - last > timeout:
-            session.pop("admin_authenticated_at", None)
-            session.pop("admin_last_seen", None)
-            session.pop("admin_csrf", None)
-            return False
-        if touch:
-            session["admin_last_seen"] = now
-        return True
-    except Exception:
-        return False
+    if touch:
+        session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
+    return True
 
 
 def _admin_csrf_token():
@@ -1920,14 +1904,14 @@ def _admin_csrf_token():
     return session["admin_csrf"]
 
 
-def admin_api_required(scope="analytics"):
-    """Protect admin JSON APIs with role checks and same-session CSRF."""
+def admin_api_required(scope="access"):
+    """Protect every Admin API with server-side authentication, RBAC, and CSRF."""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            if not _ss_user_id() or not _admin_session_valid():
-                return jsonify({"ok": False, "error": "admin_login_required", "login_url": url_for("admin_login")}), 401
-            if not _admin_allowed(scope):
+            if not _ss_user_id():
+                return jsonify({"ok": False, "error": "login_required", "login_url": url_for("login", next="/admin")}), 401
+            if not _admin_session_valid() or not _admin_allowed(scope):
                 return jsonify({"ok": False, "error": "forbidden"}), 403
             if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
                 supplied = request.headers.get("X-CSRF-Token", "")
@@ -2840,6 +2824,7 @@ def _nav():
         profile_label = "ملفي الشخصي" if lang == "ar" else "My profile"
         health_label = "بياناتي الصحية" if lang == "ar" else "My health information"
         family_label = "ملفات العائلة" if lang == "ar" else "Family profiles"
+        admin_menu_link = ('<a href="/admin" role="menuitem">⚙️ %s</a>' % ("لوحة الإدارة" if lang == "ar" else "Admin Dashboard")) if user.get("role") == "admin" else ""
         html += ('<div class="dd account-dd">'
                  '<a href="/profile" class="account-profile-link" aria-label="%s">'
                  '<span class="account-avatar" aria-hidden="true">👤</span>'
@@ -2853,12 +2838,13 @@ def _nav():
                  '<a href="/history" role="menuitem">📋 %s</a>'
                  '<a href="/family" role="menuitem">👨‍👩‍👧 %s</a>'
                  '<a href="/settings" role="menuitem">⚙️ %s</a>'
+                 '%s'
                  '<a href="/logout" role="menuitem" class="account-logout">🚪 %s</a>'
                  '</div></div>') % (
             profile_label, user_name, profile_label,
             ("خيارات الحساب" if lang == "ar" else "Account options"),
             user_name, user_email, profile_label, health_label,
-            _t("nav_myhistory"), family_label, _t("nav_privacy"), _t("nav_logout"),
+            _t("nav_myhistory"), family_label, _t("nav_privacy"), admin_menu_link, _t("nav_logout"),
         )
     else:
         html += '<a href="/profile" class="dd-btn" style="text-decoration:none;">👤 %s</a>' % ("ملفي" if ar else "My profile")
@@ -2877,15 +2863,17 @@ def _nav():
         mobile_account_aria = "تسجيل الدخول" if lang == "ar" else "Sign in"
     lang_label = "اللغة" if lang == "ar" else "Language"
     lang_aria = "اختيار لغة الموقع" if lang == "ar" else "Choose site language"
+    mobile_admin = '<a class="ss-mobile-lang" href="/admin" aria-label="Admin Dashboard"><span aria-hidden="true">⚙️</span><span>Admin</span></a>' if user and user.get("role") == "admin" else ""
     html += (
         '<header class="ss-mobile-head">'
         '<a href="/home" class="ss-mobile-logo" dir="ltr" aria-label="SymptoSense home">'
         '<span aria-hidden="true">🩺</span><b>Sympto<span>Sense</span></b></a>'
         '<div class="ss-mobile-actions">'
         '<a class="ss-mobile-lang" href="%s" aria-label="%s"><span aria-hidden="true">🌐</span><span>%s</span></a>'
+        '%s'
         '<a class="ss-mobile-account" href="%s" aria-label="%s"><span aria-hidden="true">👤</span><span>%s</span></a>'
         '</div></header>'
-    ) % (lang_picker_href, lang_aria, lang_label, mobile_account_href, mobile_account_aria, mobile_account_label)
+    ) % (lang_picker_href, lang_aria, lang_label, mobile_admin, mobile_account_href, mobile_account_aria, mobile_account_label)
     return html
 
 
@@ -2907,7 +2895,7 @@ def _footer():
         '<a href="/privacy">%s</a>'
         '<a href="/terms">%s</a>'
         '<a href="/sources">%s</a>'
-        '<a href="/admin">%s</a>'
+        '%s'
         '</div>'
         '<p class="f-love">%s <b>%s</b></p>'
         '<p class="f-copy">%s</p>'
@@ -2917,7 +2905,8 @@ def _footer():
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
          _t("footer_contact_t"), tg, _t("footer_wa_btn"),
          _t("nav_about"), _t("footer_privacy"), _t("footer_terms"),
-         ("المصادر الطبية" if _lang() == "ar" else "Medical sources"), _t("nav_admin"),
+         ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
+         ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
          _t("footer_love"), _t("footer_love_name"), _t("footer_copy_full"))
 
 
@@ -8928,7 +8917,8 @@ def login():
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
-        platform_v2.log_login(email, user_id, bool(user_id), False, request.headers.get("User-Agent", ""))
+        login_user = db.get_ss_user(user_id) if user_id else None
+        platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
             session.permanent = True
@@ -9251,7 +9241,8 @@ def api_login():
         email = (data.get("email") or "").strip()
         password = data.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
-        platform_v2.log_login(email, user_id, bool(user_id), False, request.headers.get("User-Agent", ""))
+        login_user = db.get_ss_user(user_id) if user_id else None
+        platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
             return jsonify({"ok": True, "redirect_url": "/profile"})
@@ -9440,112 +9431,86 @@ def api_analysis_history():
     return jsonify({"ok": True, "records": records, "logged_in": True})
 
 
-def _send_admin_otp(email, code):
-    api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    sender = os.environ.get("RESEND_FROM", "").strip()
-    if not api_key or not sender:
-        return False
-    try:
-        import requests
-        response = requests.post(
-            "https://api.resend.com/emails", timeout=10,
-            headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
-            json={"from": sender, "to": [email], "subject": "SymptoSense Admin verification",
-                  "html": "<h2>SymptoSense Admin</h2><p>Your verification code is:</p><p style='font-size:28px;font-weight:bold;letter-spacing:6px'>%s</p><p>It expires in 10 minutes.</p>" % code},
-        )
-        return response.status_code < 300
-    except Exception:
-        return False
+def _admin_claim_csrf_token():
+    if "admin_claim_csrf" not in session:
+        session["admin_claim_csrf"] = secrets.token_urlsafe(32)
+    return session["admin_claim_csrf"]
 
 
-@app.route("/admin/login", methods=["GET", "POST"])
+@app.route("/admin/login")
 def admin_login():
-    db.init_db()
-    ar = _lang() == "ar"
-    error = ""
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
-        user_id = db.authenticate_ss_user(email, password)
-        user = db.get_ss_user(user_id) if user_id else None
-        valid_admin = bool(user and user.get("role") in {"super_admin", "content_admin", "medical_content_admin", "analytics_admin"})
-        platform_v2.log_login(email, user_id, valid_admin, True, request.headers.get("User-Agent", ""))
-        if valid_admin:
-            if os.environ.get("ADMIN_2FA_EMAIL", "0") == "1":
-                code = "%06d" % secrets.randbelow(1_000_000)
-                session["admin_2fa_hash"] = hashlib.sha256((code + app.secret_key).encode()).hexdigest()
-                session["admin_2fa_expires"] = int(datetime.now(timezone.utc).timestamp()) + 600
-                session["admin_pending_user"] = user_id
-                if _send_admin_otp(email, code):
-                    return redirect(url_for("admin_verify"))
-                session.pop("admin_2fa_hash", None)
-                error = "تعذر إرسال رمز التحقق. راجع إعدادات البريد." if ar else "Could not send the verification code. Check email configuration."
-            else:
-                session["ss_user_id"] = user_id
-                now = int(datetime.now(timezone.utc).timestamp())
-                session["admin_authenticated_at"] = now
-                session["admin_last_seen"] = now
-                session.permanent = True
-                return redirect(url_for("admin"))
-        else:
-            error = "بيانات الدخول غير صحيحة أو الحساب غير مخوّل للإدارة." if ar else "Invalid credentials or this account is not authorised for administration."
-    body = """
-    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🛡️</div>
-    <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr">SymptoSense V2</div>
-    <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR_C__">__ERROR__</div>
-    <form method="post"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="username"></div>
-    <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required autocomplete="current-password"></div>
-    <button class="auth-btn" type="submit">__BTN__</button></form><p class="auth-link"><a href="/home">__BACK__</a></p>
-    <p class="muted" style="font-size:11px">__TIMEOUT__</p></div></div>
-    """
-    values = {"__TITLE__": "دخول الإدارة" if ar else "Admin sign in", "__SUB__": "بوابة منفصلة ومحمية لمسؤولي المنصة." if ar else "A separate, protected portal for platform administrators.",
-              "__EMAIL__": "البريد الإلكتروني" if ar else "Email address", "__PASS__": "كلمة المرور" if ar else "Password",
-              "__BTN__": "دخول لوحة الإدارة" if ar else "Open admin dashboard", "__BACK__": "العودة إلى الموقع" if ar else "Back to site",
-              "__TIMEOUT__": "تنتهي جلسة الإدارة تلقائيًا بعد فترة عدم نشاط." if ar else "Admin sessions expire automatically after inactivity.",
-              "__ERR_C__": "show" if error else "", "__ERROR__": error}
-    for key, value in values.items():
-        body = body.replace(key, value)
-    return _page(values["__TITLE__"], body, bare=True)
+    """Backward-compatible route; Admin uses the normal authenticated account."""
+    return redirect(url_for("login", next="/admin"))
 
 
-@app.route("/admin/verify", methods=["GET", "POST"])
+@app.route("/admin/verify")
 def admin_verify():
-    ar = _lang() == "ar"
-    pending = session.get("admin_pending_user")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/claim", methods=["GET", "POST"])
+@login_required
+def admin_claim():
+    """One-time secure owner bootstrap for the currently authenticated user."""
+    db.init_db()
+    uid = int(_ss_user_id())
+    user = _ss_user()
+    if user and user.get("role") == "admin":
+        return redirect(url_for("admin"))
+    if db.admin_count() > 0:
+        message = "تم تعيين حساب الإدارة مسبقًا." if _lang() == "ar" else "The administrator account has already been assigned."
+        back = "العودة للموقع" if _lang() == "ar" else "Back to site"
+        return _page("Admin", '<div class="card" style="max-width:620px;margin:40px auto;text-align:center"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (message, back)), 403
+
+    expected = os.environ.get("ADMIN_CLAIM_TOKEN", "").strip()
+    if len(expected) < 24:
+        msg = ("إعداد المالك غير مفعّل على الخادم. أضيفي ADMIN_CLAIM_TOKEN قويًا في متغيرات Railway ثم افتحي هذه الصفحة وأنتِ مسجلة الدخول بحسابك الحالي." if _lang() == "ar" else "Owner setup is not enabled on the server. Add a strong ADMIN_CLAIM_TOKEN in Railway, then open this page while signed in to your existing account.")
+        return _page("Admin setup", '<div class="card" style="max-width:680px;margin:40px auto;text-align:center"><h2>⚙️ Admin setup</h2><p class="muted">%s</p><a class="btn" href="/home">Home</a></div>' % msg), 503
+
     error = ""
-    if not pending or not session.get("admin_2fa_hash"):
-        return redirect(url_for("admin_login"))
     if request.method == "POST":
-        code = re.sub(r"\D", "", request.form.get("code") or "")
-        expected = hashlib.sha256((code + app.secret_key).encode()).hexdigest()
-        now = int(datetime.now(timezone.utc).timestamp())
-        if now <= int(session.get("admin_2fa_expires") or 0) and secrets.compare_digest(expected, session.get("admin_2fa_hash", "")):
-            session["ss_user_id"] = int(pending)
-            session["admin_authenticated_at"] = now
-            session["admin_last_seen"] = now
-            for key in ("admin_2fa_hash", "admin_2fa_expires", "admin_pending_user"):
-                session.pop(key, None)
+        csrf = request.form.get("csrf") or ""
+        supplied = request.form.get("claim_token") or ""
+        if not secrets.compare_digest(csrf, session.get("admin_claim_csrf", "")):
+            error = "انتهت صلاحية الطلب. أعيدي المحاولة." if _lang() == "ar" else "The request expired. Please try again."
+        elif not secrets.compare_digest(supplied, expected):
+            error = "رمز إعداد المالك غير صحيح." if _lang() == "ar" else "The owner setup token is incorrect."
+        elif db.claim_current_user_as_admin(uid):
+            platform_v2.audit(uid, "admin_claimed", "user_account", uid, {"role": "user"}, {"role": "admin"})
+            session.pop("admin_claim_csrf", None)
+            session.pop("admin_csrf", None)
             return redirect(url_for("admin"))
-        error = "الرمز غير صحيح أو انتهت صلاحيته." if ar else "The code is invalid or expired."
-    body = """
-    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔢</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>
-    <div class="auth-error __ERR_C__">__ERROR__</div><form method="post"><div class="auth-field"><label>__CODE__</label><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" style="direction:ltr;text-align:center;letter-spacing:8px;font-size:22px"></div><button class="auth-btn">__BTN__</button></form></div></div>
-    """
-    vals = {"__TITLE__": "التحقق بخطوتين" if ar else "Two-step verification", "__SUB__": "أدخل الرمز المرسل إلى بريد المسؤول." if ar else "Enter the code sent to the administrator email.",
-            "__CODE__": "رمز التحقق" if ar else "Verification code", "__BTN__": "تحقق" if ar else "Verify", "__ERR_C__": "show" if error else "", "__ERROR__": error}
-    for key, value in vals.items():
-        body = body.replace(key, value)
+        else:
+            error = "تعذر تعيين الحساب. قد يكون تم تعيين Admin بالفعل." if _lang() == "ar" else "Could not assign this account. An Admin may already exist."
+
+    ar = _lang() == "ar"
+    body = '''
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🛡️</div>
+    <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR__">__MSG__</div>
+    <form method="post"><input type="hidden" name="csrf" value="__CSRF__"><div class="auth-field"><label>__LABEL__</label><input type="password" name="claim_token" required autocomplete="off"></div><button class="auth-btn" type="submit">__BTN__</button></form>
+    <p class="auth-link"><a href="/home">__BACK__</a></p></div></div>'''
+    vals = {
+        "__TITLE__": "تفعيل حساب الإدارة" if ar else "Activate Admin account",
+        "__SUB__": "سيتم تعيين الحساب الذي أنتِ مسجلة الدخول به الآن كحساب Admin الوحيد." if ar else "The account you are currently signed in with will become the only Admin account.",
+        "__LABEL__": "رمز إعداد المالك" if ar else "Owner setup token",
+        "__BTN__": "تعيين هذا الحساب كـ Admin" if ar else "Make this account Admin",
+        "__BACK__": "العودة" if ar else "Back",
+        "__CSRF__": _admin_claim_csrf_token(), "__ERR__": "show" if error else "", "__MSG__": error,
+    }
+    for k, v in vals.items():
+        body = body.replace(k, str(v))
     return _page(vals["__TITLE__"], body, bare=True)
 
 
 @app.route("/admin")
 def admin():
-    if not _ss_user_id() or not _admin_session_valid():
-        return redirect(url_for("admin_login"))
-    if not _admin_allowed("access"):
+    if not _ss_user_id():
+        return redirect(url_for("login", next="/admin"))
+    if not _admin_session_valid():
+        if db.admin_count() == 0 and os.environ.get("ADMIN_CLAIM_TOKEN", "").strip():
+            return redirect(url_for("admin_claim"))
         t = L["en" if _lang() == "en" else "ar"]
-        msg = ("هذه الصفحة متاحة لمسؤولي SymptoSense فقط." if _lang() == "ar" else
-               "This page is available to SymptoSense administrators only.")
+        msg = "هذه الصفحة متاحة لحساب Admin فقط." if _lang() == "ar" else "This page is available to the Admin account only."
         return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center;"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (msg, t.get("nav_home", "Home"))), 403
     medical_knowledge.init_schema()
     return render_template_string(
@@ -9704,6 +9669,28 @@ def api_admin_knowledge_stats():
     return jsonify({"ok": True, "statistics": medical_knowledge.statistics()})
 
 
+@app.route("/api/admin/categories", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_categories():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "categories": medical_knowledge.categories(request.args.get("q", ""), True)})
+        return jsonify({"ok": True, "category": medical_knowledge.save_category(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/categories/<int:entity_id>", methods=["PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_category(entity_id):
+    try:
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_category(entity_id, _ss_user())})
+        return jsonify({"ok": True, "category": medical_knowledge.save_category(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
 @app.route("/api/admin/diseases", methods=["GET", "POST"])
 @admin_api_required("medical")
 def api_admin_diseases():
@@ -9856,7 +9843,34 @@ def api_admin_knowledge_versions(entity_type, entity_id):
 @app.route("/api/admin/system-health", methods=["GET"])
 @admin_api_required("medical")
 def api_admin_system_health():
-    return jsonify({"ok": True, "health": medical_knowledge.system_health()})
+    started = time.perf_counter()
+    health = medical_knowledge.system_health()
+    required = {"/admin", "/api/admin/v2/analytics", "/api/admin/system-health"}
+    registered = {rule.rule for rule in app.url_map.iter_rules()}
+    missing = sorted(required - registered)
+    health["components"]["api"] = {
+        "status": "online" if not missing else "offline",
+        "response_ms": round((time.perf_counter() - started) * 1000, 1),
+        "error": None if not missing else "Missing routes: " + ", ".join(missing),
+    }
+    return jsonify({"ok": True, "health": health})
+
+
+@app.route("/api/admin/audit", methods=["GET"])
+@admin_api_required("access")
+def api_admin_audit():
+    limit = max(1, min(300, int(request.args.get("limit", 150))))
+    medical_rows = medical_knowledge.audit_log(limit)
+    system_rows = platform_v2.audit_log(limit)
+    rows = [{**row, "source": "medical"} for row in medical_rows]
+    for row in system_rows:
+        rows.append({
+            "id": row.get("id"), "admin_id": row.get("admin_id"), "admin_email": "Admin #" + str(row.get("admin_id") or "—"),
+            "action": row.get("action"), "entity_type": row.get("entity_type"), "entity_id": row.get("entity_id"),
+            "previous_value": row.get("previous_value"), "new_value": row.get("new_value"), "timestamp": row.get("timestamp"), "source": "system",
+        })
+    rows.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
+    return jsonify({"ok": True, "audit": rows[:limit]})
 
 
 @app.route("/api/admin/users", methods=["GET"])
@@ -9866,15 +9880,9 @@ def api_admin_users():
 
 
 @app.route("/api/admin/users/<int:user_id>/role", methods=["PUT"])
-@admin_api_required("super")
+@admin_api_required("access")
 def api_admin_user_role(user_id):
-    try:
-        data = request.get_json(silent=True) or {}
-        if user_id == int(_ss_user_id()) and data.get("role") != "super_admin":
-            return _mk_error("cannot_remove_own_super_admin_role", 400)
-        return jsonify({"ok": True, "user": platform_v2.set_user_role(user_id, data.get("role"), int(_ss_user_id()))})
-    except Exception as exc:
-        return _mk_error(exc)
+    return jsonify({"ok": False, "error": "role_management_disabled"}), 403
 
 
 @app.route("/api/admin/v2/analytics", methods=["GET"])

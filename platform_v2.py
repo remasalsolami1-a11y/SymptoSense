@@ -19,12 +19,9 @@ import db
 
 
 PH = db.PH
-ALLOWED_CONTENT_TYPES = {"health_tip", "faq", "awareness", "intro"}
+ALLOWED_CONTENT_TYPES = {"health_tip", "faq", "educational", "mental_health", "awareness", "intro"}
 ALLOWED_STATUSES = {"active", "draft", "disabled"}
-ALLOWED_ROLES = {
-    "user", "super_admin", "content_admin", "medical_content_admin",
-    "analytics_admin",
-}
+ALLOWED_ROLES = {"user", "admin"}
 _SCHEMA_KEY = None
 
 
@@ -169,6 +166,7 @@ def record_usage(event_type: str, path: str, lang: str, user_agent: str,
 
 
 def analytics_summary(days: int = 30) -> dict:
+    """Return aggregate, privacy-preserving operational analytics only."""
     init_schema()
     days = max(1, min(365, int(days or 30)))
     since = datetime.now(timezone.utc) - timedelta(days=days)
@@ -183,26 +181,44 @@ def analytics_summary(days: int = 30) -> dict:
         events = _rows(c)
         c.execute("SELECT COUNT(*) AS n FROM ss_users")
         total_users = int((_row(c) or {}).get("n") or 0)
+        c.execute("SELECT created_at FROM ss_users WHERE created_at >= %s ORDER BY created_at" % PH, (since.isoformat(),))
+        user_rows = [r[0] for r in c.fetchall()]
         c.execute("SELECT COUNT(*) AS n FROM records")
         total_analyses = int((_row(c) or {}).get("n") or 0)
+        c.execute("SELECT timestamp,symptoms FROM records WHERE timestamp >= %s ORDER BY timestamp" % PH, (since.isoformat(),))
+        analysis_rows = c.fetchall()
     finally:
         conn.close()
-    services, languages, devices, paths, daily = Counter(), Counter(), Counter(), Counter(), Counter()
-    errors = alerts = analyses = assistant = 0
+
+    services, languages, devices, paths = Counter(), Counter(), Counter(), Counter()
+    activity_daily, assistant_daily = Counter(), Counter()
+    errors = alerts = assistant = 0
     response_values = []
     for event in events:
         services[event["service"]] += 1
         languages[event["lang"]] += 1
         devices[event["device_type"]] += 1
         paths[event["path"]] += 1
-        daily[str(event["created_at"])[:10]] += 1
+        day = str(event["created_at"])[:10]
+        activity_daily[day] += 1
         status = int(event.get("response_status") or 0)
         errors += int(status >= 400)
         alerts += int(event.get("event_type") == "safety_alert")
-        analyses += int(event.get("event_type") == "analysis_complete")
-        assistant += int(event.get("event_type") == "assistant_use")
+        if event.get("event_type") == "assistant_use":
+            assistant += 1
+            assistant_daily[day] += 1
         if event.get("response_ms") is not None:
             response_values.append(int(event["response_ms"]))
+
+    users_daily = Counter(str(ts)[:10] for ts in user_rows)
+    analyses_daily = Counter(str(row[0])[:10] for row in analysis_rows)
+    symptom_counter = Counter()
+    for _, symptoms in analysis_rows:
+        for symptom in str(symptoms or "").split(","):
+            symptom = symptom.strip()
+            if symptom:
+                symptom_counter[symptom] += 1
+
     today = datetime.now(timezone.utc).date()
     periods = {"daily": 0, "weekly": 0, "monthly": len(events)}
     for event in events:
@@ -212,15 +228,28 @@ def analytics_summary(days: int = 30) -> dict:
             periods["weekly"] += int(dt >= today - timedelta(days=6))
         except Exception:
             pass
+
+    all_days = [(since.date() + timedelta(days=i)).isoformat() for i in range(days + 1)]
     return {
-        "range_days": days, "total_users": total_users, "total_events": len(events),
-        "analyses": total_analyses, "range_analyses": analyses,
-        "assistant_uses": assistant, "errors": errors,
-        "alerts": alerts, "periods": periods,
+        "range_days": days,
+        "total_users": total_users,
+        "total_events": len(events),
+        "analyses": total_analyses,
+        "range_analyses": len(analysis_rows),
+        "assistant_uses": assistant,
+        "errors": errors,
+        "alerts": alerts,
+        "activity": len(events),
+        "periods": periods,
         "services": [{"name": k, "count": v} for k, v in services.most_common(12)],
-        "languages": dict(languages), "devices": dict(devices),
+        "languages": dict(languages),
+        "devices": dict(devices),
         "sections": [{"path": k, "count": v} for k, v in paths.most_common(12)],
-        "timeline": [{"date": k, "count": daily[k]} for k in sorted(daily)],
+        "top_symptoms": [{"name": k, "count": v} for k, v in symptom_counter.most_common(12)],
+        "timeline": [{"date": d, "count": activity_daily[d]} for d in all_days],
+        "users_timeline": [{"date": d, "count": users_daily[d]} for d in all_days],
+        "analyses_timeline": [{"date": d, "count": analyses_daily[d]} for d in all_days],
+        "assistant_timeline": [{"date": d, "count": assistant_daily[d]} for d in all_days],
         "average_response_ms": round(sum(response_values) / len(response_values)) if response_values else None,
     }
 
@@ -405,23 +434,11 @@ def set_user_status(user_id: int, status: str, admin_id: int) -> dict:
 
 
 def set_user_role(user_id: int, role: str, admin_id: int) -> dict:
-    if role not in ALLOWED_ROLES:
-        raise ValueError("invalid_role")
-    init_schema()
-    conn = db._conn()
-    c = conn.cursor()
-    try:
-        c.execute(f"SELECT id,status,role FROM ss_users WHERE id={PH}", (int(user_id),))
-        previous = _row(c)
-        if not previous:
-            raise ValueError("user_not_found")
-        c.execute(f"UPDATE ss_users SET role={PH} WHERE id={PH}", (role, int(user_id)))
-        conn.commit()
-    finally:
-        conn.close()
-    updated = {**previous, "role": role}
-    audit(admin_id, "role_changed", "user_account", user_id, previous, updated)
-    return updated
+    """Role changes are intentionally unavailable from the dashboard/API.
+
+    The single owner admin is established only through the one-time claim flow.
+    """
+    raise ValueError("role_management_disabled")
 
 
 def identity_hash(email: str) -> str:
