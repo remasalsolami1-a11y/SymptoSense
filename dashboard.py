@@ -1,268 +1,176 @@
-"""
-dashboard.py — SymptoSense Admin Dashboard
-Web interface to monitor bot usage and symptom trends in real time.
-Run with: python dashboard.py
-"""
+"""SymptoSense unified admin dashboard.
 
-from flask import Flask, render_template_string, jsonify
-import db
+The main web application renders ``DASHBOARD_HTML`` after session, role, and
+CSRF checks.  The tiny standalone app at the bottom remains for local UI work.
+"""
 import os
+
+from flask import Flask, jsonify, render_template_string
+
+import db
+
 
 app = Flask(__name__)
 
-DASHBOARD_HTML = """
+DASHBOARD_HTML = r"""
+{% set ar = lang != 'en' %}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ lang }}" dir="{{ 'rtl' if ar else 'ltr' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SymptoSense Dashboard</title>
+<title>SymptoSense — Medical Knowledge Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-  :root {
-    --primary: #1976D2;
-    --primary-dark: #123B70;
-    --primary-mid: #64B5F6;
-    --primary-pale: #B8D8F8;
-    --primary-light: #EAF4FF;
-    --text-body: #40566F;
-    --text-muted: #5F7185;
-    --bg-page: #F5F9FF;
-    --bg-card: #FFFFFF;
-    --border-card: #DCEBFA;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; min-width: 0; }
-  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-  body { font-family: 'Cairo','Segoe UI',Tahoma,sans-serif; background: var(--bg-page); color: var(--text-body); min-height: 100vh; min-height: 100dvh; -webkit-text-size-adjust: 100%; }
-  button { max-width: 100%; font-family: inherit; touch-action: manipulation; }
-  canvas { max-width: 100%; }
-  .header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); padding: 14px clamp(16px,4vw,42px); display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border-card); box-shadow: 0 4px 18px rgba(25,118,210,.06); }
-  .brand-wrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
-  .brand-icon { width: 45px; height: 45px; border-radius: 14px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 23px; }
-  .header h1 { font-size: clamp(17px,3vw,22px); color: var(--primary-dark); line-height: 1.35; }
-  .header h1 span { color: var(--primary); }
-  .header-sub { color: var(--text-muted); font-size: 11.5px; margin-top: 1px; }
-  .header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
-  .live-badge { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-pale); padding: 6px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; }
-  .container { width: 100%; max-width: 1240px; margin: 0 auto; padding: clamp(20px,3vw,28px) clamp(12px,3vw,20px) 42px; }
-  .page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-  .page-intro h2 { color: var(--primary-dark); font-size: clamp(22px,4vw,31px); margin-bottom: 3px; }
-  .page-intro p { color: var(--text-muted); font-size: 13px; }
-  .section-title { color: var(--primary-dark); font-size: 16px; font-weight: 800; margin: 4px 0 11px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
-  .stat-card { position: relative; overflow: hidden; background: var(--bg-card); border-radius: 18px; padding: 19px; border: 1px solid var(--border-card); box-shadow: 0 6px 20px rgba(25,118,210,.06); text-align: start; }
-  .stat-card::after { content:''; position:absolute; inset-inline-end:-26px; top:-26px; width:78px; height:78px; border-radius:50%; background:var(--primary-light); }
-  .stat-card .number { position:relative; z-index:1; font-size: 31px; line-height: 1.2; font-weight: 900; color: var(--primary); }
-  .stat-card .label { font-size: 13px; color: var(--primary-dark); font-weight: 800; margin-top: 6px; }
-  .stat-card .sub { font-size: 10.5px; color: #94A3B8; margin-top: 2px; }
-  .charts-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
-  .chart-card { background: var(--bg-card); border-radius: 18px; padding: 19px; border: 1px solid var(--border-card); box-shadow: 0 6px 20px rgba(25,118,210,.06); }
-  .chart-card h3 { font-size: 14px; color: var(--primary-dark); margin-bottom: 15px; padding-bottom: 11px; border-bottom: 1px solid var(--border-card); }
-  .chart-wrap { position: relative; height: 250px; }
-  .footer { text-align: center; padding: 24px; color: #94A3B8; font-size: 11px; }
-  .refresh-btn { background: var(--primary); border: 0; color: var(--bg-card); min-height: 40px; padding: 8px 16px; border-radius: 11px; cursor: pointer; font-size: 12px; font-weight: 800; box-shadow: 0 7px 16px rgba(25,118,210,.18); }
-  .refresh-btn:hover { background: #1565C0; }
-  .refresh-btn:focus-visible { outline: 3px solid rgba(25,118,210,.28); outline-offset: 3px; }
-  .last-updated { font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align:center; }
-  .empty { color:#94A3B8; text-align:center; padding:18px; font-size:13px; }
-  @media (max-width: 850px) { .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .charts-grid { grid-template-columns: 1fr; } .page-intro { align-items:flex-start; flex-direction:column; } }
-  @media (max-width: 560px) {
-    .header { align-items:flex-start; padding:12px 14px; }
-    .header-sub, .live-badge { display:none; }
-    .brand-icon { width:40px; height:40px; border-radius:12px; }
-    .container { padding:20px 12px 34px; }
-    .stats-grid { grid-template-columns: 1fr; gap:10px; }
-    .stat-card { padding:15px 13px; border-radius:15px; }
-    .stat-card .number { font-size:25px; }
-    .chart-card { padding:15px 12px; border-radius:16px; }
-    .chart-wrap { height:230px; }
-  }
-  @media (max-width: 380px) { .header h1 { font-size:16px; } .refresh-btn { padding-inline:11px; } }
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap');
+:root{--p:#1976D2;--pd:#123B70;--pl:#EAF4FF;--sky:#64B5F6;--bg:#F5F9FF;--card:#fff;--line:#DCEBFA;--text:#40566F;--muted:#5F7185;--green:#166534;--greenbg:#ECFDF5;--yellow:#92400E;--yellowbg:#FFFBEB;--red:#991B1B;--redbg:#FEF2F2}
+*{box-sizing:border-box;margin:0;padding:0;min-width:0}body{font-family:'Cairo','Poppins','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}button,input,select,textarea{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}
+.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px clamp(14px,3vw,34px)}
+.brand{display:flex;align-items:center;gap:10px}.brand-ic{width:44px;height:44px;border-radius:14px;background:var(--pl);display:grid;place-items:center;font-size:22px}.brand b{color:var(--pd);font-size:20px}.brand b em{color:var(--p);font-style:normal}.brand small{display:block;color:var(--muted);font-size:11px}
+.user{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.role{padding:5px 10px;border-radius:999px;background:var(--pl);color:var(--pd);font-size:11px;font-weight:800}.top-a{padding:7px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--pd);font-size:12px;font-weight:700}
+.layout{display:grid;grid-template-columns:235px minmax(0,1fr);max-width:1480px;margin:auto;min-height:calc(100vh - 70px)}.side{padding:20px 12px;border-inline-end:1px solid var(--line);background:#fff}.navbtn{width:100%;border:0;background:transparent;text-align:start;padding:11px 12px;border-radius:12px;color:var(--text);font-weight:700;margin:2px 0}.navbtn:hover,.navbtn.on{background:var(--pl);color:var(--p)}.main{padding:clamp(18px,3vw,30px)}
+.view{display:none}.view.on{display:block}.head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}.head h1{color:var(--pd);font-size:clamp(22px,3.5vw,31px)}.head p{color:var(--muted);font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:11px;padding:9px 15px;background:var(--p);color:#fff;font-weight:800;font-size:13px}.btn.ghost{background:#fff;color:var(--pd);border:1px solid var(--line)}.btn.danger{background:var(--redbg);color:var(--red);border:1px solid #FECACA}.btn.small{padding:6px 10px;font-size:11px}.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 5px 18px rgba(25,118,210,.05)}.stat strong{display:block;color:var(--p);font-size:27px}.stat span{color:var(--pd);font-size:12px;font-weight:800}.stat small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 5px 20px rgba(25,118,210,.05)}.card h2{color:var(--pd);font-size:16px;margin-bottom:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.chart{height:250px;position:relative}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.search{flex:1;min-width:220px;border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 12px;color:var(--text)}.filter{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 10px;color:var(--text)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}th,td{padding:11px 12px;text-align:start;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{background:var(--pl);color:var(--pd);font-weight:800;position:sticky;top:0}tr:last-child td{border-bottom:0}.muted{color:var(--muted);font-size:11px}.empty{text-align:center;color:#94A3B8;padding:25px}.badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800}.active,.verified,.online{color:var(--green);background:var(--greenbg)}.draft,.needs_review,.review,.not_configured{color:var(--yellow);background:var(--yellowbg)}.disabled,.urgent,.offline{color:var(--red);background:var(--redbg)}
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.55);padding:18px;align-items:center;justify-content:center}.modal-bg.show{display:flex}.modal{background:#fff;border-radius:20px;width:min(780px,100%);max-height:92vh;overflow:auto;box-shadow:0 30px 80px rgba(15,23,42,.3)}.modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);z-index:2}.modal-head h2{color:var(--pd);font-size:18px}.close{width:36px;height:36px;border:0;border-radius:10px;background:var(--pl);color:var(--pd);font-weight:900}.form{padding:18px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:var(--pd);font-weight:800}.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);background:#fff}.field textarea{min-height:82px;resize:vertical}.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.msg{display:none;margin:0 18px 16px;padding:10px 12px;border-radius:11px;font-size:12px}.msg.show{display:block}.msg.ok{background:var(--greenbg);color:var(--green)}.msg.err{background:var(--redbg);color:var(--red)}
+.health{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.health-item{border:1px solid var(--line);border-radius:14px;padding:14px}.health-item b{color:var(--pd)}.audit-json{max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:start}
+@media(max-width:1050px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.side{position:sticky;top:69px;z-index:30;display:flex;gap:5px;overflow:auto;border-inline-end:0;border-bottom:1px solid var(--line);padding:8px}.navbtn{width:auto;white-space:nowrap}.main{padding:18px 12px}}
+@media(max-width:700px){.top{align-items:flex-start}.brand small,.user>span:not(.role){display:none}.grid,.two,.health,.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.main{padding:16px 10px}.card{padding:13px}.head{align-items:flex-start}.table-wrap{border:0}table{min-width:0}thead{display:none}tr{display:block;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;padding:7px}td{display:flex;justify-content:space-between;gap:12px;border:0;padding:7px;font-size:12px}td:before{content:attr(data-label);font-weight:800;color:var(--pd)}.modal-bg{padding:7px}.modal{border-radius:15px}.user .top-a:first-of-type{display:none}}
 </style>
 </head>
 <body>
+<header class="top">
+  <div class="brand"><div class="brand-ic">❤️‍🩹</div><div><b>Sympto<em>Sense</em></b><small>{{ 'لوحة إدارة المحتوى الطبي' if ar else 'Medical content administration' }}</small></div></div>
+  <div class="user"><span>{{ admin_user.email }}</span><span class="role">{{ admin_user.role }}</span><a class="top-a" href="/?choose=1&next=/admin">🌐 {{ 'EN' if ar else 'AR' }}</a><a class="top-a" href="/home">{{ 'الموقع' if ar else 'Site' }}</a><a class="top-a" href="/logout">{{ 'خروج' if ar else 'Sign out' }}</a></div>
+</header>
+<div class="layout">
+<aside class="side" id="side">
+  {% if admin_user.role in ['super_admin','analytics_admin'] %}<button class="navbtn on" data-view="overview">📊 {{ 'نظرة عامة' if ar else 'Overview' }}</button>
+  <button class="navbtn" data-view="analytics">📈 {{ 'التحليلات' if ar else 'Analytics' }}</button>{% endif %}
+  <button class="navbtn {{ 'on' if admin_user.role in ['content_admin','medical_content_admin'] else '' }}" data-view="knowledge">🧠 {{ 'قاعدة المعرفة' if ar else 'Knowledge base' }}</button>
+  {% if admin_user.role != 'analytics_admin' %}
+  <button class="navbtn" data-view="content">📝 {{ 'إدارة المحتوى' if ar else 'Content management' }}</button>
+  <button class="navbtn" data-view="diseases">🩺 {{ 'الأمراض' if ar else 'Diseases' }}</button>
+  <button class="navbtn" data-view="symptoms">🤕 {{ 'الأعراض' if ar else 'Symptoms' }}</button>
+  <button class="navbtn" data-view="relationships">🔗 {{ 'العلاقات' if ar else 'Relationships' }}</button>
+  <button class="navbtn" data-view="sources">📚 {{ 'المصادر' if ar else 'Sources' }}</button>
+  <button class="navbtn" data-view="redflags">🚨 {{ 'علامات الخطر' if ar else 'Red flags' }}</button>
+  <button class="navbtn" data-view="audit">🧾 {{ 'سجل التعديلات' if ar else 'Audit log' }}</button>
+  <button class="navbtn" data-view="health">🖥️ {{ 'صحة النظام' if ar else 'System health' }}</button>
+  {% endif %}
+  {% if admin_user.role == 'super_admin' %}<button class="navbtn" data-view="users">👥 {{ 'المستخدمون' if ar else 'Users' }}</button><button class="navbtn" data-view="security">🛡️ {{ 'الأمان والنشاط' if ar else 'Security & activity' }}</button><button class="navbtn" data-view="roles">🔐 {{ 'الصلاحيات' if ar else 'Roles' }}</button>{% endif %}
+</aside>
+<main class="main">
+  <section class="view {{ 'on' if admin_user.role in ['super_admin','analytics_admin'] else '' }}" id="view-overview">
+    <div class="head"><div><h1>{{ 'الزوار والتقييمات' if ar else 'Visitors and feedback' }}</h1><p>{{ 'ملخص استخدام المنصة مع حماية الوصول للمسؤولين فقط.' if ar else 'Platform usage summary, restricted to administrators.' }}</p></div><button class="btn ghost" onclick="loadUsage()">🔄 {{ 'تحديث' if ar else 'Refresh' }}</button></div>
+    <div class="grid"><div class="stat"><strong id="visits">-</strong><span>{{ 'إجمالي الزيارات' if ar else 'Total visits' }}</span></div><div class="stat"><strong id="unique">-</strong><span>{{ 'مستخدمون فريدون' if ar else 'Unique visitors' }}</span></div><div class="stat"><strong id="week">-</strong><span>{{ 'آخر 7 أيام' if ar else 'Last 7 days' }}</span></div><div class="stat"><strong id="feedback">-</strong><span>{{ 'التقييمات' if ar else 'Feedback' }}</span></div></div>
+    <div class="two"><div class="card"><h2>{{ 'الزوار' if ar else 'Visitors' }}</h2><div class="chart"><canvas id="visChart"></canvas></div></div><div class="card"><h2>{{ 'توزيع التقييمات' if ar else 'Feedback distribution' }}</h2><div class="chart"><canvas id="fbChart"></canvas></div></div></div>
+    <div class="card"><h2>{{ 'ملاحظات المستخدمين' if ar else 'User comments' }}</h2><div id="comments" class="empty">—</div></div>
+  </section>
 
-<div class="header">
-  <div class="brand-wrap">
-    <div class="brand-icon">❤️‍🩹</div>
-    <div><h1>Sympto<span>Sense</span></h1><div class="header-sub">لوحة إدارة المنصة الصحية</div></div>
-  </div>
-  <div class="header-actions">
-    <span class="live-badge">● مباشر</span>
-    <button class="refresh-btn" onclick="loadAll()">🔄 تحديث</button>
-  </div>
+  <section class="view" id="view-analytics">
+    <div class="head"><div><h1>📈 {{ 'تحليلات الاستخدام' if ar else 'Usage analytics' }}</h1><p>{{ 'بيانات تشغيل مجمعة فقط؛ لا أعراض ولا محادثات ولا نتائج صحية شخصية.' if ar else 'Aggregate operational data only—no symptoms, chats, or personal health results.' }}</p></div><div class="actions"><select class="filter" id="analyticsDays" onchange="loadV2Analytics()"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select><button class="btn ghost" onclick="loadV2Analytics()">🔄</button></div></div>
+    <div class="grid" id="v2AnalyticsStats"></div>
+    <div class="two"><div class="card"><h2>{{ 'الخدمات الأكثر استخدامًا' if ar else 'Most-used services' }}</h2><div id="v2Services"></div></div><div class="card"><h2>{{ 'اللغة والجهاز' if ar else 'Language and device' }}</h2><div id="v2Segments"></div></div></div>
+    <div class="card"><h2>{{ 'الاستخدام عبر الوقت' if ar else 'Usage over time' }}</h2><div class="chart"><canvas id="v2Timeline"></canvas></div></div>
+    <div class="card"><h2>{{ 'الأقسام الأكثر زيارة' if ar else 'Most-visited sections' }}</h2><div class="table-wrap" id="v2Sections"></div></div>
+  </section>
+
+  <section class="view" id="view-knowledge"><div class="head"><div><h1>🧠 Medical Knowledge Base</h1><p>{{ 'مصادر موثقة + علاقات قابلة للتفسير + طبقة أمان مستقلة.' if ar else 'Verified sources, explainable relationships, and an independent safety layer.' }}</p></div><button class="btn ghost" onclick="loadKB()">🔄 {{ 'تحديث' if ar else 'Refresh' }}</button></div><div class="grid" id="kbStats"></div><div class="card"><h2>{{ 'تسلسل التقييم' if ar else 'Assessment flow' }}</h2><p class="muted">User Input → Symptom Normalization → Knowledge Retrieval → Matching → Safety Rules → AI Explanation → Risk → Sources</p></div>{% if admin_user.role != 'analytics_admin' %}<div class="card"><h2>{{ 'الفئات' if ar else 'Categories' }}</h2><div id="categories"></div></div>{% else %}<div id="categories"></div>{% endif %}</section>
+
+  {% if admin_user.role != 'analytics_admin' %}
+  <section class="view" id="view-content"><div class="head"><div><h1>📝 {{ 'إدارة المحتوى' if ar else 'Content management' }}</h1><p>{{ 'النصائح والأسئلة الشائعة والتوعية والنصوص التعريفية بالعربية والإنجليزية.' if ar else 'Bilingual tips, FAQs, awareness, and introductory copy.' }}</p></div><button class="btn edit-only" onclick="openContentEditor()">＋ {{ 'إضافة محتوى' if ar else 'Add content' }}</button></div><div class="card"><div class="toolbar"><input id="contentSearch" class="search" placeholder="{{ 'بحث...' if ar else 'Search...' }}" oninput="renderContent()"><select id="contentType" class="filter" onchange="renderContent()"><option value="">{{ 'كل الأنواع' if ar else 'All types' }}</option><option value="health_tip">Health tip</option><option value="faq">FAQ</option><option value="awareness">Awareness</option><option value="intro">Intro</option></select></div><div class="table-wrap" id="table-content"></div></div></section>
+  {% for key, icon, title_ar, title_en in [('diseases','🩺','الأمراض','Diseases'),('symptoms','🤕','الأعراض','Symptoms'),('relationships','🔗','علاقات المرض والأعراض','Disease–symptom relationships'),('sources','📚','المصادر الطبية','Medical sources'),('redflags','🚨','قواعد علامات الخطر','Red-flag rules')] %}
+  <section class="view" id="view-{{ key }}"><div class="head"><div><h1>{{ icon }} {{ title_ar if ar else title_en }}</h1><p>{{ 'البحث بالعربية أو الإنجليزية وإدارة الحالة والمحتوى.' if ar else 'Search in Arabic or English and manage content status.' }}</p></div><button class="btn edit-only" onclick="openEditor('{{ 'red_flag' if key == 'redflags' else ('relationship' if key == 'relationships' else key[:-1]) }}')">＋ {{ 'إضافة' if ar else 'Add' }}</button></div><div class="card"><div class="toolbar"><input class="search" id="search-{{ key }}" placeholder="{{ 'بحث...' if ar else 'Search...' }}" oninput="render('{{ key }}')"><select class="filter" id="filter-{{ key }}" onchange="render('{{ key }}')"><option value="">{{ 'كل الحالات' if ar else 'All statuses' }}</option><option value="active">Active</option><option value="draft">Draft</option><option value="disabled">Disabled</option>{% if key == 'sources' %}<option value="verified">Verified</option><option value="needs_review">Needs review</option>{% endif %}</select>{% if key in ['diseases','symptoms'] %}<select class="filter category-filter" id="extra-{{ key }}" onchange="render('{{ key }}')"><option value="">{{ 'كل الفئات' if ar else 'All categories' }}</option></select>{% elif key == 'sources' %}<select class="filter" id="extra-{{ key }}" onchange="render('{{ key }}')"><option value="">{{ 'كل الأنواع' if ar else 'All types' }}</option><option value="government">Government</option><option value="international_organization">International Organization</option><option value="national_health_service">National Health Service</option><option value="academic_medical_institution">Academic Medical Institution</option><option value="other_trusted_source">Other Trusted Source</option></select>{% elif key == 'relationships' %}<select class="filter" id="extra-{{ key }}" onchange="render('{{ key }}')"><option value="">{{ 'كل الأنماط' if ar else 'All typicality' }}</option><option value="very_common">Very common</option><option value="common">Common</option><option value="less_common">Less common</option></select>{% elif key == 'redflags' %}<select class="filter" id="extra-{{ key }}" onchange="render('{{ key }}')"><option value="">{{ 'كل المخاطر' if ar else 'All risks' }}</option><option value="urgent">Urgent</option><option value="review">Needs review</option></select>{% endif %}{% if key == 'diseases' %}<select class="filter" id="extra2-diseases" onchange="render('diseases')"><option value="">{{ 'كل درجات الشدة' if ar else 'All severity' }}</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>{% endif %}</div><div class="table-wrap" id="table-{{ key }}"></div></div></section>
+  {% endfor %}
+
+  <section class="view" id="view-audit"><div class="head"><div><h1>🧾 {{ 'سجل التعديلات' if ar else 'Audit log' }}</h1><p>{{ 'من عدّل ماذا ومتى، مع القيم السابقة والجديدة.' if ar else 'Who changed what and when, with previous and new values.' }}</p></div><button class="btn ghost" onclick="loadAudit()">🔄</button></div><div class="card"><div class="table-wrap" id="table-audit"></div></div></section>
+  <section class="view" id="view-health"><div class="head"><div><h1>🖥️ {{ 'صحة النظام' if ar else 'System health' }}</h1><p>{{ 'حالة المكونات وآخر فحص وزمن الاستجابة.' if ar else 'Component state, last check, and response time.' }}</p></div><button class="btn ghost" onclick="loadHealth()">🔄</button></div><div class="health" id="healthGrid"></div></section>
+  {% endif %}
+  {% if admin_user.role == 'super_admin' %}
+  <section class="view" id="view-users"><div class="head"><div><h1>👥 {{ 'إدارة المستخدمين' if ar else 'User management' }}</h1><p>{{ 'معرّف وحالة وتواريخ ودور فقط؛ لا تعرض هذه الشاشة أي بيانات صحية.' if ar else 'ID, status, dates, and role only; this screen exposes no health data.' }}</p></div><button class="btn ghost" onclick="loadUsers()">🔄</button></div><div class="card"><div class="table-wrap" id="table-users"></div></div></section>
+  <section class="view" id="view-security"><div class="head"><div><h1>🛡️ {{ 'الأمان ونشاط الدخول' if ar else 'Security and login activity' }}</h1><p>{{ 'محاولات دخول دون بريد أو عنوان IP، وسجل تغييرات الإدارة.' if ar else 'Login attempts without emails or IP addresses, plus the admin change log.' }}</p></div><button class="btn ghost" onclick="loadSecurity()">🔄</button></div><div class="two"><div class="card"><h2>{{ 'نشاط الدخول' if ar else 'Login activity' }}</h2><div class="table-wrap" id="table-login-activity"></div></div><div class="card"><h2>{{ 'سجل الإدارة' if ar else 'Admin audit' }}</h2><div class="table-wrap" id="table-security-audit"></div></div></div></section>
+  <section class="view" id="view-roles"><div class="head"><div><h1>🔐 {{ 'صلاحيات المسؤولين' if ar else 'Administrator roles' }}</h1><p>{{ 'Super Admin / Content Admin / Analytics Admin' }}</p></div></div><div class="card"><div class="table-wrap" id="table-roles"></div></div></section>
+  {% endif %}
+</main>
 </div>
 
-<div class="container">
-
-  <div class="page-intro">
-    <div><h2>الزوار والتقييمات</h2><p>ملخص واضح لعدد زوار SymptoSense وآرائهم فقط.</p></div>
-  </div>
-
-  <div class="section-title">👥 الزوار</div>
-  <div class="stats-grid" id="stats-grid">
-    <div class="stat-card"><div class="number" id="total-visits">-</div><div class="label">إجمالي الزيارات</div><div class="sub">Total Visits</div></div>
-    <div class="stat-card"><div class="number" id="unique-visitors">-</div><div class="label">مستخدمون فريدون</div><div class="sub">Unique Users</div></div>
-    <div class="stat-card"><div class="number" id="week-visits">-</div><div class="label">زيارات آخر 7 أيام</div><div class="sub">Visits in 7 Days</div></div>
-  </div>
-
-  <div class="section-title">⭐ التقييمات</div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="number" id="total-feedback">-</div><div class="label">التقييمات</div><div class="sub">Feedback</div></div>
-    <div class="stat-card"><div class="number" id="positive-feedback">-</div><div class="label">التقييمات الإيجابية</div><div class="sub">Positive Ratings</div></div>
-    <div class="stat-card"><div class="number" id="average-feedback">-</div><div class="label">متوسط التقييم</div><div class="sub">Average Rating</div></div>
-  </div>
-
-  <div class="section-title">📊 ملخص مرئي</div>
-  <div class="charts-grid">
-    <div class="chart-card">
-      <h3>👥 ملخص الزوار</h3>
-      <div class="chart-wrap"><canvas id="visitorsChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>⭐ توزيع التقييمات</h3>
-      <div class="chart-wrap"><canvas id="feedbackChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- ملاحظات التقييم -->
-  <div class="chart-card" style="margin-bottom:28px;">
-    <h3>📝 ملاحظات المستخدمين على التقييم السلبي</h3>
-    <div id="feedback-comments">
-      <p class="empty">لا توجد ملاحظات بعد</p>
-    </div>
-  </div>
-
-  <div class="last-updated" id="last-updated"></div>
-</div>
-
-<div class="footer">SymptoSense © 2026 — ريماس السلمي | للتوعية الصحية فقط</div>
+<div class="modal-bg" id="modal"><div class="modal"><div class="modal-head"><h2 id="modalTitle"></h2><button class="close" onclick="closeModal()">✕</button></div><form class="form" id="editForm"><div class="form-grid" id="formFields"></div><div class="form-actions"><button type="button" class="btn ghost" onclick="closeModal()">{{ 'إلغاء' if ar else 'Cancel' }}</button><button type="submit" class="btn">{{ 'حفظ' if ar else 'Save' }}</button></div></form><div class="msg" id="modalMsg"></div></div></div>
 
 <script>
-let visitorsChart, feedbackChart;
-
-async function loadAll() {
-  try {
-    const r = await fetch('/api/stats');
-    const d = await r.json();
-    
-    // Stats
-    document.getElementById('total-visits').textContent = d.stats.total_visits;
-    document.getElementById('unique-visitors').textContent = d.stats.unique_visitors;
-    document.getElementById('week-visits').textContent = d.stats.visits_this_period;
-    const fbCount = (d.feedback.great||0) + (d.feedback.good||0) + (d.feedback.ok||0) + (d.feedback.bad||0);
-    const positiveCount = (d.feedback.great||0) + (d.feedback.good||0);
-    const positivePct = fbCount ? Math.round((positiveCount / fbCount) * 100) : 0;
-    const average = fbCount
-      ? (((d.feedback.great||0)*4 + (d.feedback.good||0)*3 + (d.feedback.ok||0)*2 + (d.feedback.bad||0)) / fbCount).toFixed(1)
-      : '0.0';
-    document.getElementById('total-feedback').textContent = fbCount;
-    document.getElementById('positive-feedback').textContent = positivePct + '%';
-    document.getElementById('average-feedback').textContent = average + '/4';
-
-    if (visitorsChart) visitorsChart.destroy();
-    visitorsChart = new Chart(document.getElementById('visitorsChart'), {
-      type: 'bar',
-      data: {
-        labels: ['إجمالي الزيارات', 'زوار فريدون', 'آخر 7 أيام'],
-        datasets: [{ data: [d.stats.total_visits||0, d.stats.unique_visitors||0, d.stats.visits_this_period||0], backgroundColor: ['#123B70','#1976D2','#64B5F6'], borderRadius: 8 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#5F7185', font: { size: 11 } }, grid: { color: '#DCEBFA' } },
-                   y: { beginAtZero:true, ticks: { color: '#5F7185', stepSize: 1 }, grid: { color: '#DCEBFA' } } } }
-    });
-
-    // Feedback chart
-    if (feedbackChart) feedbackChart.destroy();
-    feedbackChart = new Chart(document.getElementById('feedbackChart'), {
-      type: 'doughnut',
-      data: { labels: ['ممتاز 😍', 'جيد 🙂', 'عادي 😐', 'لا 😞'],
-              datasets: [{ data: [d.feedback.great||0, d.feedback.good||0, d.feedback.ok||0, d.feedback.bad||0],
-                           backgroundColor: ['#123B70', '#1976D2', '#64B5F6', '#B8D8F8'], borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#40566F', usePointStyle:true } } } }
-    });
-
-    // Feedback comments
-    const fbBox = document.getElementById('feedback-comments');
-    if (!d.fb_comments.length) {
-      fbBox.innerHTML = '<p class="empty">لا توجد ملاحظات بعد</p>';
-    } else {
-      fbBox.innerHTML = d.fb_comments.map(c => {
-        const emoji = {bad:'😞', ok:'😐', good:'🙂', great:'😍', 1:'😍', 2:'🙂', 3:'😐', 4:'😞'}[c.rating] || '⭐';
-        const ts = (c.timestamp || '').replace('T', ' ').slice(0, 16);
-        return '<div style="padding:11px 13px;margin:7px 0;background:#F5F9FF;border:1px solid #DCEBFA;border-radius:11px;">'
-             + '<div style="color:#5F7185;font-size:11px;margin-bottom:4px;">' + emoji + ' ' + ts + '</div>'
-             + '<div style="color:#40566F;font-size:13px;">' + (c.comment || '') + '</div></div>';
-      }).join('');
-    }
-
-    document.getElementById('last-updated').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA')
-      + ' | قاعدة البيانات: ' + (d.db_backend || '?');
-  } catch(e) { console.error(e); }
-}
-
-loadAll();
-setInterval(loadAll, 30000); // تحديث كل 30 ثانية
+const LANG={{ lang|tojson }}, AR=LANG==='ar', CSRF={{ csrf_token|tojson }}, ROLE={{ admin_user.role|tojson }};
+const CAN_EDIT=ROLE==='super_admin'||ROLE==='content_admin'||ROLE==='medical_content_admin';
+let KB={diseases:[],symptoms:[],sources:[],relationships:[],red_flags:[],categories:[],statistics:{}}, CONTENT=[], editing={kind:null,id:null}, visChart,fbChart,v2TimelineChart;
+if(ROLE==='content_admin'||ROLE==='medical_content_admin')document.getElementById('view-knowledge')?.classList.add('on');
+const txt=(a,e)=>AR?a:e, esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}, statusBadge=s=>'<span class="badge '+esc(s||'draft')+'">'+esc(s||'draft')+'</span>';
+document.querySelectorAll('.edit-only').forEach(x=>x.style.display=CAN_EDIT?'':'none');
+document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>show(b.dataset.view));
+function show(name){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.querySelectorAll('.navbtn').forEach(v=>v.classList.toggle('on',v.dataset.view===name));document.getElementById('view-'+name)?.classList.add('on');if(name==='analytics')loadV2Analytics();if(name==='content')loadContent();if(name==='audit')loadAudit();if(name==='health')loadHealth();if(name==='users')loadUsers();if(name==='security')loadSecurity();if(name==='roles')loadRoles()}
+async function req(url,opt={}){opt.headers=Object.assign({'Content-Type':'application/json','X-CSRF-Token':CSRF},opt.headers||{});const r=await fetch(url,opt);const d=await r.json().catch(()=>({error:'invalid_response'}));if(!r.ok||d.ok===false)throw new Error(d.error||('HTTP '+r.status));return d}
+async function loadUsage(){try{const d=await req('/api/stats');document.getElementById('visits').textContent=d.stats.total_visits;document.getElementById('unique').textContent=d.stats.unique_visitors;document.getElementById('week').textContent=d.stats.visits_this_period;const f=d.feedback||{},n=(f.great||0)+(f.good||0)+(f.ok||0)+(f.bad||0);document.getElementById('feedback').textContent=n;if(window.Chart){visChart?.destroy();visChart=new Chart(document.getElementById('visChart'),{type:'bar',data:{labels:[txt('الإجمالي','Total'),txt('فريدون','Unique'),txt('7 أيام','7 days')],datasets:[{data:[d.stats.total_visits||0,d.stats.unique_visitors||0,d.stats.visits_this_period||0],backgroundColor:['#123B70','#1976D2','#64B5F6'],borderRadius:8}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});fbChart?.destroy();fbChart=new Chart(document.getElementById('fbChart'),{type:'doughnut',data:{labels:['😍','🙂','😐','😞'],datasets:[{data:[f.great||0,f.good||0,f.ok||0,f.bad||0],backgroundColor:['#123B70','#1976D2','#64B5F6','#B8D8F8'],borderWidth:0}]},options:{maintainAspectRatio:false}})}document.getElementById('comments').innerHTML=(d.fb_comments||[]).length?d.fb_comments.map(c=>'<div style="padding:9px;border-bottom:1px solid #DCEBFA"><small>'+esc((c.timestamp||'').slice(0,16))+'</small><div>'+esc(c.comment)+'</div></div>').join(''):'—'}catch(e){console.error(e)}}
+async function loadV2Analytics(){try{const days=document.getElementById('analyticsDays')?.value||30,d=(await req('/api/admin/v2/analytics?days='+days)).analytics,s=d.periods||{},items=[[d.total_users,txt('المستخدمون','Users')],[d.analyses,txt('التحليلات','Analyses')],[d.assistant_uses,txt('استخدامات المساعد','Assistant uses')],[d.errors,txt('الأخطاء','Errors')],[d.alerts,txt('تنبيهات الأمان','Safety alerts')],[s.daily||0,txt('اليوم','Today')],[s.weekly||0,txt('أسبوعي','Weekly')],[s.monthly||0,txt('شهري','Monthly')]];document.getElementById('v2AnalyticsStats').innerHTML=items.map(x=>'<div class="stat"><strong>'+esc(x[0]??0)+'</strong><span>'+esc(x[1])+'</span></div>').join('');const max=Math.max(1,...(d.services||[]).map(x=>x.count));document.getElementById('v2Services').innerHTML=(d.services||[]).map(x=>'<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><b>'+esc(x.name.replaceAll('_',' '))+'</b><span>'+x.count+'</span></div><div style="height:7px;background:#EAF4FF;border-radius:9px"><div style="height:100%;width:'+(x.count/max*100)+'%;background:#1976D2;border-radius:9px"></div></div></div>').join('')||'—';document.getElementById('v2Segments').innerHTML='<h3 style="font-size:13px;margin-bottom:6px">'+txt('اللغة','Language')+'</h3>'+Object.entries(d.languages||{}).map(([k,v])=>'<span class="badge active" style="margin:3px">'+esc(k)+': '+v+'</span>').join('')+'<h3 style="font-size:13px;margin:12px 0 6px">'+txt('الجهاز','Device')+'</h3>'+Object.entries(d.devices||{}).map(([k,v])=>'<span class="badge verified" style="margin:3px">'+esc(k)+': '+v+'</span>').join('');document.getElementById('v2Sections').innerHTML='<table><thead><tr><th>'+txt('المسار','Path')+'</th><th>'+txt('الزيارات','Visits')+'</th></tr></thead><tbody>'+(d.sections||[]).map(x=>'<tr><td data-label="Path">'+esc(x.path)+'</td><td data-label="Visits">'+x.count+'</td></tr>').join('')+'</tbody></table>';if(window.Chart){v2TimelineChart?.destroy();v2TimelineChart=new Chart(document.getElementById('v2Timeline'),{type:'line',data:{labels:(d.timeline||[]).map(x=>x.date),datasets:[{label:txt('الاستخدام','Usage'),data:(d.timeline||[]).map(x=>x.count),borderColor:'#1976D2',backgroundColor:'rgba(25,118,210,.1)',fill:true,tension:.3}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})}}catch(e){console.error(e)}}
+async function loadKB(){try{const d=await req('/api/admin/knowledge/bootstrap');KB=d;document.querySelectorAll('.category-filter').forEach(el=>{const current=el.value;el.innerHTML='<option value="">'+txt('كل الفئات','All categories')+'</option>'+opts(KB.categories||[],c=>AR?c.name_ar:c.name_en);el.value=current});renderStats();['diseases','symptoms','relationships','sources','redflags'].forEach(render);document.getElementById('categories').innerHTML=(KB.categories||[]).map(c=>'<span class="badge active" style="margin:4px">'+esc(AR?c.name_ar:c.name_en)+'</span>').join('')}catch(e){alert(e.message)}}
+function renderStats(){const s=KB.statistics||{},items=[[s.total_diseases,txt('إجمالي الأمراض','Total diseases')],[s.total_symptoms,txt('إجمالي الأعراض','Total symptoms')],[s.total_sources,txt('إجمالي المصادر','Total sources')],[s.verified_sources,txt('مصادر موثقة','Verified sources')],[s.active_diseases,txt('أمراض نشطة','Active diseases')],[s.active_symptoms,txt('أعراض نشطة','Active symptoms')],[s.sources_needing_review,txt('تحتاج مراجعة','Need review')],[s.last_knowledge_update?String(s.last_knowledge_update).slice(0,10):'—',txt('آخر تحديث','Last update')]];document.getElementById('kbStats').innerHTML=items.map(x=>'<div class="stat"><strong>'+esc(x[0]??0)+'</strong><span>'+esc(x[1])+'</span></div>').join('')}
+function getRows(kind){return kind==='redflags'?(KB.red_flags||[]):(KB[kind]||[])}
+function render(kind){const box=document.getElementById('table-'+kind);if(!box)return;let rows=getRows(kind),q=(document.getElementById('search-'+kind)?.value||'').toLowerCase(),f=document.getElementById('filter-'+kind)?.value||'',extra=document.getElementById('extra-'+kind)?.value||'',extra2=document.getElementById('extra2-'+kind)?.value||'';rows=rows.filter(x=>{let ok=JSON.stringify(x).toLowerCase().includes(q)&&(!f||x.status===f||x.verification_status===f);if(extra){if(kind==='diseases'||kind==='symptoms')ok=ok&&String(x.category_id)===String(extra);else if(kind==='sources')ok=ok&&x.source_type===extra;else if(kind==='relationships')ok=ok&&x.typicality===extra;else if(kind==='redflags')ok=ok&&x.risk_level===extra}if(extra2&&kind==='diseases')ok=ok&&x.severity===extra2;return ok});let cols=[];
+ if(kind==='diseases')cols=[['name_ar',txt('العربي','Arabic')],['name_en',txt('الإنجليزي','English')],['severity',txt('الشدة','Severity')],['status',txt('الحالة','Status')],['version','Version']];
+ if(kind==='symptoms')cols=[['name_ar',txt('العربي','Arabic')],['name_en',txt('الإنجليزي','English')],['severity_min',txt('أقل شدة','Min')],['severity_max',txt('أعلى شدة','Max')],['status',txt('الحالة','Status')]];
+ if(kind==='sources')cols=[['source_name',txt('المصدر','Source')],['organization',txt('الجهة','Organization')],['source_type',txt('النوع','Type')],['verification_status',txt('التحقق','Verification')],['last_verified',txt('آخر تحقق','Last verified')]];
+ if(kind==='relationships')cols=[['disease_name_ar',txt('المرض','Disease')],['symptom_name_ar',txt('العرض','Symptom')],['weight',txt('الوزن','Weight')],['typicality',txt('النمطية','Typicality')],['status',txt('الحالة','Status')]];
+ if(kind==='redflags')cols=[['name_ar',txt('القاعدة','Rule')],['risk_level',txt('الخطر','Risk')],['min_severity',txt('أقل شدة','Min severity')],['match_mode',txt('المطابقة','Mode')],['status',txt('الحالة','Status')]];
+ const head=cols.map(c=>'<th>'+esc(c[1])+'</th>').join('')+(CAN_EDIT?'<th>'+txt('إجراءات','Actions')+'</th>':'');const body=rows.map(x=>'<tr>'+cols.map(c=>'<td data-label="'+esc(c[1])+'">'+((c[0]==='status'||c[0]==='verification_status'||c[0]==='risk_level')?statusBadge(x[c[0]]):esc(x[c[0]]??'—'))+'</td>').join('')+(CAN_EDIT?'<td data-label="'+txt('إجراءات','Actions')+'"><button class="btn ghost small" onclick="openEditor(\''+(kind==='redflags'?'red_flag':kind==='relationships'?'relationship':kind.slice(0,-1))+'\','+x.id+')">✏️</button> <button class="btn danger small" onclick="removeItem(\''+(kind==='redflags'?'red_flag':kind==='relationships'?'relationship':kind.slice(0,-1))+'\','+x.id+')">🗑️</button></td>':'')+'</tr>').join('');box.innerHTML=rows.length?'<table><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table>':'<div class="empty">'+txt('لا توجد بيانات','No data')+'</div>'}
+function opts(rows,label,id='id',selected=[]){return rows.map(x=>'<option value="'+esc(x[id])+'" '+(selected.map(String).includes(String(x[id]))?'selected':'')+'>'+esc(label(x))+'</option>').join('')}
+function field(label,name,value='',type='text',full=false,extra=''){if(type==='textarea')return '<div class="field '+(full?'full':'')+'"><label>'+label+'</label><textarea name="'+name+'">'+esc(value)+'</textarea></div>';return '<div class="field '+(full?'full':'')+'"><label>'+label+'</label><input type="'+type+'" name="'+name+'" value="'+esc(value)+'" '+extra+'></div>'}
+async function loadContent(){if(!CAN_EDIT)return;try{CONTENT=(await req('/api/admin/content')).content||[];renderContent()}catch(e){alert(e.message)}}
+function renderContent(){const box=document.getElementById('table-content');if(!box)return;const q=(document.getElementById('contentSearch')?.value||'').toLowerCase(),type=document.getElementById('contentType')?.value||'',rows=CONTENT.filter(x=>(!type||x.content_type===type)&&JSON.stringify(x).toLowerCase().includes(q));box.innerHTML=rows.length?'<table><thead><tr><th>ID</th><th>'+txt('العنوان','Title')+'</th><th>'+txt('النوع','Type')+'</th><th>'+txt('الفئة','Category')+'</th><th>'+txt('الحالة','Status')+'</th><th>Version</th><th>'+txt('إجراءات','Actions')+'</th></tr></thead><tbody>'+rows.map(x=>'<tr><td data-label="ID">'+x.id+'</td><td data-label="Title">'+esc(AR?x.title_ar:x.title_en)+'</td><td data-label="Type">'+esc(x.content_type)+'</td><td data-label="Category">'+esc(x.category)+'</td><td data-label="Status">'+statusBadge(x.status)+'</td><td data-label="Version">'+x.version+'</td><td data-label="Actions"><button class="btn ghost small" onclick="openContentEditor('+x.id+')">✏️</button> <button class="btn danger small" onclick="removeContent('+x.id+')">🗑️</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">'+txt('لا يوجد محتوى','No content')+'</div>'}
+function openContentEditor(id=null){if(!CAN_EDIT)return;const x=id?CONTENT.find(v=>v.id===id)||{}:{};editing={kind:'content',id};document.getElementById('modalTitle').textContent=id?txt('تعديل المحتوى','Edit content'):txt('إضافة محتوى','Add content');document.getElementById('formFields').innerHTML=field('Slug','slug',x.slug)+ '<div class="field"><label>Type</label><select name="content_type"><option value="health_tip">Health tip</option><option value="faq">FAQ</option><option value="awareness">Awareness</option><option value="intro">Intro</option></select></div>'+field('العنوان العربي','title_ar',x.title_ar)+field('English title','title_en',x.title_en)+field('النص العربي','body_ar',x.body_ar,'textarea',true)+field('English body','body_en',x.body_en,'textarea',true)+field('Category','category',x.category||'general')+'<div class="field"><label>Status</label><select name="status"><option value="active">Active</option><option value="draft">Draft</option><option value="disabled">Disabled</option></select></div>';for(const [n,v] of Object.entries(x)){const el=document.querySelector('#editForm [name="'+n+'"]');if(el)el.value=v??''}document.getElementById('modal').classList.add('show')}
+async function removeContent(id){if(!confirm(txt('هل تريد حذف/تعطيل هذا المحتوى؟','Delete or disable this content?')))return;try{await req('/api/admin/content/'+id,{method:'DELETE',body:'{}'});await loadContent()}catch(e){alert(e.message)}}
+async function openEditor(kind,id=null){if(!CAN_EDIT)return;editing={kind,id};let x={};try{if(id&&['disease','symptom','source','red_flag'].includes(kind)){const d=await req('/api/admin/'+(kind==='red_flag'?'red-flags':kind+'s')+'/'+id);x=d[kind]||d.red_flag||{}}else if(id&&kind==='relationship')x=(KB.relationships||[]).find(r=>r.id===id)||{}}catch(e){alert(e.message);return}document.getElementById('modalTitle').textContent=(id?txt('تعديل ','Edit '):txt('إضافة ','Add '))+kind;let h='';const status='<div class="field"><label>Status</label><select name="status"><option value="active">Active</option><option value="draft">Draft</option><option value="disabled">Disabled</option></select></div>';
+ if(kind==='disease'){const selected=(x.sources||[]).map(s=>s.id);h=field('الاسم العربي / Arabic name','name_ar',x.name_ar)+field('English name','name_en',x.name_en)+field('الوصف العربي','description_ar',x.description_ar,'textarea',true)+field('English description','description_en',x.description_en,'textarea',true)+'<div class="field"><label>Category</label><select name="category_id">'+opts(KB.categories||[],c=>AR?c.name_ar:c.name_en,'id',[x.category_id])+'</select></div><div class="field"><label>Severity</label><select name="severity"><option>mild</option><option>moderate</option><option>severe</option></select></div>'+field('عوامل الخطورة','risk_factors_ar',x.risk_factors_ar,'textarea')+field('Risk factors','risk_factors_en',x.risk_factors_en,'textarea')+field('الأسباب الشائعة','common_causes_ar',x.common_causes_ar,'textarea')+field('Common causes','common_causes_en',x.common_causes_en,'textarea')+field('علامات الخطر','red_flags_ar',x.red_flags_ar,'textarea')+field('Red flags','red_flags_en',x.red_flags_en,'textarea')+field('الخطوة التالية','recommended_next_step_ar',x.recommended_next_step_ar,'textarea')+field('Next step','recommended_next_step_en',x.recommended_next_step_en,'textarea')+field('Related disease slugs (comma separated)','related_diseases',(x.related_diseases||[]).join(', '),'textarea')+field('Last updated','last_updated',x.last_updated||new Date().toISOString().slice(0,10),'date')+'<div class="field full"><label>Verified medical sources</label><select name="source_ids" multiple size="5">'+opts((KB.sources||[]).filter(s=>s.verification_status==='verified'&&s.status==='active'),s=>s.source_name,'id',selected)+'</select></div>'+status}
+ if(kind==='symptom'){const selected=(x.sources||[]).map(s=>s.id);h=field('الاسم العربي','name_ar',x.name_ar)+field('English name','name_en',x.name_en)+field('الوصف العربي','description_ar',x.description_ar,'textarea')+field('English description','description_en',x.description_en,'textarea')+'<div class="field"><label>Category</label><select name="category_id">'+opts(KB.categories||[],c=>AR?c.name_ar:c.name_en,'id',[x.category_id])+'</select></div>'+field('Min severity','severity_min',x.severity_min||1,'number',false,'min="1" max="5"')+field('Max severity','severity_max',x.severity_max||5,'number',false,'min="1" max="5"')+field('Aliases Arabic (comma separated)','aliases_ar',(x.aliases_ar||[]).join(', '), 'textarea')+field('Aliases English (comma separated)','aliases_en',(x.aliases_en||[]).join(', '),'textarea')+field('علامات الخطر','red_flags_ar',x.red_flags_ar,'textarea')+field('Red flags','red_flags_en',x.red_flags_en,'textarea')+'<div class="field full"><label>Verified medical sources</label><select name="source_ids" multiple size="5">'+opts((KB.sources||[]).filter(s=>s.verification_status==='verified'&&s.status==='active'),s=>s.source_name,'id',selected)+'</select></div>'+status}
+ if(kind==='source'){h=field('Source name','source_name',x.source_name)+field('Organization','organization',x.organization)+field('Official HTTPS URL','official_url',x.official_url,'url',true)+field('الوصف','description_ar',x.description_ar,'textarea')+field('Description','description_en',x.description_en,'textarea')+'<div class="field"><label>Language</label><select name="language"><option value="multiple">Arabic + English</option><option value="ar">Arabic</option><option value="en">English</option></select></div><div class="field"><label>Reliability</label><select name="reliability_level"><option value="high">High</option><option value="medium">Medium</option></select></div><div class="field"><label>Source type</label><select name="source_type"><option value="government">Government</option><option value="international_organization">International Organization</option><option value="national_health_service">National Health Service</option><option value="academic_medical_institution">Academic Medical Institution</option><option value="other_trusted_source">Other Trusted Source</option></select></div><div class="field"><label>Verification</label><select name="verification_status"><option value="verified">Verified</option><option value="needs_review">Needs Review</option><option value="disabled">Disabled</option></select></div>'+field('Last verified','last_verified',x.last_verified||new Date().toISOString().slice(0,10),'date')+field('Priority','priority',x.priority||50,'number')+status}
+ if(kind==='relationship'){h='<div class="field"><label>Disease</label><select name="disease_id">'+opts(KB.diseases||[],d=>AR?d.name_ar:d.name_en,'id',[x.disease_id])+'</select></div><div class="field"><label>Symptom</label><select name="symptom_id">'+opts(KB.symptoms||[],s=>AR?s.name_ar:s.name_en,'id',[x.symptom_id])+'</select></div>'+field('Relevance / Weight (0.1–1)','weight',x.weight||.5,'number',false,'min="0.1" max="1" step="0.05"')+'<div class="field"><label>Typicality</label><select name="typicality"><option value="very_common">Very common</option><option value="common">Common</option><option value="less_common">Less common</option></select></div>'+field('ملاحظات','notes_ar',x.notes_ar,'textarea')+field('Notes','notes_en',x.notes_en,'textarea')+status}
+ if(kind==='red_flag'){h=field('الاسم العربي','name_ar',x.name_ar)+field('English name','name_en',x.name_en)+'<div class="field full"><label>Required symptoms</label><select name="required_symptoms" multiple size="7">'+opts(KB.symptoms||[],s=>(AR?s.name_ar:s.name_en)+' — '+s.slug,'slug',x.required_symptoms||[])+'</select></div><div class="field"><label>Match mode</label><select name="match_mode"><option value="all">All</option><option value="any">Any</option></select></div>'+field('Min severity','min_severity',x.min_severity||1,'number',false,'min="1" max="5"')+'<div class="field"><label>Risk</label><select name="risk_level"><option value="urgent">Urgent</option><option value="review">Needs review</option></select></div>'+field('رسالة الأمان','message_ar',x.message_ar,'textarea')+field('Safety message','message_en',x.message_en,'textarea')+'<div class="field"><label>Source</label><select name="source_id">'+opts((KB.sources||[]).filter(s=>s.status==='active'),s=>s.source_name,'id',[x.source_id])+'</select></div>'+status}
+ document.getElementById('formFields').innerHTML=h;for(const [n,v] of Object.entries(x)){const el=document.querySelector('#editForm [name="'+n+'"]');if(el&&!['source_ids','required_symptoms'].includes(n))el.value=v??''}document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show');document.getElementById('modalMsg').className='msg'}
+document.getElementById('editForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),p=Object.fromEntries(f.entries()),kind=editing.kind,id=editing.id;if(e.target.elements.source_ids)p.source_ids=[...e.target.elements.source_ids.selectedOptions].map(o=>+o.value);if(e.target.elements.required_symptoms)p.required_symptoms=[...e.target.elements.required_symptoms.selectedOptions].map(o=>o.value);['aliases_ar','aliases_en','related_diseases'].forEach(k=>{if(p[k]!=null)p[k]=p[k].split(',').map(v=>v.trim()).filter(Boolean)});['category_id','severity_min','severity_max','priority','min_severity','source_id','disease_id','symptom_id'].forEach(k=>{if(p[k])p[k]=+p[k]});if(p.weight)p.weight=+p.weight;const plural=kind==='red_flag'?'red-flags':kind==='relationship'?'relationships':kind+'s',url=kind==='content'?'/api/admin/content'+(id?'/'+id:''):'/api/admin/'+plural+(id?'/'+id:''),method=id?'PUT':'POST';try{await req(url,{method,body:JSON.stringify(p)});document.getElementById('modalMsg').className='msg ok show';document.getElementById('modalMsg').textContent=txt('تم الحفظ بنجاح','Saved successfully');if(kind==='content')await loadContent();else await loadKB();setTimeout(closeModal,500)}catch(err){document.getElementById('modalMsg').className='msg err show';document.getElementById('modalMsg').textContent=err.message}}
+async function removeItem(kind,id){if(!confirm(txt('هل أنت متأكد؟ يفضّل التعطيل للمحتوى الطبي المنشور.','Are you sure? Disabling published medical content is usually safer.')))return;const plural=kind==='red_flag'?'red-flags':kind==='relationship'?'relationships':kind+'s';try{await req('/api/admin/'+plural+'/'+id,{method:'DELETE',body:'{}'});await loadKB()}catch(e){alert(e.message)}}
+async function loadAudit(){try{const d=await req('/api/admin/knowledge/audit?limit=150'),rows=d.audit||[];document.getElementById('table-audit').innerHTML='<table><thead><tr><th>Admin</th><th>Action</th><th>Entity</th><th>ID</th><th>Previous</th><th>New</th><th>Time</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.admin_email)+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.entity_type)+'</td><td>'+esc(x.entity_id)+'</td><td class="audit-json">'+esc(x.previous_value||'—')+'</td><td class="audit-json">'+esc(x.new_value||'—')+'</td><td>'+esc(x.timestamp)+'</td></tr>').join('')+'</tbody></table>'}catch(e){alert(e.message)}}
+async function loadHealth(){try{const d=await req('/api/admin/system-health'),h=d.health;document.getElementById('healthGrid').innerHTML=Object.entries(h.components).map(([k,v])=>'<div class="health-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(k.replace('_',' '))+'</b>'+statusBadge(v.status)+'</div><p class="muted" style="margin-top:7px">'+txt('زمن الاستجابة: ','Response time: ')+(v.response_ms??'—')+' ms<br>'+txt('آخر فحص: ','Last checked: ')+esc(h.checked_at)+(v.error?'<br>'+esc(v.error):'')+'</p></div>').join('')}catch(e){alert(e.message)}}
+function roleOptions(selected){return ['user','super_admin','content_admin','analytics_admin'].map(v=>'<option value="'+v+'" '+(v===selected||v==='content_admin'&&selected==='medical_content_admin'?'selected':'')+'>'+v+'</option>').join('')}
+async function loadRoles(){if(ROLE!=='super_admin')return;try{const d=await req('/api/admin/users'),rows=d.users||[];document.getElementById('table-roles').innerHTML='<table><thead><tr><th>User ID</th><th>Status</th><th>Role</th><th>'+txt('حفظ','Save')+'</th></tr></thead><tbody>'+rows.map(x=>'<tr><td data-label="User ID">#'+x.id+'</td><td data-label="Status">'+statusBadge(x.status)+'</td><td data-label="Role"><select class="filter" id="role-'+x.id+'">'+roleOptions(x.role)+'</select></td><td data-label="Save"><button class="btn small" onclick="saveRole('+x.id+')">'+txt('حفظ','Save')+'</button></td></tr>').join('')+'</tbody></table>'}catch(e){alert(e.message)}}
+async function saveRole(id){try{await req('/api/admin/users/'+id+'/role',{method:'PUT',body:JSON.stringify({role:document.getElementById('role-'+id).value})});alert(txt('تم الحفظ','Saved'))}catch(e){alert(e.message)}}
+async function loadUsers(){if(ROLE!=='super_admin')return;try{const rows=(await req('/api/admin/users')).users||[];document.getElementById('table-users').innerHTML='<table><thead><tr><th>User ID</th><th>'+txt('الحالة','Status')+'</th><th>'+txt('التسجيل','Registered')+'</th><th>'+txt('آخر دخول','Last login')+'</th><th>Role</th><th>'+txt('إجراءات','Actions')+'</th></tr></thead><tbody>'+rows.map(x=>'<tr><td data-label="User ID">#'+x.id+'</td><td data-label="Status">'+statusBadge(x.status)+'</td><td data-label="Registered">'+esc((x.created_at||'—').slice(0,16))+'</td><td data-label="Last login">'+esc((x.last_login||'—').slice(0,16))+'</td><td data-label="Role"><select class="filter" id="user-role-'+x.id+'">'+roleOptions(x.role)+'</select></td><td data-label="Actions"><button class="btn small" onclick="saveUserRole('+x.id+')">'+txt('حفظ الدور','Save role')+'</button> <button class="btn '+(x.status==='active'?'danger':'ghost')+' small" onclick="toggleUser('+x.id+',\''+(x.status==='active'?'disabled':'active')+'\')">'+(x.status==='active'?txt('تعطيل','Disable'):txt('تفعيل','Activate'))+'</button></td></tr>').join('')+'</tbody></table>'}catch(e){alert(e.message)}}
+async function saveUserRole(id){try{await req('/api/admin/users/'+id+'/role',{method:'PUT',body:JSON.stringify({role:document.getElementById('user-role-'+id).value})});await loadUsers()}catch(e){alert(e.message)}}
+async function toggleUser(id,status){if(!confirm(txt('تأكيد تغيير حالة الحساب؟','Confirm account status change?')))return;try{await req('/api/admin/users/'+id+'/status',{method:'PUT',body:JSON.stringify({status})});await loadUsers()}catch(e){alert(e.message)}}
+async function loadSecurity(){if(ROLE!=='super_admin')return;try{const [a,b]=await Promise.all([req('/api/admin/security/activity?limit=100'),req('/api/admin/security/audit?limit=100')]);const activity=a.activity||[],audit=b.audit||[];document.getElementById('table-login-activity').innerHTML='<table><thead><tr><th>User ID</th><th>'+txt('النتيجة','Result')+'</th><th>Admin</th><th>'+txt('الجهاز','Device')+'</th><th>'+txt('الوقت','Time')+'</th></tr></thead><tbody>'+activity.map(x=>'<tr><td data-label="User ID">'+(x.user_id?'#'+x.user_id:'—')+'</td><td data-label="Result">'+statusBadge(x.success?'active':'disabled')+'</td><td data-label="Admin">'+(x.is_admin?'✓':'—')+'</td><td data-label="Device">'+esc(x.device_type)+'</td><td data-label="Time">'+esc((x.occurred_at||'').slice(0,19))+'</td></tr>').join('')+'</tbody></table>';document.getElementById('table-security-audit').innerHTML='<table><thead><tr><th>Admin ID</th><th>Action</th><th>Entity</th><th>ID</th><th>Time</th></tr></thead><tbody>'+audit.map(x=>'<tr><td data-label="Admin ID">'+(x.admin_id?'#'+x.admin_id:'—')+'</td><td data-label="Action">'+esc(x.action)+'</td><td data-label="Entity">'+esc(x.entity_type)+'</td><td data-label="ID">'+esc(x.entity_id)+'</td><td data-label="Time">'+esc((x.timestamp||'').slice(0,19))+'</td></tr>').join('')+'</tbody></table>'}catch(e){alert(e.message)}}
+if(ROLE==='super_admin'||ROLE==='analytics_admin'){loadUsage();loadV2Analytics()}loadKB();setInterval(()=>{if(document.visibilityState==='visible'){if(ROLE==='super_admin'||ROLE==='analytics_admin'){loadUsage();loadV2Analytics()}loadKB()}},60000);
 </script>
-</body>
-</html>
+</body></html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template_string(DASHBOARD_HTML)
-
-@app.route('/api/stats')
-def api_stats():
-    db.init_db()
-    stats = db.get_usage_stats(days=7)
-    trends, _ = db.get_trends(days=7)
-
-    # Top 8 symptoms
-    top_symptoms = trends.most_common(8)
-
-    # Urgency, lang, age from DB
-    urgency = dict(db.fetchall("SELECT urgency, COUNT(*) FROM records GROUP BY urgency"))
-    lang = dict(db.fetchall("SELECT lang, COUNT(*) FROM records GROUP BY lang"))
-    ages = [row[0] for row in db.fetchall("SELECT age FROM records WHERE age IS NOT NULL")]
-
-    age_groups = {"0-17": 0, "18-30": 0, "31-45": 0, "46-60": 0, "60+": 0}
-    for a in ages:
-        if a <= 17: age_groups["0-17"] += 1
-        elif a <= 30: age_groups["18-30"] += 1
-        elif a <= 45: age_groups["31-45"] += 1
-        elif a <= 60: age_groups["46-60"] += 1
-        else: age_groups["60+"] += 1
-
-    feedback = db.feedback_counts()
-    fb_comments = db.fetchall(
-        "SELECT rating, comment, timestamp FROM feedback "
-        "WHERE comment IS NOT NULL AND comment != '' ORDER BY timestamp DESC LIMIT 20"
+    # Local preview only. Production uses webapp.py with real session checks.
+    return render_template_string(
+        DASHBOARD_HTML,
+        admin_user={"email": "local-preview", "role": "analytics_admin"},
+        csrf_token="local-preview", lang="ar",
     )
 
-    return jsonify({
-        "stats": stats,
-        "symptoms": top_symptoms,
-        "urgency": urgency,
-        "lang": lang,
-        "age_groups": list(age_groups.items()),
-        "feedback": feedback,
-        "fb_comments": [
-            {"rating": r, "comment": c, "timestamp": t} for r, c, t in fb_comments
-        ],
-        "assistant_feedback": db.assistant_feedback_stats(),
-        "db_backend": "PostgreSQL" if db.USE_POSTGRES else "SQLite",
-    })
+
+@app.route("/api/stats")
+def api_stats():
+    db.init_db()
+    return jsonify({"stats": db.get_usage_stats(days=7), "feedback": db.feedback_counts(), "fb_comments": []})
+
 
 def run_dashboard():
-    port = int(os.environ.get("PORT", 5000))
-    try:
-        from waitress import serve
-        serve(app, host='0.0.0.0', port=port, threads=8)
-    except ImportError:
-        app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run_dashboard()

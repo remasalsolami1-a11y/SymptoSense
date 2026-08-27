@@ -10,12 +10,13 @@ import base64
 import secrets
 import hashlib
 import random
+import time
 from datetime import datetime, timezone
 
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
 from functools import wraps
-from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for
+from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g
 
 import db
 import ml_diagnosis
@@ -27,13 +28,70 @@ import health_tips
 import analysis_core
 import health_search
 import calculators as calcmod
+import medical_knowledge
+import platform_v2
 
 from dashboard import DASHBOARD_HTML
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("WEB_SECRET", "symptosense-dev-secret-change-me")
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+V2_CSS = """
+/* SymptoSense V2 — one quiet, accessible design system across every page. */
+:root{--v2-blue:#287FC1;--v2-blue-dark:#163B5C;--v2-sky:#EAF5FC;--v2-bg:#F7FAFC;
+--v2-card:#FFFFFF;--v2-text:#23384A;--v2-muted:#607487;--v2-line:#DCE8F0;
+--v2-green:#267A52;--v2-green-bg:#EDF8F2;--v2-yellow:#8A651E;--v2-yellow-bg:#FFF8E7;
+--v2-red:#A33A3A;--v2-red-bg:#FFF1F1;--v2-radius:16px;--v2-shadow:0 6px 20px rgba(31,86,127,.07)}
+html{color-scheme:light}body{background:var(--v2-bg)!important;color:var(--v2-text)!important}
+body[dir="ltr"]{font-family:'Poppins','Cairo','Segoe UI',sans-serif}
+.container{max-width:1180px}.card,.ss-profile-card,.welcome-card,.hist-card,.manage-card,.memory-card{
+background:var(--v2-card)!important;border:1px solid var(--v2-line)!important;border-radius:var(--v2-radius)!important;
+box-shadow:var(--v2-shadow)!important}
+.chat-wrap,.chat-options,.asst-panel{background:#fff!important;border-color:var(--v2-line)!important}.chat-body{background:#F7FAFC!important}.bubble.bot{background:#fff!important;border-color:var(--v2-line)!important;color:var(--v2-text)!important}.ss-bnav,.ss-mobile-head{background:rgba(255,255,255,.98)!important;border-color:var(--v2-line)!important}.ss-mobile-logo{color:var(--v2-blue-dark)!important}
+h1,h2,h3,h4{color:var(--v2-blue-dark)}.muted{color:var(--v2-muted)!important}
+.btn,.ss-btn-primary,.auth-btn{min-height:46px;border-radius:12px!important;box-shadow:none!important;font-weight:700!important}
+.btn.pri,.ss-btn-primary,.auth-btn{background:var(--v2-blue)!important;color:#fff!important}
+.btn:hover,.ss-btn-primary:hover,.auth-btn:hover{transform:none!important;filter:brightness(.97)}
+input,select,textarea{border-color:var(--v2-line)!important;border-radius:12px!important;background:#fff!important;color:var(--v2-text)!important}
+.warn{background:var(--v2-yellow-bg)!important;border-color:#EFDAA7!important;color:#6F531B!important}
+.nav{padding:12px clamp(16px,3vw,34px);background:#fff!important;color:var(--v2-blue-dark)!important;box-shadow:0 2px 14px rgba(31,86,127,.04)!important;border-color:var(--v2-line)!important}
+.nav .logo{color:var(--v2-blue-dark)!important}.nav .links{align-items:center;gap:3px}.nav .links a,.v2-services-btn{min-height:42px;display:inline-flex;align-items:center;color:var(--v2-text)!important}
+.nav .links a.on{background:var(--v2-sky)!important;color:var(--v2-blue)!important}
+.ss-mobile-lang,.dd-btn,.account-dd{background:var(--v2-sky)!important;border-color:var(--v2-line)!important;color:var(--v2-blue-dark)!important}
+.dd-menu{background:#fff!important;border-color:var(--v2-line)!important}.dd-menu a{color:var(--v2-text)!important}.dd-menu a:hover{background:var(--v2-sky)!important;color:var(--v2-blue)!important}
+.account-avatar,.account-menu-head{background:var(--v2-bg)!important;border-color:var(--v2-line)!important}.account-name,.account-menu-head strong{color:var(--v2-blue-dark)!important}.account-label,.account-menu-head small{color:var(--v2-muted)!important}
+.v2-nav-cta{background:var(--v2-blue)!important;color:#fff!important;padding-inline:17px!important}
+.v2-services-menu{min-width:260px}.v2-services-menu a{border-radius:8px!important}
+.footer{background:#163B5C!important}.f-links{flex-wrap:wrap}
+.v2-section-head{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin:34px 0 16px}
+.v2-section-head h2{font-size:clamp(21px,3vw,29px)}
+.v2-services-more{border:1px solid var(--v2-line);border-radius:18px;background:#fff;overflow:hidden;margin:20px 0}
+.v2-services-more summary{cursor:pointer;padding:16px 19px;color:var(--v2-blue-dark);font-weight:800;list-style:none;display:flex;justify-content:space-between}
+.v2-services-more summary:after{content:'＋';color:var(--v2-blue)}.v2-services-more[open] summary:after{content:'−'}
+.v2-more-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0 16px 16px}
+.v2-more-link{padding:14px;border:1px solid var(--v2-line);border-radius:13px;color:var(--v2-blue-dark);font-weight:700;background:var(--v2-bg)}
+.v2-more-link span{font-size:20px;display:block;margin-bottom:4px}
+.v2-info-page{max-width:900px;margin:auto}.v2-info-page>section{background:#fff;border:1px solid var(--v2-line);border-radius:18px;padding:clamp(18px,3vw,28px);margin-bottom:14px;box-shadow:var(--v2-shadow)}
+.v2-info-page h1{font-size:clamp(26px,4vw,38px);margin-bottom:10px}.v2-info-page h2{font-size:18px;margin-bottom:8px}.v2-info-page ul{padding-inline-start:22px}
+.v2-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.v2-source-card{background:#fff;border:1px solid var(--v2-line);border-radius:16px;padding:18px;box-shadow:var(--v2-shadow);display:flex;flex-direction:column;gap:8px}
+.v2-source-card .source-type{font-size:11px;background:var(--v2-sky);color:var(--v2-blue-dark);padding:4px 8px;border-radius:999px;align-self:flex-start}
+.v2-guest-profile{max-width:620px;margin:30px auto;text-align:center;padding:34px;background:#fff;border:1px solid var(--v2-line);border-radius:20px;box-shadow:var(--v2-shadow)}
+.ss-flow{background:#fff;border-bottom:1px solid var(--v2-line);padding:10px 15px}.ss-flow-copy{display:flex;justify-content:space-between;gap:10px;color:var(--v2-muted);font-size:11px;font-weight:700;margin-bottom:6px}.ss-flow-track{height:6px;background:#E8F0F5;border-radius:999px;overflow:hidden}.ss-flow-fill{height:100%;width:14.285%;background:var(--v2-blue);border-radius:999px;transition:width .25s ease}
+.asst-source-list{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.asst-source-list>b{width:100%;color:var(--v2-blue-dark);font-size:12px}
+@media(max-width:900px){.v2-more-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.svc-grid[style]{grid-template-columns:1fr!important}}
+@media(max-width:600px){.v2-more-grid,.v2-source-grid{grid-template-columns:1fr}.v2-more-grid{padding:0 12px 12px}.container{padding-inline:12px}.v2-section-head{margin-top:24px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+"""
 
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
@@ -1158,10 +1216,10 @@ function asstChips() {
 function asstMainOpts() {
   return [
     { ic: '🩺', t: asstTT('asst_opt_symp'), d: asstTT('asst_opt_symp_d'), act: 'go', k: 'symp' },
+    { ic: '🧠', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
     { ic: '💊', t: asstTT('asst_opt_drug'), d: asstTT('asst_opt_drug_d'), act: 'go', k: 'drug' },
-    { ic: '🩸', t: asstTT('asst_opt_blood'), d: asstTT('asst_opt_blood_d'), act: 'go', k: 'blood' },
-    { ic: '🤍', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
-    { ic: '🧮', t: asstTT('asst_opt_calc'), d: asstTT('asst_opt_calc_d'), act: 'go', k: 'calc' }
+    { ic: '🧪', t: asstTT('asst_opt_blood'), d: asstTT('asst_opt_blood_d'), act: 'go', k: 'blood' },
+    { ic: '❓', t: asstTT('asst_opt_q'), d: asstTT('asst_opt_q_d'), act: 'go', k: 'q' }
   ];
 }
 function asstMhOpts() {
@@ -1531,6 +1589,24 @@ function asstShowServices(svs) {
     return '<button class="asst-chip" onclick="location.href=\\'' + s.url + '\\'">' + s.label + '</button>';
   }).join('');
 }
+function asstShowSources(sources) {
+  if (!sources || !sources.length) return;
+  var qs = document.getElementById('asstQs');
+  var wrap = document.createElement('div');
+  wrap.className = 'asst-source-list';
+  var title = document.createElement('b');
+  title.textContent = document.documentElement.lang === 'en' ? '📚 Medical sources' : '📚 المصادر الطبية';
+  wrap.appendChild(title);
+  sources.forEach(function(source) {
+    var href = source.reference_url || source.official_url;
+    if (!href || !href.startsWith('https://')) return;
+    var link = document.createElement('a');
+    link.className = 'asst-chip'; link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    link.textContent = source.source_name || source.organization || (document.documentElement.lang === 'en' ? 'View source' : 'عرض المصدر');
+    wrap.appendChild(link);
+  });
+  qs.appendChild(wrap);
+}
 function asstAsk(q) {
   document.getElementById('asstInput').value = q;
   asstSend();
@@ -1574,6 +1650,7 @@ function asstSend() {
         hist.push({ role: 'assistant', content: d.answer });
         sessionStorage.setItem('asst_hist', JSON.stringify(hist.slice(-16)));
         if (d.services && d.services.length) asstShowServices(d.services);
+        if (d.medical_sources && d.medical_sources.length) asstShowSources(d.medical_sources);
       } else {
         asstReply(asstTT('asst_offline'));
       }
@@ -1799,6 +1876,69 @@ def api_login_required(f):
     return decorated
 
 
+def _admin_role():
+    user = _ss_user()
+    return (user or {}).get("role", "user")
+
+
+def _admin_allowed(scope="analytics"):
+    role = _admin_role()
+    if role == "super_admin":
+        return True
+    if scope == "access":
+        return role in {"analytics_admin", "content_admin", "medical_content_admin"}
+    if scope == "analytics":
+        return role == "analytics_admin"
+    if scope == "medical":
+        return role in {"content_admin", "medical_content_admin"}
+    return False
+
+
+def _admin_session_valid(touch=True):
+    """Require the separate admin sign-in and enforce an inactivity timeout."""
+    if not session.get("admin_authenticated_at"):
+        return False
+    try:
+        now = int(datetime.now(timezone.utc).timestamp())
+        last = int(session.get("admin_last_seen") or session["admin_authenticated_at"])
+        timeout = max(5, min(240, int(os.environ.get("ADMIN_SESSION_TIMEOUT_MINUTES", "30")))) * 60
+        if now - last > timeout:
+            session.pop("admin_authenticated_at", None)
+            session.pop("admin_last_seen", None)
+            session.pop("admin_csrf", None)
+            return False
+        if touch:
+            session["admin_last_seen"] = now
+        return True
+    except Exception:
+        return False
+
+
+def _admin_csrf_token():
+    if "admin_csrf" not in session:
+        session["admin_csrf"] = secrets.token_urlsafe(32)
+    return session["admin_csrf"]
+
+
+def admin_api_required(scope="analytics"):
+    """Protect admin JSON APIs with role checks and same-session CSRF."""
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if not _ss_user_id() or not _admin_session_valid():
+                return jsonify({"ok": False, "error": "admin_login_required", "login_url": url_for("admin_login")}), 401
+            if not _admin_allowed(scope):
+                return jsonify({"ok": False, "error": "forbidden"}), 403
+            if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+                supplied = request.headers.get("X-CSRF-Token", "")
+                expected = session.get("admin_csrf", "")
+                if not expected or not secrets.compare_digest(supplied, expected):
+                    return jsonify({"ok": False, "error": "csrf_failed"}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+
 def _safe_next_url(default="/home"):
     """Accept only local redirects after login or registration."""
     target = (request.args.get("next") or default).strip()
@@ -1820,6 +1960,33 @@ def require_first_language_choice():
         return None
     target = request.full_path.rstrip("?")
     return redirect(url_for("index", next=target))
+
+
+@app.before_request
+def v2_request_timer():
+    g.v2_started_at = time.perf_counter()
+
+
+@app.after_request
+def v2_operational_metrics(response):
+    """Collect anonymous operational counts without request bodies or health data."""
+    try:
+        path = request.path or "/"
+        event_type = None
+        if response.status_code >= 400:
+            event_type = "error"
+        elif request.method == "POST" and path == "/api/analyze":
+            event_type = "analysis_complete"
+        elif request.method == "POST" and path.startswith("/api/assistant"):
+            event_type = "assistant_use"
+        elif request.method == "GET" and response.mimetype == "text/html" and not path.startswith("/admin"):
+            event_type = "page_view"
+        if event_type:
+            elapsed = round((time.perf_counter() - getattr(g, "v2_started_at", time.perf_counter())) * 1000)
+            platform_v2.record_usage(event_type, path, _lang(), request.headers.get("User-Agent", ""), response.status_code, elapsed)
+    except Exception:
+        pass
+    return response
 
 
 def _site_url():
@@ -2643,23 +2810,28 @@ def _nav():
     lang = _lang()
     path = request.path
     user = _ss_user()
+    ar = lang == "ar"
     links = [
-        ("/home", "nav_home"), ("/chat", "nav_chat"), ("/blood", "nav_blood"),
-        ("/meds", "nav_meds"), ("/calculators", "nav_calculators"), ("/family", "nav_family"), ("/emergency", "nav_emergency"),
+        ("/home", "الرئيسية" if ar else "Home"),
+        ("/chat", "تحليل الأعراض" if ar else "Symptom analysis"),
     ]
     html = '<nav class="nav"><a href="/home" class="logo" dir="ltr">🩺 Sympto<span>Sense</span></a><div class="links">'
-    for href, key in links:
+    for href, label in links:
         cls = ' class="on"' if path == href else ""
-        html += '<a href="%s"%s>%s</a>' % (href, cls, _t(key))
-    html += ('<div class="dd"><button type="button" class="dd-btn" aria-haspopup="menu" aria-expanded="false" onclick="toggleDD(event)">%s <span style="font-size:11px;">▼</span></button>'
-             '<div class="dd-menu" role="menu">'
-             '<a href="/search">%s</a>'
-             '<a href="/tips">%s</a>'
-             '<a href="/chat">%s</a>'
-             '<a href="/emergency#geo">%s</a>'
-             '<a href="/about-us">%s</a>'
-             '</div></div>') % (_t("nav_explore"), _t("nav_search"), _t("nav_tips"), _t("nav_q"), _t("nav_geo"),
-                                 _t("nav_about"))
+        html += '<a href="%s"%s>%s</a>' % (href, cls, label)
+    html += '<a href="#" class="v2-nav-cta" onclick="asstToggle();return false;">🤖 %s</a>' % ("المساعد الذكي" if ar else "AI assistant")
+    html += ('<div class="dd"><button type="button" class="dd-btn v2-services-btn" aria-haspopup="menu" aria-expanded="false" onclick="toggleDD(event)">%s <span aria-hidden="true">⌄</span></button>'
+             '<div class="dd-menu v2-services-menu" role="menu">'
+             '<a href="/blood">🧪 %s</a><a href="/meds">💊 %s</a><a href="/calculators">🧮 %s</a>'
+             '<a href="/search">🔎 %s</a><a href="/sources">📚 %s</a><a href="/family">👨‍👩‍👧 %s</a>'
+             '<a href="/tips">💡 %s</a><a href="/emergency">🚑 %s</a><a href="/about-us">ℹ️ %s</a>'
+             '</div></div>') % (
+                 "الخدمات" if ar else "Services", "تحليل التحاليل" if ar else "Lab analysis",
+                 "الأدوية" if ar else "Medicines", "الحاسبات الصحية" if ar else "Health calculators",
+                 "البحث الصحي" if ar else "Health search", "المصادر الطبية" if ar else "Medical sources",
+                 "العائلة" if ar else "Family", "نصائح صحية" if ar else "Health tips",
+                 "الطوارئ" if ar else "Emergency", "عن المنصة" if ar else "About",
+             )
     html += '</div>'
     html += '<div style="display:flex;align-items:center;gap:8px;">'
     if user:
@@ -2689,7 +2861,7 @@ def _nav():
             _t("nav_myhistory"), family_label, _t("nav_privacy"), _t("nav_logout"),
         )
     else:
-        html += '<a href="/login" class="dd-btn" style="text-decoration:none;">%s</a>' % _t("nav_login")
+        html += '<a href="/profile" class="dd-btn" style="text-decoration:none;">👤 %s</a>' % ("ملفي" if ar else "My profile")
     lang_picker_href = "/?choose=1&amp;next=" + escape(path)
     desktop_lang_label = "🌐 اختيار اللغة" if lang == "ar" else "🌐 Choose language"
     html += '<div class="lang-sw"><a href="%s" class="on">%s</a></div>' % (lang_picker_href, desktop_lang_label)
@@ -2732,8 +2904,9 @@ def _footer():
         '</div>'
         '<div class="f-links">'
         '<a href="/about-us">%s</a>'
-        '<a href="/about">%s</a>'
-        '<a href="/about">%s</a>'
+        '<a href="/privacy">%s</a>'
+        '<a href="/terms">%s</a>'
+        '<a href="/sources">%s</a>'
         '<a href="/admin">%s</a>'
         '</div>'
         '<p class="f-love">%s <b>%s</b></p>'
@@ -2743,7 +2916,8 @@ def _footer():
          _t("footer_synopsis_t"), _t("footer_synopsis_d"),
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
          _t("footer_contact_t"), tg, _t("footer_wa_btn"),
-         _t("nav_about"), _t("footer_privacy"), _t("footer_terms"), _t("nav_admin"),
+         _t("nav_about"), _t("footer_privacy"), _t("footer_terms"),
+         ("المصادر الطبية" if _lang() == "ar" else "Medical sources"), _t("nav_admin"),
          _t("footer_love"), _t("footer_love_name"), _t("footer_copy_full"))
 
 
@@ -2768,7 +2942,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__KEYWORDS__", _t("keywords"))
         .replace("__CANONICAL__", base + request.path)
         .replace("__GSC_TAG__", gsc_tag)
-        .replace("__CSS__", BASE_CSS + extra_css)
+        .replace("__CSS__", BASE_CSS + extra_css + V2_CSS)
         .replace("__NAV__", "" if bare else _nav())
         .replace("__FOOTER__", "" if bare else _footer())
         .replace("__BNAV_HOME__", _t("bnav_home"))
@@ -2974,6 +3148,12 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', sans-serif; }
 .first-lang-flag { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #EAF4FF; color: #1976D2; font-size: 14px; font-weight: 900; letter-spacing: .5px; }
 .first-lang-note { margin-top: 22px; color: #5F7185; font-size: 12.5px; line-height: 1.8; }
 .first-lang-loading { opacity: .7; pointer-events: none; }
+.first-lang-brand { font-size: clamp(30px,5vw,48px)!important; line-height:1.2!important; margin-bottom:16px!important; direction:ltr; }
+.first-lang-tag-ar { color:#163B5C;font-size:clamp(21px,3.3vw,31px);font-weight:900;direction:rtl;line-height:1.5; }
+.first-lang-tag-en { color:#287FC1;font-size:clamp(17px,2.7vw,24px);font-weight:700;margin:2px 0 14px;direction:ltr; }
+.first-lang-desc-ar,.first-lang-desc-en{max-width:660px;margin-inline:auto;color:#607487;line-height:1.9}.first-lang-desc-ar{direction:rtl;font-size:15px}.first-lang-desc-en{direction:ltr;font-size:14px;margin-top:3px}
+.first-lang-start{min-height:50px;margin:21px auto 20px;border:0;border-radius:13px;padding:11px 30px;background:#287FC1;color:#fff;font:800 16px inherit;cursor:pointer;box-shadow:0 8px 20px rgba(40,127,193,.16)}
+.first-lang-select-title{font-size:14px;color:#607487;font-weight:700;margin-bottom:10px}
 @media (max-width: 600px) {
   .first-lang-head { min-height: 68px; }
   .first-lang-main { align-items: flex-start; padding: 24px 14px; }
@@ -2996,11 +3176,14 @@ def welcome_page():
       </header>
       <section class="first-lang-main">
         <div class="first-lang-card">
-          <div class="first-lang-icon" aria-hidden="true">🌐</div>
-          <h1 dir="rtl">مرحبًا بك في SymptoSense</h1>
-          <h2 lang="en">Welcome to SymptoSense</h2>
-          <p class="first-lang-prompt-ar" id="languageTitle">اختر لغتك للمتابعة</p>
-          <p class="first-lang-prompt-en" lang="en">Choose your language to continue</p>
+          <div class="first-lang-icon" aria-hidden="true">🩺</div>
+          <h1 class="first-lang-brand" lang="en">SymptoSense 🩺</h1>
+          <p class="first-lang-tag-ar">افهم أعراضك. اعرف خطوتك التالية.</p>
+          <p class="first-lang-tag-en" lang="en">Understand your symptoms. Know your next step.</p>
+          <p class="first-lang-desc-ar">مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة.</p>
+          <p class="first-lang-desc-en" lang="en">An AI-powered health assistant that helps you understand symptoms and assess risk in a simple way.</p>
+          <button type="button" class="first-lang-start" onclick="document.getElementById('languageTitle').focus()">ابدأ الآن / Get Started</button>
+          <p class="first-lang-select-title" id="languageTitle" tabindex="-1">اختر اللغة / Choose language</p>
           <div class="first-lang-options" role="group" aria-labelledby="languageTitle">
             <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
               <span class="first-lang-flag" aria-hidden="true">SA</span><span dir="rtl">العربية</span>
@@ -3080,141 +3263,66 @@ HOME_CSS = """
 
 
 def home_page():
-    t = _t
+    ar = _lang() == "ar"
+    bi = lambda a, e: a if ar else e
     body = """
-    <div class="hh">
+    <section class="hh" aria-labelledby="homeTitle">
       <div class="hh-l">
-        <span class="hh-badge">🤖 %s</span>
-        <h1>%s <span class="hl">%s</span></h1>
-        <p class="hh-sub">%s</p>
-        <p class="hh-desc">%s</p>
-        <div class="hh-btns">
-          <a class="btn pri" href="/chat">%s</a>
-          <a class="btn sec" href="#how">%s</a>
-        </div>
+        <span class="hh-badge">🩺 SymptoSense V2</span>
+        <h1 id="homeTitle">__TITLE__</h1>
+        <p class="hh-sub">__SUB__</p>
+        <p class="hh-desc">__DESC__</p>
+        <div class="hh-btns"><a class="btn pri" href="/chat">__START__</a><button class="btn sec" onclick="asstToggle()">__ASK__</button></div>
       </div>
-      <div class="hh-r">
-        <div class="hh-globe"></div>
-        <span class="hh-ic i1">🩺</span>
-        <span class="hh-ic i2">❤️</span>
-        <span class="hh-ic i3">📱</span>
-        <span class="hh-ic i4">🛡️</span>
-        <span class="hh-ic i5">🩸</span>
-        <span class="hh-ic i6">⚕️</span>
-        <div class="phone">
-          <div class="phone-screen">
-            <div class="phone-heart">❤️</div>
-            <p>%s</p>
-            <p>%s</p>
-          </div>
-        </div>
-      </div>
+      <div class="hh-r" aria-hidden="true"><div class="hh-globe"></div><span class="hh-ic i1">🩺</span><span class="hh-ic i2">🛡️</span><span class="hh-ic i3">📚</span><span class="hh-ic i4">🤖</span><span class="hh-ic i5">🧪</span><span class="hh-ic i6">⚕️</span><div class="phone"><div class="phone-screen"><div class="phone-heart">🩺</div><p>SymptoSense</p><p>Understand • Assess • Act</p></div></div></div>
+    </section>
+
+    <div class="v2-section-head" id="services"><div><h2>__CORE_H__</h2><p class="muted">__CORE_P__</p></div></div>
+    <div class="svc-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+      <a class="svc-card" href="/chat"><span class="svc-ic">🩺</span><h3>__SYM_H__</h3><p>__SYM_P__</p><span class="svc-btn">__OPEN__</span></a>
+      <a class="svc-card" href="#" onclick="asstToggle();return false;"><span class="svc-ic">🤖</span><h3>__AI_H__</h3><p>__AI_P__</p><span class="svc-btn">__OPEN__</span></a>
+      <a class="svc-card" href="/blood"><span class="svc-ic">🧪</span><h3>__LAB_H__</h3><p>__LAB_P__</p><span class="svc-btn">__OPEN__</span></a>
     </div>
 
-    <h2 class="sec-head" id="services">%s</h2>
-    <p class="sec-sub">%s</p>
-    <div class="svc-grid">
-      <a class="svc-card" href="/chat">
-        <span class="svc-ic">🩺</span>
-        <h3>%s</h3><p>%s</p>
-        <span class="svc-btn">%s</span>
-      </a>
-      <a class="svc-card" href="/blood">
-        <span class="svc-ic">🩸</span>
-        <h3>%s</h3><p>%s</p>
-        <span class="svc-btn">%s</span>
-      </a>
-      <a class="svc-card" href="/meds">
-        <span class="svc-ic">💊</span>
-        <h3>%s</h3><p>%s</p>
-        <span class="svc-btn">%s</span>
-      </a>
-      <a class="svc-card" href="/calculators">
-        <span class="svc-ic">🧮</span>
-        <h3>%s</h3><p>%s</p>
-        <span class="svc-btn">%s</span>
-      </a>
-    </div>
-
-    <div class="mh-card">
-      <span class="mh-ic">🤍</span>
-      <div class="mh-tx">
-        <h3>%s</h3>
-        <p>%s</p>
+    <details class="v2-services-more">
+      <summary>__MORE__</summary>
+      <div class="v2-more-grid">
+        <a class="v2-more-link" href="/meds"><span>💊</span>__MEDS__</a>
+        <a class="v2-more-link" href="/calculators"><span>🧮</span>__CALC__</a>
+        <a class="v2-more-link" href="/family"><span>👨‍👩‍👧</span>__FAMILY__</a>
+        <a class="v2-more-link" href="/search"><span>🔎</span>__SEARCH__</a>
+        <a class="v2-more-link" href="/sources"><span>📚</span>__SOURCES__</a>
+        <a class="v2-more-link" href="#" onclick="openAsstMH();return false;"><span>🧠</span>__MENTAL__</a>
+        <a class="v2-more-link" href="/relax"><span>🌿</span>__RELAX__</a>
+        <a class="v2-more-link" href="/checkin"><span>📋</span>__CHECK__</a>
+        <a class="v2-more-link" href="/tips"><span>💡</span>__TIPS__</a>
+        <a class="v2-more-link" href="/firstaid"><span>🩹</span>__FIRSTAID__</a>
+        <a class="v2-more-link" href="/emergency"><span>🚑</span>__EMERGENCY__</a>
+        <a class="v2-more-link" href="/about-us"><span>ℹ️</span>__ABOUT__</a>
       </div>
-      <a class="mh-btn" href="#" onclick="openAsstMH();return false;">%s</a>
-    </div>
-
-    <div class="asst-cta">
-      <span class="asst-cta-ic">🤖</span>
-      <div class="asst-cta-tx">
-        <b>%s</b>
-        <p>%s</p>
-      </div>
-      <button onclick="asstToggle()">%s</button>
-    </div>
-
-    <h2 class="sec-head">%s</h2>
-    <div class="quick-grid">
-      <a class="quick-card" href="/emergency#geo">
-        <span class="q-ic">🏥</span>
-        <div><b>%s</b><p>%s</p></div>
-      </a>
-      <a class="quick-card" href="/emergency">
-        <span class="q-ic">🚑</span>
-        <div><b>%s</b><p>%s</p></div>
-      </a>
-    </div>
-
-    <h2 class="sec-head">%s</h2>
-    <div class="care-grid">
-      <a class="care-item" href="#" onclick="openAsstMH();return false;"><span>🤍</span>%s</a>
-      <a class="care-item" href="/relax"><span>🌱</span>%s</a>
-      <a class="care-item" href="/checkin"><span>📋</span>%s</a>
-      <a class="care-item" href="/tips"><span>💡</span>%s</a>
-    </div>
-
-    <h2 class="sec-head" id="how">%s</h2>
-    <div class="how-tl" role="list" aria-label="%s">
-      <div class="how-tl-item" role="listitem">
-        <div class="how-tl-dot" aria-hidden="true">01</div>
-        <div class="how-tl-card"><h3>%s</h3><p>%s</p></div>
-      </div>
-      <div class="how-tl-item" role="listitem">
-        <div class="how-tl-dot" aria-hidden="true">02</div>
-        <div class="how-tl-card"><h3>%s</h3><p>%s</p></div>
-      </div>
-      <div class="how-tl-item" role="listitem">
-        <div class="how-tl-dot" aria-hidden="true">03</div>
-        <div class="how-tl-card"><h3>%s</h3><p>%s</p></div>
-      </div>
-    </div>
-
-    <div class="warn2"><span class="w-ic">⚠️</span><div>%s</div></div>
-    """ % (
-        t("home_badge"),
-        t("home_h1"), t("home_h1b"), t("home_sub"), t("home_desc"),
-        t("home_btn1"), t("home_btn2"),
-        t("home_ph1"), t("home_ph2"),
-        t("home_services"), t("home_services_sub"),
-        t("home_f_t"), t("home_f_p"), t("home_f_btn"),
-        t("home_b_t"), t("home_b_p"), t("home_b_btn"),
-        t("home_m_t"), t("home_m_p"), t("home_m_btn"),
-        t("home_calc_t"), t("home_calc_p"), t("home_calc_btn"),
-        t("home_mh_t"), t("home_mh_p"), t("home_mh_btn"),
-        t("home_asst_t"), t("home_asst_sub"), t("home_asst_btn"),
-        t("home_quick_t"),
-        t("home_quick_hosp_t"), t("home_quick_hosp_p"),
-        t("home_quick_em_t"), t("home_quick_em_p"),
-        t("home_care_t"),
-        t("home_care_mh_t"), t("home_care_relax_t"), t("home_care_check_t"), t("home_care_tips_t"),
-        t("home_how"),
-        t("home_how"),
-        t("home_step1_t"), t("home_step1_p"),
-        t("home_step2_t"), t("home_step2_p"),
-        t("home_step3_t"), t("home_step3_p"),
-        t("home_warn2"),
-    )
+    </details>
+    <div class="warn2"><span class="w-ic">ℹ️</span><div>__DISC__</div></div>
+    """
+    replacements = {
+        "__TITLE__": bi("افهم أعراضك. اعرف خطوتك التالية.", "Understand your symptoms. Know your next step."),
+        "__SUB__": bi("منصة صحية رقمية مبسطة وموثوقة.", "A simple, trustworthy digital health platform."),
+        "__DESC__": bi("افهم الأعراض، راجع علامات الخطر، واطّلع على مصادر طبية موثوقة دون تشخيص قطعي.", "Understand symptoms, review safety signals, and see trusted medical sources—without definitive diagnosis."),
+        "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد", "Ask the assistant"),
+        "__CORE_H__": bi("الخدمات الرئيسية", "Core services"), "__CORE_P__": bi("ثلاثة مسارات واضحة لما تحتاجه غالبًا.", "Three clear paths for the things you need most."),
+        "__SYM_H__": bi("تحليل الأعراض", "Symptom analysis"), "__SYM_P__": bi("تحليل الأعراض وتقييم مستوى الخطورة بخطوات واضحة.", "Review symptoms and assess risk through clear steps."),
+        "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("أسئلة صحية، صحة نفسية، أدوية وتحاليل في تجربة تفاعلية.", "Interactive support for health questions, mental wellbeing, medicines, and labs."),
+        "__LAB_H__": bi("تحليل التحاليل", "Lab analysis"), "__LAB_P__": bi("مساعدة مبسطة وتثقيفية لفهم نتائج التحاليل.", "Simple, educational help understanding laboratory results."),
+        "__OPEN__": bi("فتح الخدمة", "Open service"), "__MORE__": bi("الخدمات الأخرى", "More services"),
+        "__MEDS__": bi("معلومات الأدوية", "Medicine information"), "__CALC__": bi("الحاسبات الصحية", "Health calculators"),
+        "__FAMILY__": bi("ملفات العائلة", "Family profiles"), "__SEARCH__": bi("البحث الصحي", "Health search"),
+        "__SOURCES__": bi("المصادر الطبية", "Medical sources"), "__MENTAL__": bi("الصحة النفسية", "Mental wellbeing"),
+        "__RELAX__": bi("تمارين الاسترخاء", "Relaxation"), "__CHECK__": bi("تسجيل المزاج", "Mood check-in"),
+        "__TIPS__": bi("نصائح صحية", "Health tips"), "__FIRSTAID__": bi("الإسعافات الأولية", "First aid"),
+        "__EMERGENCY__": bi("الطوارئ", "Emergency"), "__ABOUT__": bi("عن SymptoSense", "About SymptoSense"),
+        "__DISC__": bi("هذه المعلومات للتوعية ولا تُعد تشخيصًا طبيًا. عند وجود أعراض خطرة اطلب الرعاية العاجلة.", "This information is educational and is not a medical diagnosis. Seek urgent care for danger signs."),
+    }
+    for key, value in replacements.items():
+        body = body.replace(key, value)
     return _page(_t("title_landing"), body, extra_css=HOME_CSS)
 
 
@@ -3388,6 +3496,92 @@ def about_page():
     return _page(_t("title_about"), body)
 
 
+def privacy_page():
+    ar = _lang() == "ar"
+    bi = lambda a, e: a if ar else e
+    body = """
+    <main class="v2-info-page" aria-labelledby="privacyTitle">
+      <section><h1 id="privacyTitle">🔒 __TITLE__</h1><p>__INTRO__</p></section>
+      <section><h2>__COLLECT_H__</h2><ul><li>__COLLECT_1__</li><li>__COLLECT_2__</li><li>__COLLECT_3__</li></ul></section>
+      <section><h2>__SAVE_H__</h2><p>__SAVE_P__</p></section>
+      <section><h2>__AI_H__</h2><p>__AI_P__</p></section>
+      <section><h2>__CONTROL_H__</h2><p>__CONTROL_P__</p><div class="ss-btn-row"><a class="btn pri" href="/settings">__SETTINGS__</a><a class="btn ghost" href="/manage">__MANAGE__</a></div></section>
+      <section><h2>__ADMIN_H__</h2><p>__ADMIN_P__</p></section>
+      <section><h2>__KB_H__</h2><p>__KB_P__</p></section>
+    </main>
+    """
+    values = {
+        "__TITLE__": bi("الخصوصية وحماية البيانات", "Privacy and data protection"),
+        "__INTRO__": bi("نشرح هنا بلغة واضحة ما نستخدمه ولماذا، وما الذي يبقى تحت سيطرتك.", "This page explains, in plain language, what we use, why we use it, and what remains under your control."),
+        "__COLLECT_H__": bi("ما البيانات التي نجمعها؟", "What data do we collect?"),
+        "__COLLECT_1__": bi("بيانات الحساب الأساسية فقط عند اختيار إنشاء حساب: الاسم والبريد الإلكتروني وكلمة مرور مشفرة.", "Basic account data only when you choose to register: name, email, and a securely hashed password."),
+        "__COLLECT_2__": bi("المعلومات الصحية التي تُدخلها داخل الخدمة أو تختار حفظها؛ لا نطلبها أثناء التسجيل.", "Health information you enter in a service or explicitly choose to save; it is not requested during sign-up."),
+        "__COLLECT_3__": bi("بيانات تشغيل مجمعة مثل نوع الجهاز واللغة والخدمة المستخدمة، دون نص الأعراض أو المحادثة.", "Aggregate operational data such as device type, language, and service used—without symptom or chat text."),
+        "__SAVE_H__": bi("ما الذي يتم حفظه؟", "What is saved?"),
+        "__SAVE_P__": bi("للزائر، تبقى الخدمات الأساسية متاحة دون حساب. عند تسجيل الدخول، يمكن حفظ الملف والنتائج والمحادثات وفق إعدادات الخصوصية التي تختارها.", "Core services remain available to guests. When signed in, your profile, results, and conversations may be saved according to the privacy settings you choose."),
+        "__AI_H__": bi("هل تُرسل البيانات إلى خدمة AI؟", "Is data sent to an AI service?"),
+        "__AI_P__": bi("عند استخدام المساعد أو التحليل قد يُرسل النص اللازم لتوليد الرد إلى مزود الذكاء الاصطناعي المهيأ للمشروع. لا يُطلب من النموذج إنشاء مصادر أو تشخيص قطعي، وتُستخدم قاعدة المعرفة وقواعد الأمان عندما تكون متاحة. تجنب إدخال اسمك أو رقمك أو أي معرف شخصي داخل وصف الحالة.", "When you use the assistant or analysis, the text needed to generate a response may be sent to the AI provider configured for this deployment. The model is not permitted to invent sources or provide a definitive diagnosis, and the knowledge base and safety rules are used where available. Avoid entering names, phone numbers, or other identifiers in a health description."),
+        "__CONTROL_H__": bi("الحذف والتحكم", "Deletion and control"),
+        "__CONTROL_P__": bi("يمكنك تعطيل استخدام المعلومات المحفوظة، حذف حقول صحية منفردة، مسح السجل، أو حذف الحساب وبياناته من صفحات الإعدادات والإدارة الشخصية.", "You can disable use of saved information, remove individual health fields, clear history, or delete your account and its data from privacy settings and data management."),
+        "__SETTINGS__": bi("إعدادات الخصوصية", "Privacy settings"), "__MANAGE__": bi("إدارة بياناتي", "Manage my data"),
+        "__ADMIN_H__": bi("وصول المسؤولين", "Administrator access"),
+        "__ADMIN_P__": bi("تحليلات الإدارة مجمعة قدر الإمكان. صفحة المستخدمين تعرض المعرّف والحالة والتواريخ والدور فقط، ولا تعرض الأعراض أو المحادثات أو النتائج الصحية افتراضيًا.", "Admin analytics are aggregated wherever possible. User management shows only an ID, status, dates, and role; it does not expose symptoms, chats, or personal health results by default."),
+        "__KB_H__": bi("قاعدة المعرفة الطبية", "Medical knowledge base"),
+        "__KB_P__": bi("تحتوي معلومات طبية عامة ومصادر وقواعد أمان فقط، ولا تحتوي بيانات مرضى أو محادثات شخصية.", "It contains general medical information, sources, and safety rules only—never patient records or personal conversations."),
+    }
+    for key, value in values.items():
+        body = body.replace(key, value)
+    return _page(values["__TITLE__"], body)
+
+
+def terms_page():
+    ar = _lang() == "ar"
+    title = "شروط الاستخدام" if ar else "Terms of use"
+    body = """
+    <main class="v2-info-page"><section><h1>📄 __TITLE__</h1><p>__P1__</p></section>
+    <section><h2>__H2__</h2><p>__P2__</p></section><section><h2>__H3__</h2><p>__P3__</p></section>
+    <section><h2>__H4__</h2><p>__P4__</p></section></main>
+    """
+    values = {
+        "__TITLE__": title,
+        "__P1__": "SymptoSense أداة تثقيفية ومساعدة على فهم الأعراض، وليست بديلًا عن الطبيب أو خدمات الطوارئ." if ar else "SymptoSense is an educational symptom-understanding aid, not a substitute for a clinician or emergency services.",
+        "__H2__": "ليست أداة تشخيص" if ar else "Not a diagnostic tool",
+        "__P2__": "النتائج احتمالات تثقيفية قابلة للخطأ ولا تؤكد مرضًا أو تنفيه. لا تغيّر دواءً موصوفًا بناءً عليها." if ar else "Results are fallible educational possibilities and neither confirm nor rule out disease. Do not change prescribed medicine based on them.",
+        "__H3__": "الحالات العاجلة" if ar else "Urgent situations",
+        "__P3__": "إذا ظهرت علامة خطر أو تدهورت الحالة، اطلب الرعاية العاجلة فورًا بدل انتظار نتيجة الموقع." if ar else "If danger signs appear or the condition worsens, seek urgent care immediately rather than waiting for a website result.",
+        "__H4__": "الاستخدام المسؤول" if ar else "Responsible use",
+        "__P4__": "استخدم معلومات عامة، ولا تدخل بيانات تعريفية لشخص آخر دون إذنه. المصادر الخارجية تخضع لسياسات الجهة المالكة لها." if ar else "Use general information and do not enter another person's identifying data without permission. External sources are governed by their owners' policies.",
+    }
+    for key, value in values.items():
+        body = body.replace(key, value)
+    return _page(title, body)
+
+
+def sources_page():
+    from html import escape
+    ar = _lang() == "ar"
+    medical_knowledge.init_schema()
+    sources = medical_knowledge.list_entities("sources", False, verification="verified")
+    cards = ""
+    for source in sources:
+        name = escape(source.get("source_name") or source.get("organization") or "")
+        description = escape((source.get("description_ar") if ar else source.get("description_en")) or "")
+        url = escape(source.get("official_url") or "", quote=True)
+        source_type = escape((source.get("source_type") or "trusted").replace("_", " "))
+        cards += ('<article class="v2-source-card"><span class="source-type">%s</span><h2>%s</h2><p class="muted">%s</p>'
+                  '<a class="btn pri" href="%s" target="_blank" rel="noopener noreferrer">%s ↗</a></article>') % (
+                      source_type, name, description, url, "زيارة المصدر" if ar else "Visit source")
+    if not cards:
+        cards = '<div class="card">%s</div>' % ("لا توجد مصادر نشطة حاليًا." if ar else "No active sources are currently available.")
+    title = "المصادر الطبية الموثوقة" if ar else "Trusted medical sources"
+    body = '<main class="v2-info-page" style="max-width:1040px"><section><h1>📚 %s</h1><p>%s</p></section><div class="v2-source-grid">%s</div></main>' % (
+        title,
+        "نعرض الروابط الرسمية الموثقة فقط، مرتبة حسب أولوية المصدر." if ar else "Only verified official links are shown, ordered by source priority.",
+        cards,
+    )
+    return _page(title, body)
+
+
 # ---------------------------------------------------------------- chat
 CHAT = {
     "ar": {
@@ -3492,6 +3686,12 @@ CHAT = {
         "forced_high": "⚠️ تم رفع الخطورة تلقائياً بناءً على الأعراض الحمراء.",
         "low_conf": "⚖️ الثقة منخفضة — يُفضل مراجعة الطبيب.",
         "possible": "🩺 الاحتمالات المحتملة",
+        "kb_title": "🧠 لماذا ظهرت هذه الاحتمالات؟",
+        "kb_matched": "الأعراض المتوافقة",
+        "match_strong": "توافق مرتفع", "match_moderate": "توافق متوسط", "match_weak": "توافق منخفض",
+        "sources_title": "📚 المصادر الطبية",
+        "view_source": "عرض المصدر", "verified_source": "مصدر موثّق",
+        "last_updated_info": "آخر تحديث للمعلومات",
         "medwarn": "💊 تحذيرات الأدوية",
         "medwarn_note": "التوعية فقط — لا توقفي دواءك الموصوف بدون استشارة الطبيب.",
         "ml_title": "📊 تحليل نموذج التعلم الآلي",
@@ -3624,6 +3824,12 @@ CHAT = {
         "forced_high": "⚠️ Urgency raised automatically based on red-flag symptoms.",
         "low_conf": "⚖️ Low confidence — a doctor visit is recommended.",
         "possible": "🩺 Possible conditions",
+        "kb_title": "🧠 Why did these possibilities appear?",
+        "kb_matched": "Matching symptoms",
+        "match_strong": "Strong match", "match_moderate": "Moderate match", "match_weak": "Weak match",
+        "sources_title": "📚 Medical sources",
+        "view_source": "View source", "verified_source": "Verified source",
+        "last_updated_info": "Information last updated",
         "medwarn": "💊 Medication warnings",
         "medwarn_note": "Awareness only — don't stop your prescribed medication without consulting your doctor.",
         "ml_title": "📊 Machine learning model analysis",
@@ -3729,6 +3935,7 @@ def chat_page():
         <button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button>
         <button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_ON__</button>
       </div>
+      <div class="ss-flow" aria-live="polite"><div class="ss-flow-copy"><span id="flowStepLabel">__FLOW_STEP__</span><span id="flowStepName">__FLOW_DEMO__</span></div><div class="ss-flow-track" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="flowProgress"><div class="ss-flow-fill" id="flowFill"></div></div></div>
       <div class="chat-body" id="chatBody"></div>
       <div class="chat-options" id="chatOptions"></div>
       <div class="chat-input" id="chatInput" style="display:none;" role="search" aria-label="Message input">
@@ -3812,12 +4019,21 @@ def chat_page():
     ];
     document.getElementById('headP').textContent = TT('head_p');
     try { if (localStorage.getItem('symptosense_blood_id')) { const bb = document.getElementById('bloodBanner'); bb.textContent = TT('blood_banner'); bb.style.display = 'block'; } } catch (e) {}
-    const state = { age:null, gender:null, symptoms:[], duration:null, severity:null, conditions:null, medications:null, notes:null, step:'age', member_id:0, member_name:'__ME__' };
+    const state = { age:null, gender:null, symptoms:[], duration:null, severity:null, conditions:null, medications:null, allergies:null, notes:null, step:'age', member_id:0, member_name:'__ME__' };
     const bodyEl = document.getElementById('chatBody');
     const optsEl = document.getElementById('chatOptions');
     const inpEl = document.getElementById('chatInput');
     const textInp = document.getElementById('textInp');
     const famSelect = document.getElementById('famSelect');
+    function updateFlow(step) {
+      var map = {member:1,age:1,gender:1,symptoms:2,duration:3,severity:4,notes:5,conditions:6,medications:6,allergies:6,review:7,followup:7};
+      var number = map[step] || 1;
+      var names = LANG === 'ar' ? ['العمر والجنس','الأعراض','مدة الأعراض','شدة الأعراض','الأعراض المصاحبة','التاريخ الصحي والأدوية والحساسيات','النتيجة'] : ['Age and sex','Symptoms','Symptom duration','Symptom severity','Associated symptoms','History, medicines and allergies','Result'];
+      document.getElementById('flowStepLabel').textContent = (LANG === 'ar' ? 'الخطوة ' : 'Step ') + number + (LANG === 'ar' ? ' من 7' : ' of 7');
+      document.getElementById('flowStepName').textContent = names[number - 1];
+      document.getElementById('flowFill').style.width = ((number / 7) * 100) + '%';
+      var bar = document.getElementById('flowProgress'); if (bar) bar.setAttribute('aria-valuenow', String(number));
+    }
     textInp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); submitText(); }
     });
@@ -3868,7 +4084,7 @@ def chat_page():
       if (!t) return;
       speechSynthesis.cancel();
       const uu = new SpeechSynthesisUtterance(t);
-      uu.lang = LANG === 'en' ? 'en-US' : 'ar-SA';
+      uu.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
       const pre = LANG === 'en' ? 'en' : 'ar';
       const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().indexOf(pre) === 0);
       if (v) uu.voice = v;
@@ -3942,20 +4158,21 @@ def chat_page():
     let MEMBERS = [];
     function askMember() {
       state.step = 'member';
+      updateFlow(state.step);
       fetch('/api/family').then(r => r.json()).then(d => {
         MEMBERS = (d && d.members) || [];
-        if (!MEMBERS.length) { state.member = null; askSymptoms(); return; }
-        const items = [{label: TT('me_short'), fn:()=>{ state.member = null; add(TT('me_short'),'user'); askSymptoms(); }}];
+        if (!MEMBERS.length) { state.member = null; askAge(); return; }
+        const items = [{label: TT('me_short'), fn:()=>{ state.member = null; add(TT('me_short'),'user'); askAge(); }}];
         MEMBERS.forEach(m => items.push({label: m.name + (m.age ? ' — ' + m.age + ' ' + TT('yrs') : ''), fn:()=>{
           state.member = {id: m.id, name: m.name, age: m.age, gender: m.gender, conditions: m.conditions, medications: m.medications};
           if (m.age) state.age = m.age;
           if (m.gender) state.gender = m.gender;
           add(m.name + (m.age ? ' — ' + m.age + ' ' + TT('yrs') : ''), 'user');
-          askSymptoms();
+          askAge();
         }}));
         addQ('👥 ' + TT('for_whom'));
         showOpts(items);
-      }).catch(() => { state.member = null; askSymptoms(); });
+      }).catch(() => { state.member = null; askAge(); });
     }
     function appendStartBtn() {
       const s = document.createElement('button');
@@ -3968,8 +4185,7 @@ def chat_page():
       if (!state.symptoms.length) { add(TT('atleast'), 'bot'); return; }
       add(TT('chosen') + state.symptoms.join(LANG === 'en' ? ', ' : '، '), 'user');
       clearOpts();
-      if ((state.member && state.member.age) || state.age) askGender();
-      else askAge();
+      askDuration();
     }
 
     // ---------------- Voice assistant ----------------
@@ -4071,7 +4287,7 @@ def chat_page():
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) { add(TT('no_speech_api') || 'Voice recognition not supported in this browser', 'bot'); voiceMode = false; document.getElementById('voiceModeBtn').textContent = TT('voice_mode_off'); return; }
       liveRecognition = new SR();
-      liveRecognition.lang = LANG === 'en' ? 'en-US' : 'ar-SA';
+      liveRecognition.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
       liveRecognition.continuous = true;
       liveRecognition.interimResults = true;
       let finalTranscript = '';
@@ -4158,7 +4374,7 @@ def chat_page():
         if (t && 'speechSynthesis' in window) {
           speechSynthesis.cancel();
           const uu = new SpeechSynthesisUtterance(t);
-          uu.lang = LANG === 'en' ? 'en-US' : 'ar-SA';
+          uu.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
           uu.rate = 0.95;
           uu.onend = function() { if (voiceMode) { setVoiceState('listening'); tryLiveRestart(); } };
           speechSynthesis.speak(uu);
@@ -4183,6 +4399,7 @@ def chat_page():
       else showReviewScreen();
     }
     function showReviewScreen() {
+      state.step = 'review'; updateFlow(state.step);
       add(TT('preparing_analysis'), 'bot');
       var html = '<div class="ss-prereview"><h3>🔍 ' + TT('prereview_title') + '</h3><p style="color:#40566F;font-size:14px;margin-bottom:12px;">' + TT('prereview_sub') + '</p>';
       html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_symptoms') + '</span><span class="pv">' + esc(state.symptoms.join(', ')) + '</span></div>';
@@ -4252,21 +4469,24 @@ def chat_page():
     function askAge() {
       if (state.age) { askGender(); return; }
       state.step = 'age';
+      updateFlow(state.step);
       addQ(TT('age'));
       showText(TT('age_ph'));
     }
     function askGender() {
-      if (state.gender) { if (state.duration) askSeverity(); else askDuration(); return; }
+      if (state.gender) { askSymptoms(); return; }
       state.step = 'gender';
+      updateFlow(state.step);
       addQ(TT('gender'));
       showOpts([
-        {label:TT('male'), fn:()=>{ state.gender='m'; add(TT('male'),'user'); if (state.duration) askSeverity(); else askDuration(); }},
-        {label:TT('female'), fn:()=>{ state.gender='f'; add(TT('female'),'user'); if (state.duration) askSeverity(); else askDuration(); }}
+        {label:TT('male'), fn:()=>{ state.gender='m'; add(TT('male'),'user'); askSymptoms(); }},
+        {label:TT('female'), fn:()=>{ state.gender='f'; add(TT('female'),'user'); askSymptoms(); }}
       ]);
     }
     function G(f, m) { return state.gender === 'm' ? m : f; }
     function askSymptoms() {
       state.step = 'symptoms';
+      updateFlow(state.step);
       if (state.symptoms.length) {
         addHtml('➕ ' + esc(TT('syms_more')) + '<div class="sel-sum">' + esc(TT('chosen')) + ' ' + esc(state.symptoms.join(LANG === 'en' ? ', ' : '، ')) + '</div>', 'q');
       } else {
@@ -4324,34 +4544,45 @@ def chat_page():
     function askDuration() {
       if (state.duration) { askSeverity(); return; }
       state.step = 'duration';
+      updateFlow(state.step);
       addQ(TT('duration'));
       showOpts(DURS.map(d=>({label:d, fn:()=>{ state.duration=d; add(d,'user'); askSeverity(); }})));
     }
     function askSeverity() {
-      if (state.severity) { askConditions(); return; }
+      if (state.severity) { askNotes(); return; }
       state.step = 'severity';
+      updateFlow(state.step);
       addQ(TT('severity'));
-      showOpts(SEVS.map(([v,l])=>({label:l, fn:()=>{ state.severity=v; add(l,'user'); askConditions(); }})));
+      showOpts(SEVS.map(([v,l])=>({label:l, fn:()=>{ state.severity=v; add(l,'user'); askNotes(); }})));
     }
     function askConditions() {
       if (state.conditions && state.member && state.member.conditions) { askMeds(); return; }
       state.step = 'conditions';
+      updateFlow(state.step);
       addQ(G(TT('conditions_f'), TT('conditions_m')));
       const items = CONDS.map(c=>({label:c, fn:()=>{ state.conditions=c; add(c,'user'); askMeds(); }}));
       items.push({label:TT('other_diseases'), fn:()=>{ addQ(G(TT('other_diseases_f'), TT('other_diseases_m'))); showText(TT('cond_ph')); }});
       showOpts(items);
     }
     function askMeds() {
-      if (state.medications && state.member && state.member.medications) { askNotes(); return; }
+      if (state.medications && state.member && state.member.medications) { askAllergies(); return; }
       state.step = 'medications';
+      updateFlow(state.step);
       addQ(G(TT('meds_f'), TT('meds_m')));
-      showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.medications=''; askNotes(); }}]);
+      showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.medications=''; askAllergies(); }}]);
       showText(TT('meds_ph'), true);
+    }
+    function askAllergies() {
+      state.step = 'allergies'; updateFlow(state.step);
+      addQ(LANG === 'ar' ? 'هل لديك أي حساسية معروفة؟ اذكرها أو اضغط تخطي.' : 'Do you have any known allergies? Add them or skip.');
+      showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.allergies=''; startClarify(); }}]);
+      showText(LANG === 'ar' ? 'مثال: حساسية البنسلين' : 'Example: penicillin allergy', true);
     }
     function askNotes() {
       state.step = 'notes';
+      updateFlow(state.step);
       addQ(G(TT('notes_f'), TT('notes_m')));
-      showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.notes=''; startClarify(); }}]);
+      showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.notes=''; askConditions(); }}]);
       showText(TT('notes_ph'), true);
     }
     function submitText() {
@@ -4369,9 +4600,11 @@ def chat_page():
       } else if (state.step === 'conditions') {
         state.conditions = v; askMeds();
       } else if (state.step === 'medications') {
-        state.medications = v; askNotes();
+        state.medications = v; askAllergies();
+      } else if (state.step === 'allergies') {
+        state.allergies = v; startClarify();
       } else if (state.step === 'notes') {
-        state.notes = v; startClarify();
+        state.notes = v; askConditions();
       } else if (state.step === 'followup') {
         submitFollowup(v);
       }
@@ -4672,6 +4905,7 @@ def chat_page():
     function pillLabel(u) { return u==='high' ? TT('urg_high') : (u==='medium' ? TT('urg_medium') : TT('urg_low')); }
     function renderResult(d) {
       lastResult = d;
+      state.step = 'review'; updateFlow(state.step);
       const u = d.urgency;
       const pcls = u==='high' ? 'hi' : (u==='medium' ? 'med' : 'low');
       const uEmoji = u==='high' ? '🔴' : (u==='medium' ? '🟡' : '🟢');
@@ -4680,6 +4914,10 @@ def chat_page():
       h += '<div class="res-title">' + TT('result_card_title') + '</div>';
       if (state.member && state.member.name) h += '<div class="res-person">' + esc(TT('person_badge')) + esc(state.member.name) + '</div>';
       h += '<div class="res-urg"><span class="pill2 ' + pcls + '"><span class="urg-lbl">' + uEmoji + ' ' + esc(TT('urg_label')) + '</span><span class="urg-val">' + esc(uVal) + '</span></span></div>';
+      h += '<div class="res-assess" style="margin-top:10px"><div class="res-assess-h">' + (LANG==='ar'?'ملخص ما ذكرته':'What you told us') + '</div>'
+        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'الأعراض':'Symptoms') + '</span><span>' + esc((state.symptoms||[]).join(LANG==='ar'?'، ':', ')) + '</span></div>'
+        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'المدة':'Duration') + '</span><span>' + esc(state.duration||'—') + '</span></div>'
+        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'الشدة':'Severity') + '</span><span>' + esc(String(state.severity||'—')) + '/5</span></div></div>';
       if (d.triage_label) h += '<div class="res-triage">' + esc(d.triage_label) + '</div>';
       if (d.triage_reason) h += '<div class="triage-why"><b>' + esc(TT('triage_why')) + '</b><div style="margin-top:6px;text-align:right;">' + esc(d.triage_reason).replace(/\\n/g, '<br>') + '</div></div>';
       if (d.rule_forced_high) h += '<div class="warn" style="margin:8px 0;">' + TT('forced_high') + '</div>';
@@ -4691,20 +4929,34 @@ def chat_page():
       h += '<div id="resDetail">';
 
       if (d.possible_conditions) h += '<div class="rc-title">' + TT('possible') + '</div><div class="res-sec">' + esc(d.possible_conditions) + '</div>';
+      if (d.knowledge_matches && d.knowledge_matches.length) {
+        h += '<div class="rc-title">' + TT('kb_title') + '</div>';
+        d.knowledge_matches.forEach(function(m) {
+          var level = m.match_level === 'strong' ? TT('match_strong') : (m.match_level === 'moderate' ? TT('match_moderate') : TT('match_weak'));
+          var name = NAME(m, 'name_ar', 'name_en');
+          var reasons = (m.matched_symptoms || []).map(function(s){ return '✓ ' + esc(NAME(s, 'name_ar', 'name_en')); }).join('<br>');
+          h += '<div class="rec-card" style="border-inline-start:4px solid #1976D2;">'
+            + '<div class="rec-head"><b>' + esc(name) + '</b><span style="margin-inline-start:auto;background:#EAF4FF;color:#123B70;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;">' + esc(level) + '</span></div>'
+            + (reasons ? '<div class="rec-body"><b>' + esc(TT('kb_matched')) + ':</b><br>' + reasons + '</div>' : '')
+            + '</div>';
+        });
+      }
       if (d.med_warnings && d.med_warnings.length) {
         h += '<div class="rc-title">' + TT('medwarn') + '</div>';
         d.med_warnings.forEach(m => h += '<div class="rec-item"><b>' + esc(NAME(m, 'name_ar', 'name_en')) + '</b>: ' + esc(NAME(m, 'warning_ar', 'warning_en')) + '</div>');
         h += '<div class="muted">' + TT('medwarn_note') + '</div>';
       }
-      if (d.ml_predictions && d.ml_predictions.length) {
+      // Legacy ML remains available in the response for compatibility, but it
+      // is shown only when a future server version explicitly marks it as
+      // knowledge-grounded.  Unsourced condition names must not reach users.
+      if (!d.emergency && d.ml_grounded === true && (!d.knowledge_matches || !d.knowledge_matches.length) && d.ml_predictions && d.ml_predictions.length) {
         h += '<div class="rc-title">' + TT('ml_title') + '</div>';
         d.ml_predictions.forEach(p => {
-          const pct = Math.round(p.probability*100);
           const nm = NAME(p, 'name_ar', 'name_en');
-          h += '<div class="ml-row"><span>' + esc(nm) + ' <button class="bl-explain" onclick="openExplain(\\'' + esc(nm).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(TT('ml_explain')) + '</button></span><b>' + pct + '%</b></div>';
-          h += '<div class="bar-bg"><div class="bar-fill" style="width:' + pct + '%"></div></div>';
+          const level = p.probability >= .65 ? TT('match_strong') : (p.probability >= .35 ? TT('match_moderate') : TT('match_weak'));
+          h += '<div class="ml-row"><span>' + esc(nm) + ' <button class="bl-explain" onclick="openExplain(\\'' + esc(nm).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(TT('ml_explain')) + '</button></span><b>' + esc(level) + '</b></div>';
         });
-        h += '<div class="ml-note">' + esc(TT('ml_note')) + '</div>';
+        h += '<div class="ml-note">' + esc(TT('result_disclaimer')) + '</div>';
       }
       if (d.recommendations && d.recommendations.length) {
         h += '<div class="rc-title">' + TT('recs') + '</div>';
@@ -4720,6 +4972,20 @@ def chat_page():
       if (d.home_care) h += '<div class="rc-title">' + TT('home_care') + '</div><div class="res-sec bullets">' + esc(d.home_care) + '</div>';
       if (d.medication_guidance) h += '<div class="rc-title">' + TT('med_guid') + '</div><div class="res-sec">' + esc(d.medication_guidance) + '</div>';
       if (d.questions_for_doctor) h += '<div class="rc-title">' + TT('q_doc') + '</div><div class="res-sec">' + esc(d.questions_for_doctor) + '</div>';
+      if (d.medical_sources && d.medical_sources.length) {
+        h += '<div class="rc-title">' + TT('sources_title') + '</div>';
+        d.medical_sources.forEach(function(s) {
+          var sourceTitle = LANG === 'ar' ? (s.reference_title_ar || s.source_name) : (s.reference_title_en || s.source_name);
+          h += '<div class="rec-card"><div class="rec-head"><b>' + esc(s.source_name) + '</b><span style="margin-inline-start:auto;color:#166534;background:#ECFDF5;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;">✓ ' + esc(TT('verified_source')) + '</span></div>'
+            + '<div class="rec-body">' + esc(sourceTitle) + '</div>'
+            + '<a class="btn ghost small" href="' + esc(s.reference_url) + '" target="_blank" rel="noopener noreferrer">' + esc(TT('view_source')) + '</a></div>';
+        });
+      }
+      if (d.knowledge_last_updated) {
+        var kbDate = String(d.knowledge_last_updated);
+        try { kbDate = new Date(kbDate).toLocaleDateString(LANG === 'ar' ? 'ar-SA-u-ca-gregory' : 'en-GB', {month:'long', year:'numeric'}); } catch (_) {}
+        h += '<div class="muted" style="text-align:center;margin:14px 0 4px;">' + esc(TT('last_updated_info')) + ': ' + esc(kbDate) + '</div>';
+      }
       h += '</div>';
 
       // ENHANCED: Why this result
@@ -4729,8 +4995,8 @@ def chat_page():
         var syms = (state.symptoms || []).join(', ');
         var uLabel = u === 'high' ? TT('urg_high') : (u === 'medium' ? TT('urg_medium') : TT('urg_low'));
         whyText = LANG === 'ar'
-          ? 'بناءً على أعراضك (' + syms + ') وتقييم ' + uLabel + '، تم التحليل باستخدام قاعدة بيانات طبية تشمل أكثر من 500 حالة.'
-          : 'Based on your symptoms (' + syms + ') and ' + uLabel + ' assessment, analysis was performed using a medical database of 500+ conditions.';
+          ? 'بناءً على الأعراض الموحّدة (' + syms + ') وتقييم ' + uLabel + '، تمت المطابقة مع العلاقات النشطة والمصادر الموثقة في قاعدة المعرفة الطبية.'
+          : 'Based on normalized symptoms (' + syms + ') and the ' + uLabel + ' assessment, matching used active relationships and verified sources in the medical knowledge base.';
       }
       h += '<div class="res-why-body">' + esc(whyText) + '</div></div>';
 
@@ -4939,7 +5205,7 @@ def chat_page():
       }, () => { add(G(TT('loc_err_f'), TT('loc_err_m')), 'bot'); });
     }
     function restart() {
-      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,conditions:null,medications:null,notes:null});
+      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,conditions:null,medications:null,allergies:null,notes:null});
       bodyEl.innerHTML = '';
       startChat();
     }
@@ -4963,6 +5229,8 @@ def chat_page():
         .replace("__MIC_TITLE__", CHAT["ar" if ar else "en"]["mic_title"])
         .replace("__SEND__", CHAT["ar" if ar else "en"]["send"])
         .replace("__MUTED__", CHAT["ar" if ar else "en"]["muted"])
+        .replace("__FLOW_STEP__", "الخطوة 1 من 7" if ar else "Step 1 of 7")
+        .replace("__FLOW_DEMO__", "العمر والجنس" if ar else "Age and sex")
         .replace("__VOICE_SP__", CHAT["ar" if ar else "en"]["voice_speaking"])
         .replace("__VOICE_STOP__", CHAT["ar" if ar else "en"]["voice_stop"])
         .replace("__VOICE_CANCEL__", CHAT["ar" if ar else "en"]["voice_cancel"]))
@@ -5245,7 +5513,7 @@ CT = {
         "asst_emerg_txt": "⚠️ تظهر عليك علامات تستدعي الطوارئ. اتصل بالإسعاف فوراً:",
         "asst_emerg_btn": "صفحة الطوارئ ←",
         "asst_offline": "عذراً، لا أستطيع الرد الآن. جرّب صفحة فحص الأعراض أو راجع الطبيب عند الحاجة.",
-        "asst_disc": "توعية فقط — ليس تشخيصاً نهائياً.",
+        "asst_disc": "هذه المعلومات للتوعية ولا تُعد تشخيصًا طبيًا أو نفسيًا. في الحالات الطارئة، اطلب المساعدة من مختص أو خدمات الطوارئ.",
         "asst_svc_symp": "فحص الأعراض", "asst_svc_blood": "تحليل فحص الدم",
         "asst_svc_family": "مركز صحة العائلة", "asst_svc_meds": "صفحة الأدوية",
         "asst_svc_hosp": "أقرب مستشفى",
@@ -5714,7 +5982,7 @@ CT = {
         "asst_emerg_txt": "⚠️ You may be showing emergency signs. Call emergency services now:",
         "asst_emerg_btn": "Emergency page ←",
         "asst_offline": "Sorry, I can't reply right now. Try the symptom analysis page or see a doctor if needed.",
-        "asst_disc": "Awareness only — not a final diagnosis.",
+        "asst_disc": "This information is educational and is not a medical or mental-health diagnosis. In an emergency, contact a professional or emergency services.",
         "asst_svc_symp": "Symptom check", "asst_svc_blood": "Blood test analysis",
         "asst_svc_family": "Family Health Hub", "asst_svc_meds": "Medications page",
         "asst_svc_hosp": "Nearest hospital",
@@ -7512,7 +7780,31 @@ def profile_page():
     t = L["en" if _lang() == "en" else "ar"]
     uid = _ss_user_id()
     if not uid:
-        return redirect("/login?next=/profile")
+        ar = _lang() == "ar"
+        body = """
+        <section class="v2-guest-profile" aria-labelledby="guestProfileTitle">
+          <div style="font-size:48px" aria-hidden="true">👤</div>
+          <h1 id="guestProfileTitle" style="font-size:27px;margin:8px 0">__TITLE__</h1>
+          <p class="muted">__DESC__</p>
+          <div class="ss-btn-row" style="justify-content:center;margin-top:22px">
+            <a class="ss-btn-primary" href="/login?next=/profile">__LOGIN__</a>
+            <a class="btn ghost" href="/register?next=/profile">__REGISTER__</a>
+            <a class="btn ghost" href="/home">__GUEST__</a>
+          </div>
+          <p class="muted" style="font-size:12px;margin-top:18px">__NOTE__</p>
+        </section>
+        """
+        values = {
+            "__TITLE__": "ملفي" if ar else "My profile",
+            "__DESC__": "سجّل الدخول لحفظ معلوماتك ونتائجك والرجوع إليها من أي جهاز." if ar else "Sign in to save your information and results and access them across devices.",
+            "__LOGIN__": "تسجيل الدخول" if ar else "Sign in",
+            "__REGISTER__": "إنشاء حساب" if ar else "Create account",
+            "__GUEST__": "المتابعة كزائر" if ar else "Continue as guest",
+            "__NOTE__": "لا تحتاج إلى حساب لاستخدام الخدمات الأساسية." if ar else "You do not need an account to use core services.",
+        }
+        for key, value in values.items():
+            body = body.replace(key, value)
+        return _page("ملفي" if ar else "My profile", body)
     user = db.get_ss_user(uid)
     hp = db.load_health_profile(uid) or {}
     def esc(v):
@@ -8148,13 +8440,22 @@ def offline():
 # ---------------------------------------------------------------- routes
 @app.route("/")
 def index():
-    if request.cookies.get("lang") in {"ar", "en"} and request.args.get("choose") != "1":
-        return redirect(_safe_next_url("/home"))
+    """Always keep the public root as the language-selection landing page.
+
+    The selected language is still stored and used throughout the site, but a
+    previous choice must not silently skip the landing screen when the visitor
+    opens the main site URL again.
+    """
     return welcome_page()
 
 
 @app.route("/home")
 def home():
+    # Older installed PWA versions used /home?source=pwa as their start URL.
+    # Send those launches through the picker too, without affecting normal
+    # navigation to /home after a language has been selected.
+    if request.args.get("source") == "pwa":
+        return redirect(url_for("index", next="/home"))
     return home_page()
 
 
@@ -8166,6 +8467,21 @@ def about():
 @app.route("/about-us")
 def about_us():
     return about_us_page()
+
+
+@app.route("/privacy")
+def privacy():
+    return privacy_page()
+
+
+@app.route("/terms")
+def terms():
+    return terms_page()
+
+
+@app.route("/sources")
+def sources():
+    return sources_page()
 
 
 @app.route("/chat")
@@ -8287,7 +8603,7 @@ def manage_page():
     save_msg_ok = t.get("manage_saved", "✅ تم الحفظ بنجاح") if lang == "ar" else "✅ Saved successfully"
     save_msg_err = t.get("manage_error", "❌ حدث خطأ") if lang == "ar" else "❌ Error occurred"
     deleted_msg = t.get("manage_deleted", "✅ تم الحذف بنجاح") if lang == "ar" else "✅ Deleted successfully"
-    html = BASE_CSS + PAGE_FRAME.replace('__PAGE__', '''
+    body = '''
     <div style="max-width:640px;margin:0 auto;padding:0;">
       <div class="ss-profile-card" style="text-align:center;">
         <div style="font-size:42px;margin-bottom:8px;">🧹</div>
@@ -8378,8 +8694,8 @@ def manage_page():
       setTimeout(function(){ d.remove(); }, 2000);
     }
     </script>
-    ''')
-    return html
+    '''
+    return _page(title, body)
 
 
 @app.route("/memory")
@@ -8440,7 +8756,7 @@ def memory_page():
       <div class="memory-legend-item"><span class="memory-dot" style="background:#B8D8F8;"></span> %s</div>
       <div class="memory-legend-item"><span class="memory-dot" style="background:#94A3B8;"></span> %s</div>
     </div>''' % (source_profile, source_chat, source_memory, source_unknown)
-    html = BASE_CSS + PAGE_FRAME.replace('__PAGE__', '''
+    body = '''
     <div style="max-width:640px;margin:0 auto;padding:0;">
       <div class="ss-profile-card" style="text-align:center;">
         <div style="font-size:42px;margin-bottom:8px;">🧠</div>
@@ -8454,8 +8770,8 @@ def memory_page():
         <a href="/manage" style="display:inline-block;padding:14px 24px;background:#1976D2;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;width:100%;text-align:center;">''' + manage_btn + '''</a>
       </div>
     </div>
-    ''')
-    return html
+    '''
+    return _page(title, body)
 
 
 @app.route("/history")
@@ -8482,14 +8798,17 @@ def login():
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
+        platform_v2.log_login(email, user_id, bool(user_id), False, request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
+            session.permanent = True
             return redirect(next_param)
         error = t["login_error"]
     body = """
     <div class="auth-wrap">
       <div class="auth-card">
-        <div class="auth-icon">💙</div>
+        <div class="auth-icon">🩺</div>
+        <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
         <h1>__H__</h1>
         <p class="auth-sub">__SUB__</p>
         <div class="auth-reason" style="__REASON_STYLE__">🔐 __REASON__</div>
@@ -8505,15 +8824,22 @@ def login():
           </div>
           <button type="submit" class="auth-btn">__BTN__</button>
         </form>
+        <p class="auth-link" style="margin-top:12px"><a href="/forgot-password">__FORGOT__</a></p>
         <p class="auth-link">__NOACCT__ <a href="/register?next=__NEXT__">__REG__</a></p>
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#94A3B8"><span style="height:1px;background:#DCE8F0;flex:1"></span><span>__OR__</span><span style="height:1px;background:#DCE8F0;flex:1"></span></div>
+        <a class="btn ghost" style="width:100%;justify-content:center" href="/home">__GUEST__</a>
       </div>
     </div>
     """
     from html import escape
-    body = body.replace("__H__", t["login_h"]).replace("__SUB__", t["login_sub"])
+    body = body.replace("__H__", "مرحبًا بعودتك" if lang == "ar" else "Welcome back")
+    body = body.replace("__SUB__", "سجّل الدخول للوصول إلى معلوماتك ونتائجك المحفوظة." if lang == "ar" else "Sign in to access your saved information and results.")
     body = body.replace("__EMAIL__", t["login_email"]).replace("__PASS__", t["login_pass"])
     body = body.replace("__BTN__", t["login_btn"]).replace("__NOACCT__", t["login_noaccount"])
     body = body.replace("__REG__", t["login_register"])
+    body = body.replace("__FORGOT__", "نسيت كلمة المرور؟" if lang == "ar" else "Forgot password?")
+    body = body.replace("__OR__", "أو" if lang == "ar" else "or")
+    body = body.replace("__GUEST__", "المتابعة كزائر" if lang == "ar" else "Continue as guest")
     body = body.replace("__NEXT__", escape(next_param))
     body = body.replace("__REASON__", reason).replace("__REASON_STYLE__", "margin:0 0 16px;padding:11px 13px;border-radius:12px;background:#EAF4FF;color:#123B70;font-size:13px;font-weight:700;line-height:1.7;" if reason else "display:none;")
     if error:
@@ -8535,7 +8861,10 @@ def register():
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         confirm = request.form.get("confirm") or ""
-        if password != confirm:
+        accepted = request.form.get("accept_terms") == "on"
+        if not accepted:
+            error = "يجب الموافقة على سياسة الخصوصية وشروط الاستخدام." if lang == "ar" else "You must accept the privacy policy and terms of use."
+        elif password != confirm:
             error = t["register_pass_mismatch"]
         else:
             user_id, err = db.create_ss_user(email, name, password)
@@ -8546,7 +8875,8 @@ def register():
     body = """
     <div class="auth-wrap">
       <div class="auth-card">
-        <div class="auth-icon">💙</div>
+        <div class="auth-icon">🩺</div>
+        <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
         <h1>__H__</h1>
         <p class="auth-sub">__SUB__</p>
         <div class="auth-error __ERR_CLASS__">__ERR__</div>
@@ -8567,6 +8897,10 @@ def register():
             <label>__CONFIRM__</label>
             <input type="password" name="confirm" required minlength="6" placeholder="••••••" autocomplete="new-password">
           </div>
+          <label style="display:flex;align-items:flex-start;gap:9px;text-align:start;font-size:13px;line-height:1.7;margin:12px 0;color:#40566F">
+            <input type="checkbox" name="accept_terms" required style="width:18px;height:18px;margin-top:3px;flex:0 0 auto">
+            <span>__ACCEPT__</span>
+          </label>
           <button type="submit" class="auth-btn">__BTN__</button>
         </form>
         <p class="auth-link">__HASACCT__ <a href="/login?next=__NEXT__">__LOGIN__</a></p>
@@ -8578,6 +8912,9 @@ def register():
     body = body.replace("__PASS__", t["register_pass"]).replace("__CONFIRM__", t["register_confirm"])
     body = body.replace("__BTN__", t["register_btn"]).replace("__HASACCT__", t["register_hasaccount"])
     body = body.replace("__LOGIN__", t["register_login"])
+    accept = ('أوافق على <a href="/privacy" target="_blank">سياسة الخصوصية</a> و<a href="/terms" target="_blank">شروط الاستخدام</a>.' if lang == "ar" else
+              'I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms of Use</a>.')
+    body = body.replace("__ACCEPT__", accept)
     from html import escape
     body = body.replace("__NEXT__", escape(next_param))
     if error:
@@ -8587,9 +8924,106 @@ def register():
     return _page(t["title_register"], body)
 
 
+def _send_password_reset_email(email, reset_url):
+    """Send through the optional HTTPS mail provider; fail without leaking data."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    sender = os.environ.get("RESEND_FROM", "").strip()
+    if not api_key or not sender:
+        return False
+    try:
+        import requests
+        ar = _lang() == "ar"
+        subject = "استعادة كلمة مرور SymptoSense" if ar else "Reset your SymptoSense password"
+        html = ('<div dir="rtl"><h2>استعادة كلمة المرور</h2><p>استخدم الرابط التالي خلال 30 دقيقة:</p><p><a href="%s">تعيين كلمة مرور جديدة</a></p><p>إذا لم تطلب هذا، فتجاهل الرسالة.</p></div>' % reset_url
+                if ar else '<h2>Password reset</h2><p>Use this link within 30 minutes:</p><p><a href="%s">Set a new password</a></p><p>If you did not request this, ignore this email.</p>' % reset_url)
+        response = requests.post(
+            "https://api.resend.com/emails", timeout=10,
+            headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
+            json={"from": sender, "to": [email], "subject": subject, "html": html},
+        )
+        return response.status_code < 300
+    except Exception:
+        return False
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    ar = _lang() == "ar"
+    sent = False
+    debug_url = ""
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        if platform_v2.email_is_valid(email):
+            token, user_id = platform_v2.create_password_reset(email)
+            if token and user_id:
+                reset_url = _site_url().rstrip("/") + "/reset-password/" + token
+                _send_password_reset_email(email, reset_url)
+                if os.environ.get("PASSWORD_RESET_DEBUG") == "1":
+                    debug_url = reset_url
+        sent = True
+    body = """
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔑</div>
+      <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>__NOTICE__
+      <form method="post"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="email" placeholder="name@example.com"></div><button class="auth-btn" type="submit">__BTN__</button></form>
+      <p class="auth-link"><a href="/login">__BACK__</a></p>__DEBUG__
+    </div></div>
+    """
+    notice = ('<div class="ss-msg success" style="display:block">%s</div>' % (
+        "إذا كان الحساب موجودًا، أرسلنا رابط الاستعادة. تحقق من البريد والرسائل غير المرغوبة." if ar else
+        "If the account exists, a reset link has been sent. Check your inbox and spam folder.")) if sent else ""
+    debug = ('<p class="muted" style="direction:ltr;word-break:break-all"><a href="%s">Debug reset link</a></p>' % debug_url) if debug_url else ""
+    values = {"__TITLE__": "نسيت كلمة المرور؟" if ar else "Forgot your password?",
+              "__SUB__": "أدخل بريدك لإرسال رابط صالح لمدة 30 دقيقة." if ar else "Enter your email to receive a link valid for 30 minutes.",
+              "__EMAIL__": "البريد الإلكتروني" if ar else "Email address",
+              "__BTN__": "إرسال رابط الاستعادة" if ar else "Send reset link",
+              "__BACK__": "العودة إلى تسجيل الدخول" if ar else "Back to sign in",
+              "__NOTICE__": notice, "__DEBUG__": debug}
+    for key, value in values.items():
+        body = body.replace(key, value)
+    return _page(values["__TITLE__"], body)
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    ar = _lang() == "ar"
+    error = ""
+    success = False
+    if request.method == "POST":
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+        if password != confirm:
+            error = "كلمتا المرور غير متطابقتين." if ar else "Passwords do not match."
+        else:
+            try:
+                success = platform_v2.consume_password_reset(token, password)
+                if not success:
+                    error = "الرابط غير صالح أو انتهت صلاحيته." if ar else "This link is invalid or has expired."
+            except ValueError:
+                error = "استخدم 8 أحرف على الأقل." if ar else "Use at least 8 characters."
+    if success:
+        body = '<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (
+            "تم تحديث كلمة المرور" if ar else "Password updated",
+            "يمكنك تسجيل الدخول الآن." if ar else "You can sign in now.",
+            "تسجيل الدخول" if ar else "Sign in")
+    else:
+        body = """
+        <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔐</div><h1>__TITLE__</h1>
+        <div class="auth-error __ERR_CLASS__">__ERROR__</div><form method="post">
+        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div>
+        <div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" autocomplete="new-password"></div>
+        <button class="auth-btn" type="submit">__BTN__</button></form></div></div>
+        """
+        vals = {"__TITLE__": "كلمة مرور جديدة" if ar else "New password", "__PASS__": "كلمة المرور" if ar else "Password",
+                "__CONFIRM__": "تأكيد كلمة المرور" if ar else "Confirm password", "__BTN__": "حفظ كلمة المرور" if ar else "Save password",
+                "__ERR_CLASS__": "show" if error else "", "__ERROR__": error}
+        for key, value in vals.items():
+            body = body.replace(key, value)
+    return _page("استعادة كلمة المرور" if ar else "Reset password", body)
+
+
 @app.route("/logout")
 def logout():
-    session.pop("ss_user_id", None)
+    session.clear()
     return redirect("/home")
 
 
@@ -8663,6 +9097,13 @@ def api_register():
         name = (data.get("name") or "").strip()
         email = (data.get("email") or "").strip()
         password = data.get("password") or ""
+        confirm = data.get("confirm", password) or ""
+        if password != confirm:
+            return jsonify({"ok": False, "error": "password_mismatch"}), 400
+        # Existing API clients did not send this field; keep that contract
+        # working while enforcing consent whenever the V2 field is supplied.
+        if "accept_terms" in data and data.get("accept_terms") is not True:
+            return jsonify({"ok": False, "error": "terms_required"}), 400
         user_id, err = db.create_ss_user(email, name, password)
         if user_id:
             session["ss_user_id"] = user_id
@@ -8680,6 +9121,7 @@ def api_login():
         email = (data.get("email") or "").strip()
         password = data.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
+        platform_v2.log_login(email, user_id, bool(user_id), False, request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
             return jsonify({"ok": True, "redirect_url": "/profile"})
@@ -8775,8 +9217,9 @@ def api_delete_account():
     db.init_db()
     try:
         uid = _ss_user_id()
+        platform_v2.init_schema()
         db.delete_ss_user(uid)
-        session.pop("ss_user_id", None)
+        session.clear()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
@@ -8867,9 +9310,120 @@ def api_analysis_history():
     return jsonify({"ok": True, "records": records, "logged_in": True})
 
 
+def _send_admin_otp(email, code):
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    sender = os.environ.get("RESEND_FROM", "").strip()
+    if not api_key or not sender:
+        return False
+    try:
+        import requests
+        response = requests.post(
+            "https://api.resend.com/emails", timeout=10,
+            headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
+            json={"from": sender, "to": [email], "subject": "SymptoSense Admin verification",
+                  "html": "<h2>SymptoSense Admin</h2><p>Your verification code is:</p><p style='font-size:28px;font-weight:bold;letter-spacing:6px'>%s</p><p>It expires in 10 minutes.</p>" % code},
+        )
+        return response.status_code < 300
+    except Exception:
+        return False
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    db.init_db()
+    ar = _lang() == "ar"
+    error = ""
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
+        user_id = db.authenticate_ss_user(email, password)
+        user = db.get_ss_user(user_id) if user_id else None
+        valid_admin = bool(user and user.get("role") in {"super_admin", "content_admin", "medical_content_admin", "analytics_admin"})
+        platform_v2.log_login(email, user_id, valid_admin, True, request.headers.get("User-Agent", ""))
+        if valid_admin:
+            if os.environ.get("ADMIN_2FA_EMAIL", "0") == "1":
+                code = "%06d" % secrets.randbelow(1_000_000)
+                session["admin_2fa_hash"] = hashlib.sha256((code + app.secret_key).encode()).hexdigest()
+                session["admin_2fa_expires"] = int(datetime.now(timezone.utc).timestamp()) + 600
+                session["admin_pending_user"] = user_id
+                if _send_admin_otp(email, code):
+                    return redirect(url_for("admin_verify"))
+                session.pop("admin_2fa_hash", None)
+                error = "تعذر إرسال رمز التحقق. راجع إعدادات البريد." if ar else "Could not send the verification code. Check email configuration."
+            else:
+                session["ss_user_id"] = user_id
+                now = int(datetime.now(timezone.utc).timestamp())
+                session["admin_authenticated_at"] = now
+                session["admin_last_seen"] = now
+                session.permanent = True
+                return redirect(url_for("admin"))
+        else:
+            error = "بيانات الدخول غير صحيحة أو الحساب غير مخوّل للإدارة." if ar else "Invalid credentials or this account is not authorised for administration."
+    body = """
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🛡️</div>
+    <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr">SymptoSense V2</div>
+    <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR_C__">__ERROR__</div>
+    <form method="post"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="username"></div>
+    <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required autocomplete="current-password"></div>
+    <button class="auth-btn" type="submit">__BTN__</button></form><p class="auth-link"><a href="/home">__BACK__</a></p>
+    <p class="muted" style="font-size:11px">__TIMEOUT__</p></div></div>
+    """
+    values = {"__TITLE__": "دخول الإدارة" if ar else "Admin sign in", "__SUB__": "بوابة منفصلة ومحمية لمسؤولي المنصة." if ar else "A separate, protected portal for platform administrators.",
+              "__EMAIL__": "البريد الإلكتروني" if ar else "Email address", "__PASS__": "كلمة المرور" if ar else "Password",
+              "__BTN__": "دخول لوحة الإدارة" if ar else "Open admin dashboard", "__BACK__": "العودة إلى الموقع" if ar else "Back to site",
+              "__TIMEOUT__": "تنتهي جلسة الإدارة تلقائيًا بعد فترة عدم نشاط." if ar else "Admin sessions expire automatically after inactivity.",
+              "__ERR_C__": "show" if error else "", "__ERROR__": error}
+    for key, value in values.items():
+        body = body.replace(key, value)
+    return _page(values["__TITLE__"], body, bare=True)
+
+
+@app.route("/admin/verify", methods=["GET", "POST"])
+def admin_verify():
+    ar = _lang() == "ar"
+    pending = session.get("admin_pending_user")
+    error = ""
+    if not pending or not session.get("admin_2fa_hash"):
+        return redirect(url_for("admin_login"))
+    if request.method == "POST":
+        code = re.sub(r"\D", "", request.form.get("code") or "")
+        expected = hashlib.sha256((code + app.secret_key).encode()).hexdigest()
+        now = int(datetime.now(timezone.utc).timestamp())
+        if now <= int(session.get("admin_2fa_expires") or 0) and secrets.compare_digest(expected, session.get("admin_2fa_hash", "")):
+            session["ss_user_id"] = int(pending)
+            session["admin_authenticated_at"] = now
+            session["admin_last_seen"] = now
+            for key in ("admin_2fa_hash", "admin_2fa_expires", "admin_pending_user"):
+                session.pop(key, None)
+            return redirect(url_for("admin"))
+        error = "الرمز غير صحيح أو انتهت صلاحيته." if ar else "The code is invalid or expired."
+    body = """
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔢</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>
+    <div class="auth-error __ERR_C__">__ERROR__</div><form method="post"><div class="auth-field"><label>__CODE__</label><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" style="direction:ltr;text-align:center;letter-spacing:8px;font-size:22px"></div><button class="auth-btn">__BTN__</button></form></div></div>
+    """
+    vals = {"__TITLE__": "التحقق بخطوتين" if ar else "Two-step verification", "__SUB__": "أدخل الرمز المرسل إلى بريد المسؤول." if ar else "Enter the code sent to the administrator email.",
+            "__CODE__": "رمز التحقق" if ar else "Verification code", "__BTN__": "تحقق" if ar else "Verify", "__ERR_C__": "show" if error else "", "__ERROR__": error}
+    for key, value in vals.items():
+        body = body.replace(key, value)
+    return _page(vals["__TITLE__"], body, bare=True)
+
+
 @app.route("/admin")
 def admin():
-    return render_template_string(DASHBOARD_HTML)
+    if not _ss_user_id() or not _admin_session_valid():
+        return redirect(url_for("admin_login"))
+    if not _admin_allowed("access"):
+        t = L["en" if _lang() == "en" else "ar"]
+        msg = ("هذه الصفحة متاحة لمسؤولي SymptoSense فقط." if _lang() == "ar" else
+               "This page is available to SymptoSense administrators only.")
+        return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center;"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (msg, t.get("nav_home", "Home"))), 403
+    medical_knowledge.init_schema()
+    return render_template_string(
+        DASHBOARD_HTML,
+        admin_user=_ss_user(),
+        csrf_token=_admin_csrf_token(),
+        lang="en" if _lang() == "en" else "ar",
+    )
 
 
 @app.route("/robots.txt")
@@ -8882,7 +9436,7 @@ def robots_txt():
 @app.route("/sitemap.xml")
 def sitemap_xml():
     base = _site_url()
-    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about", "/about-us", "/login", "/register", "/settings"]
+    pages = ["/", "/home", "/chat", "/blood", "/search", "/calculators", "/meds", "/family", "/emergency", "/checkin", "/firstaid", "/tips", "/relax", "/profile", "/history", "/about", "/about-us", "/sources", "/privacy", "/terms", "/login", "/register", "/forgot-password", "/settings"]
     urls = "\n".join(
         "  <url><loc>%s</loc><changefreq>weekly</changefreq><priority>%.1f</priority></url>"
         % (base + p, 1.0 if p == "/" else 0.7)
@@ -8893,6 +9447,7 @@ def sitemap_xml():
 
 
 @app.route("/api/stats")
+@admin_api_required("analytics")
 def api_stats():
     db.init_db()
     stats = db.get_usage_stats(days=7)
@@ -8924,6 +9479,337 @@ def api_stats():
         "assistant_feedback": db.assistant_feedback_stats(),
         "db_backend": "PostgreSQL" if db.USE_POSTGRES else "SQLite",
     })
+
+
+# ---------------------------------------------------------------- Medical Knowledge Base APIs
+
+def _mk_error(exc, status=400):
+    return jsonify({"ok": False, "error": str(exc)[:180]}), status
+
+
+@app.route("/api/diseases", methods=["GET"])
+def api_diseases():
+    try:
+        rows = medical_knowledge.list_entities(
+            "diseases", False, request.args.get("q", ""),
+            request.args.get("category"), request.args.get("severity"),
+        )
+        return jsonify({"ok": True, "diseases": rows})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/diseases/<int:entity_id>", methods=["GET"])
+def api_disease_detail(entity_id):
+    item = medical_knowledge.get_entity("disease", entity_id, public=True)
+    return jsonify({"ok": bool(item), "disease": item}) if item else _mk_error("not_found", 404)
+
+
+@app.route("/api/diseases/<int:entity_id>/sources", methods=["GET"])
+def api_disease_sources(entity_id):
+    item = medical_knowledge.get_entity("disease", entity_id, public=True)
+    return jsonify({"ok": bool(item), "sources": (item or {}).get("sources", [])}) if item else _mk_error("not_found", 404)
+
+
+@app.route("/api/symptoms", methods=["GET"])
+def api_symptoms():
+    try:
+        rows = medical_knowledge.list_entities(
+            "symptoms", False, request.args.get("q", ""), request.args.get("category")
+        )
+        return jsonify({"ok": True, "symptoms": rows})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/symptoms/<int:entity_id>", methods=["GET"])
+def api_symptom_detail(entity_id):
+    item = medical_knowledge.get_entity("symptom", entity_id, public=True)
+    return jsonify({"ok": bool(item), "symptom": item}) if item else _mk_error("not_found", 404)
+
+
+@app.route("/api/symptoms/<int:entity_id>/sources", methods=["GET"])
+def api_symptom_sources(entity_id):
+    item = medical_knowledge.get_entity("symptom", entity_id, public=True)
+    return jsonify({"ok": bool(item), "sources": (item or {}).get("sources", [])}) if item else _mk_error("not_found", 404)
+
+
+@app.route("/api/sources", methods=["GET"])
+def api_sources():
+    try:
+        rows = medical_knowledge.list_entities(
+            "sources", False, request.args.get("q", ""), verification="verified"
+        )
+        return jsonify({"ok": True, "sources": rows})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/knowledge/bootstrap", methods=["GET"])
+@admin_api_required("access")
+def api_admin_knowledge_bootstrap():
+    try:
+        include = _admin_allowed("medical")
+        return jsonify({
+            "ok": True,
+            "role": _admin_role(),
+            "can_edit": include,
+            # Analytics admins receive aggregate statistics only.  Medical
+            # content rows are available only to the two editing roles.
+            "categories": medical_knowledge.categories() if include else [],
+            "diseases": medical_knowledge.list_entities("diseases", True) if include else [],
+            "symptoms": medical_knowledge.list_entities("symptoms", True) if include else [],
+            "sources": medical_knowledge.list_entities("sources", True) if include else [],
+            "relationships": medical_knowledge.list_relationships() if include else [],
+            "red_flags": medical_knowledge.list_entities("red_flags", True) if include else [],
+            "statistics": medical_knowledge.statistics(),
+        })
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/knowledge/stats", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_knowledge_stats():
+    return jsonify({"ok": True, "statistics": medical_knowledge.statistics()})
+
+
+@app.route("/api/admin/diseases", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_diseases():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "diseases": medical_knowledge.list_entities("diseases", True, request.args.get("q", ""), request.args.get("category"), request.args.get("severity"))})
+        return jsonify({"ok": True, "disease": medical_knowledge.save_disease(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/diseases/<int:entity_id>", methods=["GET", "PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_disease(entity_id):
+    try:
+        if request.method == "GET":
+            item = medical_knowledge.get_entity("disease", entity_id)
+            return jsonify({"ok": bool(item), "disease": item}) if item else _mk_error("not_found", 404)
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_entity("disease", entity_id, _ss_user())})
+        return jsonify({"ok": True, "disease": medical_knowledge.save_disease(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/symptoms", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_symptoms():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "symptoms": medical_knowledge.list_entities("symptoms", True, request.args.get("q", ""), request.args.get("category"))})
+        return jsonify({"ok": True, "symptom": medical_knowledge.save_symptom(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/symptoms/<int:entity_id>", methods=["GET", "PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_symptom(entity_id):
+    try:
+        if request.method == "GET":
+            item = medical_knowledge.get_entity("symptom", entity_id)
+            return jsonify({"ok": bool(item), "symptom": item}) if item else _mk_error("not_found", 404)
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_entity("symptom", entity_id, _ss_user())})
+        return jsonify({"ok": True, "symptom": medical_knowledge.save_symptom(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/sources", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_sources():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "sources": medical_knowledge.list_entities("sources", True, request.args.get("q", ""), verification=request.args.get("verification"))})
+        return jsonify({"ok": True, "source": medical_knowledge.save_source(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/sources/<int:entity_id>", methods=["GET", "PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_source(entity_id):
+    try:
+        if request.method == "GET":
+            item = medical_knowledge.get_entity("source", entity_id)
+            return jsonify({"ok": bool(item), "source": item}) if item else _mk_error("not_found", 404)
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_entity("source", entity_id, _ss_user())})
+        return jsonify({"ok": True, "source": medical_knowledge.save_source(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/relationships", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_relationships():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "relationships": medical_knowledge.list_relationships(request.args.get("q", ""))})
+        return jsonify({"ok": True, "relationship": medical_knowledge.save_relationship(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/relationships/<int:entity_id>", methods=["PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_relationship(entity_id):
+    try:
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_entity("relationship", entity_id, _ss_user())})
+        return jsonify({"ok": True, "relationship": medical_knowledge.save_relationship(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/red-flags", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_red_flags():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "red_flags": medical_knowledge.list_entities("red_flags", True, request.args.get("q", ""))})
+        return jsonify({"ok": True, "red_flag": medical_knowledge.save_red_flag(request.get_json(silent=True) or {}, _ss_user())}), 201
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/red-flags/<int:entity_id>", methods=["GET", "PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_red_flag(entity_id):
+    try:
+        if request.method == "GET":
+            item = medical_knowledge.get_entity("red_flag", entity_id)
+            return jsonify({"ok": bool(item), "red_flag": item}) if item else _mk_error("not_found", 404)
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_entity("red_flag", entity_id, _ss_user())})
+        return jsonify({"ok": True, "red_flag": medical_knowledge.save_red_flag(request.get_json(silent=True) or {}, _ss_user(), entity_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/<kind>/<int:entity_id>/sources", methods=["POST", "DELETE"])
+@admin_api_required("medical")
+def api_admin_source_link(kind, entity_id):
+    if kind not in {"diseases", "symptoms"}:
+        return _mk_error("invalid_entity", 404)
+    singular = "disease" if kind == "diseases" else "symptom"
+    try:
+        data = request.get_json(silent=True) or {}
+        if request.method == "DELETE":
+            return jsonify({"ok": medical_knowledge.delete_source_link(singular, entity_id, int(data.get("source_id")), _ss_user())})
+        return jsonify({"ok": True, "link": medical_knowledge.save_source_link(singular, entity_id, data, _ss_user())})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/knowledge/audit", methods=["GET"])
+@admin_api_required("medical")
+def api_admin_knowledge_audit():
+    return jsonify({"ok": True, "audit": medical_knowledge.audit_log(request.args.get("limit", 100))})
+
+
+@app.route("/api/admin/knowledge/versions/<entity_type>/<int:entity_id>", methods=["GET"])
+@admin_api_required("medical")
+def api_admin_knowledge_versions(entity_type, entity_id):
+    return jsonify({"ok": True, "versions": medical_knowledge.versions(entity_type, entity_id)})
+
+
+@app.route("/api/admin/system-health", methods=["GET"])
+@admin_api_required("medical")
+def api_admin_system_health():
+    return jsonify({"ok": True, "health": medical_knowledge.system_health()})
+
+
+@app.route("/api/admin/users", methods=["GET"])
+@admin_api_required("super")
+def api_admin_users():
+    return jsonify({"ok": True, "users": platform_v2.list_users_admin()})
+
+
+@app.route("/api/admin/users/<int:user_id>/role", methods=["PUT"])
+@admin_api_required("super")
+def api_admin_user_role(user_id):
+    try:
+        data = request.get_json(silent=True) or {}
+        if user_id == int(_ss_user_id()) and data.get("role") != "super_admin":
+            return _mk_error("cannot_remove_own_super_admin_role", 400)
+        return jsonify({"ok": True, "user": platform_v2.set_user_role(user_id, data.get("role"), int(_ss_user_id()))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/v2/analytics", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_v2_analytics():
+    try:
+        return jsonify({"ok": True, "analytics": platform_v2.analytics_summary(request.args.get("days", 30))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/content", methods=["GET", "POST"])
+@admin_api_required("medical")
+def api_admin_content():
+    try:
+        if request.method == "GET":
+            return jsonify({"ok": True, "content": platform_v2.list_content(False, request.args.get("q", ""), request.args.get("type", ""))})
+        return jsonify({"ok": True, "content": platform_v2.save_content(request.get_json(silent=True) or {}, int(_ss_user_id()))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/content/<int:content_id>", methods=["GET", "PUT", "DELETE"])
+@admin_api_required("medical")
+def api_admin_content_item(content_id):
+    try:
+        if request.method == "GET":
+            item = platform_v2.get_content(content_id)
+            return jsonify({"ok": bool(item), "content": item}) if item else _mk_error("not_found", 404)
+        if request.method == "DELETE":
+            platform_v2.delete_content(content_id, int(_ss_user_id()))
+            return jsonify({"ok": True})
+        return jsonify({"ok": True, "content": platform_v2.save_content(request.get_json(silent=True) or {}, int(_ss_user_id()), content_id)})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/content", methods=["GET"])
+def api_public_content():
+    try:
+        return jsonify({"ok": True, "content": platform_v2.list_content(True, request.args.get("q", ""), request.args.get("type", ""))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/users/<int:user_id>/status", methods=["PUT"])
+@admin_api_required("super")
+def api_admin_user_status(user_id):
+    try:
+        data = request.get_json(silent=True) or {}
+        return jsonify({"ok": True, "user": platform_v2.set_user_status(user_id, data.get("status"), int(_ss_user_id()))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/security/activity", methods=["GET"])
+@admin_api_required("super")
+def api_admin_security_activity():
+    return jsonify({"ok": True, "activity": platform_v2.login_activity(request.args.get("limit", 200))})
+
+
+@app.route("/api/admin/security/audit", methods=["GET"])
+@admin_api_required("super")
+def api_admin_security_audit():
+    return jsonify({"ok": True, "audit": platform_v2.audit_log(request.args.get("limit", 200))})
 
 
 def _voice_parse(text, lang):
@@ -9242,6 +10128,7 @@ def api_analyze():
             "severity": severity,
             "conditions": data.get("conditions", ""),
             "medications": data.get("medications", ""),
+            "allergies": data.get("allergies", ""),
             "notes": str(data.get("notes") or "")[:2000],
             "member_id": member_id,
         }
@@ -9278,6 +10165,8 @@ def api_analyze():
                             patient["conditions"] = hp["health_conditions"]
                         if not patient["medications"] and hp.get("medications"):
                             patient["medications"] = hp["medications"]
+                        if not patient["allergies"] and hp.get("allergies"):
+                            patient["allergies"] = hp["allergies"]
         # Fallback to legacy profile if still missing
         if not patient["conditions"] or not patient["medications"] or not patient["age"]:
             try:
@@ -9290,6 +10179,8 @@ def api_analyze():
                         patient["conditions"] = member.get("conditions") or ""
                     if not patient["medications"]:
                         patient["medications"] = member.get("medications") or ""
+                    if not patient["allergies"]:
+                        patient["allergies"] = member.get("allergies") or ""
                 else:
                     p = db.load_profile(_data_user_id())
                     if p:
@@ -9301,6 +10192,8 @@ def api_analyze():
                             patient["conditions"] = p.get("conditions") or ""
                         if not patient["medications"]:
                             patient["medications"] = p.get("medications") or ""
+                        if not patient["allergies"]:
+                            patient["allergies"] = p.get("allergies") or ""
             except Exception:
                 pass
         result = analysis_core.run_analysis(patient, lang=lang)
@@ -9326,6 +10219,7 @@ def api_analyze():
                 result["emergency_flags"] = flags
                 if member and member.get("name"):
                     result["emergency_person"] = member["name"]
+                platform_v2.record_usage("safety_alert", "/api/analyze", lang, request.headers.get("User-Agent", ""), 200, service="symptom_analysis")
         except Exception:
             pass
         return jsonify(result)
@@ -9478,6 +10372,14 @@ def api_assistant():
                 answer = ("أقلقني ما وصفته — قد يكون علامة طارئة (" + "، ".join(flags) +
                           "). يرجى الاتصال بالإسعاف فوراً 997 أو التوجه لأقرب طوارئ. لا تنتظر الرد هنا.")
             return jsonify({"ok": True, "answer": answer, "emergency_flags": flags, "services": services})
+        kb_bundle = None
+        assistant_sources = []
+        if mode != "mh" and last_text:
+            try:
+                kb_bundle = medical_knowledge.knowledge_bundle([last_text], severity=1, notes=last_text, lang=lang)
+                assistant_sources = kb_bundle.get("sources", [])[:5]
+            except Exception:
+                kb_bundle = None
         hist = []
         for m in messages[-6:]:
             role = "user" if m.get("role") == "user" else "assistant"
@@ -9516,6 +10418,20 @@ def api_assistant():
                 "إذا وصف المستخدم أعراضاً خطرة (ألم صدر، صعوبة تنفس، نزيف، تشوش، إغماء) حثه على الاتصال بالإسعاف 997 فوراً. "
                 "وذكّر دائماً أن هذه معلومات توعوية وليست تشخيصاً نهائياً."
             )
+        sys += (" Never invent diseases, symptoms, medicines, doses, percentages, sources, or links. "
+                "If reliable information is unavailable, say so clearly. Do not present a definitive diagnosis."
+                if lang == "en" else
+                " لا تخترع أمراضًا أو أعراضًا أو أدوية أو جرعات أو نسبًا أو مصادر أو روابط. إذا لم تتوفر معلومة موثوقة فاذكر ذلك بوضوح، ولا تقدم تشخيصًا قطعيًا.")
+        if kb_bundle and kb_bundle.get("matches"):
+            grounded = []
+            for match in kb_bundle["matches"][:3]:
+                grounded.append({
+                    "condition": match.get("name_en") if lang == "en" else match.get("name_ar"),
+                    "match_level": match.get("match_level"),
+                    "matched_symptoms": [s.get("name_en") if lang == "en" else s.get("name_ar") for s in match.get("matched_symptoms", [])],
+                })
+            sys += (" Use only this retrieved knowledge-base context for condition explanations: " if lang == "en" else
+                    " استخدم فقط سياق قاعدة المعرفة المسترجع التالي عند شرح الحالات: ") + json.dumps(grounded, ensure_ascii=False)
         msgs = [{"role": "system", "content": sys}] + hist
         try:
             client = analysis_core._groq_client()
@@ -9531,7 +10447,8 @@ def api_assistant():
             answer = ("أهلاً! لا أستطيع الرد الكامل الآن، لكن استخدم فحص الأعراض أو راجع الطبيب عند استمرار الأعراض. هذه إجابة توعوية وليست تشخيصاً نهائياً."
                       if lang == "ar" else
                       "Hi! I can't give a full reply right now, but use the symptom checker or see a doctor if symptoms persist. This is awareness info, not a final diagnosis.")
-        return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services})
+        return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services,
+                        "medical_sources": assistant_sources})
     except Exception as e:
         err = str(e)
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {err[:200]}"})
@@ -9877,6 +10794,7 @@ def api_blood():
 
 def run_webapp():
     db.init_db()
+    medical_knowledge.init_schema()
     port = int(os.environ.get("PORT", 5000))
     try:
         from waitress import serve

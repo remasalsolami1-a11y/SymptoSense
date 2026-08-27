@@ -489,6 +489,8 @@ def _create_ss_tables(c):
                 email TEXT UNIQUE NOT NULL,
                 name TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                status TEXT NOT NULL DEFAULT 'active',
                 created_at TEXT NOT NULL,
                 last_login TEXT
             )
@@ -537,6 +539,8 @@ def _create_ss_tables(c):
                 email TEXT UNIQUE NOT NULL,
                 name TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                status TEXT NOT NULL DEFAULT 'active',
                 created_at TEXT NOT NULL,
                 last_login TEXT
             )
@@ -595,6 +599,11 @@ def _migrate_ss_columns(conn, c):
         c.execute(f"PRAGMA table_info({table})")
         return {row[1] for row in c.fetchall()}
     try:
+        user_cols = columns("ss_users")
+        if "role" not in user_cols:
+            c.execute("ALTER TABLE ss_users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
+        if "status" not in user_cols:
+            c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
         hp_cols = columns("ss_health_profiles")
         for col, default in [("extra_info", ""), ("activity_level", "")]:
             if col not in hp_cols:
@@ -1809,6 +1818,32 @@ def all_conversations():
 
 import re as _re
 
+_ADMIN_ROLES = {"super_admin", "content_admin", "medical_content_admin", "analytics_admin"}
+
+
+def _email_set(env_name):
+    return {
+        value.strip().lower()
+        for value in os.environ.get(env_name, "").split(",")
+        if value.strip()
+    }
+
+
+def configured_admin_role(email):
+    """Return an environment-authorized role for an email, or ``user``.
+
+    Environment allowlists are the secure bootstrap path for the first admin;
+    subsequent roles can be managed by a super admin in the dashboard.
+    """
+    email = (email or "").strip().lower()
+    if email in (_email_set("SUPER_ADMIN_EMAILS") | _email_set("ADMIN_EMAILS")):
+        return "super_admin"
+    if email in (_email_set("CONTENT_ADMIN_EMAILS") | _email_set("MEDICAL_CONTENT_ADMIN_EMAILS")):
+        return "content_admin"
+    if email in _email_set("ANALYTICS_ADMIN_EMAILS"):
+        return "analytics_admin"
+    return "user"
+
 def _hash_password(password):
     """Hash a password with a unique salt and a deliberately slow KDF."""
     iterations = 600_000
@@ -1858,16 +1893,17 @@ def create_ss_user(email, name, password):
         c = conn.cursor()
         now = datetime.now(timezone.utc).isoformat()
         pw_hash = _hash_password(password)
+        role = configured_admin_role(email)
         if USE_POSTGRES:
             c.execute(
-                "INSERT INTO ss_users (email, name, password_hash, created_at) VALUES (%s,%s,%s,%s) RETURNING id",
-                (email, name, pw_hash, now),
+                "INSERT INTO ss_users (email, name, password_hash, role, created_at) VALUES (%s,%s,%s,%s,%s) RETURNING id",
+                (email, name, pw_hash, role, now),
             )
             user_id = c.fetchone()[0]
         else:
             c.execute(
-                "INSERT INTO ss_users (email, name, password_hash, created_at) VALUES (?,?,?,?)",
-                (email, name, pw_hash, now),
+                "INSERT INTO ss_users (email, name, password_hash, role, created_at) VALUES (?,?,?,?,?)",
+                (email, name, pw_hash, role, now),
             )
             user_id = c.lastrowid
         conn.commit()
@@ -1885,13 +1921,15 @@ def authenticate_ss_user(email, password):
     try:
         c = conn.cursor()
         c.execute(
-            "SELECT id, password_hash FROM ss_users WHERE email=%s" % PH,
+            "SELECT id, password_hash, status FROM ss_users WHERE email=%s" % PH,
             (email,),
         )
         row = c.fetchone()
         if not row:
             return None
-        user_id, stored_hash = row
+        user_id, stored_hash, status = row
+        if (status or "active") != "active":
+            return None
         valid, needs_upgrade = _verify_password(password, stored_hash)
         if not valid:
             return None
@@ -1916,11 +1954,13 @@ def get_ss_user(user_id):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT id, email, name, created_at, last_login FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        c.execute("SELECT id, email, name, role, created_at, last_login, status FROM ss_users WHERE id=%s" % PH, (int(user_id),))
         row = c.fetchone()
         if not row:
             return None
-        return {"id": row[0], "email": row[1], "name": row[2], "created_at": row[3], "last_login": row[4]}
+        configured = configured_admin_role(row[1])
+        role = configured if configured != "user" else (row[3] or "user")
+        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active"}
     finally:
         conn.close()
 
@@ -1931,11 +1971,46 @@ def get_ss_user_by_email(email):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT id, email, name FROM ss_users WHERE email=%s" % PH, (email,))
+        c.execute("SELECT id, email, name, role, status FROM ss_users WHERE email=%s" % PH, (email,))
         row = c.fetchone()
         if not row:
             return None
-        return {"id": row[0], "email": row[1], "name": row[2]}
+        configured = configured_admin_role(row[1])
+        role = configured if configured != "user" else (row[3] or "user")
+        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active"}
+    finally:
+        conn.close()
+
+
+def list_ss_admin_users():
+    """List accounts and effective roles for super-admin role management."""
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id,email,name,role,created_at,last_login FROM ss_users ORDER BY id")
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    out = []
+    for row in rows:
+        configured = configured_admin_role(row[1])
+        role = configured if configured != "user" else (row[3] or "user")
+        out.append({"id": row[0], "email": row[1], "name": row[2], "role": role,
+                    "created_at": row[4], "last_login": row[5]})
+    return out
+
+
+def set_ss_user_role(user_id, role):
+    """Persist an account role. Environment-authorized roles remain authoritative."""
+    role = (role or "").strip()
+    if role not in _ADMIN_ROLES | {"user"}:
+        raise ValueError("invalid_role")
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("UPDATE ss_users SET role=%s WHERE id=%s" % (PH, PH), (role, int(user_id)))
+        conn.commit()
+        return bool(c.rowcount)
     finally:
         conn.close()
 
@@ -2151,6 +2226,19 @@ def delete_ss_user(user_id):
     try:
         c = conn.cursor()
         uid = int(user_id)
+        owner = _hash_user("account-%s" % uid)
+        # Remove all account-owned health/service records. Guest records use a
+        # different random browser key and are never attached to the account.
+        for table in ("med_logs", "med_plans", "family_members", "results",
+                      "blood_tests", "profiles", "daily_checkins",
+                      "assistant_feedback", "feedback", "followups", "records",
+                      "visits", "push_subscriptions"):
+            c.execute("DELETE FROM %s WHERE user_hash=%s" % (table, PH), (owner,))
+        c.execute("DELETE FROM ss_password_resets WHERE user_id=%s" % PH, (uid,))
+        c.execute("UPDATE ss_login_activity SET user_id=NULL WHERE user_id=%s" % PH, (uid,))
+        c.execute("UPDATE ss_admin_audit SET admin_id=NULL WHERE admin_id=%s" % PH, (uid,))
+        c.execute("UPDATE ss_content SET created_by=NULL WHERE created_by=%s" % PH, (uid,))
+        c.execute("UPDATE ss_content SET updated_by=NULL WHERE updated_by=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_chat_history WHERE user_id=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_privacy WHERE user_id=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (uid,))

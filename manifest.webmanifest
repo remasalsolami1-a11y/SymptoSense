@@ -1,16 +1,16 @@
 {
   "id": "/",
-  "name": "SymptoSense — مساعدك الصحي الذكي",
-  "short_name": "SymptoSense",
-  "description": "مساعد صحي ذكي لفهم الأعراض والوصول إلى الأدوات الصحية بسهولة.",
+  "name": "SymptoSense V2 — مساعدك الصحي الذكي",
+  "short_name": "SymptoSense V2",
+  "description": "منصة صحية تثقيفية لفهم الأعراض وتقييم الخطورة والوصول إلى مصادر موثوقة.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "/home?source=pwa",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#F5F9FF",
-  "theme_color": "#1976D2",
+  "background_color": "#F7FAFC",
+  "theme_color": "#287FC1",
   "categories": ["medical", "health"],
   "icons": [
     {

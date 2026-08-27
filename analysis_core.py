@@ -12,6 +12,7 @@ from groq import Groq
 import db
 import ml_diagnosis
 import medication_warnings
+import medical_knowledge
 
 _ARABIC_RE = re.compile("[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+")
 _NON_ARABIC_LETTERS_RE = re.compile(
@@ -57,6 +58,10 @@ def _md_safe(text, lang="ar"):
         text = _NON_ARABIC_LETTERS_RE.sub("", text)
     else:
         text = _ARABIC_RE.sub("", text)
+    # Generated prose must never surface diagnostic percentages or links;
+    # source URLs are supplied separately from verified database records.
+    text = re.sub(r"https?://\S+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+(?:[.,]\d+)?\s*%", "", text)
     text = re.sub(r"\s{2,}", " ", text).strip()
     return _html_escape(text)
 
@@ -65,6 +70,8 @@ def _md_safe(text, lang="ar"):
 # Canonical source names + their homepages. Only these are accepted; any other
 # URL/source the model returns is replaced with the canonical homepage.
 TRUSTED_SOURCES = {
+    "saudi ministry of health": ("Saudi Ministry of Health", "https://www.moh.gov.sa/"),
+    "وزارة الصحة السعودية": ("وزارة الصحة السعودية", "https://www.moh.gov.sa/"),
     "mayo clinic": ("Mayo Clinic", "https://www.mayoclinic.org/"),
     "mayoclinic": ("Mayo Clinic", "https://www.mayoclinic.org/"),
     "nhs": ("NHS", "https://www.nhs.uk/"),
@@ -76,7 +83,7 @@ TRUSTED_SOURCES = {
     "medlineplus": ("MedlinePlus", "https://medlineplus.gov/"),
     "medline plus": ("MedlinePlus", "https://medlineplus.gov/"),
 }
-_TRUSTED_DOMAINS = ("mayoclinic.org", "nhs.uk", "who.int", "cdc.gov", "medlineplus.gov")
+_TRUSTED_DOMAINS = ("moh.gov.sa", "mayoclinic.org", "nhs.uk", "who.int", "cdc.gov", "medlineplus.gov")
 
 # Generic filler tips (or duplicated doctor-visit tips, or medication advice)
 # that must never appear as "recommendations".
@@ -474,6 +481,173 @@ def _blood_context(d, lang):
     return txt + "\nUse the blood results as additional context when interpreting the symptoms, and mention in the assessment that the blood test shows: " + str(b.get("level", "")) if inds else ""
 
 
+def _match_label(level, lang):
+    labels = {
+        "ar": {"strong": "توافق مرتفع", "moderate": "توافق متوسط", "weak": "توافق منخفض"},
+        "en": {"strong": "Strong match", "moderate": "Moderate match", "weak": "Weak match"},
+    }
+    return labels["en" if lang == "en" else "ar"].get(level, labels["en" if lang == "en" else "ar"]["weak"])
+
+
+def _knowledge_prompt_context(bundle, lang):
+    """A compact, bounded context.  Only these diseases and URLs may reach AI output."""
+    rows = []
+    for match in (bundle.get("matches") or [])[:4]:
+        rows.append({
+            "name": match.get("name_en") if lang == "en" else match.get("name_ar"),
+            "match": _match_label(match.get("match_level"), lang),
+            "matched_symptoms": [
+                s.get("name_en") if lang == "en" else s.get("name_ar")
+                for s in match.get("matched_symptoms", [])
+            ],
+            "description": match.get("description"),
+            "red_flags": match.get("red_flags"),
+            "next_step": match.get("recommended_next_step"),
+            "sources": [
+                {"name": s.get("source_name"), "url": s.get("reference_url")}
+                for s in match.get("sources", [])
+            ],
+        })
+    return json.dumps(rows, ensure_ascii=False)
+
+
+def _render_possible_conditions(matches, lang):
+    if not matches:
+        return ("لا توجد معلومات كافية في قاعدة المعرفة لعرض احتمالات موثوقة. لا يعني ذلك عدم وجود سبب طبي؛ راجع مختصًا إذا استمرت الأعراض أو ساءت."
+                if lang == "ar" else
+                "There is not enough information in the knowledge base to show source-grounded possibilities. This does not rule out a medical cause; seek review if symptoms persist or worsen.")
+    lines = []
+    for match in matches[:3]:
+        name = match.get("name_ar") if lang == "ar" else match.get("name_en")
+        label = _match_label(match.get("match_level"), lang)
+        if lang == "ar":
+            lines.append(f"{name} — {label}. الأعراض المذكورة تتوافق معه بهذا المستوى، لكن هذا لا يُعد تشخيصًا طبيًا.")
+        else:
+            lines.append(f"{name} — {label}. The symptoms align at this level, but this is not a medical diagnosis.")
+    return "\n".join(lines)
+
+
+def _knowledge_recommendations(bundle, lang):
+    recs, seen = [], set()
+    for match in (bundle.get("matches") or [])[:3]:
+        tip = (match.get("recommended_next_step") or "").strip()
+        if not tip or tip.lower() in seen:
+            continue
+        seen.add(tip.lower())
+        sources = match.get("sources") or []
+        source = sources[0] if sources else {}
+        name = match.get("name_ar") if lang == "ar" else match.get("name_en")
+        recs.append({
+            "title": (("خطوة آمنة لـ " + name) if lang == "ar" else ("Safe next step: " + name)),
+            "tip": tip,
+            "source": source.get("source_name") or "",
+            "url": source.get("reference_url") or "",
+        })
+    if not recs and bundle.get("risk", {}).get("level") != "urgent":
+        recs.append({
+            "title": "راقب وسجّل الأعراض" if lang == "ar" else "Monitor and record symptoms",
+            "tip": ("دوّن وقت بدء الأعراض ومدتها وما يزيدها أو يخففها، واطلب تقييمًا طبيًا إذا استمرت أو ازدادت."
+                    if lang == "ar" else
+                    "Record when symptoms started, their duration, and what changes them; seek medical review if they persist or worsen."),
+            "source": "", "url": "",
+        })
+    return recs[:4]
+
+
+def _grounded_guidance(bundle, patient, lang):
+    """Return safety and follow-up copy without relying on generated facts."""
+    risk = bundle.get("risk", {}).get("level", "low")
+    matches = bundle.get("matches") or []
+    red_flags = []
+    for match in matches[:3]:
+        text = (match.get("red_flags") or "").strip()
+        if text and text not in red_flags:
+            red_flags.append(text)
+    if not red_flags:
+        red_flags.append(
+            "اطلب مساعدة عاجلة عند تدهور مفاجئ أو ظهور صعوبة تنفس أو إغماء أو علامة عصبية جديدة."
+            if lang == "ar" else
+            "Seek urgent help for sudden deterioration, breathing difficulty, fainting, or a new neurological sign."
+        )
+    if risk == "review":
+        when = (
+            "يوصى بالتواصل مع طبيب أو الحصول على تقييم طبي قريب، وبشكل أسرع إذا ازدادت الأعراض أو ظهرت علامة خطر."
+            if lang == "ar" else
+            "Contact a clinician or arrange medical assessment soon, and seek help sooner if symptoms worsen or a red flag appears."
+        )
+    else:
+        when = (
+            "راقب الأعراض واطلب تقييمًا طبيًا إذا استمرت أو ازدادت أو ظهرت علامة خطر."
+            if lang == "ar" else
+            "Monitor symptoms and seek medical assessment if they persist, worsen, or a red flag appears."
+        )
+    home = (
+        "• سجّل الأعراض ومدتها وشدتها وأي تغير واضح.\n• اتبع الخطوات الآمنة المرتبطة بالمصادر أعلاه، ولا تؤخر التقييم عند التدهور."
+        if lang == "ar" else
+        "• Record symptoms, duration, severity, and clear changes.\n• Follow the source-linked safe steps above, and do not delay assessment if symptoms worsen."
+    )
+    medications = ""
+    if patient.get("medications"):
+        medications = (
+            "استمر على الأدوية الموصوفة وفق تعليمات طبيبك، ولا تغيّرها أو توقفها قبل سؤال الطبيب أو الصيدلي."
+            if lang == "ar" else
+            "Continue prescribed medicines as directed; do not change or stop them before asking your clinician or pharmacist."
+        )
+    questions = (
+        "ما التفسيرات التي تناسب هذه الأعراض؟ ما علامات الخطر التي أراقبها؟ متى أحتاج متابعة أو فحوصًا؟"
+        if lang == "ar" else
+        "What explanations fit these symptoms? Which red flags should I watch for? When do I need follow-up or tests?"
+    )
+    return {
+        "danger_signs": "\n".join("• " + item for item in red_flags),
+        "when_to_seek_care": when,
+        "home_care": home,
+        "medication_guidance": medications,
+        "questions_for_doctor": questions,
+    }
+
+
+def _why_result(bundle, lang):
+    matches = bundle.get("matches") or []
+    if not matches:
+        unmatched = bundle.get("normalization", {}).get("unmatched") or []
+        if unmatched:
+            return ("لم تتمكن قاعدة المعرفة من توحيد بعض الأعراض: " + "، ".join(unmatched[:4])
+                    if lang == "ar" else
+                    "The knowledge base could not normalize some symptoms: " + ", ".join(unmatched[:4]))
+        return "لم يظهر تطابق موثوق كافٍ من العلاقات الطبية المتاحة." if lang == "ar" else "No sufficiently grounded match was found in the available medical relationships."
+    parts = []
+    for match in matches[:3]:
+        name = match.get("name_ar") if lang == "ar" else match.get("name_en")
+        symptoms = [s.get("name_ar") if lang == "ar" else s.get("name_en") for s in match.get("matched_symptoms", [])]
+        parts.append((f"{name}: ظهر بسبب " if lang == "ar" else f"{name}: shown because of ") + "، ".join(symptoms))
+    return "\n".join(parts)
+
+
+def _urgent_result(bundle, lang):
+    reasons = bundle.get("risk", {}).get("reasons") or []
+    reason_text = "\n".join("• " + str(r.get("message") or r.get("name") or "") for r in reasons)
+    if lang == "ar":
+        return {
+            "personal_note": "بعض الأعراض التي ذكرتها قد تستدعي الحصول على رعاية طبية عاجلة. لا تنتظر استمرار التحليل أو تحسن الأعراض تلقائيًا.",
+            "possible_conditions": "تم إيقاف عرض الاحتمالات لأن طبقة الأمان اكتشفت علامة خطر محتملة.",
+            "recommendations": [], "danger_signs": reason_text,
+            "when_to_seek_care": "اطلب الطوارئ أو توجّه إلى أقرب قسم طوارئ الآن، ولا تقد السيارة بنفسك إذا كنت تشعر بدوار أو ضعف أو صعوبة تنفس.",
+            "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
+            "simple_explanation": "الأولوية الآن هي الأمان والحصول على تقييم عاجل، وليس تحديد اسم الحالة عبر الإنترنت.",
+            "confidence": "high", "urgency": "high", "urgency_ar": "طوارئ",
+        }
+    return {
+        "personal_note": "Some symptoms you reported may require urgent medical care. Do not wait for the assessment to continue or for symptoms to improve on their own.",
+        "possible_conditions": "Possible conditions are withheld because the independent safety layer detected a potential red flag.",
+        "recommendations": [], "danger_signs": reason_text,
+        "when_to_seek_care": "Call emergency services or go to the nearest emergency department now. Do not drive yourself if you feel dizzy, weak, or short of breath.",
+        "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
+        "simple_explanation": "The priority is safety and urgent assessment, not naming a condition online.",
+        "confidence": "high", "urgency": "high", "urgency_text": "Emergency",
+    }
+
+
 def _build_prompt(d, lang):
     sev_labels = {1: "خفيفة جداً", 2: "خفيفة", 3: "متوسطة", 4: "شديدة", 5: "شديدة جداً"} if lang == "ar" \
         else {1: "very mild", 2: "mild", 3: "moderate", 4: "severe", 5: "very severe"}
@@ -481,13 +655,16 @@ def _build_prompt(d, lang):
     age_context = _get_age_context(d.get("age"), lang)
     time_context = _get_time_context(lang)
     blood_context = _blood_context(d, lang)
+    knowledge_context = d.get("_knowledge_context") or "[]"
 
     if lang == "ar":
         return f"""انت مساعد طبي توعوي متخصص. يجب أن تكتب ردك باللغة العربية فقط بدون أي كلمة بلغة أخرى إطلاقاً.
 قواعد الموثوقية (إلزامية):
-- اعتمد فقط على المعرفة الطبية من مصادر موثوقة: Mayo Clinic, NHS, WHO, CDC, MedlinePlus.
-- لا تخترع أعراضاً أو أمراضاً. لو ما كنت متأكداً، قل "قد يكون" ولا تعطِ تشخيصاً قطعياً أبداً.
+- استخدم فقط الأمراض والمصادر والروابط الموجودة في سياق قاعدة المعرفة أدناه.
+- لا تخترع أعراضاً أو أمراضاً أو نسباً أو مصادر أو روابط. إذا لم يكفِ السياق فقل إن المعلومة غير متوفرة.
 - هذا التحليل للتوعية فقط وليس تشخيصاً نهائياً، والمريض يجب أن يراجع الطبيب عند أي شك.
+سياق قاعدة المعرفة الطبية الموثقة:
+{knowledge_context}
 معلومات المريض:
 - العمر: {d.get('age')} سنة، الجنس: {d.get('gender')}
 - الأعراض: {', '.join(d.get('symptoms', [])[:6])}
@@ -505,16 +682,17 @@ def _build_prompt(d, lang):
 - title يجب أن يكون عنواناً قصيراً جداً (3-5 كلمات)، وtip شرح التوصية بجملة أو جملتين.
 - لا توصِ بأدوية محددة أو جرعات أو مسكنات أبداً.
 - عند الحديث عن مهيجات العين أو الأنف أو الحساسية لا تستخدم كلمة "اللقاحات" أبداً — استخدم "الملوثات" أو "المهيجات".
-- المصدر يجب أن يكون واحداً فقط من: Mayo Clinic أو NHS أو WHO أو CDC أو MedlinePlus.
-- source_url يجب أن يكون رابطاً حقيقياً يبدأ بـ https:// على نفس النطاق الموثوق (مثال: مقال عن الصداع على mayoclinic.org) وليس الصفحة الرئيسية للنطاق وليس رابطاً مخترعاً.
+- المصدر والرابط يجب أن يكونا من سياق قاعدة المعرفة أعلاه فقط وبنفس الكتابة والرابط تمامًا.
 - اكتب 4 توصيات مختلفة وكلها ذات صلة محددة بهذه الحالة.
 اجب بـ JSON فقط. كل النصوص يجب أن تكون باللغة العربية فقط، ممنوع استخدام أي لغة أخرى:
 {{"personal_note":"جملة أو جملتين متعاطفتين وشخصية تخاطب المريض مباشرة بناءً على حالته بالضبط (مو نص عام)","urgency":"low|medium|high","urgency_ar":"بسيط|يحتاج موعد طبيب|طوارئ","confidence":"high|medium|low","simple_explanation":"شرح بسيط جداً بالعربية بجملة أو جملتين لغير المتخصصين، بدون مصطلحات طبية معقدة، بلغة واضحة وسهلة","possible_conditions":"الاحتمالات بالعربية فقط (3 جمل، بدون تشخيص قطعي)","recommendations":[{{"title":"عنوان قصير جداً (3-5 كلمات)","tip":"شرح التوصية بجملة أو جملتين مرتبطاً بالأعراض","source":"اسم المصدر مثل Mayo Clinic","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}},{{"title":"عنوان قصير","tip":"شرح التوصية","source":"اسم المصدر","source_url":"https://..."}}],"danger_signs":"علامات الخطر بالعربية فقط","when_to_seek_care":"متى تراجع الطبيب بالعربية فقط","home_care":"الرعاية المنزلية بالعربية كقائمة نقاط قصيرة (كل نقطة بجملة آمنة حذرة — ممنوع ذكر منتجات أو أدوية أو قطرات عينية محددة)","medication_guidance":"إرشاد حذر عن الاستمرار بالدواء أو مراجعة الطبيب/الصيدلي، أو فارغ لو ما ذكر أدوية","questions_for_doctor":"3-4 أسئلة ذكية بالعربية يسألها المريض طبيبه بناءً على حالته"}}"""
     return f"""You are a medical awareness assistant. Write your response in English ONLY. Do not use any other language.
 Reliability rules (mandatory):
-- Rely only on established medical knowledge from trusted sources: Mayo Clinic, NHS, WHO, CDC, MedlinePlus.
-- Never invent symptoms or diseases. If uncertain, say "might be" and never give a definitive diagnosis.
+- Use only the diseases, sources, and exact URLs in the knowledge-base context below.
+- Never invent symptoms, diseases, percentages, sources, or links. If context is insufficient, say the information is unavailable.
 - This is awareness only, not a final diagnosis; the patient should see a doctor if in doubt.
+Trusted medical knowledge-base context:
+{knowledge_context}
 Patient information:
 - Age: {d.get('age')}, Gender: {d.get('gender')}
 - Symptoms: {', '.join(d.get('symptoms', [])[:6])}
@@ -532,8 +710,7 @@ Recommendation rules (mandatory):
 - title must be a very short heading (3-5 words), and tip is the explanation in one or two sentences.
 - Never recommend specific drugs, doses, or painkillers.
 - When talking about eye/nose irritants or allergies, never use the word "vaccines" — use "pollutants" or "irritants" instead.
-- Source must be one of: Mayo Clinic, NHS, WHO, CDC, or MedlinePlus only.
-- source_url must be a real https:// link on that same trusted domain (e.g., a Mayo Clinic article about the symptom) — not the domain homepage and never an invented URL.
+- The source and URL must be copied exactly from the knowledge-base context above.
 - Write 4 distinct recommendations, each specifically relevant to this case.
 Reply with JSON only. All text must be in English only:
 {{"personal_note":"one or two empathetic, personalized sentences addressing the patient directly based on their specific situation (not generic)","urgency":"low|medium|high","urgency_text":"Simple|Needs appointment|Emergency","confidence":"high|medium|low","simple_explanation":"a very simple explanation in English, one or two sentences for non-experts, no complex medical jargon, clear and friendly","possible_conditions":"Possible conditions in English only (3 sentences, no definitive diagnosis)","recommendations":[{{"title":"very short heading (3-5 words)","tip":"explanation in one or two sentences tied to the symptoms","source":"source name like Mayo Clinic","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}},{{"title":"short heading","tip":"explanation","source":"source name","source_url":"https://..."}}],"danger_signs":"Danger signs in English only","when_to_seek_care":"When to see a doctor in English only","home_care":"Home care in English as a list of short safe cautious bullet points (never name specific products, drugs, or eye drops)","medication_guidance":"cautious guidance about continuing medication or consulting a doctor/pharmacist, or empty if no medications mentioned","questions_for_doctor":"3-4 smart questions in English the patient should ask their doctor based on their case"}}"""
@@ -615,37 +792,116 @@ def run_analysis(patient, lang="ar"):
     lang = "en" if lang == "en" else "ar"
     user_id = d.get("user_id") or "web-anon"
 
-    prompt = _build_prompt(d, lang)
+    # The structured knowledge and rule-based safety layers always run before AI.
+    # They are the authority for possible conditions, sources, and risk level.
     try:
-        client = _groq_client()
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1024,
-            response_format={"type": "json_object"},
-            temperature=0.3,
-            timeout=45,
+        bundle = medical_knowledge.knowledge_bundle(
+            d.get("symptoms", []), d.get("severity", 1), d.get("age"),
+            d.get("notes", ""), lang,
         )
-        full_text = response.choices[0].message.content
-        result = _extract_json(full_text)
     except Exception:
+        bundle = {"normalization": {"canonical": [], "unmatched": d.get("symptoms", [])},
+                  "matches": [], "sources": [],
+                  "risk": {"level": "review", "label": "🟡 يحتاج مراجعة طبية" if lang == "ar" else "🟡 Needs medical review", "reasons": [], "emergency": False},
+                  "last_updated": None}
+
+    # Preserve the app's existing broad red-flag detector as a second,
+    # independent rule layer.  If either ruleset says emergency, stop before
+    # asking the AI and withhold condition matching/reassuring recommendations.
+    pre_triage = _triage(d, lang)
+    if pre_triage.get("level") == "emergency" and bundle.get("risk", {}).get("level") != "urgent":
+        safety_reason = pre_triage.get("reason") or (
+            "بعض الأعراض المذكورة قد تستدعي رعاية طبية عاجلة."
+            if lang == "ar" else
+            "Some reported symptoms may require urgent medical care."
+        )
+        bundle["risk"] = {
+            "level": "urgent",
+            "label": "🔴 يحتاج رعاية عاجلة" if lang == "ar" else "🔴 Urgent",
+            "reasons": [{
+                "slug": "legacy-safety-layer",
+                "name": "علامة خطر" if lang == "ar" else "Red flag",
+                "risk_level": "urgent",
+                "message": safety_reason,
+            }],
+            "emergency": True,
+        }
+        bundle["matches"] = []
+        bundle["sources"] = []
+    elif pre_triage.get("level") in {"today", "soon"} and bundle.get("risk", {}).get("level") == "low":
+        bundle["risk"] = {
+            "level": "review",
+            "label": "🟡 يحتاج مراجعة طبية" if lang == "ar" else "🟡 Needs medical review",
+            "reasons": [{
+                "slug": "legacy-clinical-review-layer",
+                "name": "تقييم طبي" if lang == "ar" else "Medical review",
+                "risk_level": "review",
+                "message": pre_triage.get("reason") or (
+                    "تحتاج الأعراض إلى متابعة طبية."
+                    if lang == "ar" else
+                    "The symptoms need medical follow-up."
+                ),
+            }],
+            "emergency": False,
+        }
+
+    d["_knowledge_context"] = _knowledge_prompt_context(bundle, lang)
+    if bundle.get("risk", {}).get("level") == "urgent":
+        result = _urgent_result(bundle, lang)
+    elif not bundle.get("matches"):
         result = _fallback_result(d, lang)
+    else:
+        prompt = _build_prompt(d, lang)
+        try:
+            client = _groq_client()
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1024,
+                response_format={"type": "json_object"},
+                temperature=0.2,
+                timeout=45,
+            )
+            result = _extract_json(response.choices[0].message.content)
+        except Exception:
+            result = _fallback_result(d, lang)
 
-    recs = _sanitize_recommendations(result.get("recommendations", []), lang)
-    if len(recs) < 2:
-        recs = recs + _symptom_tips(d.get("symptoms", []), lang)
-    result["recommendations"] = recs[:4]
+    # These fields are always deterministic and grounded in active, verified KB rows.
+    if bundle.get("risk", {}).get("level") == "urgent":
+        result["possible_conditions"] = (
+            "تم تعليق عرض الاحتمالات لأن طبقة الأمان اكتشفت علامة خطر محتملة."
+            if lang == "ar" else
+            "Possible conditions are withheld because the independent safety layer detected a potential red flag."
+        )
+        result["recommendations"] = []
+    else:
+        result["possible_conditions"] = _render_possible_conditions(bundle.get("matches") or [], lang)
+        result["recommendations"] = _knowledge_recommendations(bundle, lang)
+        # Safety, medication, follow-up, and red-flag wording must come from
+        # deterministic data/rules rather than generated model output.
+        result.update(_grounded_guidance(bundle, d, lang))
+    result["confidence"] = ({"strong": "high", "moderate": "medium", "weak": "low"}.get(
+        ((bundle.get("matches") or [{}])[0]).get("match_level"), "low"
+    ))
 
-    rule_flag = False
-    if _rule_urgency(d.get("symptoms"), d.get("severity", 1), d.get("age")) == "high":
-        result["urgency"] = "high"
-        rule_flag = True
+    triage = pre_triage
+    risk_level = bundle.get("risk", {}).get("level", "low")
+    if risk_level == "urgent":
+        triage = {"level": "emergency", "label": _triage_label("emergency", lang),
+                  "reason": "\n".join("• " + str(r.get("message") or r.get("name") or "") for r in bundle.get("risk", {}).get("reasons", []))}
+    elif risk_level == "review" and triage.get("level") == "monitor":
+        triage = {"level": "soon", "label": _triage_label("soon", lang),
+                  "reason": "\n".join("• " + str(r.get("message") or r.get("name") or "") for r in bundle.get("risk", {}).get("reasons", []))}
 
-    triage = _triage(d, lang)
-    if triage["level"] in ("emergency", "today"):
-        result["urgency"] = "high" if triage["level"] == "emergency" else result.get("urgency", "medium")
-
-    low_conf = (result.get("confidence") or "medium").lower() == "low"
+    # The displayed urgency is derived only from the independent safety/triage layers.
+    urgency = "high" if triage["level"] == "emergency" else ("medium" if triage["level"] in ("today", "soon") else "low")
+    result["urgency"] = urgency
+    result["urgency_ar" if lang == "ar" else "urgency_text"] = ({
+        "ar": {"high": "طوارئ", "medium": "يحتاج مراجعة طبية", "low": "خطورة منخفضة"},
+        "en": {"high": "Urgent", "medium": "Needs medical review", "low": "Low risk"},
+    })[lang][urgency]
+    rule_flag = urgency == "high"
+    low_conf = result.get("confidence") == "low"
 
     predicted = []
     try:
@@ -696,6 +952,13 @@ def run_analysis(patient, lang="ar"):
                     "home_care": result.get("home_care", ""),
                     "medication_guidance": result.get("medication_guidance", ""),
                     "questions_for_doctor": result.get("questions_for_doctor", ""),
+                    "risk_level": risk_level,
+                    "risk_label": bundle.get("risk", {}).get("label", ""),
+                    "knowledge_matches": bundle.get("matches", []),
+                    "medical_sources": bundle.get("sources", []),
+                    "symptom_normalization": bundle.get("normalization", {}),
+                    "knowledge_last_updated": bundle.get("last_updated"),
+                    "why_result": _why_result(bundle, lang),
                 },
             )
     except Exception:
@@ -726,7 +989,20 @@ def run_analysis(patient, lang="ar"):
         "medication_guidance": _md_safe(result.get("medication_guidance", ""), lang),
         "simple_explanation": _md_safe(result.get("simple_explanation", ""), lang),
         "questions_for_doctor": _md_safe(result.get("questions_for_doctor", ""), lang),
+        "risk_level": risk_level,
+        "risk_label": bundle.get("risk", {}).get("label", ""),
+        "risk_reasons": bundle.get("risk", {}).get("reasons", []),
+        "knowledge_matches": bundle.get("matches", []),
+        "medical_sources": bundle.get("sources", []),
+        "symptom_normalization": bundle.get("normalization", {}),
+        "knowledge_last_updated": bundle.get("last_updated"),
+        "why_result": _md_safe(_why_result(bundle, lang), lang),
+        "emergency": bool(bundle.get("risk", {}).get("emergency")),
+        "emergency_flags": [r.get("name") or r.get("message") for r in bundle.get("risk", {}).get("reasons", []) if r.get("name") or r.get("message")],
         "ml_predictions": predicted,
+        # Kept for backward-compatible API consumers, but never presented as
+        # a medical possibility until mapped to active KB rows and sources.
+        "ml_grounded": False,
         "med_warnings": med_matches,
         "record_id": record_id,
         "triage_level": triage["level"],
