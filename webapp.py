@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
 from functools import wraps
-from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g
+from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g, abort
 
 import db
 import ml_diagnosis
@@ -30,6 +30,10 @@ import health_search
 import calculators as calcmod
 import medical_knowledge
 import platform_v2
+import advanced_features
+import admin_operational
+import medication_push
+import privacy_features
 
 from dashboard import DASHBOARD_HTML
 
@@ -90,6 +94,25 @@ input,select,textarea{border-color:var(--v2-line)!important;border-radius:12px!i
 @media(max-width:900px){.v2-more-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.svc-grid[style]{grid-template-columns:1fr!important}}
 @media(max-width:600px){.v2-more-grid,.v2-source-grid{grid-template-columns:1fr}.v2-more-grid{padding:0 12px 12px}.container{padding-inline:12px}.v2-section-head{margin-top:24px}}
+body.ss-accessibility{font-size:112%;line-height:1.75}body.ss-accessibility .btn,body.ss-accessibility .opt,body.ss-accessibility .ss-btn-primary,body.ss-accessibility button{min-height:52px!important;padding-block:11px!important}body.ss-accessibility .card,body.ss-accessibility .res-card,body.ss-accessibility .hist-card{padding:clamp(20px,3vw,28px)!important}body.ss-accessibility *{scroll-behavior:auto!important}body.ss-accessibility *,body.ss-accessibility *::before,body.ss-accessibility *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}body.ss-accessibility :focus-visible{outline:3px solid #287FC1!important;outline-offset:3px!important}
+/* Unified component layer — calm medical cards, controls, results and footer. */
+.card,.auth-card,.res-card,.res-sec,.rec-card,.res-why,.res-action,.res-assess,.res-questions,.res-transparency,.trans-card,.hp-panel,.hp-stat,.hp-quick-link{
+  background:var(--v2-card)!important;border:1px solid var(--v2-line)!important;border-radius:var(--v2-radius)!important;box-shadow:var(--v2-shadow)!important}
+.res-card{padding:clamp(16px,3vw,24px)!important}.res-sec,.rec-card,.res-why,.res-action,.res-assess,.res-questions,.res-transparency{padding:16px!important;margin-block:10px!important}
+.opt,.mini-btn,.dd-btn,.account-dd,.trans-add-btn{border-radius:12px!important;box-shadow:none!important;transition:border-color .18s ease,background .18s ease,color .18s ease!important}
+.opt:hover,.mini-btn:hover{transform:none!important;border-color:var(--v2-blue)!important}
+.hp-account-hero{background:var(--v2-sky)!important;color:var(--v2-blue-dark)!important;border:1px solid var(--v2-line)!important;box-shadow:var(--v2-shadow)!important}
+.hp-account-email{color:var(--v2-muted)!important}.hp-avatar,.hp-secure{background:#fff!important;border-color:var(--v2-line)!important;color:var(--v2-blue-dark)!important}
+.footer{background:#fff!important;color:var(--v2-muted)!important;border-top:1px solid var(--v2-line)!important;border-radius:26px 26px 0 0!important;box-shadow:none!important}
+.footer .f-brand,.footer .f-sec h4,.footer .f-love{color:var(--v2-blue-dark)!important}.footer .f-tag,.footer .f-sec p,.footer .f-copy{color:var(--v2-muted)!important}.footer a,.footer .f-links a,.footer .f-sec .f-owner{color:var(--v2-blue)!important}.footer .f-tg{background:var(--v2-blue)!important;color:#fff!important}
+.v2-symptom-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.v2-symptom-chip{display:inline-flex;align-items:center;min-height:34px;padding:6px 10px;border-radius:999px;background:var(--v2-sky);border:1px solid var(--v2-line);color:var(--v2-blue-dark);font-size:12px;font-weight:700}
+.v2-low-confidence-card{margin:12px 0;padding:15px;border:1px solid #cfe4f5;border-radius:15px;background:#f7fbff;color:#284764}.v2-low-confidence-card h3{color:#123B70;margin-bottom:7px}.v2-low-confidence-card ul{margin:8px 20px 0;line-height:1.8}
+.data-quality-card{margin:12px 0;padding:16px;border:1px solid #CFE3F2;border-radius:17px;background:#F8FCFF;color:#24445F}.dq-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.dq-score{font-size:23px;font-weight:900;color:#123B70}.dq-level{font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86}.dq-track{height:9px;background:#E5EEF5;border-radius:999px;overflow:hidden;margin:11px 0}.dq-fill{height:100%;background:var(--v2-blue);border-radius:inherit;transition:width .28s ease}.dq-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dq-item{padding:8px 10px;border-radius:11px;background:#fff;border:1px solid #E1ECF3;font-size:12px}.dq-item.missing{background:#FFF9ED;border-color:#F6E3B2}.dq-item.clarify{background:#FFF4EA;border-color:#F5D2AE}.dq-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--v2-muted)}.xai-card{margin:13px 0;border:1px solid #D4E6F1;border-radius:17px;background:#fff;overflow:hidden}.xai-card summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:900;color:#123B70;background:#F7FBFE;display:flex;align-items:center;justify-content:space-between;gap:10px}.xai-card summary::-webkit-details-marker{display:none}.xai-body{padding:15px}.xai-basis{display:inline-flex;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;margin-bottom:10px}.xai-factor{padding:11px 0;border-bottom:1px solid #EDF2F6}.xai-factor:last-child{border-bottom:0}.xai-factor-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.xai-influence{font-size:10px;font-weight:900;border-radius:999px;padding:4px 8px;background:#F1F5F9;color:#475569}.xai-influence.high{background:#EAF5FC;color:#155D8B}.xai-influence.medium{background:#FFF7E6;color:#8A5A00}.xai-influence.low{background:#F1F5F9;color:#526477}.xai-detail{font-size:12px;color:var(--v2-muted);line-height:1.7;margin-top:5px}.xai-meter{display:inline-flex;gap:3px;align-items:center;margin-inline-start:7px}.xai-meter i{display:block;width:18px;height:5px;border-radius:999px;background:#DFE7ED}.xai-meter i.on{background:#6EAED3}.xai-note{margin-top:10px;padding:10px 11px;background:#F8FAFC;border-radius:11px;color:#526477;font-size:11px;line-height:1.7}@media(max-width:600px){.dq-grid{grid-template-columns:1fr}.dq-head{align-items:flex-start}.xai-factor-head{align-items:flex-start;flex-direction:column}}.v2-emergency-card{background:var(--v2-red-bg);border:1px solid #F2CACA;border-inline-start:4px solid var(--v2-red);border-radius:16px;padding:16px;margin:12px 0;color:#713434}.v2-emergency-card h3{color:var(--v2-red);font-size:17px;margin-bottom:7px}.v2-emergency-card strong{display:block;color:#713434;margin-top:10px}.v2-emergency-card p{margin:4px 0;line-height:1.75}
+.v2-condition-card{border-inline-start:3px solid var(--v2-blue)!important}.v2-match-badge{margin-inline-start:auto;background:var(--v2-sky);color:var(--v2-blue-dark);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}.v2-match-list{display:grid;gap:5px;margin-top:8px}.v2-match-item{color:var(--v2-text);font-size:13px}
+.v2-redflag-card{background:var(--v2-red-bg)!important;border-color:#F2CACA!important;border-inline-start:3px solid var(--v2-red)!important}.v2-redflag-card .rec-head b{color:var(--v2-red)!important}.v2-safe-note{background:var(--v2-green-bg);border:1px solid #CDE7D8;border-radius:14px;padding:13px 15px;color:var(--v2-green);font-weight:700;margin:8px 0 14px}.v2-disclaimer{background:var(--v2-bg);border:1px solid var(--v2-line);border-radius:14px;padding:13px 15px;color:var(--v2-muted);font-size:12px;line-height:1.75;margin-top:16px;text-align:center}
+.v2-result-section-title{font-size:15px!important;color:var(--v2-blue-dark)!important;margin-top:18px!important;margin-bottom:8px!important}.v2-source-link{display:inline-flex;align-items:center;min-height:38px;margin-top:7px}
+@keyframes v2FadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.res-card,.v2-info-page>section,.card{animation:v2FadeUp .28s ease both}
+@media(max-width:600px){.res-card{padding:14px!important}.res-assess-row{align-items:flex-start!important;gap:7px!important;flex-direction:column!important}.rec-head{align-items:flex-start!important;flex-wrap:wrap!important}.v2-match-badge{margin-inline-start:0}.v2-emergency-card{padding:14px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 """
 
@@ -181,13 +204,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ss-next-step { background: linear-gradient(135deg, var(--primary-light), var(--bg-page)); border: 1.5px solid var(--border-card); border-radius: 18px; padding: 18px 20px; margin-bottom: 16px; }
 .ss-next-step h3 { font-size: 16px; font-weight: 800; color: var(--primary-dark); margin-bottom: 6px; }
 .ss-next-step p { font-size: 14px; color: var(--text-body); line-height: 1.7; margin-bottom: 12px; }
-.ss-prerow { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border-card); }
-.ss-prerow:last-child { border-bottom:none; }
-.ss-prerow .pr { font-weight:700; color:var(--primary-dark); min-width:90px; }
-.ss-prerow .pv { color:var(--text-body); text-align:right; }
-.ss-prerow .pv.missing { color:#EF4444; font-style:italic; }
-.ss-prereview { background:var(--bg-card); border-radius:16px; padding:20px; border:2px solid var(--border-card); margin:12px 0; box-shadow: var(--shadow-card); }
-.ss-prereview h3 { margin:0 0 12px 0; color:var(--primary-dark); }
 .manage-card { background:var(--bg-card); border-radius:16px; padding:18px; margin-bottom:12px; border:1px solid var(--border-card); box-shadow: var(--shadow-card); }
 .manage-card-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
 .manage-icon { font-size:22px; }
@@ -308,11 +324,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .res-questions { background: linear-gradient(135deg, #1E293B, #172554); border-color: #1E3A5F; }
   .res-questions-h { color: #93C5FD; }
   .res-questions-body { color: #94A3B8; }
-  .ss-prerow { border-color: #334155; }
-  .ss-prerow .pr { color: #93C5FD; }
-  .ss-prerow .pv { color: #CBD5E1; }
-  .ss-prereview { background: #1E293B; border-color: #334155; }
-  .ss-prereview h3 { color: #93C5FD; }
   .manage-card { background: #1E293B; border-color: #334155; }
   .manage-label { color: #93C5FD; }
   .manage-val { background: #0F172A; color: #CBD5E1; }
@@ -894,8 +905,6 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .hp-overview { grid-template-columns: 1fr; }
   .hp-quick-links { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .hp-account-email { overflow-wrap: anywhere; word-break: break-all; }
-  .ss-prerow { align-items: flex-start; flex-direction: column; gap: 3px; }
-  .ss-prerow .pv { width: 100%; text-align: start; }
   .how-step { flex-basis: 100%; min-width: 0; }
   .ss-modal-overlay, .expl-bg, .asst-modal-bg { padding: 10px; }
   .ss-modal, .expl-modal, .asst-modal { padding: 18px 15px; border-radius: 18px; }
@@ -1077,7 +1086,7 @@ __GSC_TAG__
 @media (max-width: 480px) { .pwa-install { align-items: flex-start; } .pwa-install-actions { flex-direction: column; } }
 </style>
 </head>
-<body>
+<body class="__BODY_CLASS__">
 <div class="pwa-install" id="pwaInstall" role="dialog" aria-live="polite" aria-label="Install SymptoSense">
   <img class="pwa-install-icon" src="/icons/icon-192.png" alt="">
   <div class="pwa-install-copy" id="pwaInstallText"></div>
@@ -1826,12 +1835,53 @@ def _data_user_id():
     return "account-%s" % account_id if account_id else _user_id()
 
 
+def _consent_subject_key():
+    """Internal subject key for consent/data controls; never exposed in analytics output."""
+    return _data_user_id()
+
+
+def _consent_state():
+    try:
+        return privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
+    except Exception:
+        return {"service_usage": False, "analytics_research": False, "needs_review": True}
+
+
+def _service_consent_ok():
+    state = _consent_state()
+    return bool(state.get("service_usage")) and not bool(state.get("needs_review"))
+
+
+def _analytics_consent_ok():
+    """Analytics consent is valid only for the current consent/policy versions."""
+    state = _consent_state()
+    return bool(state.get("analytics_research")) and not bool(state.get("needs_review"))
+
+
+def _analytics_session_id():
+    """Random per-browser-session identifier used only for anonymous journey analytics."""
+    sid=session.get("_analytics_sid")
+    if not sid:
+        sid=secrets.token_urlsafe(18)
+        session["_analytics_sid"]=sid
+    return sid
+
+
 def _ss_user():
-    """Get the logged-in user info dict, or None."""
+    """Get the logged-in user info dict, or None.
+
+    If the authenticated session belongs to the configured existing project
+    owner, repair that same account's persisted role to ``admin``. No user is
+    created and no password/credential is read or stored here.
+    """
     uid = _ss_user_id()
     if not uid:
         return None
-    return db.get_ss_user(uid)
+    user = db.get_ss_user(uid)
+    if user and db.is_owner_admin_email(user.get("email")) and user.get("role") != "admin":
+        if db.promote_existing_owner_admin(uid):
+            user = db.get_ss_user(uid)
+    return user
 
 
 def _ss_health():
@@ -1953,7 +2003,7 @@ def v2_request_timer():
 
 @app.after_request
 def v2_operational_metrics(response):
-    """Collect anonymous operational counts without request bodies or health data."""
+    """Collect content-free operational counts and anonymous journey activity."""
     try:
         path = request.path or "/"
         event_type = None
@@ -1963,11 +2013,20 @@ def v2_operational_metrics(response):
             event_type = "analysis_complete"
         elif request.method == "POST" and path.startswith("/api/assistant"):
             event_type = "assistant_use"
+        elif request.method == "GET" and path in {"/sources","/medical-sources"}:
+            event_type = "source_accessed"
         elif request.method == "GET" and response.mimetype == "text/html" and not path.startswith("/admin"):
             event_type = "page_view"
         if event_type:
             elapsed = round((time.perf_counter() - getattr(g, "v2_started_at", time.perf_counter())) * 1000)
             platform_v2.record_usage(event_type, path, _lang(), request.headers.get("User-Agent", ""), response.status_code, elapsed)
+        if request.method == "GET" and response.status_code < 400 and response.mimetype == "text/html" and not path.startswith("/admin"):
+            try:
+                admin_operational.touch_session(_analytics_session_id(), request.headers.get("User-Agent", ""))
+                if path in {"/home","/"}: admin_operational.record_journey(_analytics_session_id(), "home", request.headers.get("User-Agent", ""))
+                elif path == "/chat": admin_operational.record_journey(_analytics_session_id(), "start_analysis", request.headers.get("User-Agent", ""))
+            except Exception:
+                pass
     except Exception:
         pass
     return response
@@ -2236,7 +2295,7 @@ L = {
         "register_error": "حدث خطأ — تأكد من صحة البيانات",
         "register_pass_mismatch": "كلمتا المرور غير متطابقتين",
         "profile_h": "ملفي الصحي 👤",
-        "profile_sub": "معلوماتك تساعد SymptoSense على تخصيص تجربتك عند موافقتك.",
+        "profile_sub": "معلوماتك الصحية اختيارية وتُستخدم فقط لتخصيص تجربتك وتحسين تحليل الأعراض عند موافقتك. يمكنك حذفها في أي وقت.",
         "profile_basic": "معلوماتي الأساسية",
         "profile_name": "الاسم",
         "profile_dob": "تاريخ الميلاد",
@@ -2277,36 +2336,6 @@ L = {
         "profile_symptoms_changed_sub": "هل تغيرت الأعراض منذ آخر مرة استخدمت فيها SymptoSense؟",
         "profile_reassess": "إعادة التقييم 🔄",
         "preparing_analysis": "جاري تحضير ملخص التحليل...",
-        "prereview_title": "مراجعة قبل التحليل",
-        "prereview_sub": "تأكد من صحة المعلومات قبل بدء التحليل الذكي:",
-        "prereview_symptoms": "📋 الأعراض:",
-        "prereview_age": "🎂 العمر:",
-        "prereview_gender": "⚧ الجنس:",
-        "prereview_duration": "⏱️ المدة:",
-        "prereview_notes": "📝 ملاحظات:",
-        "prereview_height": "📏 الطول:",
-        "prereview_weight": "⚖️ الوزن:",
-        "prereview_meds": "💊 الأدوية:",
-        "prereview_allergies": "⚠️ الحساسيات:",
-        "prereview_conditions": "🩺 الأمراض:",
-        "prereview_missing": "غير مكتمل",
-        "prereview_start": "ابدأ التحليل",
-        "prereview_edit": "تعديل معلوماتي",
-        "prereview_editing": "تم فتح وضع التعديل",
-        "prereview_add_info": "أضيف معلومات إضافية",
-        "prereview_adding": "ما المعلومات الإضافية؟",
-        "prereview_edit_hint": "يمكنك تعديل معلوماتك من صفحة البروفايل",
-        "prereview_more_q": "أي معلومات تريد إضافتها؟",
-        "prereview_more_meds": "💊 الأدوية التي أتناولها",
-        "prereview_more_allergies": "⚠️ الحساسيات",
-        "prereview_more_weight": "⚖️ الوزن والطول",
-        "prereview_more_done": "✅ لا شكراً، المعلومات كافية",
-        "prereview_meds_ask": "ما هي الأدوية التي تتناولها حالياً؟",
-        "prereview_meds_hint": "اكتب الأدوية بالاسم أو الاستخدام",
-        "prereview_allergies_ask": "هل لديك أي حساسيات؟",
-        "prereview_allergies_hint": "اكتب أنواع الحساسية إن وُجدت",
-        "prereview_weight_ask": "ما وزنك وطولك؟",
-        "prereview_weight_hint": "مثال: وزني ٧٥ كجم وطول ١٧٠ سم",
         "why_title": "لماذا هذه النتيجة؟",
         "action_title": "ماذا تفعل الآن؟",
         "action_high_1": "寻求急诊医疗 - لا تنتظر",
@@ -2635,7 +2664,7 @@ L = {
         "register_error": "An error occurred — please check your details",
         "register_pass_mismatch": "Passwords do not match",
         "profile_h": "Health Profile 👤",
-        "profile_sub": "Your information helps SymptoSense personalize your experience when you allow it.",
+        "profile_sub": "Your health information is optional and is used only to personalize your experience and improve symptom analysis when you allow it. You can delete it at any time.",
         "profile_basic": "My Basic Info",
         "profile_name": "Name",
         "profile_dob": "Date of Birth",
@@ -2676,36 +2705,6 @@ L = {
         "profile_symptoms_changed_sub": "Have your symptoms changed since you last used SymptoSense?",
         "profile_reassess": "Reassess 🔄",
         "preparing_analysis": "Preparing analysis summary...",
-        "prereview_title": "Review Before Analysis",
-        "prereview_sub": "Confirm your information before starting the smart analysis:",
-        "prereview_symptoms": "📋 Symptoms:",
-        "prereview_age": "🎂 Age:",
-        "prereview_gender": "⚧ Gender:",
-        "prereview_duration": "⏱️ Duration:",
-        "prereview_notes": "📝 Notes:",
-        "prereview_height": "📏 Height:",
-        "prereview_weight": "⚖️ Weight:",
-        "prereview_meds": "💊 Medications:",
-        "prereview_allergies": "⚠️ Allergies:",
-        "prereview_conditions": "🩺 Conditions:",
-        "prereview_missing": "Not provided",
-        "prereview_start": "Start Analysis",
-        "prereview_edit": "Edit My Info",
-        "prereview_editing": "Edit mode opened",
-        "prereview_add_info": "Add More Info",
-        "prereview_adding": "What info would you like to add?",
-        "prereview_edit_hint": "You can edit your info from the profile page",
-        "prereview_more_q": "Which info would you like to add?",
-        "prereview_more_meds": "💊 Medications I take",
-        "prereview_more_allergies": "⚠️ Allergies",
-        "prereview_more_weight": "⚖️ Weight & Height",
-        "prereview_more_done": "✅ No thanks, info is complete",
-        "prereview_meds_ask": "What medications are you currently taking?",
-        "prereview_meds_hint": "Type medication names or usage",
-        "prereview_allergies_ask": "Do you have any allergies?",
-        "prereview_allergies_hint": "Type allergy types if any",
-        "prereview_weight_ask": "What is your weight and height?",
-        "prereview_weight_hint": "Example: I weigh 75kg and 170cm tall",
         "why_title": "Why This Result?",
         "action_title": "What To Do Now",
         "action_high_1": "Seek emergency medical care now",
@@ -2799,6 +2798,8 @@ def _nav():
         ("/home", "الرئيسية" if ar else "Home"),
         ("/chat", "تحليل الأعراض" if ar else "Symptom analysis"),
     ]
+    if user:
+        links.append(("/profile", "الملف الشخصي" if ar else "Profile"))
     html = '<nav class="nav"><a href="/home" class="logo" dir="ltr">🩺 Sympto<span>Sense</span></a><div class="links">'
     for href, label in links:
         cls = ' class="on"' if path == href else ""
@@ -2922,10 +2923,18 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         else ""
     )
     ast = CT["en" if lang == "en" else "ar"]
+    body_class = ""
+    try:
+        prefs = advanced_features.get_preferences(_ss_user_id()) if _ss_user_id() else {"accessibility_mode": False}
+        if prefs.get("accessibility_mode"):
+            body_class = "ss-accessibility"
+    except Exception:
+        body_class = ""
     return (
         PAGE_FRAME
         .replace("__LANG__", "en" if lang == "en" else "ar")
         .replace("__DIR__", "ltr" if lang == "en" else "rtl")
+        .replace("__BODY_CLASS__", body_class)
         .replace("__TITLE__", title)
         .replace("__DESC__", desc)
         .replace("__KEYWORDS__", _t("keywords"))
@@ -3332,222 +3341,43 @@ def _tools_html(t):
 
 
 ABOUT_US_CSS = """
-.about-us-page{width:min(1180px,100%);margin:0 auto;display:grid;gap:clamp(22px,4vw,42px);padding-bottom:18px}
-.au-section{position:relative;overflow:hidden;border:1px solid var(--v2-line);border-radius:26px;background:#fff;box-shadow:var(--v2-shadow)}
-.au-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--v2-blue);font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
-.au-title{margin:0 0 12px;color:var(--v2-blue-dark);font-size:clamp(24px,3.4vw,36px);line-height:1.35}
-.au-copy{max-width:620px}.au-copy p{margin:0;color:var(--v2-text);font-size:clamp(14.5px,1.35vw,16.5px);line-height:2}
-.au-copy p+p{margin-top:12px}.au-muted{color:var(--v2-muted)!important}.au-strong{color:var(--v2-blue-dark)!important;font-weight:800}
-.au-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.88fr);gap:clamp(24px,5vw,62px);align-items:center;padding:clamp(24px,5vw,54px);direction:ltr}
-.au-split>.au-copy{direction:rtl;text-align:right}.au-split>.au-visual{direction:ltr}.au-split.au-story-layout{grid-template-areas:'copy visual'}.au-split.au-story-layout>.au-copy{grid-area:copy}.au-split.au-story-layout>.au-visual{grid-area:visual}
-.au-split.au-idea-layout{grid-template-areas:'visual copy'}.au-split.au-idea-layout>.au-copy{grid-area:copy}.au-split.au-idea-layout>.au-visual{grid-area:visual}
-html[dir='ltr'] .au-split>.au-copy{direction:ltr;text-align:left}.au-section::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:#EAF5FC;filter:blur(2px);opacity:.55;pointer-events:none;inset:auto -120px -125px auto}
-
-/* Hero / About me */
-.au-hero{min-height:520px;display:grid;grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(30px,5vw,66px);padding:clamp(28px,5vw,60px);direction:ltr;background:linear-gradient(135deg,#F8FCFF 0%,#EFF8FE 56%,#FFFFFF 100%)}
-.au-hero-copy{direction:rtl;text-align:right;position:relative;z-index:2}.au-hero-copy h1{margin:0 0 8px;color:var(--v2-blue-dark);font-size:clamp(32px,4.6vw,52px);line-height:1.28}.au-role-line{margin:0 0 18px!important;color:var(--v2-blue)!important;font-weight:800!important;font-size:clamp(15px,1.7vw,18px)!important;line-height:1.6!important}.au-hero-copy .au-lead{max-width:56ch;color:var(--v2-text);font-size:clamp(15px,1.5vw,17px);line-height:2}.au-contact-link{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:9px 12px;border:1px solid #CFE2F1;border-radius:12px;background:#fff;color:var(--v2-blue-dark);font-size:12px;font-weight:800;text-decoration:none}.au-contact-link:hover{border-color:#9FC8DE;background:#F8FCFE}
-html[dir='ltr'] .au-hero-copy{direction:ltr;text-align:left}.au-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.au-tag{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #CFE2F1;border-radius:999px;background:#fff;color:var(--v2-blue-dark);font-size:12px;font-weight:800}
-.au-hero-visual{position:relative;min-height:385px;display:grid;place-items:center;isolation:isolate}.au-hero-visual::before{content:'';position:absolute;width:min(390px,92%);aspect-ratio:1;border-radius:42% 58% 52% 48%/48% 46% 54% 52%;background:#DDEFFA;transform:rotate(-7deg);z-index:-2}.au-hero-visual::after{content:'';position:absolute;width:min(330px,78%);aspect-ratio:1;border:1px solid #BFDDEC;border-radius:50%;z-index:-1}
-.au-abstract-card{width:min(380px,94%);min-height:300px;padding:22px;border:1px solid rgba(255,255,255,.85);border-radius:28px;background:rgba(255,255,255,.9);box-shadow:0 18px 45px rgba(31,86,127,.10);backdrop-filter:blur(8px);display:grid;grid-template-rows:auto 1fr auto;gap:18px}.au-abstract-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.au-avatar-mark{width:62px;height:62px;border-radius:20px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900;box-shadow:0 10px 22px rgba(40,127,193,.18)}.au-dots{display:flex;gap:6px}.au-dots i{width:7px;height:7px;border-radius:50%;background:#C8DFED}.au-dots i:nth-child(2){background:#8FC7E8}.au-dots i:nth-child(3){background:#58A8D7}
-.au-data-net{position:relative;min-height:146px;border:1px dashed #BED8E8;border-radius:20px;background:#F8FCFE;overflow:hidden}.au-data-net .node{position:absolute;width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:#fff;border:1px solid #D4E6F1;box-shadow:0 7px 16px rgba(31,86,127,.07);font-size:25px}.au-data-net .n1{top:16px;left:18px}.au-data-net .n2{top:48px;left:50%;transform:translateX(-50%)}.au-data-net .n3{right:20px;bottom:18px}.au-data-net .n4{left:28%;bottom:12px}.au-data-net svg{position:absolute;inset:0;width:100%;height:100%}.au-abstract-foot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.au-mini-stat{padding:10px 7px;border-radius:13px;background:#EEF7FC;color:var(--v2-blue-dark);text-align:center;font-size:11px;font-weight:800}
-
-/* Story */
-.au-story-card{background:#fff}.au-story-visual{min-height:330px;display:grid;place-items:center}.au-story-orbit{position:relative;width:min(330px,90%);aspect-ratio:1;border-radius:50%;border:1px solid #CDE3F0;background:radial-gradient(circle at center,#fff 0 31%,#F1F8FC 32% 59%,#fff 60%);box-shadow:inset 0 0 0 18px rgba(234,245,252,.55)}.au-story-orbit .center{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:34px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;text-align:center;font-weight:900;line-height:1.3;box-shadow:0 14px 28px rgba(40,127,193,.18)}.au-story-orbit .orb{position:absolute;width:58px;height:58px;border-radius:18px;background:#fff;border:1px solid #D4E6F1;display:grid;place-items:center;box-shadow:0 8px 18px rgba(31,86,127,.08);font-size:25px}.au-story-orbit .o1{top:4%;left:43%}.au-story-orbit .o2{right:3%;top:42%}.au-story-orbit .o3{left:41%;bottom:3%}.au-story-orbit .o4{left:2%;top:42%}
-.au-timeline{margin-top:24px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:relative}.au-timeline::before{content:'';position:absolute;left:8%;right:8%;top:20px;height:1px;background:#CFE1EC}.au-step{position:relative;z-index:1;padding-top:0;text-align:center}.au-step-num{width:42px;height:42px;margin:0 auto 9px;border-radius:14px;background:#fff;border:1px solid #BED8E8;color:var(--v2-blue);display:grid;place-items:center;font-size:12px;font-weight:900;box-shadow:0 5px 13px rgba(31,86,127,.06)}.au-step b{display:block;color:var(--v2-blue-dark);font-size:12px;line-height:1.5}
-
-/* Idea */
-.au-idea-visual{min-height:330px;display:grid;place-items:center}.au-product-visual{position:relative;width:min(360px,94%);padding:14px;border:1px solid #CFE3EE;border-radius:28px;background:#F3F9FD;box-shadow:0 14px 32px rgba(31,86,127,.09)}.au-product-visual img{width:100%;display:block;border-radius:20px;object-fit:cover}.au-image-chip{position:absolute;padding:7px 10px;border:1px solid #D5E6EF;border-radius:999px;background:rgba(255,255,255,.94);color:var(--v2-blue-dark);font-size:10.5px;font-weight:900;box-shadow:0 7px 16px rgba(31,86,127,.07)}.au-image-chip.c1{top:24px;left:-20px}.au-image-chip.c2{right:-20px;top:47%}.au-image-chip.c3{bottom:26px;left:-13px}.au-triad{position:relative;width:min(390px,96%);height:300px}.au-triad-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:136px;height:136px;border-radius:42px;background:var(--v2-blue-dark);color:#fff;display:grid;place-items:center;text-align:center;font-size:15px;font-weight:900;box-shadow:0 16px 34px rgba(22,59,92,.18)}.au-triad-node{position:absolute;width:102px;height:102px;border-radius:30px;background:#fff;border:1px solid #CDE3F0;display:grid;place-items:center;text-align:center;color:var(--v2-blue-dark);font-size:12px;font-weight:900;line-height:1.35;box-shadow:0 10px 24px rgba(31,86,127,.08)}.au-triad-node span{display:block;font-size:29px;margin-bottom:4px}.au-triad-node.t1{top:0;left:50%;transform:translateX(-50%)}.au-triad-node.t2{bottom:8px;left:18px}.au-triad-node.t3{bottom:8px;right:18px}.au-triad-line{position:absolute;height:1px;background:#AFCFDF;transform-origin:left center}.au-triad-line.l1{width:84px;left:50%;top:101px;transform:translateX(-50%) rotate(90deg)}.au-triad-line.l2{width:110px;left:29%;top:60%;transform:rotate(28deg)}.au-triad-line.l3{width:110px;right:29%;top:60%;transform:rotate(-28deg);transform-origin:right center}
-
-/* Why / diagram */
-.au-diagram-section{padding:clamp(28px,5vw,54px);text-align:center;background:#F9FCFE}.au-diagram-section .au-copy{max-width:780px;margin:0 auto 28px;text-align:center}.au-diagram{max-width:820px;margin:0 auto;display:grid;gap:12px;justify-items:center}.au-diagram-box{min-width:190px;padding:15px 22px;border-radius:16px;border:1px solid #CDE3F0;background:#fff;color:var(--v2-blue-dark);font-weight:900;box-shadow:0 7px 18px rgba(31,86,127,.06)}.au-diagram-box.primary{background:var(--v2-blue);border-color:var(--v2-blue);color:#fff}.au-diagram-arrow{color:#7BAFCB;font-size:22px;line-height:1}.au-diagram-mid{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.au-diagram-mid .au-diagram-box{min-width:0}.au-plus{color:var(--v2-blue);font-size:20px;font-weight:900;display:none}
-
-/* Technologies */
-.au-tech-section{padding:clamp(28px,5vw,54px)}.au-tech-head{display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:24px}.au-tech-head .au-copy{max-width:620px}.au-tech-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.au-tech{min-height:118px;padding:18px;border:1px solid #D3E5EF;border-radius:18px;background:#fff;display:flex;flex-direction:column;gap:10px;justify-content:center;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.au-tech:hover{transform:translateY(-3px);border-color:#A8CEE2;box-shadow:0 10px 22px rgba(31,86,127,.08)}.au-tech-icon{width:42px;height:42px;border-radius:13px;background:#EAF5FC;display:grid;place-items:center;font-size:21px}.au-tech b{color:var(--v2-blue-dark);font-size:14px}.au-tech small{color:var(--v2-muted);font-size:11.5px;line-height:1.55}
-
-/* Live project showcase */
-.au-project{padding:clamp(28px,5vw,54px);background:linear-gradient(180deg,#fff,#F8FCFE)}.au-project-head{max-width:760px;margin:0 auto 26px;text-align:center}.au-project-head p{color:var(--v2-muted);line-height:1.9}.au-live-label{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 10px;border:1px solid #CFE1EC;border-radius:999px;background:#fff;color:var(--v2-blue-dark);font-size:11px;font-weight:800}.au-live-dot{width:7px;height:7px;border-radius:50%;background:#4FA97C;box-shadow:0 0 0 4px #E7F5EE}.au-device-stage{display:flex;justify-content:center;align-items:flex-end;gap:20px;direction:ltr}.au-laptop{width:min(800px,85%)}.au-laptop-screen{position:relative;aspect-ratio:16/9;padding:10px;border-radius:20px 20px 12px 12px;background:#163B5C;box-shadow:0 24px 50px rgba(22,59,92,.18)}.au-laptop-screen iframe{width:100%;height:100%;border:0;border-radius:11px;background:#fff;pointer-events:none}.au-laptop-base{width:108%;height:15px;margin-left:-4%;border-radius:4px 4px 18px 18px;background:#D5E0E8;box-shadow:0 8px 15px rgba(22,59,92,.12)}.au-phone-preview{width:150px;flex:0 0 150px;margin-bottom:-4px;padding:8px;border-radius:28px;background:#163B5C;box-shadow:0 18px 36px rgba(22,59,92,.18)}.au-phone-preview iframe{width:100%;aspect-ratio:9/18.5;border:0;border-radius:21px;background:#fff;pointer-events:none}
-
-/* Goal */
-.au-goal-visual{min-height:300px;display:grid;place-items:center}.au-goal-board{position:relative;width:min(340px,92%);aspect-ratio:1;border-radius:42px;background:#F1F8FC;border:1px solid #CFE3EE;display:grid;place-items:center}.au-target{width:180px;height:180px;border-radius:50%;border:18px solid #D5EAF5;box-shadow:inset 0 0 0 18px #B8DCEC;display:grid;place-items:center;background:#fff}.au-target::after{content:'🎯';font-size:48px}.au-rise{position:absolute;right:24px;top:28px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #D4E6F1;color:#267A52;font-size:21px;box-shadow:0 8px 18px rgba(31,86,127,.07)}.au-bulb{position:absolute;left:22px;bottom:24px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #D4E6F1;font-size:21px;box-shadow:0 8px 18px rgba(31,86,127,.07)}
-
-/* Future roadmap */
-.au-future{padding:clamp(28px,5vw,54px);background:#FBFDFE}.au-future-head{max-width:760px;margin-bottom:26px}.au-roadmap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;position:relative}.au-roadmap::before{content:'';position:absolute;left:5%;right:5%;top:28px;height:1px;background:#C8DFEB}.au-road{position:relative;z-index:1;text-align:center}.au-road-dot{width:56px;height:56px;margin:0 auto 10px;border-radius:18px;background:#fff;border:1px solid #BCD8E8;display:grid;place-items:center;font-size:23px;box-shadow:0 7px 17px rgba(31,86,127,.07)}.au-road b{display:block;color:var(--v2-blue-dark);font-size:12px;line-height:1.5;min-height:38px}.au-road span{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:999px;background:#EEF7FC;color:var(--v2-blue);font-size:9.5px;font-weight:900}
-
-/* Personal */
-.au-personal{padding:clamp(28px,5vw,54px);display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;align-items:center;background:#fff}.au-personal-visual{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.au-personal-pill{min-height:112px;border:1px solid #D3E5EF;border-radius:22px;background:#F8FCFE;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--v2-blue-dark);font-weight:900;font-size:12px}.au-personal-pill span{font-size:27px}.au-personal-pill:nth-child(2),.au-personal-pill:nth-child(3){background:#EEF7FC}
-
-/* Final CTA */
-.au-final{padding:clamp(36px,6vw,66px);text-align:center;background:linear-gradient(135deg,#F4FAFE,#FFFFFF);border-color:#C9E1EF}.au-final-inner{max-width:780px;margin:0 auto;position:relative;z-index:1}.au-final-mark{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;background:#fff;border:1px solid #CFE3EE;display:grid;place-items:center;font-size:36px;box-shadow:0 10px 24px rgba(31,86,127,.08)}.au-final h2{font-size:clamp(28px,4vw,42px);margin-bottom:12px}.au-final p{max-width:640px;margin:0 auto 22px;color:var(--v2-text);font-size:clamp(15px,1.6vw,18px);line-height:1.9}.au-final .btn{display:inline-flex;align-items:center;justify-content:center;min-width:190px;text-decoration:none}
-
-/* Motion */
-.au-reveal{opacity:0;transform:translateY(18px);animation:auEnter .62s ease forwards}.au-reveal:nth-child(2){animation-delay:.05s}.au-reveal:nth-child(3){animation-delay:.08s}.au-reveal:nth-child(4){animation-delay:.11s}@keyframes auEnter{to{opacity:1;transform:none}}
-.au-hero-visual,.au-story-orbit,.au-goal-board{animation:auFloat 6s ease-in-out infinite}@keyframes auFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-
-@media(max-width:960px){.au-hero,.au-split,.au-personal{grid-template-columns:1fr}.au-hero{min-height:0}.au-hero-visual{order:-1;min-height:350px}.au-personal-visual{width:min(430px,100%);margin:auto}.au-tech-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.au-roadmap{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:24px}.au-roadmap::before{display:none}.au-device-stage{align-items:center}.au-laptop{width:100%}.au-phone-preview{display:none}.au-split.au-story-layout,.au-split.au-idea-layout{grid-template-areas:'visual' 'copy'}.au-copy{max-width:none}}
-@media(max-width:640px){.about-us-page{gap:16px}.au-section{border-radius:20px}.au-hero,.au-split,.au-diagram-section,.au-tech-section,.au-project,.au-future,.au-personal,.au-final{padding:21px}.au-hero-visual{min-height:300px}.au-abstract-card{min-height:270px;padding:16px}.au-avatar-mark{width:54px;height:54px;border-radius:17px}.au-data-net .node{width:47px;height:47px;border-radius:15px;font-size:21px}.au-tags{gap:6px}.au-tag{padding:7px 9px;font-size:11px}.au-timeline{grid-template-columns:1fr;gap:8px;margin-top:20px}.au-timeline::before{left:20px;right:auto;top:15px;bottom:15px;width:1px;height:auto}.au-step{display:grid;grid-template-columns:42px 1fr;align-items:center;gap:10px;text-align:start}.au-step-num{margin:0}.au-step b{font-size:12.5px}.au-story-orbit{width:min(290px,92%)}.au-diagram-mid{grid-template-columns:1fr}.au-plus{display:block}.au-tech-grid{grid-template-columns:1fr}.au-tech{min-height:94px}.au-device-stage{display:block}.au-laptop{width:100%}.au-laptop-screen{padding:6px;border-radius:13px 13px 8px 8px}.au-roadmap{grid-template-columns:1fr}.au-road{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;text-align:start}.au-road-dot{margin:0}.au-road b{min-height:0}.au-road span{justify-self:start}.au-personal{gap:22px}.au-personal-visual{grid-template-columns:repeat(2,1fr)}.au-personal-pill{min-height:92px;border-radius:17px}.au-final .btn{width:100%}}
-@media(prefers-reduced-motion:reduce){.au-reveal,.au-hero-visual,.au-story-orbit,.au-goal-board{animation:none;opacity:1;transform:none}.au-tech{transition:none}}
+.about-us-page{width:min(1160px,100%);margin:0 auto;display:grid;gap:clamp(18px,3.5vw,34px);padding-bottom:20px}.au-section{position:relative;overflow:hidden;border:1px solid var(--v2-line);border-radius:24px;background:#fff;box-shadow:var(--v2-shadow)}.au-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);gap:clamp(24px,5vw,58px);align-items:center;padding:clamp(24px,5vw,52px)}.au-kicker{display:inline-flex;align-items:center;gap:7px;color:var(--v2-blue);font-size:12px;font-weight:900;margin-bottom:10px}.au-section h1,.au-section h2{color:var(--v2-blue-dark);line-height:1.35}.au-section h1{font-size:clamp(30px,4.5vw,50px);margin:0 0 8px}.au-section h2{font-size:clamp(23px,3vw,34px);margin:0 0 12px}.au-role{color:var(--v2-blue);font-weight:800;font-size:clamp(15px,1.7vw,18px);margin-bottom:18px}.au-copy{font-size:clamp(14.5px,1.35vw,16.5px);line-height:2;color:var(--v2-text);max-width:62ch}.au-copy p+p{margin-top:10px}.au-hero{background:linear-gradient(135deg,#F8FCFF,#EDF7FD 58%,#fff)}.au-hero .au-split{min-height:470px}.au-visual{min-height:320px;display:grid;place-items:center}.au-portrait-abstract{position:relative;width:min(390px,96%);aspect-ratio:1;border-radius:36px;background:#F4FAFE;border:1px solid #CFE3EF;display:grid;place-items:center;isolation:isolate}.au-portrait-abstract:before,.au-portrait-abstract:after{content:'';position:absolute;border-radius:50%;border:1px solid #BFDCEA;inset:11%}.au-portrait-abstract:after{inset:27%;background:#fff;border:0;box-shadow:0 14px 32px rgba(40,127,193,.09);z-index:-1}.au-r{width:92px;height:92px;border-radius:28px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:0 13px 30px rgba(40,127,193,.2)}.au-float{position:absolute;width:64px;height:64px;border-radius:20px;background:#fff;border:1px solid #D4E6F1;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 20px rgba(31,86,127,.08)}.au-f1{top:9%;left:11%}.au-f2{top:10%;right:9%}.au-f3{bottom:8%;left:13%}.au-f4{bottom:9%;right:11%}.au-story{background:#fff}.au-story .au-visual{order:-1}.au-story-flow{width:min(380px,96%);display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.au-story-node{min-height:116px;padding:18px;border:1px solid var(--v2-line);border-radius:20px;background:#F8FCFE;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;color:var(--v2-blue-dark);font-weight:800}.au-story-node span{font-size:30px;margin-bottom:6px}.au-story-node:last-child{background:var(--v2-blue);color:#fff;border-color:var(--v2-blue)}.au-idea-visual{width:min(390px,96%);position:relative}.au-idea-visual img{width:100%;display:block;border-radius:28px;border:1px solid #CEE3EF;box-shadow:0 16px 36px rgba(31,86,127,.10)}.au-chip{position:absolute;padding:8px 11px;border-radius:999px;background:#fff;border:1px solid #D5E6EF;color:var(--v2-blue-dark);font-size:11px;font-weight:900;box-shadow:0 7px 16px rgba(31,86,127,.07)}.au-c1{top:7%;left:-18px}.au-c2{top:45%;right:-20px}.au-c3{bottom:8%;left:-14px}.au-c4{bottom:30%;right:-18px}.au-purpose{padding:clamp(28px,5vw,52px);text-align:center;background:#F9FCFE}.au-purpose .au-copy{max-width:760px;margin:0 auto}.au-purpose-icons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:700px;margin:24px auto 0}.au-purpose-item{padding:18px;border:1px solid var(--v2-line);border-radius:18px;background:#fff;color:var(--v2-blue-dark);font-weight:800}.au-purpose-item span{display:block;font-size:29px;margin-bottom:7px}.au-project{padding:clamp(28px,5vw,54px);text-align:center}.au-project-head{max-width:720px;margin:0 auto 24px}.au-device{display:flex;align-items:flex-end;justify-content:center;gap:20px;direction:ltr}.au-laptop{width:min(800px,88%)}.au-screen{aspect-ratio:16/9;padding:9px;border-radius:20px 20px 10px 10px;background:#163B5C;box-shadow:0 22px 48px rgba(22,59,92,.17)}.au-screen iframe{width:100%;height:100%;border:0;border-radius:12px;background:#fff;pointer-events:none}.au-base{height:14px;width:108%;margin-left:-4%;border-radius:4px 4px 18px 18px;background:#D6E0E8}.au-phone{width:135px;padding:7px;border-radius:25px;background:#163B5C;box-shadow:0 17px 36px rgba(22,59,92,.16)}.au-phone iframe{width:100%;aspect-ratio:9/18.5;border:0;border-radius:19px;background:#fff;pointer-events:none}.au-message{padding:clamp(28px,5vw,52px);background:#F5FAFE}.au-message-card{max-width:900px;margin:auto;display:grid;grid-template-columns:1fr 220px;align-items:center;gap:28px;padding:clamp(22px,4vw,36px);border-radius:23px;background:#fff;border:1px solid var(--v2-line);box-shadow:0 12px 30px rgba(31,86,127,.07)}.au-voice-mark{height:180px;border-radius:26px;background:#EAF5FC;display:grid;place-items:center;position:relative}.au-voice-mark:before{content:'R';width:78px;height:78px;border-radius:24px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:34px;font-weight:900}.au-voice-icons{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-around;padding:16px;font-size:23px}.au-final{padding:clamp(40px,6vw,66px);text-align:center;background:linear-gradient(135deg,#F2F9FD,#fff)}.au-final p{max-width:650px;margin:0 auto 21px;line-height:1.9;color:var(--v2-text)}.au-final .btn{display:inline-flex;justify-content:center;min-width:190px}.au-reveal{animation:auIn .55s ease both}@keyframes auIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}.au-portrait-abstract,.au-story-flow,.au-idea-visual{animation:auFloat 6s ease-in-out infinite}@keyframes auFloat{50%{transform:translateY(-5px)}}@media(max-width:900px){.au-split{grid-template-columns:1fr}.au-hero .au-visual{order:-1}.au-story .au-visual{order:0}.au-message-card{grid-template-columns:1fr}.au-voice-mark{height:145px}.au-copy{max-width:none}.au-device .au-phone{display:none}.au-laptop{width:100%}}@media(max-width:620px){.about-us-page{gap:14px}.au-section{border-radius:20px}.au-split,.au-purpose,.au-project,.au-message,.au-final{padding:21px}.au-visual{min-height:260px}.au-story-flow{grid-template-columns:1fr 1fr}.au-story-node{min-height:92px;padding:12px;font-size:12px}.au-purpose-icons{grid-template-columns:1fr}.au-chip{position:static;display:inline-flex;margin:5px 3px 0}.au-idea-visual{display:flex;flex-wrap:wrap;justify-content:center}.au-idea-visual img{width:100%}.au-final .btn{width:100%}}@media(prefers-reduced-motion:reduce){.au-reveal,.au-portrait-abstract,.au-story-flow,.au-idea-visual{animation:none!important}}
 """
 
 
 def about_us_page():
     from html import escape
-    t = _t
     ar = _lang() == "ar"
-    bi = lambda a, e: a if ar else e
-    tx = lambda key: escape(t(key))
-
+    bi = lambda a,e: a if ar else e
+    tx = lambda key: escape(_t(key))
     body = """
     <main class="about-us-page" aria-labelledby="aboutUsTitle">
-      <section class="au-section au-hero au-reveal">
-        <div class="au-hero-visual" aria-hidden="true">
-          <div class="au-abstract-card">
-            <div class="au-abstract-top">
-              <div class="au-avatar-mark">R</div>
-              <div class="au-dots"><i></i><i></i><i></i></div>
-            </div>
-            <div class="au-data-net">
-              <svg viewBox="0 0 320 150" preserveAspectRatio="none" focusable="false"><path d="M43 43 C90 20 120 85 165 74 S250 45 280 110" fill="none" stroke="#AFCFDF" stroke-width="1.4" stroke-dasharray="5 5"/><path d="M75 124 C118 92 180 116 255 80" fill="none" stroke="#C6DFEB" stroke-width="1.2"/></svg>
-              <span class="node n1">📊</span><span class="node n2">🤖</span><span class="node n3">🩺</span><span class="node n4">💻</span>
-            </div>
-            <div class="au-abstract-foot"><span class="au-mini-stat">DATA</span><span class="au-mini-stat">AI</span><span class="au-mini-stat">HEALTH</span></div>
-          </div>
-        </div>
-        <div class="au-hero-copy">
-          <span class="au-eyebrow">👩🏻‍💻 __ABOUT_ME__</span>
-          <h1 id="aboutUsTitle">__HELLO__</h1>
-          <p class="au-role-line" dir="ltr">Data Science Student &amp; Creator of SymptoSense</p>
-          <p class="au-lead">__P2__</p>
-          <div class="au-tags" aria-label="Interests"><span class="au-tag">📊 Data Science</span><span class="au-tag">🤖 AI</span><span class="au-tag">🩺 Healthcare</span><span class="au-tag">💻 Technology</span></div>
-          <a class="au-contact-link" href="https://t.me/rms_2o" target="_blank" rel="noopener">📩 __CONTACT__ <span dir="ltr">@rms_2o</span></a>
-        </div>
-      </section>
-
-      <section class="au-section au-split au-story-layout au-story-card au-reveal">
-        <div class="au-copy">
-          <span class="au-eyebrow">💡 __MY_STORY__</span>
-          <h2 class="au-title">__STORY_TITLE__</h2>
-          <p class="au-strong">__P1__</p>
-          <p>__P3__</p>
-          <div class="au-timeline" role="list" aria-label="__TIMELINE_LABEL__">
-            <div class="au-step" role="listitem"><span class="au-step-num">01</span><b>__STEP1__</b></div>
-            <div class="au-step" role="listitem"><span class="au-step-num">02</span><b>__STEP2__</b></div>
-            <div class="au-step" role="listitem"><span class="au-step-num">03</span><b>__STEP3__</b></div>
-            <div class="au-step" role="listitem"><span class="au-step-num">04</span><b>__STEP4__</b></div>
-          </div>
-        </div>
-        <div class="au-visual au-story-visual" aria-hidden="true">
-          <div class="au-story-orbit"><div class="center">DATA<br>+ AI</div><span class="orb o1">💡</span><span class="orb o2">📊</span><span class="orb o3">🩺</span><span class="orb o4">💻</span></div>
-        </div>
-      </section>
-
-      <section class="au-section au-split au-idea-layout au-reveal">
-        <div class="au-visual au-idea-visual">
-          <figure class="au-product-visual">
-            <img src="/icons/about-us-phone.webp" alt="__IMG_ALT__" width="621" height="677" loading="lazy">
-            <span class="au-image-chip c1" aria-hidden="true">📊 DATA</span><span class="au-image-chip c2" aria-hidden="true">🤖 AI</span><span class="au-image-chip c3" aria-hidden="true">🩺 HEALTH</span>
-          </figure>
-        </div>
-        <div class="au-copy">
-          <span class="au-eyebrow">🩺 __WHAT_KICK__</span>
-          <h2 class="au-title">__WHAT_TITLE__</h2>
-          <p>__WHAT_TEXT__</p>
-        </div>
-      </section>
-
-      <section class="au-section au-diagram-section au-reveal">
-        <div class="au-copy">
-          <span class="au-eyebrow">🧠 __WHY_KICK__</span>
-          <h2 class="au-title">__WHY_TITLE__</h2>
-          <p>__WHY_TEXT__</p>
-        </div>
-        <div class="au-diagram" aria-label="__DIAGRAM_LABEL__">
-          <div class="au-diagram-box primary">REEMAS</div><div class="au-diagram-arrow">↓</div>
-          <div class="au-diagram-mid"><div class="au-diagram-box">📊 DATA</div><span class="au-plus">+</span><div class="au-diagram-box">🤖 AI</div><span class="au-plus">+</span><div class="au-diagram-box">🩺 HEALTHCARE</div></div>
-          <div class="au-diagram-arrow">↓</div><div class="au-diagram-box primary">SYMPTOSENSE</div>
-        </div>
-      </section>
-
-      <section class="au-section au-tech-section au-reveal">
-        <div class="au-tech-head"><div class="au-copy"><span class="au-eyebrow">⚙️ __BUILD_KICK__</span><h2 class="au-title">__BUILD_TITLE__</h2><p>__BUILD_TEXT__</p></div></div>
-        <div class="au-tech-grid" role="list">
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">🐍</span><b>Python</b><small>__TECH_PY__</small></div>
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">🌐</span><b>Flask</b><small>__TECH_FLASK__</small></div>
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">🤖</span><b>AI · Llama / Groq</b><small>__TECH_AI__</small></div>
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">🧠</span><b>Machine Learning</b><small>__TECH_ML__</small></div>
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">🗄️</span><b>PostgreSQL / SQLite</b><small>__TECH_DB__</small></div>
-          <div class="au-tech" role="listitem"><span class="au-tech-icon">💻</span><b>Web Development</b><small>__TECH_WEB__</small></div>
-        </div>
-      </section>
-
-      <section class="au-section au-project au-reveal">
-        <div class="au-project-head"><span class="au-eyebrow">💻 __PROJECT_KICK__</span><h2 class="au-title">__PROJECT_TITLE__</h2><p>__P3__</p><span class="au-live-label"><i class="au-live-dot"></i>__LIVE_LABEL__</span></div>
-        <div class="au-device-stage" aria-label="__LIVE_ARIA__">
-          <div class="au-laptop"><div class="au-laptop-screen"><iframe src="/home" title="SymptoSense desktop preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-laptop-base" aria-hidden="true"></div></div>
-          <div class="au-phone-preview" aria-hidden="true"><iframe src="/home" title="SymptoSense mobile preview" loading="lazy" tabindex="-1"></iframe></div>
-        </div>
-      </section>
-
-      <section class="au-section au-split au-story-layout au-reveal">
-        <div class="au-copy"><span class="au-eyebrow">🎯 __GOAL_KICK__</span><h2 class="au-title">__GOAL_TITLE__</h2><p class="au-strong">__P4__</p></div>
-        <div class="au-visual au-goal-visual" aria-hidden="true"><div class="au-goal-board"><div class="au-target"></div><div class="au-rise">📈</div><div class="au-bulb">💡</div></div></div>
-      </section>
-
-      <section class="au-section au-future au-reveal">
-        <div class="au-future-head"><span class="au-eyebrow">🚀 __FUTURE_KICK__</span><h2 class="au-title">__FUTURE_TITLE__</h2><p class="au-muted">__FUTURE_TEXT__</p></div>
-        <div class="au-roadmap" role="list" aria-label="Future roadmap">
-          <div class="au-road" role="listitem"><span class="au-road-dot">📚</span><b>__ROAD1__</b><span>__COMING__</span></div>
-          <div class="au-road" role="listitem"><span class="au-road-dot">🔗</span><b>__ROAD2__</b><span>__COMING__</span></div>
-          <div class="au-road" role="listitem"><span class="au-road-dot">📈</span><b>__ROAD3__</b><span>__COMING__</span></div>
-          <div class="au-road" role="listitem"><span class="au-road-dot">🤖</span><b>__ROAD4__</b><span>__COMING__</span></div>
-          <div class="au-road" role="listitem"><span class="au-road-dot">🧠</span><b>__ROAD5__</b><span>__COMING__</span></div>
-          <div class="au-road" role="listitem"><span class="au-road-dot">🛡️</span><b>__ROAD6__</b><span>__ONGOING__</span></div>
-        </div>
-      </section>
-
-      <section class="au-section au-personal au-reveal">
-        <div class="au-copy"><span class="au-eyebrow">❤️ __PERSONAL_KICK__</span><h2 class="au-title">__PERSONAL_TITLE__</h2><p class="au-strong">__P4__</p></div>
-        <div class="au-personal-visual" aria-hidden="true"><div class="au-personal-pill"><span>📚</span>Learning</div><div class="au-personal-pill"><span>🌱</span>Growth</div><div class="au-personal-pill"><span>🚀</span>Future</div><div class="au-personal-pill"><span>💡</span>Innovation</div></div>
-      </section>
-
-      <section class="au-section au-final au-reveal">
-        <div class="au-final-inner"><div class="au-final-mark" aria-hidden="true">🩺</div><h2 class="au-title">__FINAL_TITLE__</h2><p>__FINAL_TEXT__</p><a class="btn pri" href="/chat">__CTA__</a></div>
-      </section>
-    </main>
-    """
-
-    replacements = {
-        "__ABOUT_ME__": bi("عنّي", "About me"), "__CONTACT__": tx("about_us_contact"), "__IMG_ALT__": tx("about_us_img1_alt"),
-        "__HELLO__": bi("مرحبًا، أنا ريماس حميد السلمي 👋", "Hi, I'm Remas Hameed Alsolami 👋"),
-        "__P1__": tx("about_us_p1"), "__P2__": tx("about_us_p2"), "__P3__": tx("about_us_p3"), "__P4__": tx("about_us_p4"),
-        "__MY_STORY__": bi("قصتي", "My story"), "__STORY_TITLE__": bi("كيف بدأت فكرة SymptoSense؟", "How did SymptoSense begin?"),
-        "__TIMELINE_LABEL__": bi("المسار المختصر لقصة الفكرة", "A short timeline of the idea"),
-        "__STEP1__": bi("الفكرة", "The idea"), "__STEP2__": bi("الاهتمام بعلم البيانات والذكاء الاصطناعي", "Interest in data science and AI"),
-        "__STEP3__": bi("ظهور فكرة SymptoSense", "The SymptoSense concept"), "__STEP4__": bi("تطوير الفكرة إلى مشروع حقيقي", "Turning the idea into a real project"),
-        "__WHAT_KICK__": bi("الفكرة", "The idea"), "__WHAT_TITLE__": bi("ما هو SymptoSense؟", "What is SymptoSense?"), "__WHAT_TEXT__": tx("ab_p1"),
-        "__WHY_KICK__": bi("البيانات + الذكاء الاصطناعي", "Data + AI"), "__WHY_TITLE__": bi("لماذا علم البيانات والذكاء الاصطناعي؟", "Why data science and AI?"), "__WHY_TEXT__": tx("ab_p3"),
-        "__DIAGRAM_LABEL__": bi("ريماس ثم البيانات والذكاء الاصطناعي والصحة وصولًا إلى SymptoSense", "Remas, data, AI and healthcare leading to SymptoSense"),
-        "__BUILD_KICK__": bi("كيف بُني المشروع", "How I built it"), "__BUILD_TITLE__": bi("كيف بنيت SymptoSense؟", "How I built SymptoSense"),
-        "__BUILD_TEXT__": bi("التقنيات التالية مأخوذة من المشروع الحالي نفسه، وليست تقنيات مضافة لأغراض العرض.", "These technologies are taken from the current project itself, not added just for presentation."),
-        "__TECH_PY__": bi("اللغة الأساسية للمشروع", "Core project language"), "__TECH_FLASK__": bi("تطبيق الويب والـRoutes", "Web app and routes"),
-        "__TECH_AI__": bi("طبقة المساعد والتحليل الذكي", "AI assistant and analysis layer"), "__TECH_ML__": bi("نماذج مساعدة للتقدير", "Supporting estimation models"),
-        "__TECH_DB__": bi("تخزين البيانات محليًا وإنتاجيًا", "Local and production data storage"), "__TECH_WEB__": bi("واجهة متجاوبة عربية وإنجليزية", "Responsive Arabic and English interface"),
-        "__PROJECT_KICK__": bi("المشروع الحقيقي", "Real project showcase"), "__PROJECT_TITLE__": bi("من فكرة إلى مشروع حقيقي", "From an idea to a real project"),
-        "__LIVE_LABEL__": bi("عرض حي من الموقع الحالي", "Live preview from the current site"), "__LIVE_ARIA__": bi("معاينة حية لموقع SymptoSense على لابتوب وجوال", "Live SymptoSense preview on laptop and mobile"),
-        "__GOAL_KICK__": bi("هدفي", "My goal"), "__GOAL_TITLE__": bi("هدفي من SymptoSense", "My goal for SymptoSense"),
-        "__FUTURE_KICK__": bi("الرؤية المستقبلية", "Future vision"), "__FUTURE_TITLE__": bi("إلى أين أريد أن يصل SymptoSense؟", "Where I want SymptoSense to go"),
-        "__FUTURE_TEXT__": bi("هذه النقاط معروضة كتطوير مستقبلي واستمرار لما بُني بالفعل، وليست ادعاءً بأن كل تحسين مكتمل الآن.", "These items are presented as future development and continued improvement of what already exists—not as claims that every improvement is complete today."),
-        "__ROAD1__": bi("توسيع المعرفة الطبية", "Expand medical knowledge"), "__ROAD2__": bi("تعزيز ربط المصادر الموثوقة", "Strengthen trusted-source links"),
-        "__ROAD3__": bi("تحسين التحليل والتفسير", "Improve analysis and explanations"), "__ROAD4__": bi("تطوير المساعد الذكي", "Evolve the AI assistant"),
-        "__ROAD5__": bi("تطوير الدعم النفسي التوعوي", "Evolve mental-wellbeing support"), "__ROAD6__": bi("تعزيز الخصوصية والأمان", "Strengthen privacy and security"),
-        "__COMING__": bi("Future / Coming Next", "Future / Coming Next"), "__ONGOING__": bi("Ongoing Priority", "Ongoing Priority"),
-        "__PERSONAL_KICK__": bi("رسالة شخصية", "Personal message"), "__PERSONAL_TITLE__": bi("أكثر من مجرد مشروع", "More than just a project"),
-        "__FINAL_TITLE__": bi("هذا هو SymptoSense 🩺", "This is SymptoSense 🩺"),
-        "__FINAL_TEXT__": bi("فكرة بدأت من اهتمامي بالبيانات والذكاء الاصطناعي، وأطمح أن تتطور إلى حل أكثر فائدة وتأثيرًا.", "An idea that began from my interest in data and artificial intelligence, with the ambition to grow into a more useful and impactful solution."),
-        "__CTA__": bi("تجربة SymptoSense", "Try SymptoSense"),
-    }
-    for key, value in replacements.items():
-        body = body.replace(key, value)
-    return _page(_t("title_about_us"), body, desc=t("about_us_p1"), extra_css=ABOUT_US_CSS)
+      <section class="au-section au-hero au-reveal"><div class="au-split">
+        <div><span class="au-kicker">👩🏻‍💻 __ABOUT_ME__</span><h1 id="aboutUsTitle">__HELLO__</h1><div class="au-role">Data Science Student &amp; Creator of SymptoSense</div><div class="au-copy"><p>__P2__</p><p>__P1__</p></div></div>
+        <div class="au-visual" aria-label="__ABSTRACT_ALT__"><div class="au-portrait-abstract"><div class="au-r">R</div><div class="au-float au-f1">📊</div><div class="au-float au-f2">🤖</div><div class="au-float au-f3">🩺</div><div class="au-float au-f4">💡</div></div></div>
+      </div></section>
+      <section class="au-section au-story au-reveal"><div class="au-split">
+        <div class="au-visual"><div class="au-story-flow" aria-label="__STORY_ARIA__"><div class="au-story-node"><span>💡</span>__S1__</div><div class="au-story-node"><span>📊</span>__S2__</div><div class="au-story-node"><span>🩺</span>__S3__</div><div class="au-story-node"><span>✨</span>SymptoSense</div></div></div>
+        <div><span class="au-kicker">💡 __MY_STORY__</span><h2>__STORY_TITLE__</h2><div class="au-copy"><p>__P1__</p><p>__P3__</p></div></div>
+      </div></section>
+      <section class="au-section au-reveal"><div class="au-split">
+        <div><span class="au-kicker">🩺 __IDEA_KICK__</span><h2>__WHAT_TITLE__</h2><div class="au-copy"><p>__WHAT_TEXT__</p><p>__WHAT_SHORT__</p></div></div>
+        <div class="au-visual"><figure class="au-idea-visual"><img src="/icons/about-us-phone.webp" alt="__IMG_ALT__" width="621" height="677" loading="lazy"><span class="au-chip au-c1">🩺 Healthcare</span><span class="au-chip au-c2">🤖 AI</span><span class="au-chip au-c3">📊 Data</span><span class="au-chip au-c4">👤 User</span></figure></div>
+      </div></section>
+      <section class="au-section au-purpose au-reveal"><span class="au-kicker">❤️ __PURPOSE_KICK__</span><h2>__PURPOSE_TITLE__</h2><div class="au-copy"><p>__P4__</p></div><div class="au-purpose-icons"><div class="au-purpose-item"><span>💡</span>__PURPOSE_1__</div><div class="au-purpose-item"><span>❤️</span>__PURPOSE_2__</div><div class="au-purpose-item"><span>🩺</span>__PURPOSE_3__</div></div></section>
+      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">💻 __PROJECT_KICK__</span><h2>__PROJECT_TITLE__</h2><div class="au-copy" style="margin:auto"><p>__P3__</p></div></div><div class="au-device" aria-label="__MOCKUP_ARIA__"><div class="au-laptop"><div class="au-screen"><iframe src="/home" title="SymptoSense live website preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-base"></div></div><div class="au-phone"><iframe src="/home" title="SymptoSense mobile live preview" loading="lazy" tabindex="-1"></iframe></div></div></section>
+      <section class="au-section au-message au-reveal"><div class="au-message-card"><div><span class="au-kicker">✨ __MESSAGE_KICK__</span><h2>__MESSAGE_TITLE__</h2><div class="au-copy"><p>__P4__</p><p>__P1__</p></div></div><div class="au-voice-mark" aria-hidden="true"><div class="au-voice-icons"><span>📚</span><span>🌱</span><span>💡</span></div></div></div></section>
+      <section class="au-section au-final au-reveal"><span class="au-kicker">🌟 SymptoSense</span><h2>__FINAL_TITLE__</h2><p>__FINAL_TEXT__</p><a class="btn pri" href="/chat">__CTA__</a></section>
+    </main>"""
+    rep={
+      '__ABOUT_ME__':bi('عنّي','About me'),'__HELLO__':bi('مرحبًا، أنا ريماس حميد السلمي 👋',"Hi, I'm Remas Hameed Alsolami 👋"),'__P1__':tx('about_us_p1'),'__P2__':tx('about_us_p2'),'__P3__':tx('about_us_p3'),'__P4__':tx('about_us_p4'),
+      '__ABSTRACT_ALT__':bi('رسم تجريدي يعبّر عن ريماس واهتماماتها في علم البيانات والذكاء الاصطناعي والصحة','Abstract visual representing Remas and her interests in data science, AI and healthcare'),'__MY_STORY__':bi('قصتي مع SymptoSense','My story with SymptoSense'),'__STORY_TITLE__':bi('كيف بدأت فكرة SymptoSense؟','How did SymptoSense begin?'),'__STORY_ARIA__':bi('الفكرة ثم علم البيانات ثم الصحة ثم SymptoSense','Idea, data science, healthcare, then SymptoSense'),'__S1__':bi('سؤال وفكرة','A question & idea'),'__S2__':bi('علم البيانات والذكاء الاصطناعي','Data & AI'),'__S3__':bi('فهم الأعراض بصورة أوضح','Clearer symptom understanding'),
+      '__IDEA_KICK__':bi('فكرة المشروع','The idea'),'__WHAT_TITLE__':bi('ما هو SymptoSense؟','What is SymptoSense?'),'__WHAT_TEXT__':tx('ab_p1'),'__WHAT_SHORT__':bi('الفكرة هي مساعدة المستخدم على فهم ما يشعر به والحصول على توجيه توعوي أوضح للخطوة التالية، دون تقديم تشخيص طبي قطعي.','The idea is to help people understand what they are feeling and get clearer educational guidance for the next step, without presenting a definitive medical diagnosis.'),'__IMG_ALT__':tx('about_us_img1_alt'),
+      '__PURPOSE_KICK__':bi('لماذا يهمني؟','Why it matters to me'),'__PURPOSE_TITLE__':bi('لماذا هذا المشروع مهم بالنسبة لي؟','Why this project matters to me'),'__PURPOSE_1__':bi('فكرة لها معنى','A meaningful idea'),'__PURPOSE_2__':bi('أثر إنساني','Human purpose'),'__PURPOSE_3__':bi('وعي صحي أبسط','Simpler health awareness'),
+      '__PROJECT_KICK__':bi('المشروع الحقيقي','The real project'),'__PROJECT_TITLE__':bi('من فكرة إلى مشروع حقيقي','From an idea to a real project'),'__MOCKUP_ARIA__':bi('معاينة حية للموقع الحقيقي داخل لابتوب وجوال','Live preview of the real website inside laptop and mobile mockups'),
+      '__MESSAGE_KICK__':bi('رسالة ريماس','A message from Remas'),'__MESSAGE_TITLE__':bi('أكثر من مجرد مشروع','More than just a project'),'__FINAL_TITLE__':bi('تعرّف على SymptoSense 🩺','Discover SymptoSense 🩺'),'__FINAL_TEXT__':bi('فكرة بدأت من اهتمامي بالبيانات والذكاء الاصطناعي، وأطمح أن تتطور إلى حل أكثر فائدة وتأثيرًا.','An idea that began from my interest in data and artificial intelligence, with the ambition to grow into a more useful and impactful solution.'),'__CTA__':bi('جرّب SymptoSense','Try SymptoSense')}
+    for k,v in rep.items(): body=body.replace(k,v)
+    return _page(_t('title_about_us'),body,desc=_t('about_us_p1'),extra_css=ABOUT_US_CSS)
 
 
 def about_page():
@@ -3623,8 +3453,9 @@ def privacy_page():
       <section><h1 id="privacyTitle">🔒 __TITLE__</h1><p>__INTRO__</p></section>
       <section><h2>__COLLECT_H__</h2><ul><li>__COLLECT_1__</li><li>__COLLECT_2__</li><li>__COLLECT_3__</li></ul></section>
       <section><h2>__SAVE_H__</h2><p>__SAVE_P__</p></section>
+      <section id="data-use"><h2>__USE_H__</h2><p>__USE_P__</p><p class="muted">__AI_IMPROVE__</p></section>
       <section><h2>__AI_H__</h2><p>__AI_P__</p></section>
-      <section><h2>__CONTROL_H__</h2><p>__CONTROL_P__</p><div class="ss-btn-row"><a class="btn pri" href="/settings">__SETTINGS__</a><a class="btn ghost" href="/manage">__MANAGE__</a></div></section>
+      <section><h2>__CONTROL_H__</h2><p>__CONTROL_P__</p><div class="ss-btn-row"><a class="btn pri" href="/privacy-center">__SETTINGS__</a><a class="btn ghost" href="/manage">__MANAGE__</a></div></section>
       <section><h2>__ADMIN_H__</h2><p>__ADMIN_P__</p></section>
       <section><h2>__KB_H__</h2><p>__KB_P__</p></section>
     </main>
@@ -3638,11 +3469,14 @@ def privacy_page():
         "__COLLECT_3__": bi("بيانات تشغيل مجمعة مثل نوع الجهاز واللغة والخدمة المستخدمة، دون نص الأعراض أو المحادثة.", "Aggregate operational data such as device type, language, and service used—without symptom or chat text."),
         "__SAVE_H__": bi("ما الذي يتم حفظه؟", "What is saved?"),
         "__SAVE_P__": bi("للزائر، تبقى الخدمات الأساسية متاحة دون حساب. عند تسجيل الدخول، يمكن حفظ الملف والنتائج والمحادثات وفق إعدادات الخصوصية التي تختارها.", "Core services remain available to guests. When signed in, your profile, results, and conversations may be saved according to the privacy settings you choose."),
+        "__USE_H__": bi("كيف نستخدم البيانات المصرح بها؟", "How do we use authorized data?"),
+        "__USE_P__": bi("قد نستخدم البيانات المصرح بمشاركتها لأغراض التحليل الإحصائي ودراسة الأنماط والعلاقات بين الأعراض والعوامل المدخلة، بهدف تحسين وتطوير SymptoSense. يتم ذلك فقط وفق تفضيل Analytics الذي تختاره، وبصورة مجمعة ومجهولة الهوية قدر الإمكان مع إخفاء المجموعات الصغيرة.", "Authorized data may be used for statistical analysis and to study patterns and associations among submitted symptoms and factors, with the aim of improving SymptoSense. This occurs only according to your Analytics preference, using aggregated and anonymized data where possible and suppressing small groups."),
+        "__AI_IMPROVE__": bi("حاليًا لا يستخدم SymptoSense سجلاتك الصحية لتدريب أو تحسين نموذج AI نفسه؛ لذلك لا يظهر خيار موافقة منفصل لهذا الغرض. إذا تغير هذا الاستخدام مستقبلًا فيجب تحديث الإشعار والموافقة قبل تطبيقه.", "SymptoSense currently does not use your health records to train or improve the underlying AI model itself, so a separate AI-improvement consent is not shown. If that use changes in the future, the notice and consent flow must be updated first."),
         "__AI_H__": bi("هل تُرسل البيانات إلى خدمة AI؟", "Is data sent to an AI service?"),
         "__AI_P__": bi("عند استخدام المساعد أو التحليل قد يُرسل النص اللازم لتوليد الرد إلى مزود الذكاء الاصطناعي المهيأ للمشروع. لا يُطلب من النموذج إنشاء مصادر أو تشخيص قطعي، وتُستخدم قاعدة المعرفة وقواعد الأمان عندما تكون متاحة. تجنب إدخال اسمك أو رقمك أو أي معرف شخصي داخل وصف الحالة.", "When you use the assistant or analysis, the text needed to generate a response may be sent to the AI provider configured for this deployment. The model is not permitted to invent sources or provide a definitive diagnosis, and the knowledge base and safety rules are used where available. Avoid entering names, phone numbers, or other identifiers in a health description."),
         "__CONTROL_H__": bi("الحذف والتحكم", "Deletion and control"),
         "__CONTROL_P__": bi("يمكنك تعطيل استخدام المعلومات المحفوظة، حذف حقول صحية منفردة، مسح السجل، أو حذف الحساب وبياناته من صفحات الإعدادات والإدارة الشخصية.", "You can disable use of saved information, remove individual health fields, clear history, or delete your account and its data from privacy settings and data management."),
-        "__SETTINGS__": bi("إعدادات الخصوصية", "Privacy settings"), "__MANAGE__": bi("إدارة بياناتي", "Manage my data"),
+        "__SETTINGS__": bi("مركز الخصوصية", "Privacy Center"), "__MANAGE__": bi("إدارة بياناتي", "Manage my data"),
         "__ADMIN_H__": bi("وصول المسؤولين", "Administrator access"),
         "__ADMIN_P__": bi("تحليلات الإدارة مجمعة قدر الإمكان. صفحة المستخدمين تعرض المعرّف والحالة والتواريخ والدور فقط، ولا تعرض الأعراض أو المحادثات أو النتائج الصحية افتراضيًا.", "Admin analytics are aggregated wherever possible. User management shows only an ID, status, dates, and role; it does not expose symptoms, chats, or personal health results by default."),
         "__KB_H__": bi("قاعدة المعرفة الطبية", "Medical knowledge base"),
@@ -3651,6 +3485,130 @@ def privacy_page():
     for key, value in values.items():
         body = body.replace(key, value)
     return _page(values["__TITLE__"], body)
+
+
+def consent_page():
+    ar = _lang() == "ar"
+    next_url = request.args.get("next") or "/chat"
+    if not str(next_url).startswith("/") or str(next_url).startswith("//"):
+        next_url = "/chat"
+    title = "خصوصيتك تهمنا" if ar else "Your privacy matters"
+    body = """
+    <main class="v2-info-page consent-page">
+      <section class="consent-hero"><span class="consent-icon">🔐</span><h1>__TITLE__</h1><p>__P1__</p><p>__P2__</p><p class="muted">__P3__</p></section>
+      <section>
+        <form id="consentForm">
+          <article class="consent-option"><label><input type="checkbox" id="serviceConsent"> <span><b>__SERVICE_H__</b><small>__SERVICE_P__</small></span></label><span class="consent-badge required">__REQUIRED__</span></article>
+          <article class="consent-option"><label><input type="checkbox" id="analyticsConsent"> <span><b>__AN_H__</b><small>__AN_P__</small></span></label><span class="consent-badge optional">__OPTIONAL__</span></article>
+          <div class="privacy-links"><a href="/privacy">__READ__</a><a href="/privacy#data-use">__HOW__</a></div>
+          <div id="consentErr" class="warn" style="display:none;margin-top:12px"></div>
+          <button class="btn pri" style="width:100%;margin-top:14px" type="submit">__CONTINUE__</button>
+        </form>
+      </section>
+      <section><p class="v2-disclaimer">__DISC__</p></section>
+    </main>
+    <style>
+    .consent-page{max-width:760px}.consent-hero{text-align:center}.consent-icon{font-size:44px}.consent-option{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px;border:1px solid var(--v2-line);border-radius:15px;margin:10px 0;background:#fff}.consent-option label{display:flex;gap:11px;align-items:flex-start;cursor:pointer;flex:1}.consent-option input{width:20px;height:20px;margin-top:2px;accent-color:var(--v2-blue)}.consent-option small{display:block;color:var(--v2-muted);line-height:1.7;margin-top:4px}.consent-badge{font-size:11px;font-weight:800;border-radius:999px;padding:4px 9px;white-space:nowrap}.consent-badge.required{background:var(--v2-sky);color:var(--v2-blue-dark)}.consent-badge.optional{background:#F3F6F8;color:var(--v2-muted)}.privacy-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:16px 0}.privacy-links a{color:var(--v2-blue);font-weight:700}@media(max-width:560px){.consent-option{flex-direction:column}.consent-badge{align-self:flex-start}}
+    </style>
+    <script>
+    document.getElementById('consentForm').addEventListener('submit', async function(e){
+      e.preventDefault(); const service=document.getElementById('serviceConsent').checked, analytics=document.getElementById('analyticsConsent').checked, err=document.getElementById('consentErr');
+      if(!service){err.style.display='block';err.textContent=__SERVICE_ERR__;return;}
+      err.style.display='none';
+      try{const r=await fetch('/api/consent/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:service,analytics_research:analytics})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'consent_failed');location.href=__NEXT__;}catch(ex){err.style.display='block';err.textContent=__GEN_ERR__;}
+    });
+    </script>
+    """
+    vals = {
+        "__TITLE__": title,
+        "__P1__": ("قد تجمع SymptoSense بعض المعلومات التي تختار إدخالها، مثل الأعراض والعمر ومدة الأعراض وشدة الألم، بهدف تقديم الخدمات التي تختار استخدامها." if ar else "SymptoSense may process information you choose to enter, such as symptoms, age, symptom duration, and severity, to provide the services you choose to use."),
+        "__P2__": ("وبموافقتك، قد نستخدم بعض هذه البيانات بشكل مجمع ومجهول الهوية قدر الإمكان لأغراض التحليل الإحصائي، ودراسة الأنماط والعلاقات بين الأعراض والعوامل المدخلة، وتحسين وتطوير النظام." if ar else "With your permission, some of this data may be used in aggregated and anonymized form where possible for statistical analysis, studying patterns and associations in submitted factors, and improving SymptoSense."),
+        "__P3__": ("لن نستخدم هذه التحليلات لتقديم تشخيص نهائي أو توصية علاجية، ولا ينبغي اعتبار النتائج بديلًا عن الطبيب أو المختص." if ar else "These analyses are not used to provide a definitive diagnosis or treatment recommendation and do not replace a healthcare professional."),
+        "__SERVICE_H__": ("موافقة استخدام الخدمة" if ar else "Service usage consent"),
+        "__SERVICE_P__": ("أوافق على معالجة المعلومات التي أقدمها لاستخدام خدمات SymptoSense المطلوبة. هذه الموافقة ضرورية عند استخدام ميزة تحتاج معالجة معلومات صحية." if ar else "I agree to processing the information I provide to use the requested SymptoSense services. This is required when a feature needs to process health information."),
+        "__AN_H__": ("التحليلات والبحث الإحصائي" if ar else "Analytics & statistical research"),
+        "__AN_P__": ("أوافق على استخدام بياناتي المصرح بها بشكل مجمع ومجهول الهوية قدر الإمكان للتحليل الإحصائي ودراسة الأنماط وتحسين النظام. يمكنك رفض هذا الخيار والاستمرار في الخدمة الأساسية." if ar else "I agree to use of my authorized data in aggregated and anonymized form where possible for statistical analysis, pattern research, and system improvement. You can decline and continue using the core service."),
+        "__REQUIRED__": ("مطلوب للخدمة" if ar else "Required for service"), "__OPTIONAL__": ("اختياري" if ar else "Optional"),
+        "__READ__": ("اقرأ سياسة الخصوصية" if ar else "Read Privacy Policy"), "__HOW__": ("كيف نستخدم بياناتك؟" if ar else "How do we use your data?"),
+        "__CONTINUE__": ("حفظ الاختيارات والمتابعة" if ar else "Save choices & continue"),
+        "__DISC__": ("SymptoSense أداة معلوماتية وتحليلية ولا تحل محل الاستشارة الطبية أو التشخيص أو العلاج من قبل المختصين." if ar else "SymptoSense is an informational and analytical tool and does not replace professional medical advice, diagnosis, or treatment."),
+        "__SERVICE_ERR__": json.dumps("يجب الموافقة على معالجة البيانات اللازمة لاستخدام خدمة التحليل." if ar else "Service usage consent is required to use the assessment service."),
+        "__GEN_ERR__": json.dumps("تعذر حفظ الاختيارات الآن. حاول مرة أخرى." if ar else "Unable to save your choices right now. Please try again."),
+        "__NEXT__": json.dumps(next_url),
+    }
+    for k,v in vals.items(): body=body.replace(k,str(v))
+    return _page(title, body)
+
+
+def privacy_center_page():
+    ar=_lang()=="ar"; uid=_ss_user_id(); subject=_consent_subject_key(); consent=privacy_features.get_consent(subject,uid)
+    stored=privacy_features.stored_data_types(int(uid), _data_user_id())
+    data_types=[
+      ("Profile Information" if not ar else "معلومات الملف الشخصي", stored.get("profile_information", False)),
+      ("Health Profile" if not ar else "الملف الصحي", stored.get("health_profile", False)),
+      ("Symptom Information" if not ar else "معلومات الأعراض", stored.get("symptom_information", False)),
+      ("Analysis History" if not ar else "سجل التحليلات", stored.get("analysis_history", False)),
+      ("Medication Reminders" if not ar else "تذكيرات الأدوية", stored.get("medication_reminders", False)),
+      ("Reports / Temporary Shares" if not ar else "التقارير والمشاركات المؤقتة", stored.get("reports", False)),
+      ("Assistant History" if not ar else "سجل المساعد", stored.get("assistant_history", False)),
+    ]
+    rows=''.join('<div class="pc-data-row"><span>%s</span><b>%s</b></div>'%(label,("محفوظة" if ar else "Stored") if present else ("لا توجد بيانات محفوظة حاليًا" if ar else "No stored data currently")) for label,present in data_types)
+    analytics_on=bool(consent.get('analytics_research'))
+    title="مركز الخصوصية" if ar else "Privacy Center"
+    body="""
+    <main class="privacy-center">
+      <section class="pc-hero"><span>🔐</span><div><h1>__TITLE__</h1><p>__SUB__</p></div></section>
+      <section class="pc-card"><h2>__MYDATA__</h2><p class="muted">__MYDATA_P__</p>__ROWS__</section>
+      <section class="pc-card"><div class="pc-head"><div><h2>📊 __AN_H__</h2><p class="muted">__AN_P__</p></div><span class="pc-status __AN_CLS__">__AN_STATUS__</span></div><button class="btn ghost" onclick="toggleAnalytics()">__CHANGE__</button><button class="btn ghost danger-lite" id="withdrawBtn" onclick="withdrawAnalytics()" __WITHDRAW_DISABLED__>__WITHDRAW__</button></section>
+      <section class="pc-card"><h2>📥 __DOWNLOAD_H__</h2><p class="muted">__DOWNLOAD_P__</p><a class="btn ghost" href="/api/privacy/download">__DOWNLOAD__</a></section>
+      <section class="pc-card danger-zone"><h2>🗑️ __DELETE_H__</h2><p class="muted">__DELETE_P__</p><button class="btn ghost danger-lite" onclick="deleteHealthData()">__DELETE__</button><a class="btn ghost" href="/manage">__ACCOUNT__</a></section>
+      <section class="pc-card"><h2>🧾 __VERSION_H__</h2><p>__VERSION_P__</p><a href="/privacy" class="v2-source-link">__POLICY__</a></section>
+    </main>
+    <style>.privacy-center{max-width:850px;margin:auto;display:grid;gap:14px}.pc-hero,.pc-card{background:#fff;border:1px solid var(--v2-line);border-radius:20px;padding:clamp(18px,3vw,26px);box-shadow:var(--v2-shadow)}.pc-hero{display:flex;gap:16px;align-items:center}.pc-hero>span{font-size:40px}.pc-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.pc-status{padding:6px 11px;border-radius:999px;font-size:12px;font-weight:800}.pc-status.on{background:var(--v2-green-bg);color:var(--v2-green)}.pc-status.off{background:#F2F4F6;color:var(--v2-muted)}.pc-data-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--v2-line)}.pc-data-row b{font-size:12px;color:var(--v2-muted)}.danger-lite{color:var(--v2-red)!important;border-color:#efcaca!important}.danger-zone{border-color:#f0d4d4}@media(max-width:580px){.pc-head,.pc-data-row{flex-direction:column}}</style>
+    <script>
+    async function toggleAnalytics(){const enable=__AN_BOOL__?false:true; if(!enable){return withdrawAnalytics();} const r=await fetch('/api/consent/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:true,analytics_research:true})});const d=await r.json();if(d.ok)location.reload();else alert(__ERR__);}
+    async function withdrawAnalytics(){if(!confirm(__WITHDRAW_CONFIRM__))return;const r=await fetch('/api/privacy/withdraw-analytics',{method:'POST'});const d=await r.json();if(d.ok)location.reload();else alert(__ERR__);}
+    async function deleteHealthData(){if(!confirm(__DELETE_CONFIRM__))return;const phrase=prompt(__DELETE_PHRASE__);if(phrase!==__DELETE_EXPECT__)return;const r=await fetch('/api/privacy/delete-health-data',{method:'POST'});const d=await r.json();if(d.ok){alert(__DELETE_OK__);location.reload()}else alert(__ERR__);}
+    </script>
+    """
+    vals={
+      '__TITLE__':title,'__SUB__':("أنت تعرف ما الذي نحتفظ به ولماذا، ويمكنك التحكم في استخدام بياناتك أو حذفها." if ar else "See what we store and why, and control how your data is used or deleted."),
+      '__MYDATA__':("بياناتي" if ar else "My Data"),'__MYDATA_P__':("نعرض هنا أنواع البيانات الموجودة فعليًا لهذا الحساب فقط." if ar else "Only data categories currently stored for this account are shown here."),'__ROWS__':rows,
+      '__AN_H__':("تحليلات البيانات" if ar else "Data Analytics"),'__AN_P__':("يسمح هذا الخيار باستخدام البيانات المصرح بها بشكل مجمع ومجهول الهوية قدر الإمكان للتحليل الإحصائي وتحسين النظام." if ar else "Allows authorized data to be used in aggregated and anonymized form where possible for statistical analysis and system improvement."),'__AN_CLS__':'on' if analytics_on else 'off','__AN_STATUS__':("مفعّل" if ar else "Enabled") if analytics_on else ("متوقف" if ar else "Disabled"),
+      '__CHANGE__':("تغيير التفضيل" if ar else "Change Preference"),'__WITHDRAW__':("سحب موافقة التحليلات" if ar else "Withdraw Analytics Consent"),'__WITHDRAW_DISABLED__':'' if analytics_on else 'disabled',
+      '__DOWNLOAD_H__':("تنزيل بياناتي" if ar else "Download My Data"),'__DOWNLOAD_P__':("نزّل نسخة من البيانات المرتبطة بحسابك. لا يتضمن الملف كلمات المرور أو رموز المصادقة أو الأسرار الداخلية." if ar else "Download a copy of data associated with your account. Passwords, authentication tokens, and internal secrets are excluded."),'__DOWNLOAD__':("📥 تنزيل بياناتي" if ar else "📥 Download My Data"),
+      '__DELETE_H__':("حذف بياناتي الصحية" if ar else "Delete My Health Data"),'__DELETE_P__':("يحذف البيانات الصحية المحفوظة مع إبقاء الحساب نفسه. هذا الإجراء لا يمكن التراجع عنه." if ar else "Deletes stored health data while keeping your account. This action cannot be undone."),'__DELETE__':("حذف بياناتي الصحية" if ar else "Delete My Health Data"),'__ACCOUNT__':("إدارة الملف / حذف الحساب" if ar else "Manage profile / Delete account"),
+      '__VERSION_H__':("نسخة الموافقة والسياسة" if ar else "Consent & policy version"),'__VERSION_P__':(("وافقت على نسخة %s من الموافقة ونسخة %s من سياسة الخصوصية."%(consent.get('consent_version') or '—',consent.get('privacy_policy_version') or '—')) if ar else ("Current consent version: %s · Privacy Policy version: %s"%(consent.get('consent_version') or '—',consent.get('privacy_policy_version') or '—'))),'__POLICY__':("قراءة سياسة الخصوصية" if ar else "Read Privacy Policy"),
+      '__AN_BOOL__':'true' if analytics_on else 'false','__ERR__':json.dumps("تعذر تنفيذ الطلب الآن." if ar else "Unable to complete the request right now."),'__WITHDRAW_CONFIRM__':json.dumps("هل أنت متأكد من إيقاف استخدام بياناتك المحفوظة والجديدة في التحليلات المستقبلية؟" if ar else "Are you sure you want to stop your stored and future data from being used in future analytics?"),'__DELETE_CONFIRM__':json.dumps("سيتم حذف بياناتك الصحية المحفوظة مع إبقاء حسابك. هذا الإجراء لا يمكن التراجع عنه." if ar else "Your stored health data will be deleted while your account remains. This cannot be undone."),'__DELETE_PHRASE__':json.dumps("اكتب حذف للتأكيد" if ar else "Type delete to confirm"),'__DELETE_EXPECT__':json.dumps("حذف" if ar else "delete"),'__DELETE_OK__':json.dumps("تم حذف البيانات الصحية المحفوظة." if ar else "Stored health data was deleted."),
+    }
+    for k,v in vals.items():body=body.replace(k,str(v))
+    return _page(title,body)
+
+
+def user_profile_page():
+    ar=_lang()=="ar"; user=_ss_user() or {}; hp=db.load_health_profile(_ss_user_id()) or {}; consent=_consent_state()
+    name=hp.get('display_name') or user.get('name') or ("المستخدم" if ar else "User")
+    title="ملفي" if ar else "My Profile"
+    links=[
+      ("👤","ملفي الصحي" if ar else "Health Profile","/manage"),
+      ("📜","سجل التحليلات" if ar else "Analysis History","/history"),
+      ("💡","ملاحظاتي الصحية" if ar else "My Health Insights","/health-insights"),
+      ("📈","رحلتي الصحية" if ar else "My Health Journey","/health-journey"),
+      ("💊","أدويتي وتذكيراتي" if ar else "My Medications & Reminders","/meds"),
+      ("🔐","الخصوصية والبيانات" if ar else "Privacy & Data","/privacy-center"),
+      ("⚙️","الإعدادات" if ar else "Settings","/settings"),
+    ]
+    cards=''.join('<a class="profile-link" href="%s"><span>%s</span><b>%s</b><small>›</small></a>'%(url,icon,label) for icon,label,url in links)
+    privacy_text = ("تحليلات البيانات الاختيارية: " + ("مفعّلة" if consent.get('analytics_research') else "متوقفة")) if ar else ("Optional analytics: " + ("Enabled" if consent.get('analytics_research') else "Disabled"))
+    body=("""
+    <main class="profile-hub">
+      <section class="profile-hero"><div class="hp-avatar">👤</div><div><p class="muted">%s</p><h1>%s</h1><p>%s</p></div></section>
+      <section class="profile-links">%s</section>
+      <section class="pc-card"><b>🔐 %s</b><p class="muted">%s</p><a class="btn ghost" href="/privacy-center">%s</a></section>
+    </main>
+    <style>.profile-hub{max-width:820px;margin:auto;display:grid;gap:14px}.profile-hero,.profile-links,.pc-card{background:#fff;border:1px solid var(--v2-line);border-radius:20px;padding:22px;box-shadow:var(--v2-shadow)}.profile-hero{display:flex;gap:16px;align-items:center}.hp-avatar{width:62px;height:62px;border-radius:18px;display:grid;place-items:center;background:var(--v2-sky);font-size:28px}.profile-links{display:grid;grid-template-columns:1fr 1fr;gap:10px}.profile-link{display:grid;grid-template-columns:38px 1fr auto;gap:9px;align-items:center;padding:14px;border:1px solid var(--v2-line);border-radius:14px;background:var(--v2-bg)}.profile-link>span{font-size:22px}.profile-link small{font-size:22px;color:var(--v2-blue)}@media(max-width:600px){.profile-links{grid-template-columns:1fr}.profile-hero{align-items:flex-start}}</style>
+    """ % (("مرحبًا" if ar else "Welcome"), name, ("معلوماتك الصحية اختيارية ويمكنك التحكم بها أو حذفها في أي وقت." if ar else "Your health information is optional and can be changed or deleted at any time."), cards, ("خصوصيتك تحت تحكمك" if ar else "Your privacy is under your control"), privacy_text, ("فتح مركز الخصوصية" if ar else "Open Privacy Center")))
+    return _page(title,body)
 
 
 def terms_page():
@@ -3781,8 +3739,8 @@ CHAT = {
         "det_btn": "أريد التفاصيل",
         "sim_fallback": "الأعراض تحتاج متابعة، والأفضل استشارة طبيب للتأكد من الحالة.",
         "sim_title": "👤 شرح مبسّط",
-        "voice_chip": "🎙️ تحدث بدل الكتابة",
-        "voice_btn": "🎙️ تحدث عن أعراضك",
+        "voice_chip": "🎙️ صف أعراضك صوتيًا",
+        "voice_btn": "🎙️ صف أعراضك صوتيًا",
         "voice_speaking": "استمع الآن... تحدث بوضوح عن أعراضك، ثم اضغط إيقاف",
         "voice_stop": "⏹️ إيقاف",
         "voice_cancel": "إلغاء",
@@ -3790,7 +3748,7 @@ CHAT = {
         "voice_no_audio": "لم يُلتقط صوت — حاول مرة أخرى",
         "voice_err": "تعذّر تحويل الصوت: ",
         "voice_none": "لم أتعرّف على أعراض محددة",
-        "voice_confirm": "✅ نعم، أكمل",
+        "voice_confirm": "✅ تأكيد ومتابعة التحليل",
         "voice_edit": "✏️ أعدل يدوياً",
         "voice_retry": "🔁 أعد التسجيل",
         "voice_syms": "الأعراض:",
@@ -3830,7 +3788,7 @@ CHAT = {
         "followup_ph": "مثال: هل هذا طبيعي؟ متى أتحسن؟",
         "another_q": "💬 سؤال آخر",
         "no_speech": "متصفحك لا يدعم القراءة الصوتية.",
-        "no_mic": "متصفحك لا يدعم الإدخال الصوتي.",
+        "no_mic": "الإدخال الصوتي غير مدعوم على هذا الجهاز أو المتصفح. يمكنك الاستمرار بالكتابة.",
         "locating": "جاري تحديد موقعك... 📍",
         "loc_err_f": "تعذر الوصول لموقعك — تأكدي من تفعيل الموقع.",
         "loc_err_m": "تعذر الوصول لموقعك — تأكد من تفعيل الموقع.",
@@ -3919,8 +3877,8 @@ CHAT = {
         "det_btn": "I want the details",
         "sim_fallback": "The symptoms need monitoring, and it's best to consult a doctor to confirm the condition.",
         "sim_title": "👤 Simple explanation",
-        "voice_chip": "🎙️ Speak instead of typing",
-        "voice_btn": "🎙️ Tell me your symptoms",
+        "voice_chip": "🎙️ Describe your symptoms by voice",
+        "voice_btn": "🎙️ Describe your symptoms by voice",
         "voice_speaking": "Listening... describe your symptoms clearly, then tap Stop",
         "voice_stop": "⏹️ Stop",
         "voice_cancel": "Cancel",
@@ -3928,7 +3886,7 @@ CHAT = {
         "voice_no_audio": "No audio captured — try again",
         "voice_err": "Voice conversion failed: ",
         "voice_none": "No specific symptoms recognized",
-        "voice_confirm": "✅ Yes, continue",
+        "voice_confirm": "✅ Confirm & Analyze",
         "voice_edit": "✏️ Edit manually",
         "voice_retry": "🔁 Record again",
         "voice_syms": "Symptoms:",
@@ -3968,7 +3926,7 @@ CHAT = {
         "followup_ph": "Example: Is this normal? When will I improve?",
         "another_q": "💬 Another question",
         "no_speech": "Your browser does not support voice reading.",
-        "no_mic": "Your browser does not support voice input.",
+        "no_mic": "Voice input is not supported on this device/browser. You can continue by typing.",
         "locating": "Locating you... 📍",
         "loc_err_f": "Could not access your location — please enable location services.",
         "loc_err_m": "Could not access your location — please enable location services.",
@@ -4070,6 +4028,8 @@ def chat_page():
       <div class="voice-card">
         <div class="v-mic">🎙️</div>
         <div class="v-title">__VOICE_SP__</div>
+        <div style="margin-top:10px"><select id="voiceLang" aria-label="Voice language"><option value="ar-SA">🇸🇦 العربية</option><option value="en-GB">🇬🇧 English</option></select></div>
+        <div class="muted" style="font-size:12px;margin-top:9px">__VOICE_PRIVACY__</div>
         <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
           <button class="vstop" onclick="stopVoice()">__VOICE_STOP__</button>
           <button class="vcnl" onclick="cancelVoice()">__VOICE_CANCEL__</button>
@@ -4138,7 +4098,9 @@ def chat_page():
     ];
     document.getElementById('headP').textContent = TT('head_p');
     try { if (localStorage.getItem('symptosense_blood_id')) { const bb = document.getElementById('bloodBanner'); bb.textContent = TT('blood_banner'); bb.style.display = 'block'; } } catch (e) {}
-    const state = { age:null, gender:null, symptoms:[], duration:null, severity:null, conditions:null, medications:null, allergies:null, notes:null, step:'age', member_id:0, member_name:'__ME__' };
+    const state = { age:null, gender:null, symptoms:[], duration:null, severity:null, location:null, conditions:null, medications:null, allergies:null, notes:null, history_answered:false, step:'age', member_id:0, member_name:'__ME__', smart_prompt_shown:false, previous_record_id:null };
+    let compareBase = null;
+    let adaptiveQuestionNo = 0;
     const bodyEl = document.getElementById('chatBody');
     const optsEl = document.getElementById('chatOptions');
     const inpEl = document.getElementById('chatInput');
@@ -4257,6 +4219,17 @@ def chat_page():
 
     function startChat() {
       addHtml('<div class="chat-start"><div class="cs-logo">🩺</div><div class="cs-title">' + esc(TT('welcome')) + '</div><div class="cs-sub">' + esc(TT('start_sub')) + '</div><div class="cs-desc">' + esc(TT('start_desc')) + '</div><div class="cs-voice" onclick="startVoice()">🎙️ ' + esc(TT('voice_btn')) + '</div></div>', 'q start');
+      const reId = parseInt(new URLSearchParams(location.search).get('reanalyze') || '0');
+      if (reId) {
+        fetch('/api/analysis/'+reId).then(r=>r.json()).then(function(d){
+          if (!d.ok || !d.analysis) throw new Error('not_found');
+          const a=d.analysis; compareBase={record_id:a.id,symptoms:(a.symptoms||[]).slice(),duration:a.duration,severity:a.severity,urgency:a.urgency};
+          state.previous_record_id=a.id; state.age=a.age||null; state.gender=a.gender||null; state.symptoms=(a.symptoms||[]).slice(); state.duration=null; state.severity=null; state.notes=(a.result||{}).notes||''; state.smart_prompt_shown=true;
+          add(LANG==='ar'?'تم تحميل التحليل السابق. عدّل الأعراض إذا احتجت، ثم سنسألك عن المدة والشدة من جديد.':'Previous analysis loaded. Edit symptoms if needed, then we will ask duration and severity again.','bot');
+          askSymptoms();
+        }).catch(function(){ add(LANG==='ar'?'تعذر تحميل التحليل السابق.':'Unable to load the previous analysis.','bot'); askMember(); });
+        return;
+      }
       try {
         fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
           if (ui.ok && ui.logged_in && ui.has_profile && ui.privacy && ui.privacy.use_in_analysis && ui.profile) {
@@ -4304,74 +4277,49 @@ def chat_page():
       if (!state.symptoms.length) { add(TT('atleast'), 'bot'); return; }
       add(TT('chosen') + state.symptoms.join(LANG === 'en' ? ', ' : '، '), 'user');
       clearOpts();
+      if (qualityReturnKey === 'main_symptom' || qualityReturnKey === 'associated_symptoms') { qualityReturnKey=null; showDataQualityGate(); return; }
       askDuration();
     }
 
-    // ---------------- Voice assistant ----------------
-    let voiceRec = null, voiceChunks = [];
+    // ---------------- Voice symptom input ----------------
+    // Audio is not uploaded or stored by SymptoSense. The browser performs speech
+    // recognition when supported; only the transcript is sent for structured parsing.
+    let voiceRec = null;
     function startVoice() {
       if (state.step === 'followup') { add(TT('voice_manual'), 'bot'); return; }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { add(TT('no_mic'), 'bot'); return; }
-      clearOpts();
-      addQ('🎙️ ' + TT('voice_speaking'));
-      const ov = document.getElementById('voiceOverlay');
-      ov.style.display = 'flex';
-      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-        voiceChunks = [];
-        voiceRec = new MediaRecorder(stream);
-        voiceRec.ondataavailable = function(e){ if (e.data && e.data.size) voiceChunks.push(e.data); };
-        voiceRec.onstop = sendVoice;
-        voiceRec.start();
-        setTimeout(function(){ if (voiceRec && voiceRec.state === 'recording') voiceRec.stop(); }, 15000);
-      }).catch(function(){
-        ov.style.display = 'none';
-        add(TT('no_mic'), 'bot');
-        askSymptoms();
-      });
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { add(TT('no_mic'), 'bot'); return; }
+      clearOpts(); addQ('🎙️ ' + TT('voice_speaking'));
+      const ov=document.getElementById('voiceOverlay'), sel=document.getElementById('voiceLang');
+      if(sel) sel.value=LANG==='en'?'en-GB':'ar-SA'; ov.style.display='flex';
+      voiceRec=new SR(); voiceRec.lang=sel?sel.value:(LANG==='en'?'en-GB':'ar-SA'); voiceRec.continuous=false; voiceRec.interimResults=false; voiceRec.maxAlternatives=1;
+      voiceRec.onresult=function(ev){const text=((ev.results&&ev.results[0]&&ev.results[0][0]&&ev.results[0][0].transcript)||'').trim(); hideVoice(); if(!text){add(TT('voice_no_audio'),'bot');return;} parseVoiceTranscript(text);};
+      voiceRec.onerror=function(ev){hideVoice(); const msg=(ev&&ev.error==='not-allowed')?(LANG==='ar'?'لم يتم منح إذن الميكروفون. يمكنك الاستمرار بالكتابة.':'Microphone permission was not granted. You can continue by typing.'):TT('voice_no_audio'); add(msg,'bot');};
+      voiceRec.onend=function(){ if(document.getElementById('voiceOverlay').style.display!=='none' && voiceRec){ hideVoice(); }};
+      try{voiceRec.start();}catch(e){hideVoice();add(TT('no_mic'),'bot');}
     }
-    function stopVoice() { if (voiceRec && voiceRec.state === 'recording') voiceRec.stop(); }
-    function cancelVoice() { if (voiceRec && voiceRec.state === 'recording') voiceRec.stop(); hideVoice(); }
-    function hideVoice() { document.getElementById('voiceOverlay').style.display = 'none'; voiceRec = null; }
-    async function sendVoice() {
-      const type = (voiceRec && voiceRec.mimeType) || 'audio/webm';
-      const blob = new Blob(voiceChunks, {type: type});
-      voiceRec = null;
-      hideVoice();
-      if (!blob.size) { add(TT('voice_no_audio'), 'bot'); return; }
-      add(TT('voice_thinking'), 'bot');
-      const fd = new FormData();
-      fd.append('file', blob, 'voice.webm');
-      try {
-        const r = await fetch('/api/voice', {method:'POST', body: fd});
-        const d = await r.json();
-        if (!d.ok) { add(TT('voice_err') + (d.error||''), 'bot'); return; }
-        showParsed(d.text, d.parsed);
-      } catch(e) { add(TT('conn_err'), 'bot'); }
+    function stopVoice(){if(voiceRec){try{voiceRec.stop();}catch(e){}}}
+    function cancelVoice(){if(voiceRec){try{voiceRec.abort();}catch(e){}}hideVoice();}
+    function hideVoice(){document.getElementById('voiceOverlay').style.display='none';voiceRec=null;}
+    async function parseVoiceTranscript(text){
+      add(TT('voice_thinking'),'bot');
+      try{const langSel=document.getElementById('voiceLang');const parseLang=(langSel&&langSel.value&&langSel.value.startsWith('en'))?'en':'ar';const r=await fetch('/api/voice/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,lang:parseLang})});const d=await r.json();if(!r.ok||!d.ok){if(d.consent_required){location.href=d.consent_url;return;}add(TT('voice_err')+(d.error||''),'bot');return;}showParsed(d.text,d.parsed);}catch(e){add(TT('conn_err'),'bot');}
     }
     function showParsed(text, parsed) {
       const symStr = parsed.symptoms && parsed.symptoms.length ? parsed.symptoms.join(LANG==='en' ? ', ' : '، ') : TT('voice_none');
-      let h = '<div class="res-sec">🎙️ <i>"' + esc(text) + '"</i></div>';
-      h += '<div class="res-sec"><b>' + esc(TT('voice_syms')) + '</b> ' + esc(symStr) + '</div>';
-      if (parsed.duration) h += '<div class="res-sec"><b>' + esc(TT('duration')) + '</b> ' + esc(parsed.duration) + '</div>';
-      if (parsed.severity) h += '<div class="res-sec"><b>' + esc(TT('severity')) + '</b> ' + esc(parsed.severity) + '/5</div>';
-      h += '<div class="muted">' + esc(TT('voice_confirm_q')) + '</div>';
-      addHtml(h, 'bot');
-      showOpts([
-        {label:TT('voice_confirm'), fn:()=>{ voiceConfirm(parsed); }},
-        {label:TT('voice_retry'), fn:()=>{ startVoice(); }},
-        {label:TT('voice_edit'), fn:()=>{ add(TT('voice_manual'),'bot'); askSymptoms(); }}
-      ]);
+      let h='<div class="res-sec">🎙️ <i>"'+esc(text)+'"</i></div>';
+      h+='<div class="res-assess"><div class="res-assess-h">'+esc(LANG==='ar'?'فهمنا التالي':'We understood')+'</div>';
+      h+='<div class="res-assess-row"><span class="res-assess-label">🩺 '+esc(TT('voice_syms'))+'</span><span>'+esc(symStr)+'</span></div>';
+      if(parsed.duration)h+='<div class="res-assess-row"><span class="res-assess-label">📅 '+esc(TT('duration'))+'</span><span>'+esc(parsed.duration)+'</span></div>';
+      if(parsed.location)h+='<div class="res-assess-row"><span class="res-assess-label">📍 '+esc(LANG==='ar'?'المكان':'Location')+'</span><span>'+esc(parsed.location)+'</span></div>';
+      if(parsed.severity_10)h+='<div class="res-assess-row"><span class="res-assess-label">📊 '+esc(TT('severity'))+'</span><span>'+esc(String(parsed.severity_10))+'/10</span></div>';
+      h+='</div><div class="muted">'+esc(TT('voice_confirm_q'))+'</div>'; addHtml(h,'bot');
+      showOpts([{label:TT('voice_confirm'),fn:()=>voiceConfirm(parsed)},{label:TT('voice_retry'),fn:startVoice},{label:TT('voice_edit'),fn:()=>{add(TT('voice_manual'),'bot');askSymptoms();}}]);
     }
-    function voiceConfirm(parsed) {
-      if (parsed.symptoms && parsed.symptoms.length) {
-        state.symptoms = parsed.symptoms;
-        add(TT('chosen') + parsed.symptoms.join(LANG==='en' ? ', ' : '، '), 'user');
-      }
-      if (parsed.duration) state.duration = parsed.duration;
-      if (parsed.severity) state.severity = parsed.severity;
-      clearOpts();
-      if (state.member && state.member.age) askGender();
-      else askAge();
+    function voiceConfirm(parsed){
+      if(parsed.symptoms&&parsed.symptoms.length){state.symptoms=parsed.symptoms;add(TT('chosen')+parsed.symptoms.join(LANG==='en'?', ':'، '),'user');}
+      if(parsed.duration)state.duration=parsed.duration;if(parsed.severity)state.severity=parsed.severity;if(parsed.location){state.location=parsed.location;state.notes=((state.notes||'')+' '+(LANG==='ar'?'المكان: ':'Location: ')+parsed.location).trim();}
+      clearOpts(); if(state.member&&state.member.age)askGender();else askAge();
     }
 
     // ---------------- Voice Conversation Mode ----------------
@@ -4475,11 +4423,11 @@ def chat_page():
       } else if (state.step === 'medications') {
         state.medications = text; setVoiceState('idle'); askNotes();
       } else if (state.step === 'notes') {
-        state.notes = text; setVoiceState('idle'); runAnalysis();
+        state.notes = text; setVoiceState('idle'); showDataQualityGate();
       } else {
         state.notes = (state.notes || '') + ' ' + text;
         setVoiceState('idle');
-        runAnalysis();
+        showDataQualityGate();
       }
     }
     // Override add() to auto-speak in voice mode
@@ -4506,6 +4454,7 @@ def chat_page():
     function startClarify() {
       clarQueue = [];
       clarIndex = 0;
+      adaptiveQuestionNo = 0;
       (state.symptoms || []).forEach(function(s){
         for (var i = 0; i < CLAR.length; i++) {
           if (CLAR[i].syms.indexOf(s) !== -1) { clarQueue.push(CLAR[i].node); break; }
@@ -4515,48 +4464,7 @@ def chat_page():
     }
     function nextClarNode() {
       if (clarIndex < clarQueue.length) walkClarNode(clarQueue[clarIndex++]);
-      else showReviewScreen();
-    }
-    function showReviewScreen() {
-      state.step = 'review'; updateFlow(state.step);
-      add(TT('preparing_analysis'), 'bot');
-      var html = '<div class="ss-prereview"><h3>🔍 ' + TT('prereview_title') + '</h3><p style="color:#40566F;font-size:14px;margin-bottom:12px;">' + TT('prereview_sub') + '</p>';
-      html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_symptoms') + '</span><span class="pv">' + esc(state.symptoms.join(', ')) + '</span></div>';
-      if (state.age) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_age') + '</span><span class="pv">' + esc(state.age) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_age') + '</span><span class="pv missing">' + TT('prereview_missing') + '</span></div>';
-      if (state.gender) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_gender') + '</span><span class="pv">' + esc(state.gender) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_gender') + '</span><span class="pv missing">' + TT('prereview_missing') + '</span></div>';
-      if (state.duration) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_duration') + '</span><span class="pv">' + esc(state.duration) + '</span></div>';
-      else html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_duration') + '</span><span class="pv missing">-</span></div>';
-      if (state.notes) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_notes') + '</span><span class="pv">' + esc(state.notes) + '</span></div>';
-      if (window.__USER_INFO__) {
-        var u = window.__USER_INFO__;
-        if (u.height) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_height') + '</span><span class="pv">' + esc(u.height) + ' cm</span></div>';
-        if (u.weight) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_weight') + '</span><span class="pv">' + esc(u.weight) + ' kg</span></div>';
-        if (u.medications) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_meds') + '</span><span class="pv">' + esc(u.medications) + '</span></div>';
-        if (u.allergies) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_allergies') + '</span><span class="pv">' + esc(u.allergies) + '</span></div>';
-        if (u.health_conditions) html += '<div class="ss-prerow"><span class="pr">' + TT('prereview_conditions') + '</span><span class="pv">' + esc(u.health_conditions) + '</span></div>';
-      }
-      html += '</div>';
-      addHtml(html, 'bot');
-      setTimeout(function(){ showOpts([
-        {label: '🚀 ' + TT('prereview_start'), cls: 'opt-primary', fn: function(){ clearOpts(); runAnalysis(); }},
-        {label: '✏️ ' + TT('prereview_edit'), fn: function(){ add(TT('prereview_editing'), 'user'); clearOpts(); showEdit(); }},
-        {label: '➕ ' + TT('prereview_add_info'), fn: function(){ add(TT('prereview_adding'), 'user'); clearOpts(); askMoreInfo(); }}
-      ]); }, 600);
-    }
-    function showEdit() {
-      if (typeof editMode !== 'undefined') { editMode = true; viewMode.style.display = 'none'; editMode2.style.display = 'block'; return; }
-      add(TT('prereview_edit_hint'), 'bot');
-    }
-    function askMoreInfo() {
-      addQ(TT('prereview_more_q'));
-      showOpts([
-        {label: TT('prereview_more_meds'), fn: function(){ add(TT('prereview_more_meds'), 'user'); addQ(TT('prereview_meds_ask')); showText(TT('prereview_meds_hint'), true); }},
-        {label: TT('prereview_more_allergies'), fn: function(){ add(TT('prereview_more_allergies'), 'user'); addQ(TT('prereview_allergies_ask')); showText(TT('prereview_allergies_hint'), true); }},
-        {label: TT('prereview_more_weight'), fn: function(){ add(TT('prereview_more_weight'), 'user'); addQ(TT('prereview_weight_ask')); showText(TT('prereview_weight_hint'), true); }},
-        {label: TT('prereview_more_done'), fn: function(){ add(TT('prereview_more_done'), 'user'); clearOpts(); showReviewScreen(); }}
-      ]);
+      else showDataQualityGate();
     }
     function walkClarNode(node) {
       if (!node) { nextClarNode(); return; }
@@ -4568,6 +4476,8 @@ def chat_page():
       }
       if (node.q) {
         const q = LANG === 'en' ? node.q[1] : node.q[0];
+        adaptiveQuestionNo += 1;
+        addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'السؤال ':'Question ')+adaptiveQuestionNo+(LANG==='ar'?' · يتكيف حسب إجاباتك':' · adapts to your answers'))+'</div>','bot');
         addQ('🧩 ' + q);
         showOpts([
           {label:TT('clar_yes'), fn:()=>{
@@ -4598,14 +4508,43 @@ def chat_page():
       updateFlow(state.step);
       addQ(TT('gender'));
       showOpts([
-        {label:TT('male'), fn:()=>{ state.gender='m'; add(TT('male'),'user'); askSymptoms(); }},
-        {label:TT('female'), fn:()=>{ state.gender='f'; add(TT('female'),'user'); askSymptoms(); }}
+        {label:TT('male'), fn:()=>{ state.gender='m'; add(TT('male'),'user'); if(qualityReturnKey==='gender'){qualityReturnKey=null;showDataQualityGate();}else askSymptoms(); }},
+        {label:TT('female'), fn:()=>{ state.gender='f'; add(TT('female'),'user'); if(qualityReturnKey==='gender'){qualityReturnKey=null;showDataQualityGate();}else askSymptoms(); }}
       ]);
     }
     function G(f, m) { return state.gender === 'm' ? m : f; }
+    function trackJourney(stage) {
+      try { fetch('/api/analytics/journey',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stage:stage}),keepalive:true}).catch(function(){}); } catch(e) {}
+    }
+    async function extractSmartSymptoms(text) {
+      const raw = String(text || '').trim();
+      if (!raw) return;
+      clearOpts(); add(LANG==='ar'?'أفهم وصفك وأطابقه مع قاعدة الأعراض…':'Understanding your description and matching it to the symptom knowledge base…','bot');
+      try {
+        const r = await fetch('/api/symptoms/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:raw,lang:LANG})});
+        const d = await r.json();
+        const found = (d.found || []).map(function(x){ return LANG==='ar' ? (x.name_ar || x.name_en || x.slug) : (x.name_en || x.name_ar || x.slug); }).filter(Boolean);
+        if (!found.length) {
+          add(LANG==='ar'?'لم أستطع تحديد الأعراض بثقة. اختاريها من القائمة أو اكتبيها يدويًا.':'I could not confidently identify the symptoms. Please select them from the list or enter them manually.','bot');
+          askSymptoms(); return;
+        }
+        addHtml('<div class="smart-found"><b>🧠 '+esc(LANG==='ar'?'وجدنا:':'We found:')+'</b><div style="margin-top:8px">'+found.map(x=>'✓ '+esc(x)).join('<br>')+'</div><p class="muted" style="margin:8px 0 0">'+esc(LANG==='ar'?'هل هذا صحيح؟':'Is this correct?')+'</p></div>','bot');
+        showOpts([
+          {label:LANG==='ar'?'✅ نعم، متابعة':'✅ Yes, continue',fn:function(){ state.symptoms=Array.from(new Set(found)); add(LANG==='ar'?'تم تأكيد الأعراض':'Symptoms confirmed','user'); askDuration(); }},
+          {label:LANG==='ar'?'✏️ تعديل الأعراض':'✏️ Edit symptoms',fn:function(){ state.symptoms=Array.from(new Set(found)); askSymptoms(); }}
+        ]);
+      } catch(e) { add(LANG==='ar'?'تعذر فهم الوصف الآن. يمكنك اختيار الأعراض يدويًا.':'Unable to process the description right now. You can select symptoms manually.','bot'); askSymptoms(); }
+    }
+    function showSmartSymptomInput() {
+      if (state.smart_prompt_shown) return;
+      state.smart_prompt_shown=true;
+      addHtml('<div class="smart-input-card"><b>🗣️ '+esc(LANG==='ar'?'اكتب اللي تحس فيه':'Describe what you are experiencing')+'</b><p class="muted">'+esc(LANG==='ar'?'مثال: من أمس عندي صداع قوي وأحس بغثيان.':'Example: Since yesterday I have a strong headache and feel nauseous.')+'</p><textarea id="smartSymptomText" class="field" rows="3" placeholder="'+esc(LANG==='ar'?'صف الأعراض بطريقتك…':'Describe your symptoms in your own words…')+'"></textarea><button class="ss-btn-primary" style="margin-top:8px" onclick="extractSmartSymptoms(document.getElementById(&quot;smartSymptomText&quot;).value)">'+esc(LANG==='ar'?'فهم الأعراض':'Find symptoms')+'</button></div>','q');
+    }
     function askSymptoms() {
+      trackJourney('symptoms');
       state.step = 'symptoms';
       updateFlow(state.step);
+      if (!state.symptoms.length) showSmartSymptomInput();
       if (state.symptoms.length) {
         addHtml('➕ ' + esc(TT('syms_more')) + '<div class="sel-sum">' + esc(TT('chosen')) + ' ' + esc(state.symptoms.join(LANG === 'en' ? ', ' : '، ')) + '</div>', 'q');
       } else {
@@ -4661,29 +4600,31 @@ def chat_page():
       askSymptoms();
     }
     function askDuration() {
+      trackJourney('questionnaire');
       if (state.duration) { askSeverity(); return; }
       state.step = 'duration';
       updateFlow(state.step);
       addQ(TT('duration'));
-      showOpts(DURS.map(d=>({label:d, fn:()=>{ state.duration=d; add(d,'user'); askSeverity(); }})));
+      showOpts(DURS.map(d=>({label:d, fn:()=>{ state.duration=d; add(d,'user'); if(qualityReturnKey==='duration'){qualityReturnKey=null;showDataQualityGate();}else askSeverity(); }})));
     }
     function askSeverity() {
       if (state.severity) { askNotes(); return; }
       state.step = 'severity';
       updateFlow(state.step);
       addQ(TT('severity'));
-      showOpts(SEVS.map(([v,l])=>({label:l, fn:()=>{ state.severity=v; add(l,'user'); askNotes(); }})));
+      showOpts(SEVS.map(([v,l])=>({label:l, fn:()=>{ state.severity=v; add(l,'user'); if(qualityReturnKey==='severity'){qualityReturnKey=null;showDataQualityGate();}else askNotes(); }})));
     }
     function askConditions() {
       if (state.conditions && state.member && state.member.conditions) { askMeds(); return; }
       state.step = 'conditions';
       updateFlow(state.step);
       addQ(G(TT('conditions_f'), TT('conditions_m')));
-      const items = CONDS.map(c=>({label:c, fn:()=>{ state.conditions=c; add(c,'user'); askMeds(); }}));
+      const items = CONDS.map(c=>({label:c, fn:()=>{ state.conditions=c; state.history_answered=true; add(c,'user'); if(qualityReturnKey==='relevant_history'){qualityReturnKey=null;showDataQualityGate();}else askMeds(); }}));
       items.push({label:TT('other_diseases'), fn:()=>{ addQ(G(TT('other_diseases_f'), TT('other_diseases_m'))); showText(TT('cond_ph')); }});
       showOpts(items);
     }
     function askMeds() {
+      state.history_answered = true;
       if (state.medications && state.member && state.member.medications) { askAllergies(); return; }
       state.step = 'medications';
       updateFlow(state.step);
@@ -4710,14 +4651,12 @@ def chat_page():
       if (state.step === 'age') {
         const n = parseInt(v);
         if (!n || n < 1 || n > 120) { add(TT('age_invalid'), 'bot'); showText(TT('age_ph')); return; }
-        state.age = n; askGender();
+        state.age = n; if(qualityReturnKey==='age'){qualityReturnKey=null;showDataQualityGate();}else askGender();
       } else if (state.step === 'symptoms') {
         if (checkAmbiguous(v)) return;
-        state.symptoms.push(v);
-        add(TT('added_n'), 'bot');
-        askSymptoms();
+        extractSmartSymptoms(v);
       } else if (state.step === 'conditions') {
-        state.conditions = v; askMeds();
+        state.conditions = v; state.history_answered=true; if(qualityReturnKey==='relevant_history'){qualityReturnKey=null;showDataQualityGate();}else askMeds();
       } else if (state.step === 'medications') {
         state.medications = v; askAllergies();
       } else if (state.step === 'allergies') {
@@ -4828,13 +4767,70 @@ def chat_page():
       });
       showOpts(items);
     }
+    let lastDataQuality = null;
+    let qualityReturnKey = null;
+    function dataQualityPayload(){
+      return {lang:LANG,age:state.age,gender:state.gender,symptoms:(state.symptoms||[]),duration:state.duration,severity:state.severity,conditions:state.conditions||'',medications:state.medications||'',allergies:state.allergies||'',notes:state.notes||'',location:state.location||'',history_answered:!!state.history_answered};
+    }
+    function dataQualityHtml(q, compact){
+      if(!q) return '';
+      const pct=Math.max(0,Math.min(100,parseInt(q.score||0)));
+      const levelIcon=q.level==='excellent'?'🟢':(q.level==='good'?'🟡':(q.level==='limited'?'🟠':'🔴'));
+      let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'جودة المعلومات':'Data Quality')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
+      if(!compact){
+        h+='<div class="dq-grid">'+(q.fields||[]).map(function(f){const icon=f.status==='provided'?'✅':(f.status==='needs_clarification'?'⚠️':'⚠️');const cls=f.status==='provided'?'':(f.status==='needs_clarification'?' clarify':' missing');return '<div class="dq-item'+cls+'">'+icon+' <b>'+esc(f.label)+'</b><div class="muted">'+esc(f.required?(LANG==='ar'?'مطلوب':'Required'):(LANG==='ar'?'موصى به':'Recommended'))+'</div></div>';}).join('')+'</div>';
+      }
+      h+='<div class="dq-meta"><span>'+esc(LANG==='ar'?'المطلوب مكتمل: ':'Required complete: ')+esc(String(q.required_completion||0))+'%</span><span>'+esc(LANG==='ar'?'السياق الموصى به: ':'Recommended context: ')+esc(String(q.recommended_completion||0))+'%</span></div></div>';
+      return h;
+    }
+    async function fetchDataQuality(){
+      const r=await fetch('/api/analyze/data-quality',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dataQualityPayload())});
+      const d=await r.json();
+      if(d.consent_required){location.href=d.consent_url||'/consent?next=/chat';throw new Error('consent_required');}
+      if(!r.ok||!d.ok) throw new Error(d.error||'quality_failed');
+      lastDataQuality=d.data_quality; return d.data_quality;
+    }
+    async function showDataQualityGate(){
+      clearOpts(); hideText();
+      add(LANG==='ar'?'أراجع اكتمال المعلومات قبل التحليل…':'Checking information completeness before analysis…','bot');
+      try{
+        const q=await fetchDataQuality();
+        addHtml(dataQualityHtml(q,false),'bot');
+        const missing=(q.missing||[]);
+        if(!q.sufficient){
+          add(LANG==='ar'?'أكملي المعلومات المطلوبة أولًا. إذا ظهرت علامة خطر، ستظل طبقة الأمان لها الأولوية عند تشغيل التقييم.':'Please complete the required information first. If a red flag is present, the safety layer still takes priority when the assessment runs.','bot');
+          showOpts([{label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}}]);
+          return;
+        }
+        const opts=[{label:'🩺 '+(LANG==='ar'?'تحليل الأعراض':'Analyze symptoms'),fn:function(){runAnalysis();}}];
+        if(missing.length) opts.push({label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}});
+        showOpts(opts);
+      }catch(e){ if(String(e.message)!=='consent_required'){ add(LANG==='ar'?'تعذر حساب جودة المعلومات الآن. يمكنك متابعة الأسئلة ثم المحاولة مرة أخرى.':'Unable to calculate data quality right now. Continue the questions and try again.','bot'); showOpts([{label:'🔄 '+(LANG==='ar'?'إعادة المحاولة':'Try again'),fn:showDataQualityGate}]); } }
+    }
+    function improveDataQuality(q){
+      clearOpts();
+      const missing=(q&&q.missing)||[];
+      const required=missing.find(x=>x.required)||missing[0];
+      if(!required){showDataQualityGate();return;}
+      const key=required.key; qualityReturnKey=key;
+      add((LANG==='ar'?'سنضيف: ':'Let’s add: ')+required.label,'bot');
+      if(key==='age'){state.age=null;askAge();return;}
+      if(key==='gender'){state.gender=null;askGender();return;}
+      if(key==='main_symptom'||key==='associated_symptoms'){askSymptoms();return;}
+      if(key==='duration'){state.duration=null;askDuration();return;}
+      if(key==='severity'){state.severity=null;askSeverity();return;}
+      if(key==='relevant_history'){state.history_answered=false;state.conditions=null;askConditions();return;}
+      askSymptoms();
+    }
     async function runAnalysis() {
+      trackJourney(state.previous_record_id ? 'reanalyze' : 'analysis');
       hideText();
       clearOpts();
       add(TT('analyzing'), 'bot');
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
+        if (state.previous_record_id) payload.previous_record_id = state.previous_record_id;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
         var useSaved = false;
         var userInfo = null;
@@ -4853,10 +4849,12 @@ def chat_page():
           body: JSON.stringify(payload)
         });
         const d = await r.json();
+        if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
         if (d.ok) {
+          trackJourney('result');
           if (d.emergency) { showEmergency(d); }
           else {
-            if (d.low_confidence || (d.ml_predictions && d.ml_predictions.length && d.ml_predictions[0].probability < 0.35)) {
+            if (d.assessment_status === 'insufficient' || d.assessment_status === 'low_confidence' || d.low_confidence) {
               showIncompleteResult(d);
             } else {
               renderResult(d);
@@ -4893,42 +4891,18 @@ def chat_page():
       }
     }
     function showIncompleteResult(d) {
-      add(TT('incomplete_title'), 'bot');
-      var qText = '';
-      if (!state.age) qText = TT('incomplete_q_age');
-      else if (!state.gender) qText = TT('incomplete_q_gender');
-      else if (!state.duration) qText = TT('incomplete_q_duration');
-      else if (!state.notes) qText = TT('incomplete_q_notes');
-      else qText = TT('incomplete_q_general');
-      setTimeout(function(){
-        add('🤍 ' + qText, 'bot');
-        showOpts([
-          {label:'📅 ' + TT('incomplete_today'), fn:function(){
-            add(TT('incomplete_today'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'اليوم' : 'Today';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_yesterday'), fn:function(){
-            add(TT('incomplete_yesterday'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'أمس' : 'Yesterday';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_days'), fn:function(){
-            add(TT('incomplete_days'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'عدة أيام' : 'Several days';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'📅 ' + TT('incomplete_week'), fn:function(){
-            add(TT('incomplete_week'), 'user'); clearOpts();
-            state.duration = LANG==='ar' ? 'أكثر من أسبوع' : 'More than a week';
-            reAnalyzeWithMoreInfo(d);
-          }},
-          {label:'🤷 ' + TT('incomplete_skip'), fn:function(){
-            add(TT('incomplete_skip'), 'user'); clearOpts();
-            renderResult(d);
-          }}
-        ]);
-      }, 500);
+      lastResult=d;
+      const title = LANG==='ar'?'🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق':'🧠 Not Enough Information';
+      const intro = LANG==='ar'?'لن يعرض SymptoSense احتمالًا طبيًا عندما لا تكون المعلومات أو المطابقة الموثوقة كافية.':'SymptoSense will not show a medical possibility when the information or grounded match is insufficient.';
+      const needed=(d.needed_information||[]).filter(Boolean);
+      add(title, 'bot');
+      let msg='<div class="v2-low-confidence-card"><p>'+esc(intro)+'</p>'+(needed.length?'<b>'+(LANG==='ar'?'معلومات إضافية مطلوبة:':'Additional information needed:')+'</b><ul>'+needed.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
+      add(msg,'bot');
+      showOpts([
+        {label:'✏️ '+(LANG==='ar'?'إضافة معلومات':'Add information'), fn:function(){clearOpts();improveDataQuality(d.data_quality||lastDataQuality||{missing:[]});}},
+        {label:'📚 '+(LANG==='ar'?'عرض المصادر الموثوقة':'View trusted sources'), fn:function(){clearOpts();renderResult(d);}},
+        {label:'🩺 '+(LANG==='ar'?'عرض النتيجة الآمنة':'View safe result'), fn:function(){clearOpts();renderResult(d);}}
+      ]);
     }
     function reAnalyzeWithMoreInfo(previousD) {
       add(TT('incomplete_reanalyzing'), 'bot');
@@ -4939,6 +4913,7 @@ def chat_page():
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       }).then(function(r){return r.json();}).then(function(d2){
+        if(d2.consent_required){location.href=d2.consent_url||'/consent?next=/chat';return;}
         if (d2.ok && !d2.emergency) {
           add(TT('incomplete_done'), 'bot');
           renderResult(d2);
@@ -5022,6 +4997,21 @@ def chat_page():
     function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
     function NAME(x, arKey, enKey) { return LANG === 'en' ? (x[enKey] || x[arKey]) : (x[arKey] || x[enKey]); }
     function pillLabel(u) { return u==='high' ? TT('urg_high') : (u==='medium' ? TT('urg_medium') : TT('urg_low')); }
+    function explainabilityHtml(d){
+      const x=d&&d.explainability; if(!x) return '';
+      const factors=(x.factors||[]);
+      const infLabel={high:(LANG==='ar'?'تأثير أعلى':'Higher contribution'),medium:(LANG==='ar'?'تأثير متوسط':'Moderate contribution'),low:(LANG==='ar'?'تأثير أقل':'Lower contribution')};
+      let body='<details class="xai-card"><summary><span>🔍 '+esc(LANG==='ar'?'لماذا ظهر هذا التقييم؟':'Why this assessment?')+'</span><span>⌄</span></summary><div class="xai-body"><div class="xai-basis">'+esc(x.basis_label||'')+'</div>';
+      if(factors.length){
+        body+='<div><b>'+esc(LANG==='ar'?'العوامل التي استخدمها التقييم':'Factors used in this assessment')+'</b></div>';
+        factors.forEach(function(f){const inf=f.influence||'low';const n=inf==='high'?3:(inf==='medium'?2:1);let meter='<span class="xai-meter" aria-label="'+esc(infLabel[inf]||inf)+'">';for(let i=1;i<=3;i++)meter+='<i class="'+(i<=n?'on':'')+'"></i>';meter+='</span>';body+='<div class="xai-factor"><div class="xai-factor-head"><b>'+esc(f.label||'')+'</b><span><span class="xai-influence '+esc(inf)+'">'+esc(infLabel[inf]||inf)+'</span>'+meter+'</span></div>'+(f.detail?'<div class="xai-detail">'+esc(f.detail)+'</div>':'')+'</div>';});
+      } else {
+        body+='<div class="muted">'+esc(LANG==='ar'?'لا توجد عوامل إضافية يمكن نسبها بشكل موثوق إلى التقييم الحالي.':'No additional factors can be reliably attributed to the current assessment.')+'</div>';
+      }
+      body+='<div class="xai-note"><b>'+esc(LANG==='ar'?'ماذا يعني ذلك؟':'What does this mean?')+'</b><br>'+esc(x.meaning||'')+'</div>';
+      if(x.auxiliary_model_note) body+='<div class="xai-note">🤖 '+esc(x.auxiliary_model_note)+'</div>';
+      body+='</div></details>'; return body;
+    }
     function renderResult(d) {
       lastResult = d;
       state.step = 'review'; updateFlow(state.step);
@@ -5033,6 +5023,7 @@ def chat_page():
       h += '<div class="res-title">' + TT('result_card_title') + '</div>';
       if (state.member && state.member.name) h += '<div class="res-person">' + esc(TT('person_badge')) + esc(state.member.name) + '</div>';
       h += '<div class="res-urg"><span class="pill2 ' + pcls + '"><span class="urg-lbl">' + uEmoji + ' ' + esc(TT('urg_label')) + '</span><span class="urg-val">' + esc(uVal) + '</span></span></div>';
+      if (d.data_quality) h += dataQualityHtml(d.data_quality,true);
       h += '<div class="res-assess" style="margin-top:10px"><div class="res-assess-h">' + (LANG==='ar'?'ملخص ما ذكرته':'What you told us') + '</div>'
         + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'الأعراض':'Symptoms') + '</span><span>' + esc((state.symptoms||[]).join(LANG==='ar'?'، ':', ')) + '</span></div>'
         + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'المدة':'Duration') + '</span><span>' + esc(state.duration||'—') + '</span></div>'
@@ -5040,23 +5031,28 @@ def chat_page():
       if (d.triage_label) h += '<div class="res-triage">' + esc(d.triage_label) + '</div>';
       if (d.triage_reason) h += '<div class="triage-why"><b>' + esc(TT('triage_why')) + '</b><div style="margin-top:6px;text-align:right;">' + esc(d.triage_reason).replace(/\\n/g, '<br>') + '</div></div>';
       if (d.rule_forced_high) h += '<div class="warn" style="margin:8px 0;">' + TT('forced_high') + '</div>';
-      if (d.low_confidence) h += '<div class="muted" style="text-align:center;margin-bottom:8px;">' + TT('low_conf') + '</div>';
+      if (d.assessment_status==='insufficient'||d.assessment_status==='low_confidence') { const need=(d.needed_information||[]); h += '<div class="v2-low-confidence-card"><h3>'+esc(LANG==='ar'?'🧠 معلومات غير كافية':'🧠 Not Enough Information')+'</h3><p>'+esc(LANG==='ar'?'لا توجد معلومات كافية لعرض تقييم موثوق أو احتمالات طبية.':'There is not enough grounded information to show a reliable assessment or medical possibilities.')+'</p>'+(need.length?'<b>'+esc(LANG==='ar'?'معلومات إضافية مطلوبة':'Additional information needed')+'</b><ul>'+need.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>'; }
+      if (d.emergency) {
+        h += '<div class="v2-emergency-card"><h3>🚨 ' + esc(LANG==='ar'?'تنبيه صحي مهم':'Important health alert') + '</h3>'
+          + '<p>' + esc(LANG==='ar'?'الأعراض التي أدخلتها قد تستدعي تقييمًا طبيًا عاجلًا. لا تعتمد على هذا التحليل وحده.':'The symptoms you entered may need urgent medical assessment. Do not rely on this assessment alone.') + '</p>'
+          + '<strong>' + esc(LANG==='ar'?'ما يجب فعله الآن':'What to do now') + '</strong><p>' + esc(d.when_to_seek_care || (LANG==='ar'?'اطلب الرعاية الطبية العاجلة أو تواصل مع خدمات الطوارئ المناسبة.':'Seek urgent medical care or contact the appropriate emergency service.')) + '</p></div>';
+      }
       h += '<div class="res-note"><b>' + esc(TT('assessment_label')) + '</b> ' + esc(d.personal_note) + '</div>';
-      h += '<div class="res-disc">' + esc(TT('result_disclaimer')) + '</div>';
+      h += '<div class="v2-symptom-chips">' + (state.symptoms||[]).map(function(sym){return '<span class="v2-symptom-chip">🩺 '+esc(sym)+'</span>';}).join('') + '</div>';
       h += '<div class="res-sim-toggle"><button id="simBtn" class="opt" onclick="setSim(1)">👤 ' + esc(TT('sim_btn')) + '</button><button id="detBtn" class="opt" style="display:none;" onclick="setSim(0)">🔬 ' + esc(TT('det_btn')) + '</button></div>';
       h += '<div id="resSimple" style="display:none;" class="res-sec sim-box">' + esc(d.simple_explanation || TT('sim_fallback')) + '</div>';
       h += '<div id="resDetail">';
 
-      if (d.possible_conditions) h += '<div class="rc-title">' + TT('possible') + '</div><div class="res-sec">' + esc(d.possible_conditions) + '</div>';
+      if (d.possible_conditions && !d.emergency && (!d.knowledge_matches || !d.knowledge_matches.length)) h += '<div class="rc-title v2-result-section-title">' + TT('possible') + '</div><div class="res-sec">' + esc(d.possible_conditions) + '</div>';
       if (d.knowledge_matches && d.knowledge_matches.length) {
-        h += '<div class="rc-title">' + TT('kb_title') + '</div>';
+        h += '<div class="rc-title v2-result-section-title">🩺 ' + esc(LANG==='ar'?'الاحتمالات المحتملة':'Possible conditions') + '</div>';
         d.knowledge_matches.forEach(function(m) {
           var level = m.match_level === 'strong' ? TT('match_strong') : (m.match_level === 'moderate' ? TT('match_moderate') : TT('match_weak'));
           var name = NAME(m, 'name_ar', 'name_en');
           var reasons = (m.matched_symptoms || []).map(function(s){ return '✓ ' + esc(NAME(s, 'name_ar', 'name_en')); }).join('<br>');
-          h += '<div class="rec-card" style="border-inline-start:4px solid #1976D2;">'
-            + '<div class="rec-head"><b>' + esc(name) + '</b><span style="margin-inline-start:auto;background:#EAF4FF;color:#123B70;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;">' + esc(level) + '</span></div>'
-            + (reasons ? '<div class="rec-body"><b>' + esc(TT('kb_matched')) + ':</b><br>' + reasons + '</div>' : '')
+          h += '<div class="rec-card v2-condition-card">'
+            + '<div class="rec-head"><b>' + esc(name) + '</b><span class="v2-match-badge">' + esc(level) + '</span></div>'
+            + (reasons ? '<div class="rec-body"><b>' + esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?') + '</b><div class="v2-match-list">' + reasons.split('<br>').map(function(r){return '<div class="v2-match-item">'+r+'</div>';}).join('') + '</div></div>' : '')
             + '</div>';
         });
       }
@@ -5078,7 +5074,7 @@ def chat_page():
         h += '<div class="ml-note">' + esc(TT('result_disclaimer')) + '</div>';
       }
       if (d.recommendations && d.recommendations.length) {
-        h += '<div class="rc-title">' + TT('recs') + '</div>';
+        h += '<div class="rc-title v2-result-section-title">🧭 ' + esc(LANG==='ar'?'ماذا أفعل الآن؟':'What should I do now?') + '</div>';
         d.recommendations.forEach((r, i) => {
           h += '<div class="rec-card"><div class="rec-head"><span class="rec-num">' + (i+1) + '</span><b>' + esc(r.title || r.tip) + '</b></div>';
           if (r.title && r.tip) h += '<div class="rec-body">' + esc(r.tip) + '</div>';
@@ -5086,7 +5082,20 @@ def chat_page():
           h += '</div>';
         });
       }
-      if (d.danger_signs) h += '<div class="rc-title">' + TT('danger') + '</div><div class="res-sec bullets">' + esc(d.danger_signs) + '</div>';
+      h += '<div class="rc-title v2-result-section-title">🚨 ' + esc(LANG==='ar'?'علامات تستدعي الانتباه':'Red flags') + '</div>';
+      if (d.risk_reasons && d.risk_reasons.length) {
+        d.risk_reasons.forEach(function(rf){
+          var rfName=rf.name || (LANG==='ar'?'علامة خطر':'Red flag');
+          var rfMsg=rf.description || rf.message || '';
+          var rfAction=rf.recommended_action || '';
+          h += '<div class="rec-card v2-redflag-card"><div class="rec-head"><b>🚨 '+esc(rfName)+'</b></div>'
+            + (rfMsg?'<div class="rec-body">'+esc(rfMsg)+'</div>':'')
+            + (rfAction?'<div class="rec-body"><b>'+esc(LANG==='ar'?'الإجراء الموصى به: ':'Recommended action: ')+'</b>'+esc(rfAction)+'</div>':'') + '</div>';
+        });
+      } else {
+        h += '<div class="v2-safe-note">🟢 ' + esc(LANG==='ar'?'لم يتم تحديد علامات خطر من المعلومات المدخلة.':'No red flags were identified from the information entered.') + '</div>';
+      }
+      if (d.danger_signs && (!d.risk_reasons || !d.risk_reasons.length)) h += '<div class="rc-title">' + esc(LANG==='ar'?'راقب هذه العلامات إذا ظهرت':'Watch for these signs if they appear') + '</div><div class="res-sec bullets">' + esc(d.danger_signs) + '</div>';
       if (d.when_to_seek_care) h += '<div class="rc-title">' + TT('when') + '</div><div class="res-sec">' + esc(d.when_to_seek_care) + '</div>';
       if (d.home_care) h += '<div class="rc-title">' + TT('home_care') + '</div><div class="res-sec bullets">' + esc(d.home_care) + '</div>';
       if (d.medication_guidance) h += '<div class="rc-title">' + TT('med_guid') + '</div><div class="res-sec">' + esc(d.medication_guidance) + '</div>';
@@ -5095,9 +5104,11 @@ def chat_page():
         h += '<div class="rc-title">' + TT('sources_title') + '</div>';
         d.medical_sources.forEach(function(s) {
           var sourceTitle = LANG === 'ar' ? (s.reference_title_ar || s.source_name) : (s.reference_title_en || s.source_name);
+          var sourceType=s.source_type || (LANG==='ar'?'جهة صحية رسمية':'Official health source');
+          var sourceVerified=s.last_verified || s.source_last_verified || '—';
           h += '<div class="rec-card"><div class="rec-head"><b>' + esc(s.source_name) + '</b><span style="margin-inline-start:auto;color:#166534;background:#ECFDF5;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;">✓ ' + esc(TT('verified_source')) + '</span></div>'
-            + '<div class="rec-body">' + esc(sourceTitle) + '</div>'
-            + '<a class="btn ghost small" href="' + esc(s.reference_url) + '" target="_blank" rel="noopener noreferrer">' + esc(TT('view_source')) + '</a></div>';
+            + '<div class="rec-body">' + esc(sourceTitle) + '<div class="muted" style="margin-top:6px">'+esc(sourceType)+' · '+esc(LANG==='ar'?'آخر تحقق: ':'Last verified: ')+esc(sourceVerified)+'</div></div>'
+            + '<a class="btn ghost small v2-source-link" href="' + esc(s.reference_url || s.official_url || '#') + '" target="_blank" rel="noopener noreferrer">' + esc(TT('view_source')) + '</a></div>';
         });
       }
       if (d.knowledge_last_updated) {
@@ -5107,47 +5118,27 @@ def chat_page():
       }
       h += '</div>';
 
-      // ENHANCED: Why this result
-      h += '<div class="res-why"><div class="res-why-h">🧠 ' + TT('why_title') + '</div>';
-      var whyText = d.why_result || '';
-      if (!whyText) {
-        var syms = (state.symptoms || []).join(', ');
-        var uLabel = u === 'high' ? TT('urg_high') : (u === 'medium' ? TT('urg_medium') : TT('urg_low'));
-        whyText = LANG === 'ar'
-          ? 'بناءً على الأعراض الموحّدة (' + syms + ') وتقييم ' + uLabel + '، تمت المطابقة مع العلاقات النشطة والمصادر الموثقة في قاعدة المعرفة الطبية.'
-          : 'Based on normalized symptoms (' + syms + ') and the ' + uLabel + ' assessment, matching used active relationships and verified sources in the medical knowledge base.';
+      // ENHANCED: Why this result (fallback when no grounded condition match exists)
+      if (!d.knowledge_matches || !d.knowledge_matches.length) {
+        h += '<div class="res-why"><div class="res-why-h">🧠 ' + TT('why_title') + '</div>';
+        var whyText = d.why_result || '';
+        if (!whyText) {
+          var syms = (state.symptoms || []).join(', ');
+          var uLabel = u === 'high' ? TT('urg_high') : (u === 'medium' ? TT('urg_medium') : TT('urg_low'));
+          whyText = LANG === 'ar'
+            ? 'بناءً على الأعراض الموحّدة (' + syms + ') وتقييم ' + uLabel + '، تمت مراجعة قواعد الأمان والعلاقات النشطة في قاعدة المعرفة الطبية.'
+            : 'Based on normalized symptoms (' + syms + ') and the ' + uLabel + ' assessment, the safety rules and active medical-knowledge relationships were reviewed.';
+        }
+        h += '<div class="res-why-body">' + esc(whyText) + '</div></div>';
       }
-      h += '<div class="res-why-body">' + esc(whyText) + '</div></div>';
 
-      // ENHANCED: What to do now
-      h += '<div class="res-action"><div class="res-action-h">🧭 ' + TT('action_title') + '</div>';
-      var actionColor = u === 'high' ? '#DC2626' : (u === 'medium' ? '#F59E0B' : '#16A34A');
-      var actionBg = u === 'high' ? '#FEF2F2' : (u === 'medium' ? '#FFFBEB' : '#F0FDF4');
-      var actionBorder = u === 'high' ? '#FECACA' : (u === 'medium' ? '#FDE68A' : '#BBF7D0');
-      var actionItems = [];
-      if (u === 'high') {
-        actionItems.push(TT('action_high_1') || 'seek_emergency');
-        actionItems.push(TT('action_high_2') || 'call_doctor');
-        actionItems.push(TT('action_high_3') || 'do_not_wait');
-      } else if (u === 'medium') {
-        actionItems.push(TT('action_med_1') || 'schedule_appointment');
-        actionItems.push(TT('action_med_2') || 'monitor_symptoms');
-        actionItems.push(TT('action_med_3') || 'home_care_tips');
-      } else {
-        actionItems.push(TT('action_low_1') || 'self_care');
-        actionItems.push(TT('action_low_2') || 'rest_hydrate');
-        actionItems.push(TT('action_low_3') || 'see_doctor_if_worse');
-      }
-      h += '<div style="background:' + actionBg + ';border-left:4px solid ' + actionColor + ';border-radius:0 12px 12px 0;padding:14px 16px;margin-top:10px;">';
-      actionItems.forEach(function(item){ h += '<div style="padding:4px 0;color:' + actionColor + ';font-weight:600;">• ' + esc(item) + '</div>'; });
-      h += '</div></div>';
+      h += explainabilityHtml(d);
 
       // ENHANCED: Assessment card
       h += '<div class="res-assess"><div class="res-assess-h">📋 ' + TT('assess_title') + '</div>';
       h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_safety') + '</span><span class="pill2 ' + pcls + '">' + uEmoji + ' ' + esc(uVal) + '</span></div>';
-      var completionPct = 100;
-      if (profileMissing && profileMissing.length > 0) completionPct = Math.max(40, 100 - profileMissing.length * 15);
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_completion') + '</span><span style="font-weight:700;color:#16A34A;">' + completionPct + '%</span></div>';
+      var completionLabel = d.data_quality ? ((d.data_quality.score||0)+'% · '+(d.data_quality.level_label||'')) : ((profileMissing && profileMissing.length > 0) ? (LANG==='ar'?'معلومات جزئية':'Partial information') : (LANG==='ar'?'المعلومات الأساسية مكتملة':'Core information complete'));
+      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_completion') + '</span><span style="font-weight:700;color:var(--v2-green);">' + esc(completionLabel) + '</span></div>';
       h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_followup') + '</span><span style="font-weight:600;">' + esc(d.when_to_seek_care || TT('assess_followup_default')) + '</span></div>';
       if (useSaved && profileMissing.length > 0) {
         h += '<div style="margin-top:10px;padding:10px;background:#FFF7ED;border-radius:8px;border:1px solid #FDE68A;"><span style="font-weight:600;color:#92400E;">⚠️ ' + TT('assess_missing') + ':</span> <span style="color:#78350F;">' + esc(profileMissing.map(function(m){return m.label}).join(', ')) + '</span></div>';
@@ -5193,6 +5184,20 @@ def chat_page():
       h += '<div class="trans-items">' + notaskedItems.map(function(i){ return '<div class="trans-item trans-item-gray">○ ' + esc(i) + '</div>'; }).join('') + '</div>';
       h += '<div class="trans-note">' + TT('trans_notasked_note') + '</div></div>';
       h += '</div>';
+      var nextTitle = LANG==='ar'?'ما الخطوة التالية؟':'What should I do next?';
+      var nextText = u==='high' ? (LANG==='ar'?'اطلب تقييمًا طبيًا عاجلًا، خصوصًا إذا ظهرت علامة خطر.':'Seek urgent medical evaluation, especially when a red flag is present.') : (u==='medium' ? (LANG==='ar'?'فكّر في التواصل مع مختص صحي إذا استمرت الأعراض أو ساءت.':'Consider contacting a healthcare professional if symptoms persist or worsen.') : (LANG==='ar'?'راقب الأعراض واطلب المساعدة إذا ساءت أو ظهرت علامات خطر.':'Monitor your symptoms and seek help if they worsen or red flags appear.'));
+      h += '<div class="res-assess smart-next"><div class="res-assess-h">🧭 '+esc(nextTitle)+'</div><div class="res-assess-row"><strong>'+esc(nextText)+'</strong></div><div class="muted" style="margin-top:7px">'+esc(LANG==='ar'?'هذا التوجيه مبني على مستوى الخطورة في هذا التقييم ولا يُعد علاجًا أو تشخيصًا.':'This guidance is based on the risk level in this assessment and is not a diagnosis or treatment plan.')+'</div></div>';
+      if (compareBase) {
+        var changes=[];
+        if (String(compareBase.severity||'') !== String(state.severity||'')) changes.push((LANG==='ar'?'الشدة: ':'Severity: ')+(compareBase.severity||'—')+' → '+(state.severity||'—'));
+        if (String(compareBase.duration||'') !== String(state.duration||'')) changes.push((LANG==='ar'?'المدة: ':'Duration: ')+(compareBase.duration||'—')+' → '+(state.duration||'—'));
+        if (String(compareBase.urgency||'') !== String(u||'')) changes.push((LANG==='ar'?'مستوى الخطورة تغيّر':'Risk level changed')+': '+pillLabel(compareBase.urgency||'low')+' → '+pillLabel(u));
+        var oldS=(compareBase.symptoms||[]).slice().sort().join('|'), newS=(state.symptoms||[]).slice().sort().join('|');
+        if (oldS!==newS) changes.push(LANG==='ar'?'تم تعديل قائمة الأعراض.':'The symptom list changed.');
+        h += '<div class="res-why"><div class="res-why-h">📊 '+esc(LANG==='ar'?'ما الذي تغيّر؟':'What Changed?')+'</div><div class="res-why-body">'+(changes.length?changes.map(x=>'• '+esc(x)).join('<br>'):esc(LANG==='ar'?'لم تتغير البيانات الأساسية مقارنة بالتحليل السابق.':'Core inputs did not change from the previous analysis.'))+'<div class="muted" style="margin-top:8px">'+esc(LANG==='ar'?'تغيّر التقييم بعد تغيّر إجاباتك؛ هذا لا يثبت سببًا طبيًا.':'The assessment changed after your responses changed; this does not establish a medical cause.')+'</div></div></div>';
+      }
+      if (d.record_id) h += '<div class="detail-actions" style="margin:14px 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="beginReanalysis('+d.record_id+')">🔄 '+esc(LANG==='ar'?'إعادة التحليل':'Re-analyze')+'</button><a class="btn ghost" href="/api/analyze/export/'+d.record_id+'">📄 '+esc(LANG==='ar'?'تحميل التقرير':'Download Report')+'</a><button class="btn ghost" onclick="openDoctorHandoff('+d.record_id+')">🗣️ '+esc(LANG==='ar'?'تجهيز ملخص لزيارة الطبيب':'Prepare for a Doctor Visit')+'</button></div>';
+      h += '<div class="v2-disclaimer">⚠️ ' + esc(LANG==='ar'?'هذه المعلومات للتوعية ولا تُعد تشخيصًا طبيًا أو بديلًا عن استشارة الطبيب.':'This information is for awareness and is not a medical diagnosis or a substitute for professional medical advice.') + '</div>';
 
       h += '</div>';
       addHtml(h, 'result');
@@ -5224,7 +5229,27 @@ def chat_page():
         }
       ]);
     }
+    async function openDoctorHandoff(recordId){
+      let candidates=[];try{const d=await fetch('/api/handoff/candidates').then(r=>r.json());candidates=(d.analyses||[]).filter(x=>x.id!==recordId);}catch(e){}
+      const overlay=document.createElement('div');overlay.id='handoffOverlay';overlay.style.cssText='position:fixed;inset:0;background:rgba(15,35,55,.45);z-index:1005;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+      const fields=[['symptoms',LANG==='ar'?'الأعراض':'Symptoms'],['duration',LANG==='ar'?'المدة':'Duration'],['severity',LANG==='ar'?'الشدة':'Severity'],['location',LANG==='ar'?'المكان':'Location'],['notes',LANG==='ar'?'الملاحظات':'Notes'],['medications',LANG==='ar'?'معلومات الأدوية':'Medication information']];
+      const choices=fields.map(x=>'<label style="display:flex;gap:8px;align-items:center;padding:8px 0"><input type="checkbox" data-share="'+x[0]+'"> '+esc(x[1])+'</label>').join('');
+      const prev=candidates.length?'<div style="margin-top:10px"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-share="previous_assessments" id="includePrevious"> '+esc(LANG==='ar'?'تقييمات سابقة مختارة':'Selected previous assessments')+'</label><div id="prevChoices" style="display:none;margin:8px 0;padding:10px;background:var(--v2-bg);border-radius:12px">'+candidates.slice(0,6).map(x=>'<label style="display:block;padding:5px"><input type="checkbox" data-prev="'+x.id+'"> '+esc((x.symptoms||[]).join(LANG==='ar'?'، ':', '))+' · '+esc(String(x.timestamp||'').slice(0,10))+'</label>').join('')+'</div></div>':'';
+      overlay.innerHTML='<div style="width:min(620px,100%);background:#fff;border-radius:20px;padding:22px;border:1px solid var(--v2-line);box-shadow:0 24px 70px rgba(20,50,80,.22)"><div style="display:flex;justify-content:space-between;gap:10px"><div><h2>🗣️ '+esc(LANG==='ar'?'تجهيز ملخص لزيارة الطبيب':'Prepare for a Doctor Visit')+'</h2><p class="muted">'+esc(LANG==='ar'?'اختر فقط المعلومات التي تريد مشاركتها. لا يتم اختيار أي حقل تلقائيًا.':'Choose only what you want to share. No field is selected by default.')+'</p></div><button class="opt" id="closeHandoff">✕</button></div><div style="margin-top:12px"><b>'+esc(LANG==='ar'?'اختر ما تريد مشاركته':'Choose what to share')+'</b>'+choices+prev+'</div><label style="display:block;margin-top:12px"><b>'+esc(LANG==='ar'?'مدة صلاحية الرابط':'Link expiration')+'</b><select id="handoffExpiry" style="width:100%;margin-top:6px"><option value="15">15 '+esc(LANG==='ar'?'دقيقة':'minutes')+'</option><option value="60">1 '+esc(LANG==='ar'?'ساعة':'hour')+'</option><option value="1440">24 '+esc(LANG==='ar'?'ساعة':'hours')+'</option></select></label><div id="handoffStatus" class="muted" style="margin-top:10px"></div><button class="btn pri" id="generateHandoff" style="width:100%;margin-top:12px">📱 '+esc(LANG==='ar'?'إنشاء QR مؤقت':'Generate Temporary QR')+'</button><div id="handoffResult"></div></div>';
+      document.body.appendChild(overlay);document.getElementById('closeHandoff').onclick=()=>overlay.remove();const ip=document.getElementById('includePrevious');if(ip)ip.onchange=()=>document.getElementById('prevChoices').style.display=ip.checked?'block':'none';
+      document.getElementById('generateHandoff').onclick=async function(){const selected={};overlay.querySelectorAll('[data-share]').forEach(x=>selected[x.dataset.share]=x.checked);if(!Object.values(selected).some(Boolean)){document.getElementById('handoffStatus').textContent=LANG==='ar'?'اختر معلومة واحدة على الأقل.':'Select at least one item.';return;}const previous_ids=Array.from(overlay.querySelectorAll('[data-prev]:checked')).map(x=>parseInt(x.dataset.prev));document.getElementById('handoffStatus').textContent=LANG==='ar'?'جاري إنشاء الرابط المؤقت…':'Generating temporary link…';try{const r=await fetch('/api/handoff/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId,selected:selected,previous_ids:previous_ids,expires_minutes:parseInt(document.getElementById('handoffExpiry').value)})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'failed');window.__handoffToken=d.token;const qr=d.qr_data_uri?'<img alt="QR" src="'+d.qr_data_uri+'" style="width:220px;max-width:100%;margin:12px auto;display:block">':'';document.getElementById('handoffResult').innerHTML='<div class="res-assess" style="margin-top:12px;text-align:center">'+qr+'<a class="v2-source-link" href="'+esc(d.share_url)+'" target="_blank" rel="noopener">'+esc(LANG==='ar'?'فتح رابط المشاركة':'Open share link')+'</a><div class="muted" id="handoffCountdown" style="margin:8px 0"></div><button class="btn ghost" id="copyHandoff">🔗 '+esc(LANG==='ar'?'نسخ الرابط':'Copy Link')+'</button> <button class="btn ghost danger-lite" id="revokeHandoff">'+esc(LANG==='ar'?'إلغاء الرابط':'Revoke Link')+'</button></div>';document.getElementById('copyHandoff').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(d.share_url);document.getElementById('revokeHandoff').onclick=()=>revokeDoctorLink(d.token);startHandoffCountdown(d.expires_at);document.getElementById('handoffStatus').textContent='';}catch(e){document.getElementById('handoffStatus').textContent=LANG==='ar'?'تعذر إنشاء الرابط.':'Unable to create the link.';}};
+    }
+    function startHandoffCountdown(expiresAt){const el=document.getElementById('handoffCountdown');if(!el)return;const tick=()=>{const ms=new Date(expiresAt).getTime()-Date.now();if(ms<=0){el.textContent=LANG==='ar'?'انتهت صلاحية الرابط.':'Link expired.';return;}const m=Math.ceil(ms/60000);el.textContent=(LANG==='ar'?'ينتهي الرابط خلال ':'Link expires in ')+m+(LANG==='ar'?' دقيقة':' min');setTimeout(tick,30000)};tick();}
+    async function revokeDoctorLink(token){if(!confirm(LANG==='ar'?'إلغاء الرابط الآن؟':'Revoke this link now?'))return;const r=await fetch('/api/handoff/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:token})});const d=await r.json();if(d.ok){const box=document.getElementById('handoffResult');if(box)box.innerHTML='<div class="v2-safe-note">'+esc(LANG==='ar'?'تم إلغاء الرابط ولم يعد متاحًا.':'The link was revoked and is no longer available.')+'</div>';}}
+
     let lastResult = null;
+    function beginReanalysis(id) {
+      trackJourney('reanalyze');
+      compareBase={record_id:id,symptoms:(state.symptoms||[]).slice(),duration:state.duration,severity:state.severity,urgency:(lastResult||{}).urgency||'low'};
+      state.previous_record_id=id; state.duration=null; state.severity=null; state.smart_prompt_shown=true;
+      add(LANG==='ar'?'سنستخدم بيانات التحليل السابق. عدّل الأعراض إن تغيرت ثم اضغط بدء التحليل.':'We will reuse the previous analysis. Edit symptoms if they changed, then start the assessment.','bot');
+      askSymptoms();
+    }
     function askFollowup() {
       state.step = 'followup';
       add(G(TT('followup_f'), TT('followup_m')), 'bot');
@@ -5324,7 +5349,7 @@ def chat_page():
       }, () => { add(G(TT('loc_err_f'), TT('loc_err_m')), 'bot'); });
     }
     function restart() {
-      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,conditions:null,medications:null,allergies:null,notes:null});
+      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null;
       bodyEl.innerHTML = '';
       startChat();
     }
@@ -5351,6 +5376,7 @@ def chat_page():
         .replace("__FLOW_STEP__", "الخطوة 1 من 7" if ar else "Step 1 of 7")
         .replace("__FLOW_DEMO__", "العمر والجنس" if ar else "Age and sex")
         .replace("__VOICE_SP__", CHAT["ar" if ar else "en"]["voice_speaking"])
+        .replace("__VOICE_PRIVACY__", "لا يحفظ SymptoSense التسجيل الصوتي؛ يتم إرسال النص الناتج فقط للمعالجة." if ar else "SymptoSense does not store the audio recording; only the resulting transcript is sent for parsing.")
         .replace("__VOICE_STOP__", CHAT["ar" if ar else "en"]["voice_stop"])
         .replace("__VOICE_CANCEL__", CHAT["ar" if ar else "en"]["voice_cancel"]))
 
@@ -6382,6 +6408,7 @@ def blood_page():
       fd.append('age', document.getElementById('ba').value);
       const r = await fetch('/api/blood', { method: 'POST', body: fd });
       const d = await r.json();
+      if (d.consent_required) { location.href=d.consent_url||'/consent?next=/blood'; return; }
       if (!d.ok) { box.innerHTML = '<div class="warn">' + esc(d.error || TT('blood_err')) + '</div>'; return; }
       let h = '<div class="result bubble bot" style="max-width:100%">';
       if (d.indicators && d.indicators.length) {
@@ -6482,2068 +6509,116 @@ def blood_page():
 
 # ---------------------------------------------------------------- meds
 def meds_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    logged_in = bool(_ss_user_id())
-    ar = _lang() == "ar"
-    body = """
-    <div class="card">
-      <h2>__MH__</h2>
-      <p class="muted">__MSUB__</p>
-      <div style="margin-top:16px;">
-        <div class="search-box">
-          <span class="sb-ic">🔎</span>
-          <input class="inp" id="medInput" placeholder="__MPH__" onkeydown="if(event.key==='Enter'){searchDrug();}">
-          <button class="btn pri sb-btn" onclick="searchDrug()">__MBTN__</button>
-        </div>
-        <div id="medRes" style="margin-top:16px;"></div>
-      </div>
-    </div>
-    <div class="auth-gate-card" style="__GATE_STYLE__">
-      <div class="gate-icon">🔐</div>
-      <h3>__GATE_TITLE__</h3>
-      <p>__GATE_TEXT__</p>
-      <div class="auth-gate-actions">
-        <a class="gate-login" href="/login?next=/meds">__GATE_LOGIN__</a>
-        <a class="gate-register" href="/register?next=/meds">__GATE_REGISTER__</a>
-      </div>
-    </div>
-    <div class="card auth-only __AUTH_ONLY__" style="margin-top:16px;">
-      <h2>__RH__</h2>
-      <p class="muted">__RSUB__</p>
-      <label class="lbl">__FAMPERSON__</label>
-      <div id="membChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
-      <div class="rc-title">__REMLISTH__</div>
-      <div id="planList" style="margin-top:12px;"></div>
-      <div style="margin-top:16px;border-top:1px dashed #DCEBFA;padding-top:14px;">
-        <div class="grid2">
-          <div><label class="lbl">__RNAME__</label><input class="inp" id="remName" placeholder="__RNAMEPH__"></div>
-          <div><label class="lbl">__PDOSE__</label><input class="inp" id="pDose" placeholder="500mg"></div>
-        </div>
-        <div class="grid2">
-          <div><label class="lbl">__RTIMES__</label><input class="inp" id="remTimes" placeholder="__RTIMESPH__"></div>
-          <div><label class="lbl">__PDAYS__</label><input class="inp" id="pDays" type="number" min="1" placeholder="7"></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button class="btn" onclick="addReminder()">__RSAVE__</button>
-          <span id="remMsg" style="font-weight:600;color:#1976D2;"></span>
-        </div>
-      </div>
-    </div>
-    <div class="card auth-only __AUTH_ONLY__" style="margin-top:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <b style="color:#123B70;">__WADH__</b>
-        <b style="color:#1976D2;" id="adhVal">—</b>
-      </div>
-      <div class="adh-bar"><div class="adh-fill" id="adhFill" style="width:0%;"></div></div>
-    </div>
-    <div class="warn">__MWARN__</div>
-    <div class="warn" style="margin-top:16px;">__MWARN2__</div>
-    <script>
-    const T = __PT__;
-    const LOGGED_IN = __LOGGED_IN__;
-    function TT(k) { return T[k] || k; }
-    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
-    const EMO = {'me':'👤','mother':'👩','father':'👨','daughter':'👧','son':'👦','grandparent':'👵','other':'🧑'};
-    let selMember = 0;
-    let members = [];
-    function todayStr() { const d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-    function renderMemb() {
-      const box = document.getElementById('membChips');
-      let chips = '<span class="fam-chip' + (selMember===0?' sel':'') + '" onclick="pickMemb(0)">' + TT('me_short') + '</span>';
-      members.forEach(m => {
-        chips += '<span class="fam-chip' + (m.id===selMember?' sel':'') + '" onclick="pickMemb(' + m.id + ')">' + (EMO[m.relation]||'🧑') + ' ' + esc(m.name) + '</span>';
-      });
-      box.innerHTML = chips;
-    }
-    function pickMemb(id) { selMember = id; renderMemb(); loadPlans(); loadAdh(); }
-    function loadMemb() {
-      fetch('/api/family').then(r=>r.json()).then(d=>{
-        if (d.ok) members = d.members || [];
-        renderMemb();
-      }).catch(()=>{});
-    }
-    function loadPlans() {
-      fetch('/api/meds/today').then(r=>r.json()).then(d=>{
-        const box = document.getElementById('planList');
-        const mine = (d.plans||[]).filter(p => p.member_id === selMember);
-        if (!mine.length) { box.innerHTML = '<div class="muted">' + TT('no_rem') + '</div>'; return; }
-        let h = '<table class="tbl"><tr><th>' + TT('rem_name') + '</th><th>' + TT('rem_times') + '</th><th></th></tr>';
-        mine.forEach(p => {
-          h += '<tr><td><b>💊 ' + esc(p.med_name) + (p.dose ? ' <span class="muted">(' + esc(p.dose) + ')</span>' : '') + '</b></td><td><div style="display:flex;flex-direction:column;gap:4px;">';
-          p.times.forEach(tm => {
-            const st = p.status[tm] || '';
-            h += '<span style="display:flex;align-items:center;gap:8px;"><b style="color:#1976D2;">🕐 ' + tm + '</b>' +
-                 (st ? '<span class="mini-btn done">' + TT('fam_today_logged') + '</span>'
-                     : '<span class="mini-btn tk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'taken\\')">' + TT('fam_take') + '</span>' +
-                       '<span class="mini-btn sk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'skipped\\')">' + TT('fam_skip') + '</span>' +
-                       '<span class="mini-btn lt" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'deferred\\')">' + TT('fam_later') + '</span>') +
-                 '</span>';
-          });
-          h += '</div></td><td><button class="opt" onclick="delPlan(' + p.id + ')">' + TT('del') + '</button></td></tr>';
-        });
-        h += '</table>';
-        box.innerHTML = h;
-      }).catch(()=>{});
-    }
-    function logMed(pid, tm, st) {
-      fetch('/api/meds/log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        plan_id: pid, time: tm, status: st, member_id: selMember, date: todayStr()
-      })}).then(r=>r.json()).then(()=>{ loadPlans(); loadAdh(); });
-    }
-    function delPlan(pid) {
-      fetch('/api/meds/plan/' + pid, {method:'DELETE'}).then(r=>r.json()).then(()=>{ loadPlans(); });
-    }
-    function loadAdh() {
-      fetch('/api/meds/weekly?member=' + selMember).then(r=>r.json()).then(d=>{
-        const v = (d.ok && d.percent !== null && d.percent !== undefined) ? d.percent : null;
-        document.getElementById('adhVal').textContent = (v === null ? TT('fam_no_adherence') : TT('fam_week_adh').replace('%s', v));
-        document.getElementById('adhFill').style.width = (v === null ? 0 : Math.min(100, v)) + '%';
-      }).catch(()=>{});
-    }
-    async function searchDrug() {
-      const name = document.getElementById('medInput').value.trim();
-      const box = document.getElementById('medRes');
-      if (!name) { box.innerHTML = '<div class="warn">' + esc(TT('meds_write')) + '</div>'; return; }
-      box.innerHTML = '<div class="bubble bot">' + esc(TT('meds_searching')) + ' <span class="spin"></span></div>';
-      const r = await fetch('/api/drug?name=' + encodeURIComponent(name));
-      const d = await r.json();
-      if (!d.ok) { box.innerHTML = '<div class="bubble bot">' + esc(TT('meds_nf')) + '</div>'; return; }
-      box.innerHTML =
-        '<div class="drug-card">' +
-        '<div class="drug-name">💊 ' + esc(d.name) + '</div>' +
-        '<div class="drug-sec"><div class="drug-sec-t">' + esc(TT('meds_sec_uses')) + '</div><p>' + esc(d.uses) + '</p></div>' +
-        '<div class="drug-sec"><div class="drug-sec-t wr">' + esc(TT('meds_sec_warn')) + '</div><p>' + esc(d.warning) + '</p></div>' +
-        '<div class="drug-sec"><div class="drug-sec-t">' + esc(TT('meds_sec_int')) + '</div><p>' + esc(d.interactions) + '</p></div>' +
-        '<div class="drug-sec"><div class="drug-sec-t wt">' + esc(TT('meds_sec_consult')) + '</div><p>' + esc(TT('meds_consult_txt')) + '</p></div>' +
-        '<div class="drug-note">' + esc(TT('meds_disc')) + '</div>' +
-        '</div>';
-    }
-    function addReminder() {
-      if (!LOGGED_IN) { location.href = '/login?next=/meds'; return; }
-      const name = document.getElementById('remName').value.trim();
-      const tval = document.getElementById('remTimes').value.trim();
-      const box = document.getElementById('remMsg');
-      if (!name) { box.textContent = TT('name_first'); return; }
-      const times = tval.split(/[,،\\s]+/).filter(Boolean);
-      if (!times.length) { box.textContent = TT('times_ph_err'); return; }
-      fetch('/api/meds/plan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        member_id: selMember, med_name: name, dose: document.getElementById('pDose').value.trim(),
-        times: times, days: document.getElementById('pDays').value || null
-      })}).then(r=>r.json()).then(d=>{
-        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/meds'; return; }
-        if (!d.ok) { box.textContent = TT('fam_err') + (d.error||''); box.style.color='#B91C1C'; return; }
-        box.textContent = TT('saved'); box.style.color = '#1976D2';
-        document.getElementById('remName').value=''; document.getElementById('remTimes').value=''; document.getElementById('pDose').value=''; document.getElementById('pDays').value='';
-        loadPlans();
-        if (!('Notification' in window)) { box.textContent = TT('no_notif'); return; }
-        Notification.requestPermission().then(perm => {
-          if (perm !== 'granted') { box.textContent = TT('enable_notif'); }
-        });
-      });
-    }
-    function checkTimes() {
-      const now = new Date();
-      const cur = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
-      fetch('/api/meds/today').then(r=>r.json()).then(d=>{
-        const lastKey = 'ss_last_notif_' + todayStr();
-        const sent = {};
-        try { (localStorage.getItem(lastKey)||'').split(',').forEach(t=>sent[t]=1); } catch(e) {}
-        (d.plans||[]).forEach(p => {
-          p.times.forEach(tm => {
-            if (tm === cur && !sent[cur] && p.status[tm]) {
-              sent[cur] = 1;
-              localStorage.setItem(lastKey, Object.keys(sent).join(','));
-              if (('Notification' in window) && Notification.permission === 'granted') {
-                new Notification(TT('rem_notif_t'), { body: TT('rem_notif_b') + p.med_name + ' — ' + (p.member_name || '') });
-              }
-            }
-          });
-        });
-      }).catch(()=>{});
-    }
-    if (LOGGED_IN) {
-      setInterval(checkTimes, 30000);
-      loadMemb();
-      loadPlans();
-      loadAdh();
-    }
-    </script>
-    """
-    repl = [
-        ("__PT__", json.dumps(t, ensure_ascii=False)),
-        ("__MH__", t["meds_h"]), ("__MSUB__", t["meds_sub"]),
-        ("__MPH__", t["meds_ph"]), ("__MBTN__", t["meds_btn"]),
-        ("__RH__", t["rem_h"]), ("__RSUB__", t["rem_sub"]),
-        ("__RNAME__", t["rem_name"]), ("__RNAMEPH__", t["rem_name_ph"]),
-        ("__RTIMES__", t["rem_times"]), ("__RTIMESPH__", t["rem_times_ph"]),
-        ("__RSAVE__", t["rem_save"]), ("__MWARN__", t["meds_warn"]),
-        ("__REMLISTH__", t["rem_list_h"]), ("__MWARN2__", t["meds_warn2"]),
-        ("__FAMPERSON__", t["fam_person"]), ("__PDOSE__", t["fam_plan_dose"]),
-        ("__PDAYS__", t["fam_plan_days"]), ("__WADH__", t["fam_week_adh"]),
-    ]
-    for k, v in repl:
-        body = body.replace(k, v)
-    body = body.replace("__LOGGED_IN__", "true" if logged_in else "false")
-    body = body.replace("__AUTH_ONLY__", "" if logged_in else "is-locked")
-    body = body.replace("__GATE_STYLE__", "display:none;" if logged_in else "")
-    body = body.replace("__GATE_TITLE__", "تسجيل الدخول مطلوب للتذكيرات" if ar else "Sign in to use reminders")
-    body = body.replace("__GATE_TEXT__", "يمكنك البحث عن الأدوية بدون حساب. ولحفظ التذكيرات وربطها بملفات العائلة والوصول إليها من أي جهاز، سجّلي الدخول أولًا." if ar else "Medication search is available without an account. Sign in to save reminders, connect family profiles, and access them on any device.")
-    body = body.replace("__GATE_LOGIN__", "تسجيل الدخول" if ar else "Sign in")
-    body = body.replace("__GATE_REGISTER__", "إنشاء حساب" if ar else "Create account")
-    return _page(_t("title_meds"), body, extra_css=FAM_CSS)
-
-
-# ---------------------------------------------------------------- family health hub
-FAM_CSS = """
-.fam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-top: 16px; }
-.fam-card { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 18px; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; text-align: center; }
-.fam-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(18,59,112,.12); }
-.fam-av { width: 58px; height: 58px; margin: 0 auto 10px; border-radius: 50%; background: #EAF4FF; border: 2px solid #DCEBFA; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-.fam-name { font-weight: 800; font-size: 16px; color: #123B70; }
-.fam-meta { font-size: 13px; color: #5F7185; margin-top: 4px; }
-.fam-stat { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 12px; color: #40566F; }
-.fam-stat b { color: #1976D2; }
-.fam-form { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 20px; margin-top: 16px; }
-.fam-rel-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.fam-chip { padding: 8px 14px; border-radius: 999px; border: 1.5px solid #1976D2; background: #FFFFFF; color: #1976D2; font-size: 13px; font-weight: 700; cursor: pointer; }
-.fam-chip.sel { background: #1976D2; color: #FFFFFF; }
-.tl-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed #DCEBFA; font-size: 14px; }
-.tl-dot { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; background: #EAF4FF; flex: 0 0 34px; }
-.tl-date { color: #94A3B8; font-size: 12px; }
-.tl-type { color: #40566F; }
-.tl-type b { color: #123B70; }
-.mplan-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #F5F9FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
-.mplan-time { font-weight: 800; color: #1976D2; min-width: 52px; }
-.mplan-name { font-weight: 700; color: #40566F; }
-.mplan-status { display: flex; gap: 6px; flex-wrap: wrap; }
-.mini-btn { border: 1px solid #DCEBFA; background: #FFFFFF; color: #40566F; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
-.mini-btn.tk { border-color: #86EFAC; color: #166534; }
-.mini-btn.sk { border-color: #FECACA; color: #991B1B; }
-.mini-btn.lt { border-color: #FDE68A; color: #92400E; }
-.mini-btn.done { opacity: .55; pointer-events: none; }
-.adh-bar { height: 8px; background: #DCEBFA; border-radius: 8px; overflow: hidden; margin-top: 6px; }
-.adh-fill { height: 100%; background: #1976D2; border-radius: 8px; }
-"""
-
-
-def _fam_emoji(relation):
-    return {
-        "me": "👤", "mother": "👩", "father": "👨", "daughter": "👧",
-        "son": "👦", "grandparent": "👵", "other": "🧑",
-    }.get(relation, "🧑")
-
-
-def family_page():
-    ar = _lang() == "ar"
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__H__</h2>
-      <p class="muted">__SUB__</p>
-      <div class="muted" style="font-size:13px;margin-top:6px;">__INTRO__</div>
-      <div class="fam-grid" id="famGrid"><div class="muted">...</div></div>
-    </div>
-    <div class="fam-form">
-      <h3 style="color:#123B70;">__ADD__</h3>
-      <label class="lbl">__WHO__</label>
-      <div class="fam-rel-chips" id="relChips"></div>
-      <div class="grid2" style="margin-top:6px;">
-        <div><label class="lbl">__NAME__</label><input class="inp" id="fName" placeholder="__NAMEPH__"></div>
-        <div><label class="lbl">__AGE__</label><input class="inp" id="fAge" placeholder="__AGEPH__"></div>
-      </div>
-      <div class="grid2">
-        <div><label class="lbl">__GEN__</label>
-          <select class="inp" id="fGender"><option value="f">__GF__</option><option value="m">__GM__</option></select>
-        </div>
-        <div><label class="lbl">__COND__</label><input class="inp" id="fCond" placeholder="..."></div>
-      </div>
-      <div class="grid2">
-        <div><label class="lbl">__MEDS__</label><input class="inp" id="fMeds" placeholder="..."></div>
-        <div><label class="lbl">__ALL__</label><input class="inp" id="fAll" placeholder="..."></div>
-      </div>
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="btn pri" onclick="saveFam()">__SAVE__</button>
-        <span id="famMsg" style="font-weight:700;color:#1976D2;"></span>
-      </div>
-    </div>
-    <script>
-    const T = __PT__;
-    const LANG = "__LANG__";
-    function TT(k) { return T[k] || k; }
-    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
-    const RELS = [
-      ['me', TT('fam_rel_me')], ['mother', TT('fam_rel_mother')], ['father', TT('fam_rel_father')],
-      ['daughter', TT('fam_rel_daughter')], ['son', TT('fam_rel_son')],
-      ['grandparent', TT('fam_rel_grandparent')], ['other', TT('fam_rel_other')]
-    ];
-    const EMO = {'me':'👤','mother':'👩','father':'👨','daughter':'👧','son':'👦','grandparent':'👵','other':'🧑'};
-    let rel = 'other';
-    function renderChips() {
-      document.getElementById('relChips').innerHTML = RELS.map(r =>
-        '<span class="fam-chip' + (r[0]===rel?' sel':'') + '" onclick="pickRel(\\'' + r[0] + '\\')">' + r[1] + '</span>').join('');
-    }
-    function pickRel(r) { rel = r; renderChips(); }
-    function loadFam() {
-      fetch('/api/family').then(r=>r.json()).then(d=>{
-        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
-        const box = document.getElementById('famGrid');
-        if (!d.ok || !d.members.length) { box.innerHTML = '<div class="muted">' + TT('fam_empty') + '</div>'; return; }
-        let h = '<div class="fam-card" onclick="location.href=\\'/profile\\'"><div class="fam-av">👤</div><div class="fam-name">' + TT('me_short') + '</div><div class="fam-meta">' + TT('fam_rel_me') + '</div></div>';
-        d.members.forEach(m => {
-          const adh = m.adherence !== null && m.adherence !== undefined ? m.adherence + '%' : TT('fam_no_adherence');
-          h += '<div class="fam-card" onclick="location.href=\\'/family/' + m.id + '\\'">' +
-            '<div class="fam-av">' + EMO[m.relation] + '</div>' +
-            '<div class="fam-name">' + esc(m.name) + '</div>' +
-            '<div class="fam-meta">' + (m.age ? m.age + ' ' + TT('fam_years') : '') + (m.gender ? ' • ' + (m.gender==='f'?TT('fam_g_f'):TT('fam_g_m')) : '') + '</div>' +
-            '<div class="fam-stat"><span>🩺 <b>' + m.records_count + '</b></span><span>💊 <b>' + adh + '</b></span></div>' +
-            '</div>';
-        });
-        box.innerHTML = h;
-      }).catch(()=>{ document.getElementById('famGrid').innerHTML = '<div class="warn">' + TT('fam_err') + '</div>'; });
-    }
-    function saveFam() {
-      const name = document.getElementById('fName').value.trim();
-      const msg = document.getElementById('famMsg');
-      if (!name) { msg.textContent = TT('fam_name'); msg.style.color = '#B91C1C'; return; }
-      fetch('/api/family', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        relation: rel, name: name,
-        age: document.getElementById('fAge').value.trim(),
-        gender: document.getElementById('fGender').value,
-        conditions: document.getElementById('fCond').value.trim(),
-        medications: document.getElementById('fMeds').value.trim(),
-        allergies: document.getElementById('fAll').value.trim()
-      })}).then(r=>r.json()).then(d=>{
-        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
-        if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
-        msg.textContent = TT('fam_saved'); msg.style.color = '#1976D2';
-        ['fName','fAge','fCond','fMeds','fAll'].forEach(i=>document.getElementById(i).value='');
-        loadFam();
-      });
-    }
-    renderChips();
-    loadFam();
-    </script>
-    """
-    for k, v in [
-        ("__PT__", json.dumps(t, ensure_ascii=False)),
-        ("__LANG__", "en" if _lang() == "en" else "ar"),
-        ("__H__", t["fam_h"]), ("__SUB__", t["fam_sub"]), ("__INTRO__", t["fam_hub_intro"]),
-        ("__ADD__", t["fam_add"]), ("__WHO__", t["fam_who"]),
-        ("__NAME__", t["fam_name"]), ("__NAMEPH__", t["fam_name_ph"]),
-        ("__AGE__", t["fam_age"]), ("__AGEPH__", t["fam_age_ph"]),
-        ("__GEN__", t["fam_gender"]), ("__GF__", t["fam_g_f"]), ("__GM__", t["fam_g_m"]),
-        ("__COND__", t["fam_conditions"]), ("__MEDS__", t["fam_meds"]),
-        ("__ALL__", t["fam_allergies"]), ("__SAVE__", t["fam_save"]),
-    ]:
-        body = body.replace(k, v)
-    return _page(_t("title_home"), body, extra_css=FAM_CSS)
-
-
-def family_detail_page(mid):
-    ar = _lang() == "ar"
-    t = CT["en" if _lang() == "en" else "ar"]
-    uid = _data_user_id()
-    member = db.get_member(uid, mid) if mid else None
-    if not member:
-        body = ('<div class="card" style="max-width:520px;margin:40px auto;text-align:center;">'
-                '<h2>%s</h2><p style="margin-top:10px;"><a class="btn" href="/family">%s</a></p></div>'
-                % (t["fam_empty"], t["fam_back"]))
-        return _page(_t("title_home"), body)
-    last_rec = None
-    try:
-        recs = db.get_records(uid, limit=1, member_id=mid)
-        if recs:
-            last_rec = recs[0]
-    except Exception:
-        pass
-    last_blood = None
-    try:
-        bts = db.get_blood_tests(uid, limit=1, member_id=mid)
-        if bts:
-            last_blood = bts[0]
-    except Exception:
-        pass
-    adh = db.med_adherence(uid, member_id=mid)["percent"]
-    plans = db.list_med_plans(uid, member_id=mid)
-    gender_txt = (t["fam_g_f"] if member["gender"] == "f" else t["fam_g_m"]) if member["gender"] else ""
-    ana_txt = (", ".join(last_rec["symptoms"][:3]) + " • " + last_rec["timestamp"][:10]) if last_rec else t["fam_no_analysis"]
-    cbc_txt = (last_blood["data"].get("level", "") + " • " + (last_blood["timestamp"] or "")[:10]) if last_blood else t["fam_no_cbc"]
-    meds_txt = "; ".join(p["med_name"] for p in plans[:4]) if plans else t["fam_no_meds"]
-    body = """
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div class="fam-av" style="width:64px;height:64px;font-size:32px;margin:0;">__AV__</div>
+    ar=_lang()=="ar"; logged_in=bool(_ss_user_id())
+    def tx(a,e): return a if ar else e
+    body=r'''
+    <style>
+    .med-shell{max-width:1050px;margin:0 auto}.med-hero{padding:27px;border:1px solid var(--v2-line);border-radius:24px;background:linear-gradient(135deg,#fff,#f1f9fe);margin-bottom:16px}.med-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}.med-card{background:#fff;border:1px solid var(--v2-line);border-radius:18px;padding:19px;box-shadow:var(--v2-shadow);margin-bottom:14px}.med-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.med-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.med-form-grid .wide{grid-column:1/-1}.weekdays{display:flex;gap:6px;flex-wrap:wrap}.weekday{border:1px solid var(--v2-line);border-radius:999px;background:#fff;padding:7px 10px;cursor:pointer}.weekday.on{background:var(--v2-sky);border-color:var(--v2-blue);color:var(--v2-blue-dark);font-weight:800}.plan{border:1px solid var(--v2-line);border-radius:16px;padding:15px;margin:10px 0}.plan-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.times{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.time-pill{border-radius:999px;background:var(--v2-sky);padding:6px 10px;font-size:12px;font-weight:800;color:var(--v2-blue-dark)}.time-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.mini-action{border:1px solid var(--v2-line);background:#fff;border-radius:10px;padding:7px 9px;cursor:pointer;font-weight:700}.push-state{display:flex;gap:9px;align-items:center;padding:12px;border-radius:14px;background:var(--v2-bg);border:1px solid var(--v2-line)}.dot{width:9px;height:9px;border-radius:50%;background:#a33a3a}.dot.on{background:#267a52}.setting-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--v2-line)}.setting-row:last-child{border-bottom:0}.cal-row{display:grid;grid-template-columns:95px 75px 1fr auto;gap:8px;padding:9px 0;border-bottom:1px solid var(--v2-line);align-items:center}.status-taken{color:#267a52}.status-skipped{color:#a33a3a}.status-snoozed{color:#8a651e}.status-scheduled{color:var(--v2-muted)}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.summary-box{padding:12px;border:1px solid var(--v2-line);border-radius:14px;background:var(--v2-bg);text-align:center}.summary-box b{display:block;font-size:20px;color:var(--v2-blue-dark)}.privacy-note{padding:13px;border-radius:14px;background:var(--v2-sky);color:var(--v2-blue-dark);font-size:13px;line-height:1.7}.ios-note{padding:11px;border-radius:12px;background:#fff8e7;color:#6f531b;font-size:12px;margin-top:9px}.drug-card{border:1px solid var(--v2-line);border-radius:16px;padding:16px;background:#fff}.drug-sec{margin-top:11px}.drug-name{font-weight:900;color:var(--v2-blue-dark);font-size:18px}.hide{display:none!important}@media(max-width:760px){.med-grid,.med-form-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(2,1fr)}.cal-row{grid-template-columns:80px 65px 1fr}.cal-row .cal-med{grid-column:1/-1}.plan-head{flex-direction:column}.med-card{padding:15px}}@media(max-width:430px){.summary-grid{grid-template-columns:1fr 1fr}.cal-row{grid-template-columns:1fr 1fr}.cal-row .cal-med{grid-column:1/-1}}
+    </style>
+    <main class="med-shell">
+      <section class="med-hero"><h1>💊 __MY_MEDS__</h1><p class="muted">__HERO_SUB__</p></section>
+      <section class="med-card">
+        <h2>🔎 __INFO_TITLE__</h2><p class="muted">__INFO_SUB__</p>
+        <div class="search-box"><span class="sb-ic">🔎</span><input class="inp" id="medInput" placeholder="__SEARCH_PH__" onkeydown="if(event.key==='Enter')searchDrug()"><button class="btn pri sb-btn" onclick="searchDrug()">__SEARCH__</button></div><div id="medRes" style="margin-top:14px"></div>
+      </section>
+      <section id="loginGate" class="med-card __GATE_HIDE__" style="text-align:center"><h2>🔐 __LOGIN_TITLE__</h2><p class="muted">__LOGIN_TEXT__</p><a class="ss-btn-primary" href="/login?next=/meds">__SIGN_IN__</a></section>
+      <div id="privateArea" class="__PRIVATE_HIDE__">
+        <div class="med-grid">
           <div>
-            <h2 style="color:#123B70;">__NAME__</h2>
-            <div class="muted">__META__</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <a class="btn small" href="/chat?m=__MID__">__ANA__</a>
-          <a class="btn small" href="/blood?m=__MID__">__CBC__</a>
-          <a class="btn small ghost" href="/family">__BACK__</a>
-        </div>
-      </div>
-      <div class="grid2" style="margin-top:16px;">
-        <div class="card" style="background:#F5F9FF;">
-          <b>__LASTANA__</b>
-          <div style="margin-top:6px;font-size:14px;color:#40566F;">__ANA_TXT__</div>
-        </div>
-        <div class="card" style="background:#F5F9FF;">
-          <b>__LASTCBC__</b>
-          <div style="margin-top:6px;font-size:14px;color:#40566F;">__CBC_TXT__</div>
-        </div>
-      </div>
-      <div class="card" style="background:#F5F9FF;margin-top:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <b>__ADH__</b>
-          <b style="color:#1976D2;">__ADH_PCT__</b>
-        </div>
-        <div class="adh-bar"><div class="adh-fill" style="width:__ADH_W__%;"></div></div>
-      </div>
-      <div style="margin-top:10px;font-size:13px;color:#40566F;">
-        <b>__MEDSREG__:</b> <span id="medsTxt">__MEDS_TXT__</span>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:14px;">
-      <h3 style="color:#123B70;">__PLANT__</h3>
-      <p class="muted">__PLANSUB__</p>
-      <div id="planList" style="margin-top:12px;"><div class="muted">...</div></div>
-      <div style="margin-top:16px;border-top:1px dashed #DCEBFA;padding-top:14px;">
-        <div class="grid2">
-          <div><label class="lbl">__PNAME__</label><input class="inp" id="pName" placeholder="__PNAMEPH__"></div>
-          <div><label class="lbl">__PDOSE__</label><input class="inp" id="pDose" placeholder="500mg"></div>
-        </div>
-        <div class="grid2">
-          <div><label class="lbl">__PTIMES__</label><input class="inp" id="pTimes" placeholder="__PTIMESPH__"></div>
-          <div><label class="lbl">__PDAYS__</label><input class="inp" id="pDays" type="number" min="1" placeholder="7"></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <button class="btn pri" onclick="savePlan()">__PSAVE__</button>
-          <span id="planMsg" style="font-weight:700;color:#1976D2;"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:14px;">
-      <h3 style="color:#123B70;">__TL__</h3>
-      <div id="timeline" style="margin-top:10px;"><div class="muted">...</div></div>
-    </div>
-    <script>
-    const T = __PT__;
-    const LANG = "__LANG__";
-    const MID = __MID__;
-    const MEMNAME = "__MEMNAME__";
-    function TT(k) { return T[k] || k; }
-    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
-    function todayStr() { const d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-    function loadPlans() {
-      fetch('/api/meds/today').then(r=>r.json()).then(d=>{
-        const box = document.getElementById('planList');
-        const mine = (d.plans||[]).filter(p => p.member_id === MID);
-        if (!mine.length) { box.innerHTML = '<div class="muted">' + TT('fam_no_meds') + '</div>'; return; }
-        let h = '';
-        mine.forEach(p => {
-          h += '<div class="rc-title">' + esc(p.med_name) + (p.dose ? ' <span class="muted">(' + esc(p.dose) + ')</span>' : '') + '</div>';
-          p.times.forEach(tm => {
-            const st = p.status[tm] || '';
-            let btn = '';
-            if (st) { btn = '<span class="mini-btn done">' + TT('fam_today_logged') + '</span>'; }
-            else {
-              btn = '<span class="mini-btn tk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'taken\\')">' + TT('fam_take') + '</span>' +
-                    '<span class="mini-btn sk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'skipped\\')">' + TT('fam_skip') + '</span>' +
-                    '<span class="mini-btn lt" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'deferred\\')">' + TT('fam_later') + '</span>';
-            }
-            h += '<div class="mplan-row"><span class="mplan-time">🕐 ' + tm + '</span><span class="mplan-name">' + (st?('💊 '+esc(st)):'') + '</span><span class="mplan-status">' + btn + '</span></div>';
-          });
-        });
-        box.innerHTML = h;
-      }).catch(()=>{});
-    }
-    function logMed(pid, tm, st) {
-      fetch('/api/meds/log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        plan_id: pid, time: tm, status: st, member_id: MID, date: todayStr()
-      })}).then(r=>r.json()).then(()=>{ loadPlans(); refreshAdh(); });
-    }
-    function refreshAdh() {
-      fetch('/api/meds/weekly?member=' + MID).then(r=>r.json()).then(d=>{
-        if (d.ok && d.percent !== null && d.percent !== undefined) {
-          document.querySelector('.adh-fill').style.width = d.percent + '%';
-          const el = document.querySelector('.adh-bar').previousElementSibling;
-          el.querySelector('b').textContent = TT('fam_week_adh').replace('%s', d.percent);
-        }
-      }).catch(()=>{});
-    }
-    function savePlan() {
-      const name = document.getElementById('pName').value.trim();
-      const tval = document.getElementById('pTimes').value;
-      const msg = document.getElementById('planMsg');
-      const times = tval.split(/[,،\\s]+/).filter(Boolean);
-      if (!name || !times.length) { msg.textContent = TT('fam_name'); msg.style.color='#B91C1C'; return; }
-      fetch('/api/meds/plan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        member_id: MID, med_name: name, dose: document.getElementById('pDose').value.trim(),
-        times: times, days: document.getElementById('pDays').value || null
-      })}).then(r=>r.json()).then(d=>{
-        if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
-        msg.textContent = TT('fam_saved'); msg.style.color = '#1976D2';
-        document.getElementById('pName').value=''; document.getElementById('pDose').value=''; document.getElementById('pTimes').value=''; document.getElementById('pDays').value='';
-        loadPlans();
-        if (('Notification' in window) && Notification.permission === 'default') Notification.requestPermission();
-      });
-    }
-    function loadTimeline() {
-      fetch('/api/timeline?member=' + MID + '&days=30').then(r=>r.json()).then(d=>{
-        const box = document.getElementById('timeline');
-        if (!d.ok || !d.events.length) { box.innerHTML = '<div class="muted">' + TT('fam_no_events') + '</div>'; return; }
-        const EMO = {'analysis':'🩺','blood':'🩸','med':'💊'};
-        let h = '';
-        d.events.forEach(e => {
-          const title = LANG === 'en' ? e.en_title : e.title;
-          h += '<div class="tl-item"><div class="tl-dot">' + (EMO[e.type]||'📋') + '</div>' +
-               '<div><div class="tl-date">' + e.date + '</div><div class="tl-type">' + esc(title) + (e.detail?' — <span class="muted">'+esc(e.detail)+'</span>':'') + '</div></div></div>';
-        });
-        box.innerHTML = h;
-      }).catch(()=>{});
-    }
-    loadPlans();
-    loadTimeline();
-    </script>
-    """
-    for k, v in [
-        ("__PT__", json.dumps(t, ensure_ascii=False)),
-        ("__LANG__", "en" if _lang() == "en" else "ar"),
-        ("__MID__", str(mid)),
-        ("__MEMNAME__", member["name"]),
-        ("__AV__", _fam_emoji(member.get("relation", "other"))),
-        ("__NAME__", member["name"]),
-        ("__META__", (member.get("age") or "?") + " " + t["fam_years"] + (" • " + gender_txt if gender_txt else "")),
-        ("__ANA__", t["fam_add_analysis"]), ("__CBC__", t["fam_add_cbc"]), ("__BACK__", t["fam_back"]),
-        ("__LASTANA__", t["fam_last_analysis"]), ("__ANA_TXT__", ana_txt),
-        ("__LASTCBC__", t["fam_last_cbc"]), ("__CBC_TXT__", cbc_txt),
-        ("__ADH__", t["fam_week_adh"]), ("__ADH_PCT__", (str(adh) + "%") if adh is not None else t["fam_no_adherence"]),
-        ("__ADH_W__", str(int(adh)) if adh is not None else "0"),
-        ("__MEDSREG__", t["fam_meds_reg"]), ("__MEDS_TXT__", meds_txt),
-        ("__PLANT__", t["fam_plan_title"]), ("__PLANSUB__", t["fam_plan_sub"] % member["name"]),
-        ("__PNAME__", t["fam_plan_name"]), ("__PNAMEPH__", t["fam_plan_name_ph"]),
-        ("__PDOSE__", t["fam_plan_dose"]), ("__PTIMES__", t["fam_plan_times"]),
-        ("__PTIMESPH__", t["fam_plan_times_ph"]), ("__PDAYS__", t["fam_plan_days"]),
-        ("__PSAVE__", t["fam_plan_save"]), ("__TL__", t["fam_timeline"]),
-    ]:
-        body = body.replace(k, v)
-    return _page(_t("title_home"), body, extra_css=FAM_CSS)
-
-
-# ---------------------------------------------------------------- health search
-SEARCH_CSS = """
-.sea-wrap { max-width: 720px; margin: 0 auto; }
-.sea-box { display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 2px solid #1976D2; border-radius: 999px; padding: 7px 8px 7px 18px; box-shadow: 0 10px 30px rgba(25,118,210,.14); transition: box-shadow .25s ease, border-color .25s ease; }
-.sea-box:focus-within { box-shadow: 0 14px 38px rgba(25,118,210,.22); border-color: #123B70; }
-.sea-box .sea-ic { font-size: 20px; color: #1976D2; }
-.sea-box input { flex: 1; border: none; outline: none; font-size: 16px; font-family: inherit; padding: 11px 4px; background: transparent; color: #123B70; min-width: 0; }
-.sea-box input::placeholder { color: #94A3B8; }
-.sea-box .sea-btn { border: none; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; font-weight: 800; font-size: 15px; padding: 12px 26px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap; }
-.sea-box .sea-btn:hover { filter: brightness(1.12); }
-.sea-hint { text-align: center; color: #5F7185; font-size: 13px; margin-top: 12px; }
-.sea-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
-.sea-chip { border: 1px solid #DCEBFA; background: #EAF4FF; color: #1976D2; border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s; }
-.sea-chip:hover { background: #EAF4FF; }
-.sea-result { margin-top: 22px; background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 20px; padding: 22px; box-shadow: 0 8px 24px rgba(18,59,112,.08); }
-.sea-result .sr-head { display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed #DCEBFA; padding-bottom: 12px; margin-bottom: 14px; }
-.sea-result .sr-emoji { font-size: 34px; }
-.sea-result .sr-title { font-size: 21px; font-weight: 800; color: #123B70; }
-.sea-result .sr-cat { display: inline-block; background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 3px 10px; margin-top: 4px; }
-.sea-result .sr-sec { font-size: 14.5px; line-height: 1.9; color: #40566F; margin-bottom: 12px; }
-.sea-result .sr-sec b { color: #1976D2; display: block; margin-bottom: 4px; }
-.sea-result .sr-causes { list-style: none; padding: 0; margin: 0 0 14px; }
-.sea-result .sr-causes li { padding: 6px 22px 6px 0; position: relative; font-size: 14px; color: #40566F; line-height: 1.7; }
-.sea-result .sr-causes li::before { content: '•'; position: absolute; right: 4px; color: #1976D2; font-weight: 900; }
-[dir="ltr"] .sea-result .sr-causes li { padding: 6px 0 6px 22px; }
-[dir="ltr"] .sea-result .sr-causes li::before { right: auto; left: 4px; }
-.sea-worry { background: #FEF2F2; border: 1px solid #FECACA; color: #7F1D1D; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 10px; }
-.sea-doctor { background: #EAF4FF; border: 1px solid #DCEBFA; color: #123B70; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
-.sea-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
-.sea-actions .btn.sea-assist { background: linear-gradient(135deg, #1976D2, #1976D2); }
-.sea-no { text-align: center; color: #5F7185; margin-top: 22px; font-size: 14px; }
-.sea-disc { background: #FFF7ED; border: 1px dashed #FDBA74; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.7; margin-top: 16px; text-align: center; }
-@media (max-width: 560px) { .sea-box { flex-wrap: wrap; border-radius: 22px; padding: 12px; } .sea-box .sea-btn { width: 100%; } }
-"""
-
-
-def search_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__SEAH__</h2>
-      <p class="muted">__SEASUB__</p>
-      <div class="sea-wrap">
-        <div class="sea-box">
-          <span class="sea-ic">🔎</span>
-          <input id="seaInput" placeholder="__SEAPH__" onkeydown="if(event.key==='Enter')doSearch()">
-          <button class="sea-btn" onclick="doSearch()">__SEABTN__</button>
-        </div>
-        <p class="sea-hint">__SEAHINT__</p>
-        <div class="sea-chips" id="seaChips"></div>
-      </div>
-      <div id="seaRes" style="margin-top:8px;"></div>
-    </div>
-    <div class="warn">__SEAWARN__</div>
-    <script>
-    const ST = __PT__;
-    function sT(k) { return ST[k] || k; }
-    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-    let curTopic = '';
-    const API_LANG = function() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; };
-    function loadSuggestions() {
-      fetch('/api/search?lang=' + API_LANG())
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          const box = document.getElementById('seaChips');
-          if (!box || !d.suggestions) return;
-          box.innerHTML = d.suggestions.map(function(s) {
-            return '<button class="sea-chip" onclick="pickSug(\\'' + s[1].replace(/["'\\\\]/g, '') + '\\')">' + esc(s[0]) + ' ' + esc(s[1]) + '</button>';
-          }).join('');
-        }).catch(function() {});
-    }
-    function pickSug(q) { document.getElementById('seaInput').value = q; doSearch(); }
-    function doSearch() {
-      const inp = document.getElementById('seaInput');
-      const q = (inp ? inp.value : '').trim();
-      const box = document.getElementById('seaRes');
-      if (!q) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_ph')) + '</div>'; return; }
-      box.innerHTML = '<div style="text-align:center;padding:24px;">... <span class="spin"></span></div>';
-      fetch('/api/search?q=' + encodeURIComponent(q) + '&lang=' + API_LANG())
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d.ok) { box.innerHTML = '<div class="warn">' + esc(d.error || sT('sea_err')) + '</div>'; return; }
-          if (!d.result) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_noresult')) + '</div>'; return; }
-          renderResult(d.result);
-        }).catch(function() { box.innerHTML = '<div class="warn">' + esc(sT('sea_err')) + '</div>'; });
-    }
-    function catTxt(c) {
-      const m = { symptom: 'sea_cat_symp', test: 'sea_cat_test', term: 'sea_cat_term', medication: 'sea_cat_med' };
-      return sT(m[c] || 'sea_cat_term');
-    }
-    function renderResult(r) {
-      const box = document.getElementById('seaRes');
-      let h = '<div class="sea-result">';
-      h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(r.title) + '</div><span class="sr-cat">' + esc(catTxt(r.category)) + '</span></div></div>';
-      h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
-      if (r.causes && r.causes.length) {
-        h += '<b style="color:#1976D2;">' + esc(r.causes_label || sT('sea_causes')) + '</b><ul class="sr-causes">';
-        r.causes.forEach(function(c) { h += '<li>' + esc(c) + '</li>'; });
-        h += '</ul>';
-      }
-      if (r.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(r.worry) + '</div>';
-      if (r.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(r.doctor) + '</div>';
-      h += '<div class="sea-actions">' +
-        '<button class="btn" onclick="openExplain(\\'' + esc(r.title).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(sT('sea_explain')) + '</button>' +
-        '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>' +
-        '</div>';
-      h += '</div>';
-      h += '<div class="sea-disc">' + esc(sT('sea_disc')) + '</div>';
-      box.innerHTML = h;
-      curTopic = r.title;
-    }
-    function askAboutTopic() {
-      if (typeof asstOpenWithContext === 'function') asstOpenWithContext(curTopic);
-    }
-    const seaInp = document.getElementById('seaInput');
-    if (seaInp) seaInp.addEventListener('focus', loadSuggestions);
-    loadSuggestions();
-    </script>
-    """
-    repl = [
-        ("__PT__", json.dumps(t, ensure_ascii=False)),
-        ("__SEAH__", t["sea_h"]), ("__SEASUB__", t["sea_sub"]),
-        ("__SEAPH__", t["sea_ph"]), ("__SEABTN__", t["sea_btn"]),
-        ("__SEAHINT__", t["sea_hint"]), ("__SEAWARN__", t["sea_warn"]),
-        ("__SEAASK__", t["sea_ask_assist"]),
-    ]
-    for k, v in repl:
-        body = body.replace(k, v)
-    return _page(_t("title_search"), body, extra_css=SEARCH_CSS)
-
-
-# ---------------------------------------------------------------- health calculators
-CALC_CSS = """
-.calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 6px; }
-.calc-card { background: #FFFFFF; border: 1.5px solid #DCEBFA; border-radius: 18px; padding: 22px 18px; cursor: pointer; text-align: center; font-family: inherit; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
-.calc-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(25,118,210,.16); border-color: #1976D2; }
-.calc-card .cc-ic { font-size: 40px; }
-.calc-card h3 { font-size: 17px; font-weight: 800; color: #123B70; margin: 8px 0 6px; }
-.calc-card p { font-size: 13.5px; color: #40566F; line-height: 1.8; margin-bottom: 14px; }
-.calc-card .cc-btn { display: inline-block; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; font-weight: 800; font-size: 13.5px; padding: 10px 22px; border-radius: 999px; }
-.calc-card .cc-tag { display: inline-block; background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; margin-bottom: 4px; }
-.calc-card.cal-fea { grid-column: 1 / -1; background: linear-gradient(120deg, #FFFFFF, #F2F8FF); border: 2px solid #1976D2; box-shadow: 0 8px 24px rgba(25,118,210,.10); }
-.calc-card.cal-fea .cc-ic { font-size: 44px; }
-.calc-card.cal-fea p { font-size: 14px; }
-.calc-sub { max-width: 720px; }
-.calc-pane { display: none; }
-.calc-pane.open { display: block; animation: fadeIn .35s ease both; }
-.calc-back { margin-bottom: 12px; }
-.calc-form .cf-row { margin-bottom: 14px; }
-.calc-sug-hint { display: flex; gap: 10px; align-items: flex-start; background: #EAF4FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.8; color: #123B70; margin-bottom: 14px; }
-.calc-result { margin-top: 16px; background: #FFFFFF; border: 1.5px solid #DCEBFA; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(18,59,112,.08); }
-.cr-value { font-size: 18px; font-weight: 800; color: #123B70; }
-.cr-value .cr-num { font-size: 26px; }
-.cr-cat { display: inline-block; margin-top: 10px; font-weight: 800; font-size: 15px; padding: 8px 18px; border-radius: 999px; }
-.cr-cat.c-green { background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; }
-.cr-cat.c-blue { background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; }
-.cr-cat.c-yellow { background: #FEF9C3; color: #854D0E; border: 1px solid #FDE68A; }
-.cr-cat.c-orange { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
-.cr-cat.c-red { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
-.cr-note { margin-top: 12px; font-size: 14px; line-height: 1.9; color: #40566F; }
-.cr-note .ped { display: block; margin-top: 8px; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 8px 12px; font-size: 13px; }
-.cr-alert { margin-top: 14px; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #7F1D1D; border-radius: 14px; padding: 14px 16px; font-size: 14px; line-height: 1.8; }
-.cr-alert a { color: #B91C1C; font-weight: 800; text-decoration: underline; }
-.cr-assist { margin-top: 16px; border-top: 1px dashed #DCEBFA; padding-top: 14px; text-align: center; }
-.cr-assist .cr-follow { font-size: 15px; font-weight: 800; color: #123B70; margin-bottom: 10px; }
-.cr-assist .btn { min-width: 250px; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; border: none; }
-.cr-assist .btn:hover { transform: translateY(-1px); }
-.calc-rows { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-.cd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F5F9FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
-.cd-row b { color: #123B70; }
-.cd-row .cd-first { background: #EAF4FF; border: 1px solid #DCEBFA; color: #1976D2; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 3px 10px; }
-.cd-note { margin-top: 12px; background: #FFF7ED; border: 1px dashed #FDBA74; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.8; }
-.calc-unit-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.calc-unit-row label { flex: 1; min-width: 140px; border: 2px solid #DCEBFA; border-radius: 12px; padding: 11px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 700; color: #40566F; font-family: inherit; }
-.calc-unit-row input[type="radio"] { display: none; }
-.calc-unit-row input[type="radio"]:checked + label { border-color: #1976D2; background: #EAF4FF; color: #1976D2; }
-.calc-a1c-hint { font-size: 12.5px; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 8px 12px; margin-top: 8px; }
-.calc-disc-card { display: flex; gap: 12px; align-items: flex-start; background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 16px; padding: 16px 18px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(18,59,112,.05); }
-.calc-disc-card .cdc-ic { font-size: 22px; line-height: 1.4; }
-.calc-disc-card .cdc-t { font-weight: 800; color: #123B70; margin-bottom: 4px; font-size: 15px; }
-.calc-disc-card .cdc-p { font-size: 13.5px; color: #40566F; line-height: 1.9; }
-@media (max-width: 640px) { .calc-grid { grid-template-columns: 1fr; } }
-"""
-
-
-def calculators_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    cards = [
-        ("bmi", "⚖️", "calc_bmi_name", "calc_bmi_desc", ""),
-        ("fluids", "💧", "calc_fluids_name", "calc_fluids_desc", ""),
-        ("dose", "💊", "calc_dose_name", "calc_dose_desc", ""),
-        ("cal", "🔥", "calc_cal_name", "calc_cal_desc", ""),
-        ("sug", "🩸", "calc_sug_name", "calc_sug_desc", "cal-fea"),
-    ]
-    cards_html = "".join(
-        '<button class="calc-card %s" onclick="showCalc(\'%s\')"><div class="cc-ic">%s</div>'
-        '<h3>%s</h3>%s<p>%s</p><span class="cc-btn">%s</span></button>'
-        % (cls, k, ic, t[n], ('<span class="cc-tag">%s</span>' % t["calc_sug_tag"]) if cls else "", t[d], t["calc_now"])
-        for k, ic, n, d, cls in cards
-    )
-    body = """
-    <div class="card">
-      <h2>__CALCH__</h2>
-      <p class="muted calc-sub">__CALCSUB__</p>
-      <div class="calc-grid">__CARDS__</div>
-    </div>
-
-    <div id="calcPaneArea" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
-        <h2 id="paneTitle" style="color:#123B70;"></h2>
-        <button class="btn ghost calc-back" onclick="backToGrid()">__CALCBACK__</button>
-      </div>
-
-      <div class="calc-pane open" id="pane-bmi">
-        <div class="card">
-          <div class="calc-form">
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__BW__</label><input class="inp" id="bmiW" type="number" inputmode="decimal" placeholder="__BWPH__"></div>
-              <div class="cf-row"><label class="lbl">__BH__</label><input class="inp" id="bmiH" type="number" inputmode="decimal" placeholder="__BHPH__"></div>
-            </div>
-            <button class="btn pri start-btn" onclick="runBMI()">__BBTN__</button>
-          </div>
-          <div id="resBMI"></div>
-        </div>
-      </div>
-
-      <div class="calc-pane" id="pane-fluids">
-        <div class="card">
-          <div class="calc-form">
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="flAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
-              <div class="cf-row"><label class="lbl">__WEIGHT__</label><input class="inp" id="flW" type="number" inputmode="decimal" placeholder="__WPH__"></div>
-            </div>
-            <div class="cf-row"><label class="lbl">__ACT__</label>
-              <select class="inp" id="flAct">
-                <option value="low">__ACTLOW__</option>
-                <option value="medium">__ACTMED__</option>
-                <option value="high">__ACTHIGH__</option>
-              </select>
-            </div>
-            <button class="btn pri start-btn" onclick="runFluids()">__FBTN__</button>
-          </div>
-          <div id="resFluids"></div>
-        </div>
-      </div>
-
-      <div class="calc-pane" id="pane-dose">
-        <div class="card">
-          <div class="warn">__DWARN__</div>
-          <div class="calc-form">
-            <div class="cf-row"><label class="lbl">__DMED__</label><input class="inp" id="dMed" placeholder="__DMEDPH__"></div>
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__DFIRST__</label><input class="inp" id="dFirst" type="time" value="08:00"></div>
-              <div class="cf-row"><label class="lbl">__DIV__</label><select class="inp" id="dIv"></select></div>
-            </div>
-            <button class="btn pri start-btn" onclick="runDose()">__DBTN__</button>
-          </div>
-          <div id="resDose"></div>
-        </div>
-      </div>
-
-      <div class="calc-pane" id="pane-cal">
-        <div class="card">
-          <div class="calc-form">
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="calAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
-              <div class="cf-row"><label class="lbl">__GENDER__</label>
-                <select class="inp" id="calG">
-                  <option value="male">__MALE__</option>
-                  <option value="female">__FEMALE__</option>
-                </select>
+            <section class="med-card">
+              <div class="med-title"><div><h2 style="margin:0">💊 __REMINDERS__</h2><p class="muted" style="margin:5px 0 0">__REM_SUB__</p></div><button class="btn ghost" onclick="resetPlanForm()">＋ __ADD__</button></div>
+              <div id="planList" style="margin-top:14px"></div>
+            </section>
+            <section class="med-card" id="planFormCard">
+              <h3 id="planFormTitle">＋ __ADD_MED__</h3>
+              <input type="hidden" id="editPlanId">
+              <div class="med-form-grid">
+                <div><label class="lbl">__MED_NAME__</label><input class="inp" id="remName" maxlength="120"></div>
+                <div><label class="lbl">__DOSE__</label><input class="inp" id="pDose" maxlength="120" placeholder="__OPTIONAL__"></div>
+                <div class="wide"><label class="lbl">__TIMES__</label><input class="inp" id="remTimes" placeholder="08:00, 20:00"><small class="muted">__MULTI_TIME__</small></div>
+                <div><label class="lbl">__FREQ__</label><select class="inp" id="frequency" onchange="toggleWeekdays()"><option value="daily">__DAILY__</option><option value="specific_days">__SPECIFIC__</option></select></div>
+                <div><label class="lbl">__TZ__</label><input class="inp" id="planTimezone" readonly></div>
+                <div id="weekdaysWrap" class="wide hide"><label class="lbl">__DAYS__</label><div class="weekdays" id="weekdayButtons"></div></div>
+                <div><label class="lbl">__START__</label><input class="inp" type="date" id="startDate"></div>
+                <div><label class="lbl">__END__</label><input class="inp" type="date" id="endDate"></div>
+                <div class="wide"><label class="lbl">__NOTES__</label><textarea class="inp" id="medNotes" rows="2" maxlength="600" placeholder="__OPTIONAL__"></textarea></div>
               </div>
-            </div>
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__HGT__</label><input class="inp" id="calH" type="number" inputmode="decimal" placeholder="__HGTPH__"></div>
-              <div class="cf-row"><label class="lbl">__WEIGHT__</label><input class="inp" id="calW" type="number" inputmode="decimal" placeholder="__WPH__"></div>
-            </div>
-            <div class="cf-row"><label class="lbl">__ACT__</label>
-              <select class="inp" id="calAct">
-                <option value="low">__ACT2LOW__</option>
-                <option value="medium">__ACT2MED__</option>
-                <option value="high">__ACT2HIGH__</option>
-              </select>
-            </div>
-            <button class="btn pri start-btn" onclick="runCal()">__CBTN__</button>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px"><button class="ss-btn-primary" onclick="savePlan()">__SAVE__</button><button class="btn ghost" onclick="resetPlanForm()">__CANCEL__</button><span id="planMsg" class="muted"></span></div>
+              <div class="privacy-note" style="margin-top:13px">⚠️ __SAFETY__</div>
+            </section>
           </div>
-          <div id="resCal"></div>
+          <aside>
+            <section class="med-card">
+              <h2>🔔 __NOTIF__</h2><div class="push-state"><span id="pushDot" class="dot"></span><div><b id="pushLabel">__CHECKING__</b><small class="muted" id="pushSupport" style="display:block"></small></div></div>
+              <button id="enablePushBtn" class="ss-btn-primary" style="width:100%;margin-top:10px" onclick="enablePush()">__ENABLE__</button>
+              <button id="disablePushBtn" class="btn ghost hide" style="width:100%;margin-top:8px" onclick="disablePush()">__DISABLE__</button>
+              <div id="iosHelp" class="ios-note hide">__IOS_HELP__</div>
+              <div class="setting-row"><span>__NOTIF_ON__</span><input type="checkbox" id="notifEnabled" checked onchange="saveNotifSettings()"></div>
+              <div class="setting-row"><span>__SOUND__</span><input type="checkbox" id="notifSound" checked onchange="saveNotifSettings()"></div>
+              <div class="setting-row"><span>__SNOOZE__</span><select id="snoozeMinutes" class="inp" style="max-width:115px" onchange="saveNotifSettings()"><option>5</option><option selected>10</option><option>15</option><option>30</option></select></div>
+            </section>
+            <section class="med-card"><h2>📊 __SUMMARY__</h2><div id="summaryGrid" class="summary-grid"></div><p class="muted" style="font-size:12px;margin-top:10px">__ADH_NOTE__</p></section>
+          </aside>
         </div>
+        <section class="med-card"><div class="med-title"><div><h2 style="margin:0">📅 __CALENDAR__</h2><p class="muted" style="margin:5px 0 0">__CAL_SUB__</p></div><select class="inp" id="calDays" style="max-width:150px" onchange="loadCalendar()"><option value="7">7 __DAYS_WORD__</option><option value="30" selected>30 __DAYS_WORD__</option></select></div><div id="calendarList" style="margin-top:12px"></div></section>
       </div>
-
-      <div class="calc-pane" id="pane-sug">
-        <div class="card">
-          <div class="calc-sug-hint">🩸 __SUGHINT__</div>
-          <div class="calc-form">
-            <div class="grid2">
-              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="sgAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
-              <div class="cf-row"><label class="lbl">__STYPE__</label>
-                <select class="inp" id="sgType" onchange="sugTypeChange()">
-                  <option value="fasting">__SFAST__</option>
-                  <option value="post">__SPOST__</option>
-                  <option value="random">__SRAND__</option>
-                  <option value="a1c">__SA1C__</option>
-                </select>
-              </div>
-            </div>
-            <div class="cf-row"><label class="lbl">__SREAD__</label><input class="inp" id="sgVal" type="number" inputmode="decimal" placeholder="__SREADPH__"></div>
-            <div class="cf-row" id="sgUnitRow">
-              <label class="lbl">__SUNIT__</label>
-              <div class="calc-unit-row">
-                <input type="radio" name="sgUnit" id="sgMg" value="mg" checked>
-                <label for="sgMg">__SUNMG__</label>
-                <input type="radio" name="sgUnit" id="sgMmol" value="mmol">
-                <label for="sgMmol">__SUNMMOL__</label>
-              </div>
-            </div>
-            <div class="calc-a1c-hint" id="sgA1cHint" style="display:none;">__SA1CHINT__</div>
-            <button class="btn pri start-btn" onclick="runSugar()">__SBTN__</button>
-          </div>
-          <div id="resSug"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="calc-disc-card">
-      <div class="cdc-ic">⚠️</div>
-      <div>
-        <div class="cdc-t">__CALCDISCT__</div>
-        <div class="cdc-p">__CALCDISC__</div>
-      </div>
-    </div>
+    </main>
     <script>
-    const T = __PT__;
-    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-    function CTT(k) { return T[k] || k; }
-    function APILang() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; }
-    const PANE_TITLES = { bmi: 'calc_bmi_name', fluids: 'calc_fluids_name', dose: 'calc_dose_name', cal: 'calc_cal_name', sug: 'calc_sug_name' };
-    const CAT_EMOJI = { green: '🟢', blue: '🔵', yellow: '🟡', orange: '🟠', red: '🔴' };
-    let calcCtx = '';
-    let asstCalcKind = 'calc';
-    if (typeof asstSetCtx === 'function') asstSetCtx('calc');
-
-    function showCalc(k) {
-      asstCalcKind = k;
-      if (typeof asstSetCtx === 'function') asstSetCtx(k);
-      document.getElementById('calcPaneArea').style.display = '';
-      document.getElementById('paneTitle').textContent = CTT(PANE_TITLES[k]);
-      document.querySelectorAll('.calc-pane').forEach(function(p) { p.classList.remove('open'); });
-      document.getElementById('pane-' + k).classList.add('open');
-      if (k === 'dose') initIv();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    function backToGrid() {
-      document.getElementById('calcPaneArea').style.display = 'none';
-      document.getElementById('calcPaneArea').scrollIntoView({ behavior: 'smooth' });
-    }
-    function initIv() {
-      const sel = document.getElementById('dIv');
-      if (sel.dataset.init) return;
-      sel.dataset.init = '1';
-      const opts = [4, 6, 8, 12, 24];
-      sel.innerHTML = opts.map(function(v) {
-        return '<option value="' + v + '">' + CTT('calc_dose_every').replace('%s', v) + '</option>';
-      }).join('');
-      sel.value = '8';
-    }
-    function sugTypeChange() {
-      const a1c = document.getElementById('sgType').value === 'a1c';
-      document.getElementById('sgUnitRow').style.display = a1c ? 'none' : '';
-      document.getElementById('sgA1cHint').style.display = a1c ? '' : 'none';
-    }
-    function askCalc() {
-      if (typeof asstSetCtx === 'function') asstSetCtx(asstCalcKind || 'calc');
-      if (calcCtx && typeof asstSendContextText === 'function') asstSendContextText(calcCtx);
-    }
-    function assistHTML(kind) {
-      let askT = CTT('calc_follow'), askB = CTT('calc_ask');
-      if (kind === 'bmi') { askT = CTT('calc_ask_bmi_t'); askB = CTT('calc_ask_bmi_b'); }
-      else if (kind === 'sug') { askT = CTT('calc_ask_sug_t'); askB = CTT('calc_ask_sug_b'); }
-      return '<div class="cr-assist"><div class="cr-follow">' + esc(askT) + '</div>' +
-        '<button class="btn pri" onclick="askCalc()">' + esc(askB) + '</button></div>';
-    }
-    function fmtNum(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
-    function fmtTime(h, m) {
-      const p = h < 12 ? CTT('calc_am') : CTT('calc_pm');
-      let hh = h % 12; if (hh === 0) hh = 12;
-      return hh + ':' + (m < 10 ? '0' + m : m) + ' ' + p;
-    }
-    function catHTML(d, kind) {
-      if (!d.category) return '';
-      const lbl = CTT('calc_' + kind + '_cat_' + d.category);
-      return '<div class="cr-cat c-' + d.color + '">' + (CAT_EMOJI[d.color] || '') + ' ' + esc(lbl) + '</div>';
-    }
-    function noteHTML(d, kind, extraPed) {
-      let n = CTT('calc_' + kind + '_note_' + d.category) || '';
-      if (extraPed) n += ' <span class="ped">⚠️ ' + esc(CTT('calc_sug_note_ped')) + '</span>';
-      return '<div class="cr-note">' + esc(n) + '</div>';
-    }
-    function alertHTML(d) {
-      if (!d.alert) return '';
-      let msg = CTT('calc_alert_msg');
-      if (d.alert_kind === 'high') msg = CTT('calc_alert_high');
-      if (d.alert_kind === 'low') msg = CTT('calc_alert_low');
-      return '<div class="cr-alert">' + esc(CTT('calc_alert_t')) + ' — ' + esc(msg) +
-        ' <br><a href="/emergency">' + esc(CTT('calc_em_btn')) + ' →</a></div>';
-    }
-    function renderBox(id, d, kind, valueLabel, unit, extraPed) {
-      const box = document.getElementById(id);
-      let h = '<div class="calc-result">';
-      h += '<div class="cr-value">' + esc(valueLabel) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(unit || '') + '</div>';
-      h += catHTML(d, kind) + noteHTML(d, kind, extraPed);
-      h += alertHTML(d) + assistHTML(kind);
-      h += '</div>';
-      box.innerHTML = h;
-    }
-    function calcGet(params, cb, errId) {
-      const box = document.getElementById(errId || 'resBMI');
-      fetch('/api/calc?' + params).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) cb(d); else box.innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>';
-      }).catch(function() { box.innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; });
-    }
-    function runBMI() {
-      const w = parseFloat(document.getElementById('bmiW').value);
-      const h = parseFloat(document.getElementById('bmiH').value);
-      if (!w || !h) { document.getElementById('resBMI').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
-      calcGet('kind=bmi&w=' + w + '&h=' + h + '&lang=' + APILang(), function(d) {
-        renderBox('resBMI', d, 'bmi', CTT('calc_bmi_val'), CTT('calc_bmi_unit'));
-        calcCtx = CTT('calc_bmi_ctx').replace('%s', fmtNum(d.value));
-      }, 'resBMI');
-    }
-    function runFluids() {
-      const a = parseFloat(document.getElementById('flAge').value);
-      const w = parseFloat(document.getElementById('flW').value);
-      if (!a || !w) { document.getElementById('resFluids').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
-      const act = document.getElementById('flAct').value;
-      calcGet('kind=fluids&age=' + a + '&w=' + w + '&act=' + act + '&lang=' + APILang(), function(d) {
-        let h = '<div class="calc-result">';
-        h += '<div class="cr-value">' + esc(CTT('calc_fluids_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_fluids_unit')) + '</div>';
-        h += '<div class="cr-note">' + esc(CTT('calc_fluids_note')) + '</div>';
-        h += alertHTML(d) + assistHTML('fluids') + '</div>';
-        document.getElementById('resFluids').innerHTML = h;
-        calcCtx = CTT('calc_fluids_ctx').replace('%s', fmtNum(d.value));
-      }, 'resFluids');
-    }
-    function runDose() {
-      const val = document.getElementById('dFirst').value || '08:00';
-      const parts = val.split(':');
-      const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-      const iv = document.getElementById('dIv').value || '8';
-      const med = document.getElementById('dMed').value.trim() || '—';
-      calcGet('kind=dose&h=' + h + '&m=' + m + '&iv=' + iv + '&lang=' + APILang(), function(d) {
-        let hh = '<div class="calc-result">';
-        hh += '<div class="cr-value">' + esc(CTT('calc_dose_table')) + '</div>';
-        hh += '<div class="calc-rows">';
-        d.schedule.forEach(function(s) {
-          hh += '<div class="cd-row"><span>💊 <b>' + esc(fmtTime(s.h, s.m)) + '</b></span>' +
-            (s.first ? '<span class="cd-first">' + esc(CTT('calc_dose_first_dose')) + '</span>' : '<span class="muted">' + esc(CTT('calc_dose_next')) + '</span>') + '</div>';
-        });
-        hh += '</div><div class="cd-note">' + esc(CTT('calc_dose_note')) + '</div>';
-        hh += assistHTML('dose') + '</div>';
-        document.getElementById('resDose').innerHTML = hh;
-        calcCtx = CTT('calc_dose_ctx').replace('%s', med);
-      }, 'resDose');
-    }
-    function runCal() {
-      const a = parseFloat(document.getElementById('calAge').value);
-      const h = parseFloat(document.getElementById('calH').value);
-      const w = parseFloat(document.getElementById('calW').value);
-      if (!a || !h || !w) { document.getElementById('resCal').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
-      const g = document.getElementById('calG').value;
-      const act = document.getElementById('calAct').value;
-      calcGet('kind=cal&age=' + a + '&g=' + g + '&h=' + h + '&w=' + w + '&act=' + act + '&lang=' + APILang(), function(d) {
-        let bb = '<div class="calc-result">';
-        bb += '<div class="cr-value">' + esc(CTT('calc_cal_val')) + ' <span class="cr-num">≈ ' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_cal_unit')) + '</div>';
-        bb += '<div class="cr-note">' + esc(CTT('calc_cal_note')) + '</div>';
-        bb += alertHTML(d) + assistHTML('cal') + '</div>';
-        document.getElementById('resCal').innerHTML = bb;
-        calcCtx = CTT('calc_cal_ctx').replace('%s', fmtNum(d.value));
-      }, 'resCal');
-    }
-    function runSugar() {
-      const a = parseFloat(document.getElementById('sgAge').value);
-      const val = parseFloat(document.getElementById('sgVal').value);
-      if (!val) { document.getElementById('resSug').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
-      const type = document.getElementById('sgType').value;
-      const unit = type === 'a1c' ? 'a1c' : (document.querySelector('input[name="sgUnit"]:checked') || { value: 'mg' }).value;
-      calcGet('kind=sugar&val=' + val + '&unit=' + unit + '&type=' + type + '&age=' + (a || '') + '&lang=' + APILang(), function(d) {
-        const typeLabel = CTT('calc_sug_' + ({ fasting: 'fast', post: 'post', random: 'random', a1c: 'a1c' })[d.type]);
-        let hh = '<div class="calc-result">';
-        hh += '<div class="cr-value">' + esc(CTT('calc_sug_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(d.unit) + ' · ' + esc(typeLabel) + '</div>';
-        hh += catHTML(d, 'sug') + noteHTML(d, 'sug', !!d.pediatric);
-        hh += alertHTML(d) + assistHTML('sug') + '</div>';
-        document.getElementById('resSug').innerHTML = hh;
-        if (d.type === 'a1c') calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', '%').replace('%t', 'HbA1c');
-        else calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', d.unit).replace('%t', typeLabel);
-      }, 'resSug');
-    }
-    (function(){
-      fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
-        if (ui.ok && ui.logged_in && ui.profile) {
-          var p = ui.profile;
-          var age = p.age;
-          if (!age && p.dob) {
-            try { var bd = new Date(p.dob); var now = new Date(); age = Math.floor((now - bd) / (365.25 * 24 * 60 * 60 * 1000)); } catch(e) {}
-          }
-          if (age) {
-            var fields = ['flAge', 'calAge', 'sgAge'];
-            fields.forEach(function(id) {
-              var el = document.getElementById(id);
-              if (el && !el.value) el.value = age;
-            });
-          }
-          if (p.weight) {
-            var wFields = ['bmiW', 'flW', 'calW'];
-            wFields.forEach(function(id) {
-              var el = document.getElementById(id);
-              if (el && !el.value) el.value = p.weight;
-            });
-          }
-          if (p.height) {
-            var hFields = ['bmiH', 'calH'];
-            hFields.forEach(function(id) {
-              var el = document.getElementById(id);
-              if (el && !el.value) el.value = p.height;
-            });
-          }
-          if (p.gender) {
-            var gFields = ['calG'];
-            var gVal = p.gender === 'male' ? 'm' : (p.gender === 'female' ? 'f' : '');
-            if (gVal) {
-              gFields.forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el && !el.value) el.value = gVal;
-              });
-            }
-          }
-        }
-      }).catch(function(){});
-    })();
+    const AR=__AR__, LOGGED_IN=__LOGGED_IN__; let plans=[],editing=null,weekdays=[];
+    const W=AR?['الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const esc=v=>{const d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML};
+    const timezone=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Riyadh'}catch(e){return'Asia/Riyadh'}})();
+    function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+    function renderWeekdays(){document.getElementById('weekdayButtons').innerHTML=W.map((x,i)=>'<button type="button" class="weekday '+(weekdays.includes(i)?'on':'')+'" onclick="toggleDay('+i+')">'+x+'</button>').join('')}
+    function toggleDay(i){weekdays=weekdays.includes(i)?weekdays.filter(x=>x!==i):weekdays.concat([i]);renderWeekdays()}
+    function toggleWeekdays(){document.getElementById('weekdaysWrap').classList.toggle('hide',document.getElementById('frequency').value!=='specific_days')}
+    function resetPlanForm(){editing=null;weekdays=[];['editPlanId','remName','pDose','endDate','medNotes'].forEach(id=>document.getElementById(id).value='');document.getElementById('remTimes').value='';document.getElementById('frequency').value='daily';document.getElementById('startDate').value=today();document.getElementById('planTimezone').value=timezone;document.getElementById('planFormTitle').textContent='＋ '+(AR?'إضافة دواء':'Add Medication');document.getElementById('planMsg').textContent='';toggleWeekdays();renderWeekdays();document.getElementById('planFormCard').scrollIntoView({behavior:'smooth',block:'start'})}
+    function editPlan(id){const p=plans.find(x=>x.id===id);if(!p)return;editing=id;weekdays=(p.days_of_week||[]).slice();document.getElementById('remName').value=p.med_name||'';document.getElementById('pDose').value=p.dose||'';document.getElementById('remTimes').value=(p.times||[]).join(', ');document.getElementById('frequency').value=p.frequency||'daily';document.getElementById('startDate').value=(p.start_date||today()).slice(0,10);document.getElementById('endDate').value=(p.end_date||'').slice(0,10);document.getElementById('medNotes').value=p.notes||'';document.getElementById('planTimezone').value=p.timezone||timezone;document.getElementById('planFormTitle').textContent=AR?'تعديل التذكير':'Edit Reminder';toggleWeekdays();renderWeekdays();document.getElementById('planFormCard').scrollIntoView({behavior:'smooth',block:'start'})}
+    async function savePlan(){const name=document.getElementById('remName').value.trim(),times=document.getElementById('remTimes').value.split(/[,،\s]+/).map(x=>x.trim()).filter(Boolean),msg=document.getElementById('planMsg');if(!name||!times.length){msg.textContent=AR?'اسم الدواء ووقت تذكير واحد على الأقل مطلوبان.':'Medication name and at least one reminder time are required.';return}const payload={med_name:name,dose:document.getElementById('pDose').value.trim(),times,frequency:document.getElementById('frequency').value,days_of_week:weekdays,start_date:document.getElementById('startDate').value||today(),end_date:document.getElementById('endDate').value||null,notes:document.getElementById('medNotes').value.trim(),timezone,notifications_enabled:true};const url=editing?'/api/meds/plan/'+editing:'/api/meds/plan',method=editing?'PUT':'POST';const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();if(!r.ok||!d.ok){msg.textContent=AR?'تعذر حفظ التذكير.':'Unable to save reminder.';return}msg.textContent='✓ '+(AR?'تم الحفظ':'Saved');await loadPlans();await loadCalendar();setTimeout(resetPlanForm,500)}
+    async function loadPlans(){if(!LOGGED_IN)return;const r=await fetch('/api/meds/plan'),d=await r.json();plans=(d.plans||[]).filter(p=>p.active);const box=document.getElementById('planList');if(!plans.length){box.innerHTML='<p class="muted">'+(AR?'لا توجد تذكيرات دوائية بعد.':'No medication reminders yet.')+'</p>';return}box.innerHTML=plans.map(p=>'<article class="plan"><div class="plan-head"><div><b>💊 '+esc(p.med_name)+'</b>'+(p.dose?'<small class="muted" style="display:block">'+esc(p.dose)+'</small>':'')+'<small class="muted">'+esc(p.frequency==='specific_days'?(AR?'أيام محددة':'Specific days'):(AR?'يوميًا':'Daily'))+' · '+esc(p.timezone||timezone)+'</small></div><div><button class="mini-action" onclick="editPlan('+p.id+')">✏️ '+(AR?'تعديل':'Edit')+'</button> <button class="mini-action" onclick="deletePlan('+p.id+')">🗑️ '+(AR?'حذف':'Delete')+'</button></div></div><div class="times">'+(p.times||[]).map(tm=>'<span class="time-pill">⏰ '+esc(tm)+'</span>').join('')+'</div><div class="time-actions">'+(p.times||[]).map(tm=>'<span><button class="mini-action" onclick="mark('+p.id+',\''+tm+'\',\'taken\')">✓ '+(AR?'تم أخذه':'Taken')+'</button> <button class="mini-action" onclick="snooze('+p.id+',\''+tm+'\')">😴 '+(AR?'غفوة':'Snooze')+'</button> <button class="mini-action" onclick="mark('+p.id+',\''+tm+'\',\'skipped\')">— '+(AR?'تخطي':'Skip')+'</button></span>').join('')+'</div></article>').join('')}
+    async function deletePlan(id){if(!confirm(AR?'حذف هذا التذكير؟':'Delete this reminder?'))return;await fetch('/api/meds/plan/'+id,{method:'DELETE'});loadPlans();loadCalendar()}
+    async function mark(id,tm,status){await fetch('/api/meds/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,time:tm,status,date:today()})});loadCalendar()}
+    async function snooze(id,tm){const mins=Number(document.getElementById('snoozeMinutes').value||10);await fetch('/api/meds/snooze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,time:tm,date:today(),minutes:mins})});loadCalendar()}
+    async function loadCalendar(){if(!LOGGED_IN)return;const d=await fetch('/api/meds/calendar?days='+document.getElementById('calDays').value).then(r=>r.json());const sm=d.summary||{},g=document.getElementById('summaryGrid');g.innerHTML=[[sm.scheduled||0,AR?'مجدول':'Scheduled'],[sm.taken||0,AR?'تم أخذه':'Taken'],[sm.skipped||0,AR?'تم تخطيه':'Skipped'],[(sm.adherence||0)+'%',AR?'استجابة للتذكيرات':'Reminder response']].map(x=>'<div class="summary-box"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('');const e=(d.entries||[]).slice().reverse(),box=document.getElementById('calendarList');if(!e.length){box.innerHTML='<p class="muted">'+(AR?'لا يوجد سجل تذكيرات بعد.':'No reminder history yet.')+'</p>';return}const st={taken:AR?'✓ تم أخذه':'✓ Taken',skipped:AR?'— تم تخطيه':'— Skipped',snoozed:AR?'😴 غفوة':'😴 Snoozed',deferred:AR?'😴 غفوة':'😴 Snoozed',scheduled:AR?'○ مجدول':'○ Scheduled'};box.innerHTML=e.slice(0,120).map(x=>'<div class="cal-row"><span>'+esc(x.date)+'</span><b>'+esc(x.time)+'</b><span class="cal-med">'+esc(x.med_name)+'</span><span class="status-'+esc(x.status)+'">'+esc(st[x.status]||x.status)+'</span></div>').join('')}
+    function urlB64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+    function pushSupported(){return location.protocol==='https:'&&'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}
+    async function refreshPush(){if(!LOGGED_IN)return;const dot=document.getElementById('pushDot'),label=document.getElementById('pushLabel'),support=document.getElementById('pushSupport'),on=document.getElementById('enablePushBtn'),off=document.getElementById('disablePushBtn');if(!pushSupported()){label.textContent=AR?'الإشعارات غير مدعومة على هذا الجهاز/المتصفح.':"Push notifications aren't supported on this device/browser.";support.textContent=AR?'يتطلب Web Push اتصال HTTPS ومتصفحًا يدعمه.':'Web Push requires HTTPS and browser support.';on.classList.add('hide');return}const d=await fetch('/api/push/status').then(r=>r.json());const perm=Notification.permission;dot.classList.toggle('on',d.subscribed&&perm==='granted');label.textContent=d.subscribed&&perm==='granted'?(AR?'الإشعارات مفعلة':'Notifications ON'):(AR?'الإشعارات متوقفة':'Notifications OFF');support.textContent=!d.configured?(AR?'خدمة Push لم يتم إعداد مفاتيحها على الخادم بعد.':'Push keys are not configured on the server yet.'):(perm==='denied'?(AR?'الإذن مرفوض. فعّليه من إعدادات المتصفح.':'Permission is blocked. Enable it in browser settings.'):'');on.classList.toggle('hide',d.subscribed&&perm==='granted');off.classList.toggle('hide',!(d.subscribed&&perm==='granted'));const s=d.settings||{};document.getElementById('notifEnabled').checked=s.enabled!==false;document.getElementById('notifSound').checked=s.sound!==false;document.getElementById('snoozeMinutes').value=String(s.snooze_minutes||10);const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);document.getElementById('iosHelp').classList.toggle('hide',!isiOS)}
+    async function enablePush(){if(!pushSupported())return;const cfg=await fetch('/api/push/vapid-public').then(r=>r.json());if(!cfg.configured||!cfg.public_key){alert(AR?'خدمة Push غير مهيأة على الخادم.':'Push is not configured on the server.');return}const perm=await Notification.requestPermission();if(perm!=='granted'){refreshPush();return}const reg=await navigator.serviceWorker.register('/service-worker.js');const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(cfg.public_key)});const r=await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),timezone,lang:AR?'ar':'en'})});if(!r.ok){alert(AR?'تعذر تفعيل الإشعارات.':'Unable to enable notifications.');return}await saveNotifSettings();refreshPush()}
+    async function disablePush(){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await fetch('/api/push/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe()}}catch(e){}document.getElementById('notifEnabled').checked=false;await saveNotifSettings();refreshPush()}
+    async function saveNotifSettings(){if(!LOGGED_IN)return;await fetch('/api/meds/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:document.getElementById('notifEnabled').checked,sound:document.getElementById('notifSound').checked,snooze_minutes:Number(document.getElementById('snoozeMinutes').value||10),timezone})})}
+    async function searchDrug(){const name=document.getElementById('medInput').value.trim(),box=document.getElementById('medRes');if(!name)return;box.innerHTML='<p class="muted">'+(AR?'جاري البحث في المعلومات المتاحة…':'Searching available verified information…')+'</p>';try{const d=await fetch('/api/drug?name='+encodeURIComponent(name)).then(r=>r.json());if(!d.ok){box.innerHTML='<p class="muted">'+(AR?'لا تتوفر معلومات دوائية موثقة لهذا الاسم حاليًا.':'No verified medication information is currently available for this name.')+'</p>';return}box.innerHTML='<article class="drug-card"><div class="drug-name">💊 '+esc(d.name)+'</div><div class="drug-sec"><b>'+(AR?'معلومات عامة':'General information')+'</b><p>'+esc(d.uses||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'تنبيهات مهمة':'Important warnings')+'</b><p>'+esc(d.warning||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'التداخلات المتوفرة':'Available interaction information')+'</b><p>'+esc(d.interactions||'—')+'</p></div><p class="privacy-note">'+(AR?'هذه المعلومات توعوية فقط. لا تبدأ أو توقف أو تغيّر دواءً أو جرعةً بناءً على هذه الصفحة.':'This is awareness information only. Do not start, stop, or change a medication or dose based on this page.')+'</p></article>'}catch(e){box.innerHTML='<p class="muted">'+(AR?'تعذر تحميل المعلومات الآن.':'Unable to load information right now.')+'</p>'}}
+    if(LOGGED_IN){document.getElementById('startDate').value=today();document.getElementById('planTimezone').value=timezone;renderWeekdays();loadPlans();loadCalendar();refreshPush()}
     </script>
-    """
-    repl = [
-        ("__PT__", json.dumps(t, ensure_ascii=False)),
-        ("__CALCH__", t["calc_h"]), ("__CALCSUB__", t["calc_sub"]),
-        ("__CARDS__", cards_html), ("__CALCBACK__", t["calc_back"]),
-        ("__CALCDISC__", t["calc_disc"]), ("__CALCDISCT__", t["calc_disc_t"]),
-        ("__SUGHINT__", t["calc_sug_hint"]),
-        ("__BW__", t["calc_bmi_w"]), ("__BWPH__", t["calc_bmi_w_ph"]),
-        ("__BH__", t["calc_bmi_h"]), ("__BHPH__", t["calc_bmi_h_ph"]),
-        ("__BBTN__", t["calc_bmi_btn"]),
-        ("__AGE__", t["calc_age"]), ("__AGEPH__", t["calc_age_ph"]),
-        ("__WEIGHT__", t["calc_weight"]), ("__WPH__", t["calc_weight_ph"]),
-        ("__ACT__", t["calc_act"]), ("__ACTLOW__", t["calc_act_low"]),
-        ("__ACTMED__", t["calc_act_med"]), ("__ACTHIGH__", t["calc_act_high"]),
-        ("__FBTN__", t["calc_fluids_btn"]),
-        ("__DWARN__", t["calc_dose_warn"]), ("__DMED__", t["calc_dose_med"]),
-        ("__DMEDPH__", t["calc_dose_med_ph"]), ("__DFIRST__", t["calc_dose_first"]),
-        ("__DIV__", t["calc_dose_iv"]), ("__DBTN__", t["calc_dose_btn"]),
-        ("__GENDER__", t["calc_gender"]), ("__MALE__", t["calc_male"]),
-        ("__FEMALE__", t["calc_female"]), ("__HGT__", t["calc_hgt"]),
-        ("__HGTPH__", t["calc_hgt_ph"]),
-        ("__ACT2LOW__", t["calc_act2_low"]), ("__ACT2MED__", t["calc_act2_med"]),
-        ("__ACT2HIGH__", t["calc_act2_high"]), ("__CBTN__", t["calc_cal_btn"]),
-        ("__STYPE__", t["calc_sug_type"]), ("__SFAST__", t["calc_sug_fast"]),
-        ("__SPOST__", t["calc_sug_post"]), ("__SRAND__", t["calc_sug_random"]),
-        ("__SA1C__", t["calc_sug_a1c"]), ("__SREAD__", t["calc_sug_reading"]),
-        ("__SREADPH__", t["calc_sug_reading_ph"]), ("__SUNIT__", t["calc_sug_unit"]),
-        ("__SUNMG__", t["calc_sug_unit_mg"]), ("__SUNMMOL__", t["calc_sug_unit_mmol"]),
-        ("__SA1CHINT__", t["calc_sug_a1c_hint"]), ("__SBTN__", t["calc_sug_btn"]),
-    ]
-    for k, v in repl:
-        body = body.replace(k, v)
-    return _page(_t("title_calculators"), body, extra_css=CALC_CSS)
-
-
-# ---------------------------------------------------------------- first aid
-FA_VIDEOS = {
-    "burns": {"ar": "HaC2oiBB7sI", "en": "ASY_ImKX6B0"},
-    "choking": {"ar": "dZ9-i_UpjlA", "en": "HGBBu4zr8sM"},
-    "bleeding": {"ar": "gjQ8VCMGClc", "en": "NxO5LvgqZe0"},
-    "poisoning": {"ar": "KEfLi97i_mI", "en": "eTrlm6Nyo6g"},
-    "fracture": {"ar": "lY7DLGaz4ek", "en": "2v8vlXgGXwE"},
-    "fainting": {"ar": "3CJt648ex8M", "en": "ddHKwkMwNyI"},
-    "heatstroke": {"ar": "lp1Q0K9cJ8E", "en": "R6VdoV8dZRc"},
-    "cpr": {"ar": "Lc5rSYTnqLM", "en": "BQNNOh8c8ks"},
-}
-
-
-def firstaid_page():
-    lang = "en" if _lang() == "en" else "ar"
-    cats = wellbeing.first_aid_categories(lang)
-    t = CT["en" if _lang() == "en" else "ar"]
-    vids = {}
-    for k, v in FA_VIDEOS.items():
-        yid = v.get(lang)
-        if yid:
-            vids[k] = "https://www.youtube-nocookie.com/embed/%s?rel=0&hl=%s" % (yid, lang)
-    body = """
-    <div class="card">
-      <h2>__FAH__</h2>
-      <p class="muted">__FASUB__</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;" id="faBtns"></div>
-      <div id="faRes" style="margin-top:18px;"></div>
-    </div>
-    <div class="warn">__FAWARN__</div>
-    <script>
-    const CATS = __CATS__;
-    const VIDS = __VIDS__;
-    const wrap = document.getElementById('faBtns');
-    CATS.forEach(([k, label]) => {
-      const b = document.createElement('button');
-      b.className = 'opt';
-      b.textContent = label;
-      b.onclick = async () => {
-        const r = await fetch('/api/firstaid/' + k);
-        const d = await r.json();
-        let html = '<div class="bubble bot" style="max-width:100%"><b>' + esc(d.label) + '</b>\\n\\n' + esc(d.text) + '</div>';
-        const vid = VIDS[k];
-        if (vid) {
-          html += '<div class="vidbtn" onclick="loadVid(this,\\'' + vid + '\\')">' + esc('__FAVIDEO__') + '</div><div class="vidwrap"></div>';
-        }
-        document.getElementById('faRes').innerHTML = html;
-      };
-      wrap.appendChild(b);
-    });
-    function loadVid(el, url) {
-      el.outerHTML = '<iframe src="' + url + '" title="First aid video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin-top:12px;" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+    '''
+    repl={
+      '__MY_MEDS__':tx('أدويتي وتذكيراتي','My Medications & Reminders'),'__HERO_SUB__':tx('نظّم تذكيرات الأدوية التي أدخلتها بنفسك. لا يصف SymptoSense دواءً ولا يقترح جرعة.','Organize reminders for medications you enter yourself. SymptoSense does not prescribe medication or suggest doses.'),
+      '__INFO_TITLE__':tx('معلومات الدواء','Medication Information'),'__INFO_SUB__':tx('اعرض المعلومات المتاحة من المصادر الموجودة في النظام فقط.','View only the verified information currently available in the system.'),'__SEARCH_PH__':tx('اكتب اسم الدواء','Enter medication name'),'__SEARCH__':tx('بحث','Search'),
+      '__LOGIN_TITLE__':tx('سجّل الدخول لاستخدام التذكيرات','Sign in to use reminders'),'__LOGIN_TEXT__':tx('البحث متاح للجميع، أما التذكيرات والسجل فخاصة بحسابك.','Search is public; reminders and history are private to your account.'),'__SIGN_IN__':tx('تسجيل الدخول','Sign in'),
+      '__REMINDERS__':tx('تذكيرات الأدوية','Medication Reminders'),'__REM_SUB__':tx('أنت من تحدد الاسم والوقت والجرعة الاختيارية.','You choose the name, time, and optional dose.'),'__ADD__':tx('إضافة','Add'),'__ADD_MED__':tx('إضافة دواء','Add Medication'),'__MED_NAME__':tx('اسم الدواء','Medication Name'),'__DOSE__':tx('الجرعة (اختيارية)','Dose (Optional)'),'__OPTIONAL__':tx('اختياري','Optional'),'__TIMES__':tx('أوقات التذكير','Reminder Times'),'__MULTI_TIME__':tx('يمكن إضافة أكثر من وقت، مثال: 08:00, 20:00','Multiple times are supported, e.g. 08:00, 20:00'),'__FREQ__':tx('التكرار','Frequency'),'__DAILY__':tx('يوميًا','Daily'),'__SPECIFIC__':tx('أيام محددة','Specific Days'),'__TZ__':tx('المنطقة الزمنية','Timezone'),'__DAYS__':tx('الأيام','Days'),'__START__':tx('تاريخ البداية','Start Date'),'__END__':tx('تاريخ النهاية (اختياري)','End Date (Optional)'),'__NOTES__':tx('ملاحظات (اختيارية)','Notes (Optional)'),'__SAVE__':tx('حفظ التذكير','Save Reminder'),'__CANCEL__':tx('إلغاء','Cancel'),'__SAFETY__':tx('هذه الميزة للتذكير فقط. لا تستخدمها لاتخاذ قرار ببدء دواء أو إيقافه أو تغيير الجرعة.','This feature is for reminders only. Do not use it to decide to start, stop, or change a medication or dose.'),
+      '__NOTIF__':tx('إشعارات الدواء','Medication Notifications'),'__CHECKING__':tx('جاري التحقق…','Checking…'),'__ENABLE__':tx('تفعيل الإشعارات','Enable Notifications'),'__DISABLE__':tx('إيقاف الإشعارات','Disable Notifications'),'__IOS_HELP__':tx('على iPhone/iPad، Web Push متاح لتطبيقات الويب المضافة إلى الشاشة الرئيسية على الإصدارات المدعومة. أضف SymptoSense إلى Home Screen ثم فعّل الإشعارات من داخل التطبيق.','On supported iPhone/iPad versions, Web Push is available for web apps added to the Home Screen. Add SymptoSense to Home Screen, then enable notifications from the app.'),'__NOTIF_ON__':tx('Medication Notifications','Medication Notifications'),'__SOUND__':tx('صوت التذكير','Reminder Sound'),'__SNOOZE__':tx('مدة الغفوة (دقيقة)','Snooze (minutes)'),
+      '__SUMMARY__':tx('ملخص التذكيرات','Reminder Summary'),'__ADH_NOTE__':tx('النسبة تعكس استجابتك للتذكيرات فقط، وليست تقييمًا طبيًا للالتزام بالعلاج.','This percentage reflects reminder responses only; it is not a medical assessment of treatment adherence.'),'__CALENDAR__':tx('سجل التذكيرات','Reminder Calendar'),'__CAL_SUB__':tx('✓ تم أخذه · ○ مجدول · — تم تخطيه','✓ Taken · ○ Scheduled · — Skipped'),'__DAYS_WORD__':tx('أيام','days'),
+      '__AR__':'true' if ar else 'false','__LOGGED_IN__':'true' if logged_in else 'false','__GATE_HIDE__':'hide' if logged_in else '','__PRIVATE_HIDE__':'' if logged_in else 'hide'
     }
-    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
-    </script>
-    """
-    body = body.replace("__CATS__", json.dumps(cats, ensure_ascii=False))
-    body = body.replace("__VIDS__", json.dumps(vids, ensure_ascii=False))
-    body = body.replace("__FAH__", t["fa_h"]).replace("__FASUB__", t["fa_sub"]).replace("__FAWARN__", t["fa_warn"])
-    body = body.replace("__FAVIDEO__", t["fa_video"])
-    return _page(_t("title_firstaid"), body)
-
-
-# ---------------------------------------------------------------- tips
-def tips_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__TIPSH__</h2>
-      <p class="muted">__TIPSSUB__</p>
-      <div id="tipBox" style="margin-top:16px;"></div>
-      <div style="text-align:center;margin-top:14px;"><button class="btn" onclick="loadTip()">__TIPSB__</button></div>
-    </div>
-    <div class="warn">__TIPSWARN__</div>
-    <script>
-    async function loadTip() {
-      const box = document.getElementById('tipBox');
-      box.innerHTML = '<div style="text-align:center;padding:24px;">... <span class="spin"></span></div>';
-      const r = await fetch('/api/tip');
-      const d = await r.json();
-      box.innerHTML =
-        '<div class="tip-card">' +
-        '<div class="tip-top"><span class="tip-icon">' + esc(d.icon) + '</span>' +
-        '<div><span class="tip-cat">' + esc(d.cat) + '</span><h3>' + esc(d.title) + '</h3></div></div>' +
-        '<p class="tip-text">' + esc(d.text) + '</p>' +
-        '<div class="tip-tip">💡 ' + esc(d.tip) + '</div>' +
-        '</div>';
-    }
-    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
-    loadTip();
-    </script>
-    """
-    body = body.replace("__TIPSH__", t["tips_h"]).replace("__TIPSB__", t["tips_btn"])
-    body = body.replace("__TIPSSUB__", t["tips_sub"]).replace("__TIPSWARN__", t["tips_warn"])
-    return _page(_t("title_tips"), body)
-
-
-# ---------------------------------------------------------------- relax
-def relax_page():
-    lang = "en" if _lang() == "en" else "ar"
-    txt = wellbeing.relax_guide(lang)
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__RELAXH__</h2>
-      <div style="font-size:16px;line-height:2;background:#EAF4FF;border-radius:12px;padding:20px;white-space:pre-wrap;">__TXT__</div>
-      <div style="text-align:center;margin-top:16px;"><div id="breathBox" style="font-size:30px;font-weight:800;color:#1976D2;height:70px;display:flex;align-items:center;justify-content:center;"></div></div>
-    </div>
-    <script>
-    const phases = [['__BRIN__', 4], ['__BRHOLD__', 7], ['__BROUT__', 8]];
-    let pi = 0;
-    function tick() {
-      const [label, secs] = phases[pi];
-      document.getElementById('breathBox').textContent = label;
-      pi = (pi + 1) % phases.length;
-      setTimeout(tick, secs * 1000);
-    }
-    tick();
-    </script>
-    """
-    body = body.replace("__TXT__", txt)
-    body = body.replace("__RELAXH__", t["relax_h"])
-    body = body.replace("__BRIN__", t["br_in"]).replace("__BRHOLD__", t["br_hold"]).replace("__BROUT__", t["br_out"])
-    return _page(_t("title_relax"), body)
-
-
-# ---------------------------------------------------------------- emergency
-def emergency_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <style>body { background: #F5F9FF; }</style>
-    <div class="card">
-      <h2>__EMH__</h2>
-      <p class="muted">__EMSUB__</p>
-      <div class="em-alert">__EMALERT__</div>
-      <div class="em-grid3">
-        <div class="em-card">
-          <div class="em-ic">🚑</div>
-          <h3>__EMRED__</h3>
-          <p class="em-desc">__EMREDD__</p>
-          <div class="em-num red">997</div>
-          <a class="em-call" href="tel:997">📞 __EMCALL__</a>
-        </div>
-        <div class="em-card">
-          <div class="em-ic">📞</div>
-          <h3>__EMUNI__</h3>
-          <p class="em-desc">__EMUNID__</p>
-          <div class="em-num red">911</div>
-          <a class="em-call" href="tel:911">📞 __EMCALL__</a>
-        </div>
-        <div class="em-card">
-          <div class="em-ic">🩺</div>
-          <h3>__EM937__</h3>
-          <p class="em-desc">__EM937D__</p>
-          <div class="em-num blue">937</div>
-          <a class="em-call blue" href="tel:937">📞 __EMCALL__</a>
-        </div>
-      </div>
-      <div class="em-mini">
-        <div class="em-mini-card">🚓 <b>__EMPOL__</b><span class="em-mini-num">999</span><p class="muted" style="flex-basis:100%;">__EMPOLD__</p></div>
-        <div class="em-mini-card">🚒 <b>__EMCIV__</b><span class="em-mini-num">998</span><p class="muted" style="flex-basis:100%;">__EMCIVD__</p></div>
-      </div>
-    </div>
-    <div class="card em-danger">
-      <h2 class="em-danger-h">__EMSIGNH__</h2>
-      <div class="em-signs">
-        <div class="em-sign">__EMS1__</div>
-        <div class="em-sign">__EMS2__</div>
-        <div class="em-sign">__EMS3__</div>
-        <div class="em-sign">__EMS4__</div>
-        <div class="em-sign">__EMS5__</div>
-      </div>
-      <div style="text-align:center;margin-top:16px;">
-        <a class="em-call big" href="tel:997">__EMCALLBTN__</a>
-      </div>
-    </div>
-    <div class="card" id="geo">
-      <h2>__EMGEOT__</h2>
-      <p class="muted">__EMGEOSUB__</p>
-      <div style="text-align:center;margin-top:14px;">
-        <span class="em-24h">🕐 __EMGEO24H__</span>
-        <div style="margin-top:14px;"><button class="btn pri big" onclick="nearMe()">__EMGEOBTN__</button></div>
-      </div>
-      <div id="geoMsg" style="text-align:center;margin-top:10px;font-weight:700;color:#1976D2;"></div>
-      <div id="geoList" style="margin-top:12px;"></div>
-    </div>
-    <div class="warn em-safety">__EMSAFETY__</div>
-    <script>
-    const EM = __PT__;
-    async function nearMe() {
-      const msg = document.getElementById('geoMsg');
-      const list = document.getElementById('geoList');
-      msg.textContent = EM.em_geo_searching;
-      list.innerHTML = '';
-      if (!navigator.geolocation) { msg.textContent = EM.em_geo_err; return; }
-      navigator.geolocation.getCurrentPosition(async function(pos) {
-        try {
-          const r = await fetch('/api/hospitals', {method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude})});
-          const d = await r.json();
-          if (!d.ok) { msg.textContent = EM.em_geo_err + (d.error ? ' (' + d.error + ')' : ''); return; }
-          if (!d.hospitals || !d.hospitals.length) { msg.textContent = EM.em_geo_empty; return; }
-          msg.textContent = '';
-          let html = '<h3 style="margin-bottom:8px;">' + EM.em_nearby + '</h3>';
-          d.hospitals.forEach(function(h) {
-            html += '<div class="hist-card"><div class="hist-head"><b>🏥 ' + (h.name || '?') + '</b></div>' +
-              '<p class="muted">📍 ' + (h.distance_km || '') + ' km</p>' +
-              (h.maps_url ? '<a class="btn ghost small" href="' + h.maps_url + '" target="_blank" rel="noopener">🗺️ ' + EM.em_geo_btn + '</a>' : '') +
-              '</div>';
-          });
-          list.innerHTML = html;
-        } catch(e) { msg.textContent = EM.em_geo_err; }
-      }, function() { msg.textContent = EM.em_geo_err; }, {timeout: 15000});
-    }
-    </script>
-    """
-    repl = [
-        ("__EMH__", t["em_h"]), ("__EMSUB__", t["em_sub"]),
-        ("__EMALERT__", t["em_alert"]),
-        ("__EMRED__", t["em_red"]), ("__EMUNI__", t["em_unified"]), ("__EM937__", t["em_937"]),
-        ("__EMREDD__", t["em_red_desc"]), ("__EMUNID__", t["em_unified_desc"]), ("__EM937D__", t["em_937_desc"]),
-        ("__EMCALL__", t["em_call"]),
-        ("__EMPOL__", t["em_police"]), ("__EMCIV__", t["em_civil"]),
-        ("__EMPOLD__", t["em_police_desc"]), ("__EMCIVD__", t["em_civil_desc"]),
-        ("__EMSIGNH__", t["em_signs_h"]),
-        ("__EMS1__", t["em_s1"]), ("__EMS2__", t["em_s2"]), ("__EMS3__", t["em_s3"]),
-        ("__EMS4__", t["em_s4"]), ("__EMS5__", t["em_s5"]),
-        ("__EMCALLBTN__", t["em_call_btn"]),
-        ("__EMGEOT__", t["em_geo_title"]), ("__EMGEOSUB__", t["em_geo_sub"]),
-        ("__EMGEO24H__", t["em_geo_24h"]), ("__EMGEOBTN__", t["em_geo_btn"]),
-        ("__EMSAFETY__", t["em_safety"]),
-        ("__PT__", json.dumps({
-            "em_geo_searching": t["em_geo_searching"], "em_geo_err": t["em_geo_err"],
-            "em_geo_empty": t["em_geo_empty"], "em_nearby": t["em_nearby"],
-            "em_geo_btn": t["em_geo_btn"],
-        }, ensure_ascii=False)),
-    ]
-    for k, v in repl:
-        body = body.replace(k, v)
-    return _page(_t("title_emergency"), body)
-
-
-# ---------------------------------------------------------------- checkin
-def checkin_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__CIH__</h2>
-      <p class="muted">__CISUB__</p>
-      <div style="margin-top:14px;text-align:center;">
-        <button class="btn ghost" onclick="ci(1)">😞 1</button>
-        <button class="btn ghost" onclick="ci(2)">😕 2</button>
-        <button class="btn ghost" onclick="ci(3)">😐 3</button>
-        <button class="btn ghost" onclick="ci(4)">🙂 4</button>
-        <button class="btn ghost" onclick="ci(5)">😊 5</button>
-      </div>
-      <div id="ciMsg" style="margin-top:10px;font-weight:700;color:#1976D2;text-align:center;"></div>
-      <div id="ciChart" style="margin-top:20px;text-align:center;"></div>
-    </div>
-    <script>
-    const T = __PT__;
-    function TT(k) { return T[k] || k; }
-    async function ci(rating) {
-      const r = await fetch('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rating: rating})});
-      const d = await r.json();
-      if (d.ok) { document.getElementById('ciMsg').textContent = TT('ci_saved'); loadChart(); }
-      else document.getElementById('ciMsg').textContent = TT('ci_err') + (d.error || '?');
-    }
-    async function loadChart() {
-      const r = await fetch('/api/checkin');
-      const d = await r.json();
-      const box = document.getElementById('ciChart');
-      if (!d.ok) { box.innerHTML = '<div class="muted">' + TT('ci_chart_err') + '</div>'; return; }
-      if (!d.rows.length) { box.innerHTML = '<div class="muted">' + TT('ci_empty') + '</div>'; return; }
-      box.innerHTML = '<img src="' + d.chart + '" alt="' + TT('ci_alt') + '" style="max-width:100%;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08);">';
-    }
-    loadChart();
-    </script>
-    """
-    body = body.replace("__PT__", json.dumps(t, ensure_ascii=False))
-    body = body.replace("__CIH__", t["ci_h"]).replace("__CISUB__", t["ci_sub"])
-    return _page(_t("title_checkin"), body)
-
-
-# ---------------------------------------------------------------- profile
-def profile_page():
-    db.init_db()
-    t = L["en" if _lang() == "en" else "ar"]
-    uid = _ss_user_id()
-    if not uid:
-        ar = _lang() == "ar"
-        body = """
-        <section class="v2-guest-profile" aria-labelledby="guestProfileTitle">
-          <div style="font-size:48px" aria-hidden="true">👤</div>
-          <h1 id="guestProfileTitle" style="font-size:27px;margin:8px 0">__TITLE__</h1>
-          <p class="muted">__DESC__</p>
-          <div class="ss-btn-row" style="justify-content:center;margin-top:22px">
-            <a class="ss-btn-primary" href="/login?next=/profile">__LOGIN__</a>
-            <a class="btn ghost" href="/register?next=/profile">__REGISTER__</a>
-            <a class="btn ghost" href="/home">__GUEST__</a>
-          </div>
-          <p class="muted" style="font-size:12px;margin-top:18px">__NOTE__</p>
-        </section>
-        """
-        values = {
-            "__TITLE__": "ملفي" if ar else "My profile",
-            "__DESC__": "سجّل الدخول لحفظ معلوماتك ونتائجك والرجوع إليها من أي جهاز." if ar else "Sign in to save your information and results and access them across devices.",
-            "__LOGIN__": "تسجيل الدخول" if ar else "Sign in",
-            "__REGISTER__": "إنشاء حساب" if ar else "Create account",
-            "__GUEST__": "المتابعة كزائر" if ar else "Continue as guest",
-            "__NOTE__": "لا تحتاج إلى حساب لاستخدام الخدمات الأساسية." if ar else "You do not need an account to use core services.",
-        }
-        for key, value in values.items():
-            body = body.replace(key, value)
-        return _page("ملفي" if ar else "My profile", body)
-    user = db.get_ss_user(uid)
-    hp = db.load_health_profile(uid) or {}
-    def esc(v):
-        return (v or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    def age_from_dob(dob):
-        if not dob:
-            return ""
-        try:
-            from datetime import date
-            born = date.fromisoformat(dob)
-            today = date.today()
-            return str(today.year - born.year - ((today.month, today.day) < (born.month, born.day)))
-        except Exception:
-            return ""
-    age = age_from_dob(hp.get("dob", ""))
-    gender_label = {"male": t["profile_male"], "female": t["profile_female"]}.get(hp.get("gender"), "—")
-    act_label = {"low": t.get("activity_low", "Low"), "moderate": t.get("activity_moderate", "Moderate"), "high": t.get("activity_high", "High")}.get(hp.get("activity_level"), "—")
-    lang_label = "العربية" if hp.get("lang", "ar") == "ar" else "English"
-    has_data = any([hp.get("dob"), hp.get("gender"), hp.get("height"), hp.get("weight"), hp.get("medications"), hp.get("allergies"), hp.get("health_conditions")])
-    def field_row(icon, label, value):
-        v = esc(value) if value else '<span style="color:#94A3B8;">—</span>'
-        return '<div class="ss-field"><div class="ss-f-icon">%s</div><div style="flex:1;"><label>%s</label><div style="font-size:15px;font-weight:600;color:#40566F;padding:4px 0;">%s</div></div></div>' % (icon, label, v)
-    gen_opts = {
-        "male": '<option value="male" selected>' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
-        "female": '<option value="male">' + t["profile_male"] + '</option><option value="female" selected>' + t["profile_female"] + '</option>',
-        "": '<option value="male">' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>',
-    }.get(hp.get("gender", ""), '<option value="male">' + t["profile_male"] + '</option><option value="female">' + t["profile_female"] + '</option>')
-    act_opts = ""
-    for val, label in [("low", t.get("activity_low", "Low")), ("moderate", t.get("activity_moderate", "Moderate")), ("high", t.get("activity_high", "High"))]:
-        sel = ' selected' if hp.get("activity_level") == val else ""
-        act_opts += '<option value="%s"%s>%s</option>' % (val, sel, label)
-    # Calculate completion
-    required_fields = {"dob": 20, "gender": 15, "height": 15, "weight": 15, "medications": 10, "allergies": 10, "health_conditions": 15}
-    total_score = sum(required_fields.values())
-    current_score = sum(w for f, w in required_fields.items() if hp.get(f))
-    completion_pct = int((current_score / total_score) * 100) if total_score else 0
-    # Account dashboard data. Personal records use member_id=0, while family files
-    # stay in their own pages and never get mixed into the account owner's history.
-    data_owner = _data_user_id()
-    personal_records = []
-    blood_tests = []
-    family_members = []
-    active_med_plans = []
-    try:
-        personal_records = db.get_records(data_owner, limit=500, member_id=0)
-    except Exception:
-        personal_records = []
-    try:
-        blood_tests = db.get_blood_tests(data_owner, limit=100, member_id=0)
-    except Exception:
-        blood_tests = []
-    try:
-        family_members = db.list_members(data_owner)
-    except Exception:
-        family_members = []
-    try:
-        active_med_plans = db.list_med_plans(data_owner, member_id=0, active_only=True)
-    except Exception:
-        active_med_plans = []
-    recent_records = personal_records[:5]
-    latest_record = recent_records[0] if recent_records else None
-    lang_is_ar = _lang() == "ar"
-
-    def bi(ar, en):
-        return ar if lang_is_ar else en
-
-    if latest_record:
-        latest_symptoms = latest_record.get("symptoms") or []
-        if not isinstance(latest_symptoms, list):
-            latest_symptoms = [str(latest_symptoms)]
-        symptoms_html = '<div class="hp-chips">' + "".join(
-            '<span class="hp-chip">%s</span>' % esc(symptom) for symptom in latest_symptoms
-        ) + '</div>'
-        urgency_raw = (latest_record.get("urgency") or "").lower()
-        urgency_label = {
-            "high": bi("عالية", "High"),
-            "medium": bi("متوسطة", "Medium"),
-            "low": bi("منخفضة", "Low"),
-        }.get(urgency_raw, latest_record.get("urgency") or "—")
-        latest_meta = (
-            '<div class="hp-meta"><span>📅 %s</span><span>⏱️ %s</span><span>📊 %s/5</span><span>🟢 %s</span></div>'
-            % (
-                esc((latest_record.get("timestamp") or "")[:10] or "—"),
-                esc(str(latest_record.get("duration") or "—")),
-                esc(str(latest_record.get("severity") or "—")),
-                esc(str(urgency_label)),
-            )
-        )
-    else:
-        symptoms_html = '<p class="muted">%s</p>' % bi("لا توجد أعراض مسجلة حتى الآن.", "No symptoms have been recorded yet.")
-        latest_meta = ''
-
-    planned_names = [p.get("med_name", "") for p in active_med_plans if p.get("med_name")]
-    meds_overview = hp.get("medications", "") or ", ".join(planned_names[:4])
-    essentials_html = "".join([
-        '<div class="hp-essential"><b>⚠️ %s</b><span>%s</span></div>' % (
-            bi("الحساسية", "Allergies"), esc(hp.get("allergies", "") or bi("غير مضافة", "Not added"))),
-        '<div class="hp-essential"><b>🩺 %s</b><span>%s</span></div>' % (
-            bi("الحالات الصحية", "Health conditions"), esc(hp.get("health_conditions", "") or bi("غير مضافة", "Not added"))),
-        '<div class="hp-essential"><b>💊 %s</b><span>%s</span></div>' % (
-            bi("الأدوية الحالية", "Current medications"), esc(meds_overview or bi("غير مضافة", "Not added"))),
-    ])
-    body = """
-    <div style="max-width:640px;margin:0 auto;padding:0;">
-      <section class="hp-account-hero" aria-labelledby="healthProfileTitle">
-        <div class="hp-account-head">
-          <div class="hp-avatar" aria-hidden="true">👤</div>
-          <div style="min-width:0;flex:1;">
-            <div id="healthProfileTitle" class="hp-account-name">__WELCOME__ __NAME__</div>
-            <div class="hp-account-email">__EMAIL__</div>
-            <div style="font-size:12.5px;opacity:.88;margin-top:5px;">__SUB__</div>
-          </div>
-          <div class="hp-secure">🔒 __PRIVATE__</div>
-        </div>
-      </section>
-
-      <section class="hp-stats" aria-label="__SUMMARY_ARIA__">
-        <div class="hp-stat"><span class="hp-stat-icon">🩺</span><span class="hp-stat-value">__ANALYSIS_COUNT__</span><span class="hp-stat-label">__ANALYSIS_LABEL__</span></div>
-        <div class="hp-stat"><span class="hp-stat-icon">💊</span><span class="hp-stat-value">__MED_COUNT__</span><span class="hp-stat-label">__MED_LABEL__</span></div>
-        <div class="hp-stat"><span class="hp-stat-icon">🩸</span><span class="hp-stat-value">__BLOOD_COUNT__</span><span class="hp-stat-label">__BLOOD_LABEL__</span></div>
-        <div class="hp-stat"><span class="hp-stat-icon">👨‍👩‍👧</span><span class="hp-stat-value">__FAMILY_COUNT__</span><span class="hp-stat-label">__FAMILY_LABEL__</span></div>
-      </section>
-
-      <section class="hp-overview">
-        <div class="hp-panel">
-          <h3>🩺 __LATEST_SYMPTOMS__</h3>
-          __LATEST_SYMPTOMS_HTML__
-          __LATEST_META__
-        </div>
-        <div class="hp-panel">
-          <h3>❤️ __IMPORTANT_HEALTH__</h3>
-          __ESSENTIALS_HTML__
-        </div>
-      </section>
-
-      <nav class="hp-quick-links" aria-label="__QUICK_ARIA__">
-        <a class="hp-quick-link" href="/chat"><span>➕</span>__NEW_ANALYSIS__</a>
-        <a class="hp-quick-link" href="/meds"><span>💊</span>__MY_MEDS__</a>
-        <a class="hp-quick-link" href="/blood"><span>🩸</span>__MY_BLOOD__</a>
-        <a class="hp-quick-link" href="/family"><span>👨‍👩‍👧</span>__MY_FAMILY__</a>
-      </nav>
-
-      <div class="ss-profile-card" style="text-align:center;">
-        <h2 style="justify-content:center;">__H__</h2>
-        <p class="muted">__DASHBOARD_NOTE__</p>
-      </div>
-
-      <!-- COMPLETION BAR -->
-      <div class="ss-completion">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div><b style="font-size:15px;color:#123B70;">__COMPL_TITLE__</b><div class="bar-label">__COMPL_PCT__%</div></div>
-          <div style="font-size:28px;font-weight:900;color:#1976D2;">__COMPL_PCT__%</div>
-        </div>
-        <div class="bar-track"><div class="bar-fill-green" style="width:__COMPL_PCT__%;"></div></div>
-        <div class="bar-label">__COMPL_SUB__</div>
-      </div>
-
-      <!-- SMART NEXT STEP -->
-      __NEXT_STEP_HTML__
-
-      <!-- READ ONLY VIEW -->
-      <div id="viewMode">
-        <div class="ss-profile-card">
-          <h2>👤 __BASIC__</h2>
-          __ROW_NAME__
-          __ROW_DOB__
-          __ROW_GENDER__
-          __ROW_LANG__
-        </div>
-        <div class="ss-profile-card">
-          <h2>🩺 __HEALTH__</h2>
-          __ROW_HEIGHT__
-          __ROW_WEIGHT__
-          __ROW_ACTIVITY__
-          __ROW_MEDS__
-          __ROW_ALLERGIES__
-          __ROW_CONDITIONS__
-          __ROW_EXTRA__
-        </div>
-        <div class="ss-btn-row" style="justify-content:center;">
-          <button type="button" class="ss-btn-primary" onclick="showEdit()">✏️ __EDIT_BTN__</button>
-          <a href="/settings" class="ss-btn-primary" style="text-decoration:none;background:#EAF4FF;color:#123B70;border:1px solid #DCEBFA;">⚙️ __PRIVACY__</a>
-        </div>
-      </div>
-
-      <!-- EDIT MODE -->
-      <form id="hpForm" style="display:none;">
-        <div class="ss-profile-card">
-          <h2>👤 __BASIC__</h2>
-          <div class="ss-field">
-            <div class="ss-f-icon">📛</div>
-            <div style="flex:1;"><label>__L_NAME__</label><input name="display_name" value="__VAL_NAME__" placeholder="___"></div>
-          </div>
-          <div class="ss-grid2">
-            <div class="ss-field">
-              <div class="ss-f-icon">🎂</div>
-              <div style="flex:1;"><label>__L_DOB__</label><input name="dob" type="date" value="__VAL_DOB__"></div>
-            </div>
-            <div class="ss-field">
-              <div class="ss-f-icon">⚧</div>
-              <div style="flex:1;"><label>__L_GENDER__</label><select name="gender">__GEN_OPTS__</select></div>
-            </div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">🌐</div>
-            <div style="flex:1;"><label>__L_LANG__</label>
-              <select name="lang_pref">
-                <option value="ar" __LANG_AR__>العربية</option>
-                <option value="en" __LANG_EN__>English</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="ss-profile-card">
-          <h2>🩺 __HEALTH__</h2>
-          <div class="ss-grid2">
-            <div class="ss-field">
-              <div class="ss-f-icon">📏</div>
-              <div style="flex:1;"><label>__L_HEIGHT__</label><input name="height" type="number" min="50" max="250" value="__VAL_HEIGHT__" placeholder="165"></div>
-            </div>
-            <div class="ss-field">
-              <div class="ss-f-icon">⚖️</div>
-              <div style="flex:1;"><label>__L_WEIGHT__</label><input name="weight" type="number" min="20" max="300" value="__VAL_WEIGHT__" placeholder="60"></div>
-            </div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">🏃</div>
-            <div style="flex:1;"><label>__L_ACTIVITY__</label><select name="activity_level">__ACT_OPTS__</select></div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">💊</div>
-            <div style="flex:1;"><label>__L_MEDS__</label><textarea name="medications" placeholder="__PH_MEDS__">__VAL_MEDS__</textarea></div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">⚠️</div>
-            <div style="flex:1;"><label>__L_ALLERGIES__</label><textarea name="allergies" placeholder="__PH_ALLERGIES__">__VAL_ALLERGIES__</textarea></div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">🩺</div>
-            <div style="flex:1;"><label>__L_CONDITIONS__</label><textarea name="health_conditions" placeholder="__PH_CONDITIONS__">__VAL_CONDITIONS__</textarea></div>
-          </div>
-          <div class="ss-field">
-            <div class="ss-f-icon">📝</div>
-            <div style="flex:1;"><label>__L_EXTRA__</label><textarea name="extra_info" placeholder="__PH_EXTRA__">__VAL_EXTRA__</textarea></div>
-          </div>
-        </div>
-
-        <div class="ss-btn-row" style="justify-content:center;">
-          <button type="submit" class="ss-btn-primary">__SAVE_BTN__</button>
-          <button type="button" class="ss-btn-primary" style="background:#EAF4FF;color:#123B70;border:1px solid #DCEBFA;" onclick="showView()">↩ __CANCEL__</button>
-        </div>
-        <div id="hpMsg" class="ss-msg" style="display:none;"></div>
-      </form>
-
-      <!-- ANALYSIS HISTORY -->
-      <div class="ss-profile-card" id="historySection">
-        <h2>📊 __HISTORY_TITLE__</h2>
-        <div id="historyList">__HISTORY_HTML__</div>
-      </div>
-
-      <!-- SYMPTOMS CHANGED -->
-      <div class="ss-next-step" style="background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border-color:#FDE68A;">
-        <h3>🔄 __CHANGED_TITLE__</h3>
-        <p>__CHANGED_SUB__</p>
-        <a href="/chat" class="ss-btn-primary" style="text-decoration:none;background:#F59E0B;color:#fff;">__REASSESS_BTN__</a>
-      </div>
-
-      <div style="margin-top:16px;text-align:center;">
-        <button onclick="deleteProfile()" class="ss-btn-danger">__DELETE_BTN__</button>
-      </div>
-    </div>
-
-    <div id="valModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:18px;">
-      <div style="background:#fff;border-radius:22px;max-width:420px;width:100%;padding:30px 26px;text-align:center;box-shadow:0 24px 60px rgba(15,23,42,.25);">
-        <div style="font-size:36px;margin-bottom:8px;">⚠️</div>
-        <h3 id="valTitle" style="font-size:20px;color:#123B70;margin-bottom:8px;"></h3>
-        <p id="valDesc" style="font-size:14px;color:#40566F;line-height:1.7;margin-bottom:14px;"></p>
-        <div id="valList" style="text-align:start;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:13.5px;color:#991B1B;line-height:1.8;"></div>
-        <button onclick="document.getElementById('valModal').style.display='none'" style="background:#1976D2;color:#fff;border:none;border-radius:12px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">__VAL_OK__</button>
-      </div>
-    </div>
-    <script>
-    var LANG = '__LANG__';
-    var VAL_LABELS = {dob:__L_DOB_JSON__,gender:__L_GENDER_JSON__,height:__L_HEIGHT_JSON__,weight:__L_WEIGHT_JSON__};
-    function esc(s) { var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
-    function historyUrgency(u) {
-      if (LANG === 'ar') return u === 'high' ? 'عالية' : (u === 'medium' ? 'متوسطة' : 'منخفضة');
-      return u === 'high' ? 'High' : (u === 'medium' ? 'Medium' : 'Low');
-    }
-    function showEdit() { document.getElementById('viewMode').style.display='none'; document.getElementById('hpForm').style.display='block'; window.scrollTo(0,0); }
-    function showView() { document.getElementById('viewMode').style.display='block'; document.getElementById('hpForm').style.display='none'; }
-    document.getElementById('hpForm').addEventListener('submit', async function(e){
-      e.preventDefault();
-      var f = e.target;
-      var missing = [];
-      if (!f.dob.value) missing.push({key:'dob',label:VAL_LABELS.dob});
-      if (!f.gender.value) missing.push({key:'gender',label:VAL_LABELS.gender});
-      if (!f.height.value) missing.push({key:'height',label:VAL_LABELS.height});
-      if (!f.weight.value) missing.push({key:'weight',label:VAL_LABELS.weight});
-      document.querySelectorAll('#hpForm .ss-field').forEach(function(el){ el.style.borderColor='#DCEBFA'; });
-      if (missing.length > 0) {
-        missing.forEach(function(m){
-          var inp = f[m.key];
-          if (inp) { var field = inp.closest('.ss-field'); if(field) field.style.borderColor='#dc2626'; }
-        });
-        var listHtml = missing.map(function(m){ return '⚠️ ' + m.label; }).join('<br>');
-        document.getElementById('valTitle').textContent = LANG==='ar' ? '⚠️ باقي بعض المعلومات' : '⚠️ Some information is missing';
-        document.getElementById('valDesc').textContent = LANG==='ar' ? 'يرجى إكمال:' : 'Please complete:';
-        document.getElementById('valList').innerHTML = listHtml;
-        document.getElementById('valModal').style.display = 'flex';
-        return;
-      }
-      var r = await fetch('/api/health-profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        display_name: f.display_name.value, dob: f.dob.value, gender: f.gender.value,
-        height: f.height.value, weight: f.weight.value, activity_level: f.activity_level.value,
-        medications: f.medications.value, allergies: f.allergies.value,
-        health_conditions: f.health_conditions.value, extra_info: f.extra_info.value,
-        lang: f.lang_pref.value
-      })});
-      var d = await r.json();
-      var m = document.getElementById('hpMsg');
-      m.style.display = 'block';
-      m.textContent = d.ok ? '__MSG_OK__' : (d.error || '__MSG_ERR__');
-      m.className = d.ok ? 'ss-msg' : 'ss-msg error';
-      if (d.ok) setTimeout(function(){ location.reload(); }, 1000);
-    });
-    // Fetch analysis history from API
-    (async function(){
-      try {
-        var r = await fetch('/api/analysis-history');
-        var d = await r.json();
-        if (d.ok && d.records && d.records.length) {
-          var list = document.getElementById('historyList');
-          var html = '';
-          d.records.forEach(function(rec){
-            var syms = (rec.symptoms || []).join(', ').substring(0, 60);
-            var urg = rec.urgency || '';
-            var urgCls = urg === 'high' ? 'pill-high' : (urg === 'medium' ? 'pill-med' : 'pill-low');
-            var ts = (rec.timestamp || '').substring(0, 10);
-            html += '<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#123B70;">' + esc(ts) + '</span><span class="pill ' + urgCls + '">' + esc(historyUrgency(urg)) + '</span></div><div class="muted" style="margin-top:4px;">' + esc(syms) + '</div></div>';
-          });
-          list.innerHTML = html;
-        }
-      } catch(e) {}
-    })();
-    async function deleteProfile() {
-      var c = LANG==='ar' ? 'هل أنت متأكد من حذف جميع معلوماتك الصحية؟' : 'Are you sure you want to delete all your health information?';
-      if (confirm(c)) {
-        var r = await fetch('/api/health-profile/delete', {method:'POST'});
-        var d = await r.json();
-        if (d.ok) location.reload();
-      }
-    }
-    </script>
-    """
-    welcome_text = t.get("welcome_back", "Welcome back,")
-    body = body.replace("__H__", t["profile_h"]).replace("__SUB__", t["profile_sub"])
-    body = body.replace("__BASIC__", t["profile_basic"]).replace("__HEALTH__", t["profile_health"])
-    body = body.replace("__WELCOME__", welcome_text).replace("__NAME__", esc(user.get("name", "")))
-    body = body.replace("__EMAIL__", esc(user.get("email", "")))
-    body = body.replace("__PRIVATE__", bi("ملف صحي خاص", "Private health file"))
-    body = body.replace("__SUMMARY_ARIA__", bi("ملخص الملف الصحي", "Health profile summary"))
-    body = body.replace("__ANALYSIS_COUNT__", str(len(personal_records)))
-    body = body.replace("__MED_COUNT__", str(len(active_med_plans)))
-    body = body.replace("__BLOOD_COUNT__", str(len(blood_tests)))
-    body = body.replace("__FAMILY_COUNT__", str(len(family_members)))
-    body = body.replace("__ANALYSIS_LABEL__", bi("سجل أعراض", "Symptom records"))
-    body = body.replace("__MED_LABEL__", bi("دواء نشط", "Active medicines"))
-    body = body.replace("__BLOOD_LABEL__", bi("فحص دم", "Blood tests"))
-    body = body.replace("__FAMILY_LABEL__", bi("فرد عائلة", "Family members"))
-    body = body.replace("__LATEST_SYMPTOMS__", bi("آخر الأعراض المسجلة", "Latest recorded symptoms"))
-    body = body.replace("__LATEST_SYMPTOMS_HTML__", symptoms_html).replace("__LATEST_META__", latest_meta)
-    body = body.replace("__IMPORTANT_HEALTH__", bi("المعلومات الصحية المهمة", "Important health information"))
-    body = body.replace("__ESSENTIALS_HTML__", essentials_html)
-    body = body.replace("__QUICK_ARIA__", bi("اختصارات الملف الصحي", "Health profile shortcuts"))
-    body = body.replace("__NEW_ANALYSIS__", bi("تحليل جديد", "New analysis"))
-    body = body.replace("__MY_MEDS__", bi("أدويتي", "My medicines"))
-    body = body.replace("__MY_BLOOD__", bi("فحوصاتي", "My blood tests"))
-    body = body.replace("__MY_FAMILY__", bi("ملفات العائلة", "Family profiles"))
-    body = body.replace("__DASHBOARD_NOTE__", bi("راجعي معلوماتك وعدّليها متى احتجتِ؛ تُستخدم فقط وفق إعدادات الخصوصية.", "Review and update your information anytime; it is used only according to your privacy settings."))
-    body = body.replace("__EDIT_BTN__", t.get("profile_edit_btn", "Edit my info"))
-    body = body.replace("__CANCEL__", t.get("profile_cancel", "Cancel"))
-    body = body.replace("__ROW_NAME__", field_row("📛", t["profile_name"], hp.get("display_name", user.get("name", ""))))
-    body = body.replace("__ROW_DOB__", field_row("🎂", t["profile_dob"], (hp.get("dob", "") + (" (%s)" % age if age else "")) if hp.get("dob") else ""))
-    body = body.replace("__ROW_GENDER__", field_row("⚧", t["profile_gender"], gender_label))
-    body = body.replace("__ROW_LANG__", field_row("🌐", t["profile_lang_pref"], lang_label))
-    body = body.replace("__ROW_HEIGHT__", field_row("📏", t["profile_height"], (hp.get("height", "") + " cm") if hp.get("height") else ""))
-    body = body.replace("__ROW_WEIGHT__", field_row("⚖️", t["profile_weight"], (hp.get("weight", "") + " kg") if hp.get("weight") else ""))
-    body = body.replace("__ROW_ACTIVITY__", field_row("🏃", t["profile_activity"], act_label))
-    body = body.replace("__ROW_MEDS__", field_row("💊", t["profile_meds"], hp.get("medications", "")))
-    body = body.replace("__ROW_ALLERGIES__", field_row("⚠️", t["profile_allergies"], hp.get("allergies", "")))
-    body = body.replace("__ROW_CONDITIONS__", field_row("🩺", t["profile_conditions"], hp.get("health_conditions", "")))
-    body = body.replace("__ROW_EXTRA__", field_row("📝", t["profile_extra"], hp.get("extra_info", "")))
-    body = body.replace("__L_NAME__", t["profile_name"]).replace("__VAL_NAME__", esc(hp.get("display_name", user.get("name", ""))))
-    body = body.replace("__L_DOB__", t["profile_dob"]).replace("__VAL_DOB__", esc(hp.get("dob", "")))
-    body = body.replace("__L_GENDER__", t["profile_gender"]).replace("__GEN_OPTS__", gen_opts)
-    body = body.replace("__L_LANG__", t["profile_lang_pref"])
-    body = body.replace("__LANG_AR__", 'selected' if hp.get("lang", "ar") == "ar" else "")
-    body = body.replace("__LANG_EN__", 'selected' if hp.get("lang", "ar") == "en" else "")
-    body = body.replace("__L_HEIGHT__", t["profile_height"]).replace("__VAL_HEIGHT__", esc(hp.get("height", "")))
-    body = body.replace("__L_WEIGHT__", t["profile_weight"]).replace("__VAL_WEIGHT__", esc(hp.get("weight", "")))
-    body = body.replace("__L_ACTIVITY__", t["profile_activity"]).replace("__ACT_OPTS__", act_opts)
-    body = body.replace("__L_MEDS__", t["profile_meds"]).replace("__VAL_MEDS__", esc(hp.get("medications", "")))
-    body = body.replace("__PH_MEDS__", t["profile_meds_ph"])
-    body = body.replace("__L_ALLERGIES__", t["profile_allergies"]).replace("__VAL_ALLERGIES__", esc(hp.get("allergies", "")))
-    body = body.replace("__PH_ALLERGIES__", t["profile_allergies_ph"])
-    body = body.replace("__L_CONDITIONS__", t["profile_conditions"]).replace("__VAL_CONDITIONS__", esc(hp.get("health_conditions", "")))
-    body = body.replace("__PH_CONDITIONS__", t["profile_conditions_ph"])
-    body = body.replace("__L_EXTRA__", t["profile_extra"]).replace("__VAL_EXTRA__", esc(hp.get("extra_info", "")))
-    body = body.replace("__PH_EXTRA__", t["profile_extra_ph"])
-    body = body.replace("__SAVE_BTN__", t["profile_save"]).replace("__PRIVACY__", t["nav_privacy"])
-    body = body.replace("__DELETE_BTN__", t["profile_delete_btn"])
-    body = body.replace("__DELETE_CONFIRM__", t["profile_delete_confirm"])
-    body = body.replace("__MSG_OK__", t["profile_saved"]).replace("__MSG_ERR__", t.get("profile_error", "Error"))
-    body = body.replace("__VAL_OK__", "حسنًا، سأكمل المعلومات" if _lang() == "ar" else "OK, I'll complete it")
-    # Completion
-    body = body.replace("__COMPL_TITLE__", t.get("profile_completion", "Profile Completion"))
-    body = body.replace("__COMPL_PCT__", str(completion_pct))
-    body = body.replace("__COMPL_SUB__", t.get("profile_completion_sub", "Completing your info helps generate more accurate analysis"))
-    # Next step
-    if completion_pct < 100:
-        next_html = ('<div class="ss-next-step">'
-                     '<h3>📋 %s</h3><p>%s</p>'
-                     '<a href="#viewMode" class="ss-btn-primary" style="text-decoration:none;" onclick="showEdit();return false;">✨ %s</a>'
-                     '</div>') % (t.get("profile_next_incomplete", "Some info is missing"), t.get("profile_next_incomplete_sub", "Completing it helps personalize your analysis"), t.get("profile_next_continue", "Complete my info"))
-    else:
-        next_html = ('<div class="ss-next-step">'
-                     '<h3>🩺 %s</h3><p>%s</p>'
-                     '<a href="/chat" class="ss-btn-primary" style="text-decoration:none;">🩺 %s</a>'
-                     '</div>') % (t.get("profile_next_complete", "Your profile is ready"), t.get("profile_next_complete_sub", "You can now start symptom analysis"), t.get("profile_next_start", "Start symptom analysis"))
-    body = body.replace("__NEXT_STEP_HTML__", next_html)
-    # History
-    body = body.replace("__HISTORY_TITLE__", t.get("profile_history_title", "My Previous Analyses"))
-    if recent_records:
-        hist_html = ""
-        for r in recent_records:
-            raw_symptoms = r.get("symptoms") or []
-            sym = ", ".join(raw_symptoms) if isinstance(raw_symptoms, list) else str(raw_symptoms)
-            sym = sym[:100]
-            urg = r.get("urgency", "")
-            urg_cls = "pill-high" if urg == "high" else ("pill-med" if urg == "medium" else "pill-low")
-            urg_label = {"high": bi("عالية", "High"), "medium": bi("متوسطة", "Medium"), "low": bi("منخفضة", "Low")}.get(urg, urg or "—")
-            ts = (r.get("timestamp", "") or "")[:10]
-            severity_text = bi("الشدة", "Severity") + ": " + str(r.get("severity") or "—") + "/5"
-            duration_text = bi("المدة", "Duration") + ": " + str(r.get("duration") or "—")
-            hist_html += ('<div class="hist-card"><div class="hist-head"><span style="font-weight:700;color:#123B70;">%s</span><span class="pill %s">%s</span></div>'
-                          '<div style="font-weight:700;color:#40566F;margin-top:6px;">%s</div><div class="muted" style="margin-top:4px;">%s • %s</div></div>') % (
-                              esc(ts), urg_cls, esc(urg_label), esc(sym), esc(severity_text), esc(duration_text))
-        body = body.replace("__HISTORY_HTML__", hist_html)
-    else:
-        body = body.replace("__HISTORY_HTML__", '<p class="muted" style="text-align:center;padding:12px;">%s</p>' % t.get("profile_history_empty", "No analyses yet"))
-    # Symptoms changed
-    body = body.replace("__CHANGED_TITLE__", t.get("profile_symptoms_changed", "Symptoms changed?"))
-    body = body.replace("__CHANGED_SUB__", t.get("profile_symptoms_changed_sub", "Have your symptoms changed since your last analysis?"))
-    body = body.replace("__REASSESS_BTN__", t.get("profile_reassess", "Reassess"))
-    body = body.replace("__LANG__", "en" if _lang() == "en" else "ar")
-    body = body.replace("__L_DOB_JSON__", json.dumps(t["profile_dob"], ensure_ascii=False))
-    body = body.replace("__L_GENDER_JSON__", json.dumps(t["profile_gender"], ensure_ascii=False))
-    body = body.replace("__L_HEIGHT_JSON__", json.dumps(t["profile_height"], ensure_ascii=False))
-    body = body.replace("__L_WEIGHT_JSON__", json.dumps(t["profile_weight"], ensure_ascii=False))
-    return _page(t["title_profile"], body)
-
-
-# ---------------------------------------------------------------- history
-def history_page():
-    db.init_db()
-    t = L["en" if _lang() == "en" else "ar"]
-    rows = db.get_records(_data_user_id(), limit=25, member_id=0)
-    if not rows:
-        body = """
-        <div class="card" style="max-width:640px;margin:0 auto;text-align:center;">
-          <h2>__HSH__</h2>
-          <p class="muted">__HSSUB__</p>
-          <p style="margin-top:16px;">__HSEMPTY__</p>
-          <p style="margin-top:10px;">__NOPROF__ <a href="/profile">__PROFLINK__</a></p>
-        </div>
-        """
-        body = body.replace("__HSH__", t["hs_h"]).replace("__HSSUB__", t["hs_sub"])
-        body = body.replace("__HSEMPTY__", t["hs_empty"])
-        body = body.replace("__NOPROF__", t["hs_no_profile"]).replace("__PROFLINK__", t["hs_profile_link"])
-        return _page(_t("title_history"), body)
-    cards = ""
-    urg_en = {"high": "Emergency", "medium": "Needs appointment", "low": "Simple"}
-    urg_ar = {"high": "طوارئ", "medium": "يحتاج موعد طبيب", "low": "بسيط"}
-    urg_map = urg_en if _lang() == "en" else urg_ar
-    for r in rows:
-        u = (r["urgency"] or "low").lower()
-        u_label = urg_map.get(u, u)
-        share_txt = (
-            "SymptoSense: " + ", ".join(r["symptoms"]) + " → " + u_label
-        )
-        share_url = "https://t.me/share/url?text=" + share_txt.replace(" ", "%20")
-        cards += """
-        <div class="hist-card">
-          <div class="hist-head"><b>📅 %s</b><span class="pill pill-%s">%s</span></div>
-          <p class="muted">%s</p>
-          <div class="hist-row"><a class="btn ghost small" href="/api/analyze/export/%s">%s</a>
-          <a class="btn ghost small" href="%s" target="_blank" rel="noopener">📤 %s</a></div>
-        </div>
-        """ % (
-            r["timestamp"][:16].replace("T", " "),
-            "hi" if u == "high" else ("med" if u == "medium" else "low"),
-            u_label,
-            ", ".join(r["symptoms"]),
-            r["id"],
-            t["hs_dl"],
-            share_url,
-            t["hs_share"],
-        )
-    body = """
-    <div class="card" style="max-width:760px;margin:0 auto;">
-      <h2>__HSH__</h2>
-      <p class="muted">__HSSUB__</p>
-      <div style="margin-top:14px;">__CARDS__</div>
-    </div>
-    """
-    body = body.replace("__HSH__", t["hs_h"]).replace("__HSSUB__", t["hs_sub"]).replace("__CARDS__", cards)
-    return _page(_t("title_history"), body)
-
-
-def _pdf_report(record, lang):
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A4
-    import arabic_reshaper
-    from bidi.algorithm import get_display
-
-    t = L["en" if lang == "en" else "ar"]
-    w, h = A4
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=A4)
-    c.setTitle(t["pdf_doc_title"])
-    rtl = lang != "en"
-
-    def T(s):
-        if not s:
-            return ""
-        s = str(s)
-        return get_display(arabic_reshaper.reshape(s)) if rtl else s
-
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0.06, 0.46, 0.42)
-    c.drawString(50, h - 55, T("SymptoSense 🏥"))
-    c.setFont("Helvetica-Bold", 15)
-    c.setFillColorRGB(0.12, 0.16, 0.24)
-    c.drawString(50, h - 80, T(t["pdf_doc_title"]))
-    c.setFont("Helvetica", 10)
-    c.setFillColorRGB(0.4, 0.45, 0.5)
-    c.drawString(50, h - 98, T(record.get("timestamp", "")[:19].replace("T", " ")))
-
-    y = h - 130
-    def section(label, text, extra=14):
-        nonlocal y
-        c.setFont("Helvetica-Bold", 11)
-        c.setFillColorRGB(0.06, 0.46, 0.42)
-        c.drawString(50, y, T(label))
-        y -= 4
-        c.setFont("Helvetica", 10.5)
-        c.setFillColorRGB(0.12, 0.16, 0.24)
-        for chunk in str(text).split("\n"):
-            line = T(chunk)
-            while len(line) > 80:
-                c.drawString(50, y, line[:80])
-                line = line[80:]
-                y -= extra
-            c.drawString(50, y, line)
-            y -= extra
-        y -= 6
-
-    urgs = {"high": "طوارئ", "medium": "يحتاج موعد طبيب", "low": "بسيط"} if rtl else {"high": "Emergency", "medium": "Needs appointment", "low": "Simple"}
-    u = str(record.get("urgency") or "low").lower()
-    urgency_text = urgs.get(u, u)
-    recs = record.get("recommendations") or []
-    rec_text = "\n".join(
-        "- %s%s (%s)" % (
-            (r.get("title") + ": ") if r.get("title") else "",
-            r.get("tip") or r.get("title") or "",
-            r.get("source") or "",
-        )
-        for r in recs if isinstance(r, dict) and (r.get("tip") or r.get("title"))
-    ) or "—"
-    conds = record.get("possible_conditions") or "—"
-
-    section(t["pdf_symptoms"], ", ".join(record.get("symptoms", [])))
-    section(t["pdf_conditions"], conds)
-    section(t["pdf_urgency"], urgency_text)
-    section(t["pdf_recs"], rec_text)
-    section(t["pdf_for"], "Age: %s | Gender: %s" % (record.get("age") or "—", record.get("gender") or "—"))
-
-    c.setFont("Helvetica-Oblique", 9)
-    c.setFillColorRGB(0.5, 0.5, 0.5)
-    c.drawString(50, 50, T(t["pdf_disclaimer"]))
-    c.drawString(50, 38, T(t["pdf_source"]))
-    c.showPage()
-    c.save()
-    buf.seek(0)
-    return buf
-
-
-# ---------------------------------------------------------------- PWA files
-@app.route("/manifest.webmanifest")
-def pwa_manifest():
-    response = send_from_directory(BASE_DIR, "manifest.webmanifest", mimetype="application/manifest+json")
-    response.headers["Cache-Control"] = "public, max-age=3600"
-    return response
+    for k,v in repl.items(): body=body.replace(k,str(v))
+    return _page(tx('الأدوية والتذكيرات','Medications & Reminders'), body, extra_css=FAM_CSS)
 
 
 @app.route("/service-worker.js")
-def pwa_service_worker():
-    response = send_from_directory(BASE_DIR, "service-worker.js", mimetype="application/javascript")
-    response.headers["Cache-Control"] = "no-cache"
-    response.headers["Service-Worker-Allowed"] = "/"
+def service_worker_file():
+    response=send_from_directory(BASE_DIR,"service-worker.js",mimetype="application/javascript")
+    response.headers["Cache-Control"]="no-cache, no-store, must-revalidate"
+    response.headers["Service-Worker-Allowed"]="/"
     return response
+
+
+@app.route("/manifest.webmanifest")
+def manifest_file():
+    return send_from_directory(BASE_DIR,"manifest.webmanifest",mimetype="application/manifest+json")
 
 
 @app.route("/icons/<path:filename>")
-def pwa_icon(filename):
-    response = send_from_directory(os.path.join(BASE_DIR, "icons"), filename)
-    response.headers["Cache-Control"] = "public, max-age=2592000"
-    return response
+def pwa_icon_file(filename):
+    return send_from_directory(os.path.join(BASE_DIR,"icons"),filename)
 
 
 @app.route("/favicon.ico")
@@ -8580,7 +6655,8 @@ def home():
 
 @app.route("/about")
 def about():
-    return about_page()
+    # Keep the legacy URL working, but use the single personal About Us experience.
+    return redirect(url_for("about_us"))
 
 
 @app.route("/about-us")
@@ -8591,6 +6667,17 @@ def about_us():
 @app.route("/privacy")
 def privacy():
     return privacy_page()
+
+
+@app.route("/consent")
+def consent():
+    return consent_page()
+
+
+@app.route("/privacy-center")
+@login_required
+def privacy_center():
+    return privacy_center_page()
 
 
 @app.route("/terms")
@@ -8605,6 +6692,8 @@ def sources():
 
 @app.route("/chat")
 def chat():
+    if not _service_consent_ok():
+        return redirect(url_for("consent", next="/chat"))
     return chat_page()
 
 
@@ -8615,6 +6704,8 @@ def blood():
 
 @app.route("/meds")
 def meds():
+    # Keep the page reachable so users can inspect/delete already-stored data.
+    # Creating or modifying sensitive reminder data is consent-gated server-side.
     return meds_page()
 
 
@@ -8666,8 +6757,9 @@ def calculators():
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    return profile_page()
+    return user_profile_page()
 
 
 @app.route("/manage")
@@ -8893,9 +6985,132 @@ def memory_page():
     return _page(title, body)
 
 
+def history_page():
+    """Private analysis history. Data is scoped to the authenticated owner in SQL."""
+    ar = _lang() == "ar"
+    rows = advanced_features.user_analysis_rows(_data_user_id(), limit=200)
+    title = "سجل التحليلات" if ar else "Analysis History"
+    if not rows:
+        body = '''
+        <main class="history-shell">
+          <section class="history-hero"><div><span class="eyebrow">📜 __TITLE__</span><h1>__EMPTY_H__</h1><p>__EMPTY_P__</p></div><a class="btn primary" href="/chat">__START__</a></section>
+        </main>
+        <style>.history-shell{max-width:900px;margin:auto}.history-hero{background:#fff;border:1px solid var(--v2-line);border-radius:22px;padding:clamp(22px,4vw,38px);box-shadow:var(--v2-shadow);display:flex;justify-content:space-between;gap:20px;align-items:center}.eyebrow{color:var(--v2-blue);font-weight:800}@media(max-width:650px){.history-hero{flex-direction:column;align-items:stretch}}</style>
+        '''
+        body = body.replace("__TITLE__", title).replace("__EMPTY_H__", "لا توجد تحليلات محفوظة بعد" if ar else "No saved analyses yet").replace("__EMPTY_P__", "أكمل تحليلًا لبدء سجل خاص بحسابك." if ar else "Complete an assessment to start your private history.").replace("__START__", "بدء تحليل" if ar else "Start an analysis")
+        return _page(title, body)
+
+    from html import escape
+    cards=[]
+    for row in rows:
+        result=row.get("result") or {}
+        risk=(result.get("risk_level") or row.get("urgency") or "low").lower()
+        risk_map={
+          "low": ("منخفض" if ar else "Low risk", "low"),
+          "medium": ("يحتاج متابعة" if ar else "Needs follow-up", "medium"),
+          "high": ("عاجل" if ar else "Urgent", "high"),
+          "urgent": ("عاجل" if ar else "Urgent", "high"),
+        }
+        risk_label,risk_cls=risk_map.get(risk,(escape(str(risk)),"medium"))
+        symptoms=', '.join(escape(str(x)) for x in (row.get('symptoms') or [])) or '—'
+        date=escape(str(row.get('timestamp') or '—'))[:16].replace('T',' ')
+        duration=escape(str(row.get('duration') or '—'))
+        cards.append(f'''<article class="history-card">
+          <div class="history-card-top"><div><small>{date}</small><h3>{symptoms}</h3></div><span class="risk-pill {risk_cls}">{risk_label}</span></div>
+          <p class="muted">{'المدة' if ar else 'Duration'}: {duration}</p>
+          <div class="history-actions"><a class="btn ghost" href="/history/{int(row['id'])}">{'عرض التحليل' if ar else 'View Analysis'}</a><button class="btn ghost danger-lite" onclick="deleteAnalysis({int(row['id'])})">{'حذف' if ar else 'Delete'}</button></div>
+        </article>''')
+    body='''
+    <main class="history-shell">
+      <section class="history-heading"><div><span class="eyebrow">📜 __TITLE__</span><h1>__H1__</h1><p>__SUB__</p></div><a class="btn primary" href="/chat">__NEW__</a></section>
+      <section class="history-grid">__CARDS__</section>
+    </main>
+    <style>
+    .history-shell{max-width:980px;margin:auto;display:grid;gap:16px}.history-heading,.history-card{background:#fff;border:1px solid var(--v2-line);border-radius:20px;box-shadow:var(--v2-shadow)}.history-heading{padding:24px;display:flex;justify-content:space-between;gap:20px;align-items:center}.history-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.history-card{padding:18px}.history-card-top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.history-card h3{margin:5px 0 0;font-size:17px}.history-card small{color:var(--v2-muted)}.risk-pill{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}.risk-pill.low{background:var(--v2-green-bg);color:var(--v2-green)}.risk-pill.medium{background:#FFF6DB;color:#8A6400}.risk-pill.high{background:#FDECEC;color:var(--v2-red)}.history-actions{display:flex;gap:8px;margin-top:14px}.danger-lite{color:var(--v2-red)!important;border-color:#efcaca!important}@media(max-width:700px){.history-grid{grid-template-columns:1fr}.history-heading{flex-direction:column;align-items:stretch}.history-card-top{flex-direction:column}}
+    </style>
+    <script>async function deleteAnalysis(id){if(!confirm(__CONFIRM__))return;const r=await fetch('/api/analysis/'+id,{method:'DELETE'});if(r.ok)location.reload();else alert(__ERROR__);}</script>
+    '''
+    body=body.replace('__TITLE__',title).replace('__H1__','تحليلاتي السابقة' if ar else 'My previous analyses').replace('__SUB__','هذه النتائج خاصة بحسابك ولا يستطيع مستخدم آخر فتحها.' if ar else 'These results are private to your account and cannot be opened by another user.').replace('__NEW__','تحليل جديد' if ar else 'New analysis').replace('__CARDS__',''.join(cards)).replace('__CONFIRM__',json.dumps('هل تريد حذف هذا التحليل؟ لا يمكن التراجع عن الحذف.' if ar else 'Delete this analysis? This cannot be undone.')).replace('__ERROR__',json.dumps('تعذر حذف التحليل.' if ar else 'Unable to delete the analysis.'))
+    return _page(title, body)
+
+
+def analysis_detail_page(record_id):
+    """Render one stored analysis only when it belongs to the authenticated user."""
+    ar=_lang()=="ar"
+    row=advanced_features.get_user_analysis(_data_user_id(), record_id)
+    if not row:
+        abort(404)
+    from html import escape
+    result=row.get('result') or {}
+    risk=(result.get('risk_level') or row.get('urgency') or 'low').lower()
+    risk_map={
+      'low':('منخفض' if ar else 'Low risk','low'),
+      'medium':('يحتاج متابعة' if ar else 'Needs follow-up','medium'),
+      'high':('عاجل' if ar else 'Urgent','high'),
+      'urgent':('عاجل' if ar else 'Urgent','high'),
+    }
+    risk_label,risk_cls=risk_map.get(risk,(escape(str(risk)),'medium'))
+    syms=''.join('<span class="sym-chip">%s</span>'%escape(str(x)) for x in (row.get('symptoms') or [])) or '<span>—</span>'
+    dq=result.get('data_quality') or {}
+    dq_html=''
+    if isinstance(dq,dict) and dq.get('score') is not None:
+        score=max(0,min(100,int(round(float(dq.get('score') or 0)))))
+        level=escape(str(dq.get('level_label') or dq.get('level') or ''))
+        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'جودة المعلومات' if ar else 'Data Quality'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
+    xai=result.get('explainability') or {}
+    xai_html=''
+    if isinstance(xai,dict) and xai:
+        factors=[]
+        for f in (xai.get('factors') or [])[:8]:
+            if not isinstance(f,dict): continue
+            label=escape(str(f.get('label') or f.get('feature') or '—'))
+            influence=escape(str(f.get('influence_label') or f.get('influence') or ''))
+            reason=escape(str(f.get('detail') or f.get('explanation') or f.get('reason') or ''))
+            factors.append(f'<li><b>{label}</b><span>{influence}</span><small>{reason}</small></li>')
+        if factors:
+            xai_html=f'''<details class="detail-card xai-detail"><summary>🔍 {'لماذا ظهر هذا التقييم؟' if ar else 'Why this assessment?'}</summary><p class="muted">{'يعرض هذا العوامل التي ساهمت في قواعد السلامة والمطابقة المعرفية الفعلية، وليس أسبابًا طبية مؤكدة.' if ar else 'This shows factors that contributed to the actual safety and knowledge-matching logic, not confirmed medical causes.'}</p><ul>{''.join(factors)}</ul><p class="notice">{'العوامل المعروضة لا تؤكد تشخيصًا ولا تحدد سبب الأعراض.' if ar else 'The factors shown do not confirm a diagnosis or identify the cause of symptoms.'}</p></details>'''
+    poss=escape(str(result.get('possible_conditions') or ''))
+    poss_html=f'<section class="detail-card"><h2>🩺 {"الاحتمالات المعلوماتية" if ar else "Informational possibilities"}</h2><p>{poss}</p></section>' if poss else ''
+    sources=[]
+    for src in (result.get('medical_sources') or []):
+        if not isinstance(src,dict): continue
+        name=escape(str(src.get('source_name') or src.get('name') or src.get('organization') or 'Source'))
+        url=str(src.get('official_url') or src.get('url') or '')
+        link=f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">{name}</a>' if url.startswith(('https://','http://')) else name
+        sources.append(f'<li>{link}</li>')
+    sources_html=f'''<section class="detail-card"><h2>📚 {'المصادر الطبية' if ar else 'Medical Sources'}</h2><ul class="source-list">{''.join(sources)}</ul></section>''' if sources else ''
+    date=escape(str(row.get('timestamp') or '—'))[:19].replace('T',' ')
+    duration=escape(str(row.get('duration') or '—')); severity=escape(str(row.get('severity') if row.get('severity') is not None else '—'))
+    body=f'''
+    <main class="analysis-detail-shell">
+      <div class="detail-nav"><a href="/history">← {'العودة للسجل' if ar else 'Back to history'}</a></div>
+      <section class="detail-hero"><div><span class="eyebrow">🩺 {'نتيجة التقييم' if ar else 'Assessment Result'}</span><h1>{date}</h1></div><span class="risk-pill {risk_cls}">{risk_label}</span></section>
+      <section class="detail-card"><h2>{'الأعراض التي أدخلتها' if ar else 'Reported symptoms'}</h2><div class="sym-list">{syms}</div><div class="mini-grid"><div><small>{'المدة' if ar else 'Duration'}</small><b>{duration}</b></div><div><small>{'الشدة' if ar else 'Severity'}</small><b>{severity}</b></div></div></section>
+      {dq_html}{poss_html}{xai_html}{sources_html}
+      <section class="detail-card notice"><b>⚠️ {'تنبيه' if ar else 'Important notice'}</b><p>{'هذه المعلومات للتوعية ولا تُعد تشخيصًا طبيًا أو بديلًا عن استشارة الطبيب.' if ar else 'This information is for educational purposes and is not a medical diagnosis or a substitute for professional medical advice.'}</p></section>
+    </main>
+    <style>.analysis-detail-shell{{max-width:900px;margin:auto;display:grid;gap:14px}}.detail-nav a{{color:var(--v2-blue);font-weight:700}}.detail-hero,.detail-card{{background:#fff;border:1px solid var(--v2-line);border-radius:20px;padding:clamp(18px,3vw,24px);box-shadow:var(--v2-shadow)}}.detail-hero{{display:flex;justify-content:space-between;align-items:center;gap:18px}}.eyebrow{{color:var(--v2-blue);font-weight:800}}.risk-pill{{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:800}}.risk-pill.low{{background:var(--v2-green-bg);color:var(--v2-green)}}.risk-pill.medium{{background:#FFF6DB;color:#8A6400}}.risk-pill.high{{background:#FDECEC;color:var(--v2-red)}}.sym-list{{display:flex;flex-wrap:wrap;gap:8px}}.sym-chip{{background:var(--v2-sky);border:1px solid var(--v2-line);border-radius:999px;padding:7px 10px}}.mini-grid{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}}.mini-grid>div{{background:var(--v2-bg);border-radius:12px;padding:12px;display:grid;gap:4px}}.mini-grid small,.xai-detail small{{color:var(--v2-muted)}}.detail-progress{{height:9px;background:#EAF0F4;border-radius:999px;overflow:hidden}}.detail-progress span{{display:block;height:100%;background:var(--v2-blue);border-radius:999px}}.section-head{{display:flex;justify-content:space-between;gap:14px}}.xai-detail summary{{cursor:pointer;font-weight:800;font-size:18px}}.xai-detail li{{display:grid;grid-template-columns:1fr auto;gap:6px;padding:10px 0;border-bottom:1px solid var(--v2-line)}}.xai-detail li small{{grid-column:1/-1}}.source-list{{display:grid;gap:8px}}.notice{{background:#F8FBFE}}@media(max-width:600px){{.detail-hero,.section-head{{align-items:flex-start;flex-direction:column}}.mini-grid{{grid-template-columns:1fr}}}}</style>
+    '''
+    return _page('نتيجة التحليل' if ar else 'Analysis Result', body)
+
+
 @app.route("/history")
+@login_required
 def history():
     return history_page()
+
+
+@app.route("/history/<int:record_id>")
+@login_required
+def history_detail(record_id):
+    return analysis_detail_page(record_id)
+
+
+@app.route("/health-insights")
+@app.route("/health-journey")
+@app.route("/health-twin")
+def health_history_aliases():
+    return redirect(url_for("history"))
 
 
 # ---- Smart Account System routes ----
@@ -8917,11 +7132,18 @@ def login():
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
+        if user_id:
+            # Repair only the existing authenticated owner account. A normal
+            # user can never gain Admin through this path.
+            db.promote_existing_owner_admin(user_id)
         login_user = db.get_ss_user(user_id) if user_id else None
         platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
             session.permanent = True
+            if login_user and login_user.get("role") == "admin":
+                try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
+                except Exception: pass
             return redirect(next_param)
         error = t["login_error"]
     body = """
@@ -8990,6 +7212,8 @@ def register():
             user_id, err = db.create_ss_user(email, name, password)
             if user_id:
                 session["ss_user_id"] = user_id
+                try: platform_v2.record_usage("new_account", "/register", lang, request.headers.get("User-Agent", ""), 201, None)
+                except Exception: pass
                 return redirect(next_param)
             error = t["register_error"]
     body = """
@@ -9143,6 +7367,10 @@ def reset_password(token):
 
 @app.route("/logout")
 def logout():
+    try:
+        u=_ss_user()
+        if u and u.get("role")=="admin": platform_v2.audit(int(u.get("id")), "logout", "admin_session", "self", None, {"status": "success"})
+    except Exception: pass
     session.clear()
     return redirect("/home")
 
@@ -9162,8 +7390,10 @@ def settings():
             "save_chat_history": request.form.get("save_chat_history") == "on",
         }
         db.save_privacy_settings(_ss_user_id(), data)
+        advanced_features.save_preferences(int(_ss_user_id()), request.form.get("accessibility_mode") == "on")
         msg = t["settings_saved"]
     privacy = db.load_privacy_settings(_ss_user_id())
+    prefs = advanced_features.get_preferences(int(_ss_user_id()))
     def chk(v):
         return 'checked' if v else ''
     body = """
@@ -9187,6 +7417,10 @@ def settings():
           <span class="ss-t-label">__T4__</span>
           <label class="ss-toggle"><input type="checkbox" name="save_chat_history" __CHK4__><span class="ss-slider"></span></label>
         </div>
+        <div class="ss-toggle-row">
+          <span class="ss-t-label">__ACCESS__<small style="display:block;color:#64748b;font-weight:500;margin-top:3px">__ACCESS_SUB__</small></span>
+          <label class="ss-toggle"><input type="checkbox" name="accessibility_mode" __CHK_ACCESS__><span class="ss-slider"></span></label>
+        </div>
         <div class="ss-btn-row">
           <button type="submit" class="ss-btn-primary">__SAVE__</button>
         </div>
@@ -9201,6 +7435,9 @@ def settings():
     body = body.replace("__CHK2__", chk(privacy.get("use_in_analysis", True)))
     body = body.replace("__CHK3__", chk(privacy.get("use_in_calculators", True)))
     body = body.replace("__CHK4__", chk(privacy.get("save_chat_history", True)))
+    body = body.replace("__CHK_ACCESS__", chk(prefs.get("accessibility_mode", False)))
+    body = body.replace("__ACCESS__", "♿ وضع سهولة الوصول" if lang == "ar" else "♿ Accessibility Mode")
+    body = body.replace("__ACCESS_SUB__", "خط أكبر، أزرار ومسافات أوضح، حركة أقل، وتركيز لوحة مفاتيح أفضل." if lang == "ar" else "Larger text and controls, clearer spacing, reduced motion, and improved keyboard focus.")
     body = body.replace("__SAVE__", t["settings_save"])
     if msg:
         body = body.replace("__MSG_CLASS__", "").replace("__MSG__", msg)
@@ -9241,11 +7478,16 @@ def api_login():
         email = (data.get("email") or "").strip()
         password = data.get("password") or ""
         user_id = db.authenticate_ss_user(email, password)
+        if user_id:
+            db.promote_existing_owner_admin(user_id)
         login_user = db.get_ss_user(user_id) if user_id else None
         platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
-            return jsonify({"ok": True, "redirect_url": "/profile"})
+            if login_user and login_user.get("role") == "admin":
+                try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
+                except Exception: pass
+            return jsonify({"ok": True, "redirect_url": "/profile", "role": login_user.get("role", "user"), "user": login_user})
         return jsonify({"ok": False, "error": "invalid_credentials"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
@@ -9259,6 +7501,8 @@ def api_health_profile():
     if request.method == "GET":
         profile = db.load_health_profile(uid) or {}
         return jsonify({"ok": True, "profile": profile})
+    if not _service_consent_ok():
+        return _consent_required_json("/manage")
     try:
         data = request.get_json(force=True)
         db.save_health_profile(uid, data)
@@ -9282,6 +7526,8 @@ def api_delete_health_profile():
 @login_required
 def api_update_health_field():
     db.init_db()
+    if not _service_consent_ok():
+        return _consent_required_json("/manage")
     uid = _ss_user_id()
     data = request.get_json(force=True)
     field = data.get("field", "")
@@ -9315,6 +7561,58 @@ def api_delete_health_field():
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
+
+
+@app.route("/api/consent/status", methods=["GET"])
+def api_consent_status():
+    try:
+        state = privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
+        return jsonify({"ok": True, "consent": state, "ai_improvement_available": privacy_features.AI_IMPROVEMENT_ACTIVE})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+
+
+@app.route("/api/consent/preferences", methods=["POST"])
+def api_consent_preferences():
+    try:
+        data = request.get_json(silent=True) or {}
+        # Explicit booleans only; omitted values are never interpreted as consent.
+        service = data.get("service_usage") is True
+        analytics = data.get("analytics_research") is True
+        state = privacy_features.save_consent(_consent_subject_key(), _ss_user_id(), service, analytics)
+        return jsonify({"ok": True, "consent": state})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 400
+
+
+@app.route("/api/privacy/withdraw-analytics", methods=["POST"])
+@login_required
+def api_withdraw_analytics():
+    try:
+        state = privacy_features.withdraw_analytics(_consent_subject_key(), _ss_user_id())
+        return jsonify({"ok": True, "consent": state})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 400
+
+
+@app.route("/api/privacy/delete-health-data", methods=["POST"])
+@login_required
+def api_delete_health_data():
+    try:
+        result = privacy_features.delete_health_data(int(_ss_user_id()), _data_user_id())
+        return jsonify({"ok": True, **result})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+
+
+@app.route("/api/privacy/download", methods=["GET"])
+@login_required
+def api_download_my_data():
+    try:
+        buf = privacy_features.user_export_bytes(int(_ss_user_id()), _data_user_id())
+        return send_file(buf, mimetype="application/json; charset=utf-8", as_attachment=True, download_name="SymptoSense_My_Data_%s.json" % datetime.now(timezone.utc).date().isoformat())
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 500
 
 
 @app.route("/api/privacy", methods=["GET", "POST"])
@@ -9412,12 +7710,49 @@ def api_user_info():
         "ok": True,
         "logged_in": bool(uid),
         "user": user,
+        "role": (user or {}).get("role", "user"),
+        "is_admin": bool(user and user.get("role") == "admin"),
         "profile": profile,
         "privacy": privacy,
         "missing_fields": missing,
         "available_fields": available,
         "has_profile": bool(profile),
     })
+
+
+@app.route("/api/symptoms/extract", methods=["POST"])
+def api_symptoms_extract():
+    data=request.get_json(silent=True) or {}
+    lang="en" if data.get("lang")=="en" else "ar"
+    return jsonify({"ok": True, **advanced_features.smart_extract_symptoms(data.get("text", ""), lang)})
+
+
+@app.route("/api/user/preferences", methods=["GET", "POST"])
+@login_required
+def api_user_preferences():
+    advanced_features.init_schema()
+    if request.method == "GET":
+        return jsonify({"ok": True, "preferences": advanced_features.get_preferences(int(_ss_user_id()))})
+    data=request.get_json(silent=True) or {}
+    advanced_features.save_preferences(int(_ss_user_id()), accessibility_mode=bool(data.get("accessibility_mode")))
+    return jsonify({"ok": True, "preferences": advanced_features.get_preferences(int(_ss_user_id()))})
+
+
+@app.route("/api/health-summary", methods=["GET"])
+@login_required
+def api_health_summary():
+    return jsonify({"ok": True, "summary": advanced_features.personal_health_summary(_data_user_id(), "en" if _lang()=="en" else "ar")})
+
+
+@app.route("/api/analysis/<int:record_id>", methods=["GET", "DELETE"])
+@login_required
+def api_user_analysis_item(record_id):
+    if request.method == "DELETE":
+        ok=advanced_features.delete_user_analysis(_data_user_id(), record_id)
+        return jsonify({"ok": ok}), (200 if ok else 404)
+    row=advanced_features.get_user_analysis(_data_user_id(), record_id)
+    if not row: return jsonify({"ok": False, "error": "not_found"}), 404
+    return jsonify({"ok": True, "analysis": row})
 
 
 @app.route("/api/analysis-history", methods=["GET"])
@@ -9429,12 +7764,6 @@ def api_analysis_history():
         return jsonify({"ok": True, "records": [], "logged_in": False})
     records = db.get_records(_data_user_id(), limit=10, member_id=0)
     return jsonify({"ok": True, "records": records, "logged_in": True})
-
-
-def _admin_claim_csrf_token():
-    if "admin_claim_csrf" not in session:
-        session["admin_claim_csrf"] = secrets.token_urlsafe(32)
-    return session["admin_claim_csrf"]
 
 
 @app.route("/admin/login")
@@ -9449,57 +7778,18 @@ def admin_verify():
 
 
 @app.route("/admin/claim", methods=["GET", "POST"])
-@login_required
 def admin_claim():
-    """One-time secure owner bootstrap for the currently authenticated user."""
-    db.init_db()
-    uid = int(_ss_user_id())
-    user = _ss_user()
-    if user and user.get("role") == "admin":
+    """Legacy route retained only so old links do not break.
+
+    Admin assignment no longer uses a claim token. It is synchronized from the
+    already-authenticated existing owner account.
+    """
+    if not _ss_user_id():
+        return redirect(url_for("login", next="/admin"))
+    if _admin_session_valid():
         return redirect(url_for("admin"))
-    if db.admin_count() > 0:
-        message = "تم تعيين حساب الإدارة مسبقًا." if _lang() == "ar" else "The administrator account has already been assigned."
-        back = "العودة للموقع" if _lang() == "ar" else "Back to site"
-        return _page("Admin", '<div class="card" style="max-width:620px;margin:40px auto;text-align:center"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (message, back)), 403
-
-    expected = os.environ.get("ADMIN_CLAIM_TOKEN", "").strip()
-    if len(expected) < 24:
-        msg = ("إعداد المالك غير مفعّل على الخادم. أضيفي ADMIN_CLAIM_TOKEN قويًا في متغيرات Railway ثم افتحي هذه الصفحة وأنتِ مسجلة الدخول بحسابك الحالي." if _lang() == "ar" else "Owner setup is not enabled on the server. Add a strong ADMIN_CLAIM_TOKEN in Railway, then open this page while signed in to your existing account.")
-        return _page("Admin setup", '<div class="card" style="max-width:680px;margin:40px auto;text-align:center"><h2>⚙️ Admin setup</h2><p class="muted">%s</p><a class="btn" href="/home">Home</a></div>' % msg), 503
-
-    error = ""
-    if request.method == "POST":
-        csrf = request.form.get("csrf") or ""
-        supplied = request.form.get("claim_token") or ""
-        if not secrets.compare_digest(csrf, session.get("admin_claim_csrf", "")):
-            error = "انتهت صلاحية الطلب. أعيدي المحاولة." if _lang() == "ar" else "The request expired. Please try again."
-        elif not secrets.compare_digest(supplied, expected):
-            error = "رمز إعداد المالك غير صحيح." if _lang() == "ar" else "The owner setup token is incorrect."
-        elif db.claim_current_user_as_admin(uid):
-            platform_v2.audit(uid, "admin_claimed", "user_account", uid, {"role": "user"}, {"role": "admin"})
-            session.pop("admin_claim_csrf", None)
-            session.pop("admin_csrf", None)
-            return redirect(url_for("admin"))
-        else:
-            error = "تعذر تعيين الحساب. قد يكون تم تعيين Admin بالفعل." if _lang() == "ar" else "Could not assign this account. An Admin may already exist."
-
-    ar = _lang() == "ar"
-    body = '''
-    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🛡️</div>
-    <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR__">__MSG__</div>
-    <form method="post"><input type="hidden" name="csrf" value="__CSRF__"><div class="auth-field"><label>__LABEL__</label><input type="password" name="claim_token" required autocomplete="off"></div><button class="auth-btn" type="submit">__BTN__</button></form>
-    <p class="auth-link"><a href="/home">__BACK__</a></p></div></div>'''
-    vals = {
-        "__TITLE__": "تفعيل حساب الإدارة" if ar else "Activate Admin account",
-        "__SUB__": "سيتم تعيين الحساب الذي أنتِ مسجلة الدخول به الآن كحساب Admin الوحيد." if ar else "The account you are currently signed in with will become the only Admin account.",
-        "__LABEL__": "رمز إعداد المالك" if ar else "Owner setup token",
-        "__BTN__": "تعيين هذا الحساب كـ Admin" if ar else "Make this account Admin",
-        "__BACK__": "العودة" if ar else "Back",
-        "__CSRF__": _admin_claim_csrf_token(), "__ERR__": "show" if error else "", "__MSG__": error,
-    }
-    for k, v in vals.items():
-        body = body.replace(k, str(v))
-    return _page(vals["__TITLE__"], body, bare=True)
+    msg = "هذه الصفحة لم تعد مطلوبة. صلاحية Admin مرتبطة بحساب مالكة المشروع المصادق عليه فقط." if _lang() == "ar" else "This page is no longer required. Admin access is tied only to the authenticated project-owner account."
+    return _page("Admin", '<div class="card" style="max-width:620px;margin:40px auto;text-align:center"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">Home</a></div>' % msg), 403
 
 
 @app.route("/admin")
@@ -9507,8 +7797,6 @@ def admin():
     if not _ss_user_id():
         return redirect(url_for("login", next="/admin"))
     if not _admin_session_valid():
-        if db.admin_count() == 0 and os.environ.get("ADMIN_CLAIM_TOKEN", "").strip():
-            return redirect(url_for("admin_claim"))
         t = L["en" if _lang() == "en" else "ar"]
         msg = "هذه الصفحة متاحة لحساب Admin فقط." if _lang() == "ar" else "This page is available to the Admin account only."
         return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center;"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (msg, t.get("nav_home", "Home"))), 403
@@ -9519,6 +7807,18 @@ def admin():
         csrf_token=_admin_csrf_token(),
         lang="en" if _lang() == "en" else "ar",
     )
+
+
+@app.route("/admin/<section>")
+def admin_section(section):
+    allowed={"knowledge-graph","anomalies","audit-log","ask-data","insights","ai-performance","data-export","privacy-analytics","dropoff","live-activity"}
+    if section not in allowed:
+        return redirect(url_for("admin"))
+    if not _ss_user_id():
+        return redirect(url_for("login", next=request.path))
+    if not _admin_session_valid():
+        return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center"><h2>🔒 403</h2><p class="muted">Admin access only.</p><a class="btn" href="/home">Home</a></div>'), 403
+    return redirect(url_for("admin") + "#" + section)
 
 
 @app.route("/robots.txt")
@@ -9548,9 +7848,9 @@ def api_stats():
     stats = db.get_usage_stats(days=7)
     trends, _ = db.get_trends(days=7)
     top_symptoms = trends.most_common(8)
-    urgency = dict(db.fetchall("SELECT urgency, COUNT(*) FROM records GROUP BY urgency"))
-    lang = dict(db.fetchall("SELECT lang, COUNT(*) FROM records GROUP BY lang"))
-    ages = [row[0] for row in db.fetchall("SELECT age FROM records WHERE age IS NOT NULL")]
+    urgency = dict(db.fetchall("SELECT urgency, COUNT(*) FROM records WHERE COALESCE(analytics_eligible,0)=1 GROUP BY urgency"))
+    lang = dict(db.fetchall("SELECT lang, COUNT(*) FROM records WHERE COALESCE(analytics_eligible,0)=1 GROUP BY lang"))
+    ages = [row[0] for row in db.fetchall("SELECT age FROM records WHERE age IS NOT NULL AND COALESCE(analytics_eligible,0)=1")]
     age_groups = {"0-17": 0, "18-30": 0, "31-45": 0, "46-60": 0, "60+": 0}
     for a in ages:
         if a <= 17: age_groups["0-17"] += 1
@@ -9862,13 +8162,15 @@ def api_admin_audit():
     limit = max(1, min(300, int(request.args.get("limit", 150))))
     medical_rows = medical_knowledge.audit_log(limit)
     system_rows = platform_v2.audit_log(limit)
+    privacy_rows = privacy_features.privacy_audit_events(limit)
     rows = [{**row, "source": "medical"} for row in medical_rows]
     for row in system_rows:
         rows.append({
-            "id": row.get("id"), "admin_id": row.get("admin_id"), "admin_email": "Admin #" + str(row.get("admin_id") or "—"),
+            "id": row.get("id"), "admin_id": row.get("admin_id"),
             "action": row.get("action"), "entity_type": row.get("entity_type"), "entity_id": row.get("entity_id"),
             "previous_value": row.get("previous_value"), "new_value": row.get("new_value"), "timestamp": row.get("timestamp"), "source": "system",
         })
+    rows.extend(privacy_rows)
     rows.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
     return jsonify({"ok": True, "audit": rows[:limit]})
 
@@ -9950,102 +8252,248 @@ def api_admin_security_audit():
     return jsonify({"ok": True, "audit": platform_v2.audit_log(request.args.get("limit", 200))})
 
 
+def _admin_analytics_filters():
+    allowed_age={"","Under 18","18–25","26–35","36–45","46–55","56+"}
+    allowed_gender={"","Female","Male","Other","Unknown"}
+    allowed_risk={"","Low Risk","Needs Follow-up","Urgent"}
+    period=(request.args.get("period") or "30d").lower()
+    if period not in {"7d","30d","90d","180d","all","custom"}: period="30d"
+    age=request.args.get("age_group","")
+    gender=request.args.get("gender","")
+    risk=request.args.get("risk","")
+    return {
+        "period":period,"start":request.args.get("start","")[:10],"end":request.args.get("end","")[:10],
+        "age_group":age if age in allowed_age else "","gender":gender if gender in allowed_gender else "",
+        "medication":(request.args.get("medication") or "")[:100],"symptom":(request.args.get("symptom") or "")[:100],
+        "risk":risk if risk in allowed_risk else "",
+    }
+
+
+@app.route("/api/admin/analytics-export/preview", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_analytics_export_preview():
+    try:
+        filters=_admin_analytics_filters()
+        return jsonify({"ok":True, **admin_operational.medication_analytics_preview(filters)})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/analytics-export/xlsx", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_analytics_export_xlsx():
+    filters=_admin_analytics_filters()
+    try:
+        buf=admin_operational.export_medication_analytics_excel(filters)
+        filter_types=[k for k in ("age_group","gender","medication","symptom","risk") if filters.get(k)]
+        platform_v2.audit(int(_ss_user_id()),"exported","analytics","medication_analytics",None,{"period":filters.get("period"),"filter_types":filter_types,"privacy":"aggregated_anonymized"})
+        stamp=datetime.now().strftime("%Y-%m-%d")
+        return send_file(buf,mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",as_attachment=True,download_name=f"SymptoSense_Data_Analytics_{stamp}.xlsx")
+    except Exception as exc:
+        try: platform_v2.audit(int(_ss_user_id()),"export_failed","analytics","medication_analytics",None,{"error_type":type(exc).__name__})
+        except Exception: pass
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/dropoff", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_dropoff():
+    try:
+        period=(request.args.get("period") or "30d").lower()
+        if period not in {"today","7d","30d","90d","custom"}: period="30d"
+        device=(request.args.get("device") or "").lower()
+        if device not in {"","mobile","desktop","tablet"}: device=""
+        return jsonify({"ok":True,"dropoff":admin_operational.dropoff_analysis(period,request.args.get("start"),request.args.get("end"),device)})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/live-activity", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_live_activity():
+    try:
+        cat=(request.args.get("category") or "all").lower()
+        if cat not in {"all","analysis","assistant","reports","authentication","system"}: cat="all"
+        win=(request.args.get("window") or "hour").lower()
+        if win not in {"hour","today","7d"}: win="hour"
+        return jsonify({"ok":True,"activity":admin_operational.live_activity(request.args.get("limit",80),cat,win)})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/ui-audit", methods=["POST"])
+@admin_api_required("access")
+def api_admin_ui_audit():
+    data=request.get_json(silent=True) or {}; action=str(data.get("action") or "")
+    allowed={"opened_analytics","changed_analytics_filters","opened_live_activity","changed_dashboard_settings","opened_dropoff"}
+    if action not in allowed: return jsonify({"ok":False,"error":"invalid_action"}),400
+    platform_v2.audit(int(_ss_user_id()),action,"admin_dashboard",None,None,{"section":str(data.get("section") or "")[:40]})
+    return jsonify({"ok":True})
+
+
+@app.route("/api/admin/export/xlsx", methods=["GET"])
+@admin_api_required("access")
+def api_admin_export_xlsx():
+    try:
+        # The legacy overview export now uses the same privacy-thresholded,
+        # aggregate report as Data Analytics Export. It never exports individual
+        # health rows.
+        buf = admin_operational.export_medication_analytics_excel({"period": "all"})
+        platform_v2.audit(int(_ss_user_id()), "exported", "admin_data", "excel", None, {"format": "xlsx", "privacy": "aggregated_anonymized"})
+        stamp = datetime.now().strftime("%Y-%m-%d")
+        return send_file(buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=f"SymptoSense_Export_{stamp}.xlsx")
+    except Exception as exc:
+        try: platform_v2.audit(int(_ss_user_id()), "export_failed", "admin_data", "excel", None, {"error_type": type(exc).__name__})
+        except Exception: pass
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/audit/export", methods=["GET"])
+@admin_api_required("access")
+def api_admin_audit_export():
+    try:
+        buf = advanced_features.export_audit_excel()
+        platform_v2.audit(int(_ss_user_id()), "exported", "audit_log", "excel", None, {"format": "xlsx"})
+        stamp = datetime.now().strftime("%Y-%m-%d")
+        return send_file(buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=f"SymptoSense_Audit_{stamp}.xlsx")
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/ai-performance", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_ai_performance():
+    try: return jsonify({"ok": True, "performance": advanced_features.ai_performance(request.args.get("days", 30))})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/knowledge-graph", methods=["GET"])
+@admin_api_required("medical")
+def api_admin_knowledge_graph():
+    try: return jsonify({"ok": True, "graph": advanced_features.knowledge_graph_data()})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/anomalies", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_anomalies():
+    try: return jsonify({"ok": True, "anomalies": advanced_features.anomaly_detection()})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/automatic-insights", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_automatic_insights():
+    try: return jsonify({"ok": True, "insights": advanced_features.automatic_insights()})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/privacy-analytics", methods=["GET"])
+@admin_api_required("access")
+def api_admin_privacy_analytics():
+    try:
+        return jsonify({"ok": True, "analytics": privacy_features.anonymous_health_analytics()})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+
+
+@app.route("/api/admin/ask-data", methods=["POST"])
+@admin_api_required("analytics")
+def api_admin_ask_data():
+    try:
+        data=request.get_json(silent=True) or {}
+        answer=advanced_features.ask_your_data(data.get("question", ""), "en" if data.get("lang")=="en" else "ar")
+        if answer.get("ok"):
+            platform_v2.audit(int(_ss_user_id()), "queried", "ask_your_data", "aggregate", None, {"result_type": answer.get("type")})
+        return jsonify(answer), (200 if answer.get("ok") else 400)
+    except Exception as exc: return _mk_error(exc)
+
+
 def _voice_parse(text, lang):
-    text = text or ""
+    """Parse a speech transcript into user-reviewable fields without storing audio."""
+    text = str(text or "").strip()
     low = text.lower()
     if lang == "ar":
         sym_map = [
-            (["صداع", "راس", "الرأس"], "🤕 صداع"),
-            (["حمى", "حرارة", "سخونة"], "🤒 حمى"),
-            (["سعال", "كحة", "كحه"], "😷 سعال"),
-            (["صدر", "الصدري"], "🫀 ألم في الصدر"),
-            (["غثيان", "قيء", "استفراغ"], "🤢 غثيان"),
+            (["صداع", "راسي", "رأسي", "الرأس", "راس"], "🤕 صداع"),
+            (["حمى", "حرارة", "سخونة"], "🤒 حمى"), (["سعال", "كحة", "كحه"], "😷 سعال"),
+            (["ألم في الصدر", "وجع الصدر", "صدري", "صدر"], "🫀 ألم في الصدر"),
+            (["غثيان", "ترجيع", "استفراغ", "قيء"], "🤢 غثيان"),
             (["تعب", "إرهاق", "ارهاق", "خمول"], "😴 تعب وإرهاق"),
-            (["تنفس", "نفس", "اختناق"], "🫁 ضيق التنفس"),
-            (["دوار", "دوخة", "دوخه", "دوار"], "💫 دوار"),
-            (["مفاصل", "عظام"], "🦴 ألم المفاصل"),
-            (["بطن", "معدة"], "😖 ألم في البطن"),
-            (["قشعريرة", "رعشة", "رجفه"], "🥶 قشعريرة"),
-            (["عيون", "عين", "احمرار العين"], "👁️ احمرار العيون"),
-            (["رجل", "رجلين", "ساق"], "🦵 ألم في الرجل"),
-            (["حلق", "زور"], "😣 ألم الحلق"),
+            (["ضيق تنفس", "ضيق في التنفس", "صعوبة التنفس", "نفس", "اختناق"], "🫁 ضيق التنفس"),
+            (["دوار", "دوخة", "دوخه"], "💫 دوار"), (["مفاصل", "عظام"], "🦴 ألم المفاصل"),
+            (["بطني يعورني", "ألم بطني", "الم في البطن", "ألم في البطن", "بطن", "معدة"], "😖 ألم في البطن"),
+            (["قشعريرة", "رعشة", "رجفه"], "🥶 قشعريرة"), (["احمرار العين", "عيوني حمراء", "عين", "عيون"], "👁️ احمرار العيون"),
+            (["ألم في الرجل", "ألم في الساق", "ساق", "رجل"], "🦵 ألم في الرجل"), (["ألم الحلق", "حلق", "زور"], "😣 ألم الحلق"),
             (["حكة", "هرش", "هرشه"], "🖐️ حكة"),
         ]
         dur_rules = [
-            (["من يومين", "يومين", "منذ يومين", "٢ أيام", "2 أيام"], "📅 1-3 أيام"),
-            (["ثلاثة أيام", "ثلاث ايام", "٣ أيام", "3 أيام", "ثلاثة"], "📅 1-3 أيام"),
-            (["أربعة أيام", "خمسة أيام", "٤ أيام", "٥ أيام", "4 أيام", "5 أيام"], "📅 4-7 أيام"),
-            (["من أمس", "البارحة", "اليوم", "هذا الصباح", "الليلة", "منذ يوم", "من يوم"], "⏰ أقل من 24 ساعة"),
-            (["أسبوعين", "اسبوعين"], "🗓️ أكثر من أسبوعين"),
-            (["أسبوع", "اسبوع"], "🗓️ 1-2 أسبوع"),
-            (["شهر", "أكثر من شهر"], "📆 أكثر من شهر"),
+            (["من أمس", "من امس", "البارحة", "منذ أمس", "من يوم", "منذ يوم"], "⏰ أقل من 24 ساعة"),
+            (["يومين", "ثلاثة أيام", "ثلاث ايام", "2 أيام", "3 أيام", "٢ أيام", "٣ أيام"], "📅 1-3 أيام"),
+            (["أربعة أيام", "خمسة أيام", "4 أيام", "5 أيام", "٤ أيام", "٥ أيام"], "📅 4-7 أيام"),
+            (["أسبوعين", "اسبوعين"], "🗓️ أكثر من أسبوعين"), (["أسبوع", "اسبوع"], "🗓️ 1-2 أسبوع"), (["شهر"], "📆 أكثر من شهر"),
         ]
-        sev_rules = [(["شديد جداً", "حرج", "مؤلم جداً"], 5), (["شديد", "قوي"], 4), (["متوسط"], 3), (["خفيف"], 2)]
+        locations = [
+            (["الجهة اليمنى", "اليمين", "يمين"], "الجهة اليمنى"), (["الجهة اليسرى", "اليسار", "يسار"], "الجهة اليسرى"),
+            (["أسفل البطن", "اسفل البطن"], "أسفل البطن"), (["أعلى البطن", "اعلى البطن"], "أعلى البطن"),
+            (["منتصف", "الوسط"], "المنتصف"),
+        ]
+        words = {"واحد":1,"واحدة":1,"اثنين":2,"اثنان":2,"ثلاثة":3,"أربعة":4,"اربعة":4,"خمسة":5,"ستة":6,"سبعة":7,"ثمانية":8,"تسعة":9,"عشرة":10}
     else:
         sym_map = [
-            (["headache", "head hurts", "head pain"], "🤕 Headache"),
-            (["fever", "temperature", "hot"], "🤒 Fever"),
-            (["cough"], "😷 Cough"),
-            (["chest", "heart pain"], "🫀 Chest pain"),
-            (["nausea", "vomit"], "🤢 Nausea"),
-            (["fatigue", "tired", "exhausted"], "😴 Fatigue"),
-            (["breath", "breathing", "breathless", "choking"], "🫁 Shortness of breath"),
-            (["dizzy", "dizziness"], "💫 Dizziness"),
-            (["joint", "joints"], "🦴 Joint pain"),
-            (["stomach", "abdominal", "belly", "abdomen"], "😖 Stomach pain"),
-            (["chills", "shivering"], "🥶 Chills"),
-            (["eye", "eyes"], "👁️ Eye redness"),
-            (["leg", "legs"], "🦵 Leg pain"),
-            (["throat", "sore throat"], "😣 Sore throat"),
-            (["itch", "itching", "itchy"], "🖐️ Itching"),
+            (["headache", "head hurts", "head pain"], "🤕 Headache"), (["fever", "temperature"], "🤒 Fever"), (["cough"], "😷 Cough"),
+            (["chest pain", "chest hurts"], "🫀 Chest pain"), (["nausea", "vomit", "vomiting"], "🤢 Nausea"), (["fatigue", "tired", "exhausted"], "😴 Fatigue"),
+            (["shortness of breath", "breathless", "difficulty breathing"], "🫁 Shortness of breath"), (["dizzy", "dizziness"], "💫 Dizziness"),
+            (["joint pain", "joints"], "🦴 Joint pain"), (["abdominal pain", "stomach pain", "belly pain", "abdomen"], "😖 Stomach pain"),
+            (["chills", "shivering"], "🥶 Chills"), (["red eye", "eye redness"], "👁️ Eye redness"), (["leg pain"], "🦵 Leg pain"),
+            (["sore throat", "throat pain"], "😣 Sore throat"), (["itch", "itching", "itchy"], "🖐️ Itching"),
         ]
         dur_rules = [
-            (["since yesterday", "yesterday", "today", "this morning", "tonight", "last night"], "⏰ Less than 24 hours"),
-            (["two days", "2 days", "couple of days", "three days", "3 days"], "📅 1-3 days"),
-            (["two weeks", "2 weeks"], "🗓️ More than 2 weeks"),
-            (["week"], "🗓️ 1-2 weeks"),
-            (["month"], "📆 More than a month"),
-            (["four days", "five days", "4 days", "5 days"], "📅 4-7 days"),
+            (["since yesterday", "yesterday", "one day", "1 day"], "⏰ Less than 24 hours"),
+            (["two days", "2 days", "three days", "3 days", "couple of days"], "📅 1-3 days"),
+            (["four days", "five days", "4 days", "5 days"], "📅 4-7 days"), (["two weeks", "2 weeks"], "🗓️ More than 2 weeks"),
+            (["week"], "🗓️ 1-2 weeks"), (["month"], "📆 More than a month"),
         ]
-        sev_rules = [(["extremely severe", "critical", "unbearable", "severe pain"], 5), (["severe", "very bad"], 4), (["moderate"], 3), (["mild", "slight"], 2)]
+        locations = [
+            (["right side", "on the right", "right lower"], "Right side"), (["left side", "on the left", "left lower"], "Left side"),
+            (["lower abdomen", "lower belly"], "Lower abdomen"), (["upper abdomen", "upper belly"], "Upper abdomen"), (["middle", "center"], "Center"),
+        ]
+        words = {"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"seven":7,"eight":8,"nine":9,"ten":10}
+    found=[]
+    for kws,label in sym_map:
+        if any(k in low for k in kws) and label not in found: found.append(label)
+    duration=next((label for kws,label in dur_rules if any(k in low for k in kws)),None)
+    location=next((label for kws,label in locations if any(k in low for k in kws)),None)
+    severity10=None
+    # Prefer an explicit x/10 or "x out of ten" statement.
+    m=re.search(r"\b(10|[1-9])\s*(?:/|من|out of)\s*10\b", low)
+    if m: severity10=int(m.group(1))
+    if severity10 is None:
+        for w,n in words.items():
+            if re.search(r"\b"+re.escape(w)+r"\b",low) and (("عشرة" in low or "من عشرة" in low) if lang=="ar" else ("out of ten" in low or "out of 10" in low)):
+                severity10=n;break
+    if severity10 is None:
+        if any(x in low for x in (["شديد جدًا","شديد جدا","لا يحتمل"] if lang=="ar" else ["unbearable","extremely severe"])): severity10=9
+        elif any(x in low for x in (["شديد","قوي"] if lang=="ar" else ["severe","very bad"])): severity10=8
+        elif any(x in low for x in (["متوسط"] if lang=="ar" else ["moderate"])): severity10=5
+        elif any(x in low for x in (["خفيف"] if lang=="ar" else ["mild","slight"])): severity10=3
+    severity5 = max(1,min(5,int(round((severity10 or 0)/2)))) if severity10 else None
+    return {"symptoms":found,"duration":duration,"location":location,"severity":severity5,"severity_10":severity10,"transcript":text}
 
-    found = []
-    for kws, label in sym_map:
-        if any(k in low for k in kws) and label not in found:
-            found.append(label)
-    duration = None
-    for kws, label in dur_rules:
-        if any(k in low for k in kws):
-            duration = label
-            break
-    severity = None
-    for kws, val in sev_rules:
-        if any(k in low for k in kws):
-            severity = val
-            break
-    return {"symptoms": found, "duration": duration, "severity": severity}
+
+@app.route("/api/voice/parse", methods=["POST"])
+def api_voice_parse():
+    if not _service_consent_ok():
+        return jsonify({"ok":False,"error":"consent_required","consent_url":"/consent?next=/chat"}),403
+    data=request.get_json(silent=True) or {}; text=str(data.get("text") or "").strip()[:1200]
+    lang="en" if data.get("lang")=="en" else "ar"
+    if not text:
+        return jsonify({"ok":False,"error":"empty_transcript"}),400
+    return jsonify({"ok":True,"text":text,"parsed":_voice_parse(text,lang),"audio_stored":False})
 
 
 @app.route("/api/voice", methods=["POST"])
 def api_voice():
-    f = request.files.get("file")
-    if not f:
-        return jsonify({"ok": False, "error": "لم يتم رفع ملف صوتي"})
-    lang = "en" if _lang() == "en" else "ar"
-    raw = f.read()
-    try:
-        client = analysis_core._groq_client()
-        tr = client.audio.transcriptions.create(
-            file=("voice.webm", raw),
-            model="whisper-large-v3",
-            language=lang,
-        )
-        text = (tr.text or "").strip()
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:150]}"})
-    if not text:
-        return jsonify({"ok": False, "error": "لم يُلتقط صوت واضح — حاول مرة أخرى"})
-    return jsonify({"ok": True, "text": text, "parsed": _voice_parse(text, lang)})
+    # Raw audio upload is intentionally disabled: voice input uses the browser's
+    # speech-recognition capability and only the resulting text is sent here.
+    return jsonify({"ok":False,"error":"raw_audio_upload_disabled_use_client_speech_recognition","audio_stored":False}),410
 
 
 @app.route("/api/blood/history", methods=["GET"])
@@ -10077,6 +8525,7 @@ def api_family():
         db.init_db()
         uid = _data_user_id()
         if request.method == "POST":
+            if not _service_consent_ok(): return _consent_required_json("/family")
             data = request.get_json(force=True)
             mid = db.save_member(
                 uid,
@@ -10108,6 +8557,7 @@ def api_family_one(mid):
         if request.method == "DELETE":
             db.delete_member(uid, mid)
             return jsonify({"ok": True})
+        if not _service_consent_ok(): return _consent_required_json("/family")
         data = request.get_json(force=True)
         db.update_member(
             uid, mid,
@@ -10125,95 +8575,169 @@ def api_family_one(mid):
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
+@app.route("/api/analytics/journey", methods=["POST"])
+def api_analytics_journey():
+    if not _analytics_consent_ok():
+        return jsonify({"ok":True,"recorded":False,"reason":"analytics_consent_disabled"})
+    data=request.get_json(silent=True) or {}; stage=str(data.get("stage") or "")
+    if stage not in admin_operational.JOURNEY_STAGES:
+        return jsonify({"ok":False,"error":"invalid_stage"}),400
+    try:
+        admin_operational.record_journey(_analytics_session_id(),stage,request.headers.get("User-Agent", ""))
+        admin_operational.touch_session(_analytics_session_id(),request.headers.get("User-Agent", ""))
+        if stage=="analysis": platform_v2.record_usage("analysis_started","/chat",_lang(),request.headers.get("User-Agent",""),200,None)
+        elif stage=="reanalyze": platform_v2.record_usage("reanalysis_started","/chat",_lang(),request.headers.get("User-Agent",""),200,None)
+        return jsonify({"ok":True})
+    except Exception:
+        return jsonify({"ok":True})
+
+
 @app.route("/api/meds/plan", methods=["GET", "POST"])
 @api_login_required
 def api_meds_plan():
     try:
-        db.init_db()
-        uid = _data_user_id()
-        if request.method == "POST":
-            data = request.get_json(force=True)
-            times = [str(t).strip() for t in (data.get("times") or []) if str(t).strip()]
-            if not data.get("med_name") or not times:
-                return jsonify({"ok": False, "error": "اسم الدواء وأوقات الاستخدام مطلوبة"})
-            days = data.get("days")
-            try:
-                days = int(days) if days else None
-            except (TypeError, ValueError):
-                days = None
-            pid = db.save_med_plan(
-                uid, int(data.get("member_id") or 0),
-                str(data.get("med_name") or "").strip(),
-                times,
-                str(data.get("dose") or "").strip(),
-                days,
-                data.get("start_date") or None,
-            )
-            return jsonify({"ok": True, "id": pid})
-        member_id = request.args.get("member")
-        plans = db.list_med_plans(uid, member_id=int(member_id) if member_id else None)
-        members = {m["id"]: m["name"] for m in db.list_members(uid)}
-        for p in plans:
-            p["member_name"] = members.get(p["member_id"], "أنا" if p["member_id"] == 0 else "?")
-        return jsonify({"ok": True, "plans": plans})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        db.init_db(); medication_push.init_schema(); uid=_data_user_id()
+        if request.method=="POST":
+            if not _service_consent_ok(): return _consent_required_json("/meds")
+            data=request.get_json(silent=True) or {}
+            pid=medication_push.save_plan(uid,data)
+            return jsonify({"ok":True,"id":pid})
+        member_id=request.args.get("member")
+        plans=medication_push.list_plans(uid,member_id=int(member_id) if member_id else None)
+        members={m["id"]:m["name"] for m in db.list_members(uid)}
+        for plan in plans: plan["member_name"]=members.get(plan["member_id"], _t("me_short") if plan["member_id"]==0 else "")
+        return jsonify({"ok":True,"plans":plans})
+    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except Exception as exc: return _mk_error(exc)
 
 
-@app.route("/api/meds/plan/<int:pid>", methods=["DELETE"])
+@app.route("/api/meds/plan/<int:pid>", methods=["PUT", "DELETE"])
 @api_login_required
-def api_meds_plan_delete(pid):
+def api_meds_plan_item(pid):
     try:
-        db.init_db()
-        db.delete_med_plan(_data_user_id(), pid)
-        return jsonify({"ok": True})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        medication_push.init_schema(); uid=_data_user_id()
+        if request.method=="DELETE":
+            if not medication_push.disable_plan(uid,pid): return jsonify({"ok":False,"error":"not_found"}),404
+            return jsonify({"ok":True})
+        if not _service_consent_ok(): return _consent_required_json("/meds")
+        updated=medication_push.save_plan(uid,request.get_json(silent=True) or {},plan_id=pid)
+        return jsonify({"ok":True,"id":updated})
+    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except Exception as exc: return _mk_error(exc)
 
 
 @app.route("/api/meds/today", methods=["GET"])
 @api_login_required
 def api_meds_today():
     try:
-        db.init_db()
-        uid = _data_user_id()
-        plans = db.med_plans_today(uid)
-        members = {m["id"]: m["name"] for m in db.list_members(uid)}
-        for p in plans:
-            p["member_name"] = members.get(p["member_id"], _t("me_short") if p["member_id"] == 0 else "")
-        return jsonify({"ok": True, "plans": plans})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        uid=_data_user_id(); plans=medication_push.plans_today(uid)
+        members={m["id"]:m["name"] for m in db.list_members(uid)}
+        for plan in plans: plan["member_name"]=members.get(plan["member_id"], _t("me_short") if plan["member_id"]==0 else "")
+        return jsonify({"ok":True,"plans":plans})
+    except Exception as exc: return _mk_error(exc)
 
 
 @app.route("/api/meds/log", methods=["POST"])
 @api_login_required
 def api_meds_log():
+    if not _service_consent_ok(): return _consent_required_json("/meds")
     try:
-        db.init_db()
-        data = request.get_json(force=True)
-        plan_id = int(data.get("plan_id") or 0)
-        log_time = str(data.get("time") or "")
-        status = str(data.get("status") or "taken")
-        log_date = str(data.get("date") or datetime.now(timezone.utc).date().isoformat())
-        if not plan_id or not log_time or status not in ("taken", "skipped", "deferred"):
-            return jsonify({"ok": False, "error": "بيانات غير مكتملة"})
-        db.log_med_status(_data_user_id(), int(data.get("member_id") or 0), plan_id, log_date, log_time, status)
-        return jsonify({"ok": True})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        data=request.get_json(silent=True) or {}; plan_id=int(data.get("plan_id") or 0); log_time=str(data.get("time") or "")
+        status=str(data.get("status") or "taken"); log_date=str(data.get("date") or datetime.now(timezone.utc).date().isoformat())
+        if not plan_id or not log_time or status not in ("taken","skipped"):
+            return jsonify({"ok":False,"error":"invalid_reminder_status"}),400
+        owned={p["id"]:p for p in medication_push.list_plans(_data_user_id(),active_only=False)}
+        if plan_id not in owned: return jsonify({"ok":False,"error":"forbidden"}),403
+        db.log_med_status(_data_user_id(),int(data.get("member_id") or owned[plan_id].get("member_id") or 0),plan_id,log_date,log_time,status)
+        return jsonify({"ok":True})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/meds/snooze", methods=["POST"])
+@api_login_required
+def api_meds_snooze():
+    if not _service_consent_ok(): return _consent_required_json("/meds")
+    try:
+        data=request.get_json(silent=True) or {}; mins=medication_push.schedule_snooze(_data_user_id(),int(data.get("plan_id") or 0),int(data.get("member_id") or 0),str(data.get("date") or datetime.now(timezone.utc).date().isoformat()),str(data.get("time") or ""),data.get("minutes"))
+        return jsonify({"ok":True,"minutes":mins})
+    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except Exception as exc: return _mk_error(exc)
 
 
 @app.route("/api/meds/weekly", methods=["GET"])
 @api_login_required
 def api_meds_weekly():
     try:
-        db.init_db()
-        member_id = request.args.get("member")
-        a = db.med_adherence(_data_user_id(), member_id=int(member_id) if member_id else None)
-        return jsonify({"ok": True, **a})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        member_id=request.args.get("member"); return jsonify({"ok":True,**medication_push.weekly_summary(_data_user_id(),int(member_id) if member_id else None)})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/meds/calendar", methods=["GET"])
+@api_login_required
+def api_meds_calendar():
+    try:
+        member_id=request.args.get("member"); days=max(1,min(90,int(request.args.get("days") or 30)))
+        return jsonify({"ok":True,**medication_push.reminder_calendar(_data_user_id(),int(member_id) if member_id else None,days)})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/meds/settings", methods=["GET", "PUT"])
+@api_login_required
+def api_meds_settings():
+    try:
+        if request.method=="GET": return jsonify({"ok":True,"settings":medication_push.get_settings(_data_user_id())})
+        if not _service_consent_ok(): return _consent_required_json("/meds")
+        return jsonify({"ok":True,"settings":medication_push.save_settings(_data_user_id(),request.get_json(silent=True) or {})})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/push/vapid-public", methods=["GET"])
+def api_push_vapid_public():
+    cfg=medication_push.push_config()
+    return jsonify({"ok":True,"configured":cfg.get("configured",False),"public_key":cfg.get("public_key","")})
+
+
+@app.route("/api/push/status", methods=["GET"])
+@api_login_required
+def api_push_status():
+    return jsonify({"ok":True,**medication_push.subscription_status(_data_user_id())})
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+@api_login_required
+def api_push_subscribe():
+    if not _service_consent_ok(): return _consent_required_json("/meds")
+    try:
+        data=request.get_json(silent=True) or {}; sub=data.get("subscription") or {}
+        medication_push.subscribe(_data_user_id(),sub,data.get("timezone") or "Asia/Riyadh",data.get("lang") or _lang())
+        return jsonify({"ok":True})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/push/unsubscribe", methods=["POST", "DELETE"])
+@api_login_required
+def api_push_unsubscribe():
+    try:
+        data=request.get_json(silent=True) or {}; medication_push.unsubscribe(_data_user_id(),data.get("endpoint")); return jsonify({"ok":True})
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/push/action", methods=["POST"])
+def api_push_action():
+    try:
+        data=request.get_json(silent=True) or {}; result=medication_push.handle_push_action(str(data.get("token") or ""),str(data.get("action") or "")); return jsonify({"ok":True,**result})
+    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/push/test", methods=["POST"])
+@admin_api_required("access")
+def api_admin_push_test():
+    try:
+        data=request.get_json(silent=True) or {}; result=medication_push.send_test_to_user(_data_user_id(),_lang(),data.get("endpoint"))
+        platform_v2.audit(int(_ss_user_id()),"sent_test_notification","push","current_admin_device",None,{"success":bool(result.get("ok"))})
+        return jsonify(result), (200 if result.get("ok") else 400)
+    except Exception as exc: return _mk_error(exc)
 
 
 @app.route("/api/timeline", methods=["GET"])
@@ -10229,10 +8753,35 @@ def api_timeline():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
+@app.route("/api/analyze/data-quality", methods=["POST"])
+def api_analyze_data_quality():
+    try:
+        if not _service_consent_ok():
+            return _consent_required_json("/chat")
+        data=request.get_json(silent=True) or {}
+        lang="en" if data.get("lang")=="en" else "ar"
+        symptoms=data.get("symptoms") or []
+        if isinstance(symptoms,str): symptoms=[symptoms]
+        patient={
+            "age":data.get("age"),"gender":data.get("gender"),"symptoms":[str(x).strip() for x in symptoms if str(x).strip()][:20],
+            "duration":data.get("duration"),"severity":data.get("severity"),"conditions":str(data.get("conditions") or "")[:1000],
+            "medications":str(data.get("medications") or "")[:1000],"allergies":str(data.get("allergies") or "")[:1000],
+            "notes":str(data.get("notes") or "")[:2000],"location":str(data.get("location") or "")[:200],
+            "history_answered":bool(data.get("history_answered")),
+        }
+        return jsonify({"ok":True,"data_quality":analysis_core.assess_data_quality(patient,lang)})
+    except Exception as exc:
+        return jsonify({"ok":False,"error":f"{type(exc).__name__}: {str(exc)[:160]}"}),400
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     try:
-        db.init_db()
+        db.init_db(); privacy_features.init_schema()
+        consent = privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
+        if not consent.get("service_usage") or consent.get("needs_review"):
+            lang0 = _lang()
+            return jsonify({"ok": False, "error": "يلزم اختيار تفضيلات الخصوصية قبل تحليل الأعراض." if lang0 == "ar" else "Please choose your privacy preferences before symptom analysis.", "consent_required": True, "consent_url": "/consent?next=/chat"}), 403
         data = request.get_json(silent=True) or {}
         lang = "en" if data.get("lang") == "en" else "ar"
         symptoms = data.get("symptoms") or []
@@ -10246,10 +8795,11 @@ def api_analyze():
             member_id = int(data.get("member_id") or 0)
         except (TypeError, ValueError):
             member_id = 0
+        raw_severity = data.get("severity")
         try:
-            severity = max(1, min(5, int(data.get("severity") or 1)))
+            severity = max(1, min(5, int(raw_severity))) if raw_severity not in (None, "") else None
         except (TypeError, ValueError):
-            severity = 1
+            severity = None
         use_saved = data.get("use_saved", False)
         member = None
         if member_id:
@@ -10268,6 +8818,8 @@ def api_analyze():
             "medications": data.get("medications", ""),
             "allergies": data.get("allergies", ""),
             "notes": str(data.get("notes") or "")[:2000],
+            "location": str(data.get("location") or "")[:200],
+            "history_answered": bool(data.get("history_answered")),
             "member_id": member_id,
         }
         if member:
@@ -10335,6 +8887,17 @@ def api_analyze():
             except Exception:
                 pass
         result = analysis_core.run_analysis(patient, lang=lang)
+        if result.get("record_id"):
+            try:
+                privacy_features.set_record_analytics_eligibility(int(result["record_id"]), _analytics_consent_ok())
+            except Exception:
+                pass
+        previous_record_id = data.get("previous_record_id")
+        if previous_record_id and result.get("record_id"):
+            try:
+                advanced_features.link_reanalysis(_data_user_id(), int(previous_record_id), int(result.get("record_id")))
+            except Exception:
+                pass
         # Save chat history if user is logged in and privacy allows
         uid = _ss_user_id()
         if uid:
@@ -10367,6 +8930,8 @@ def api_analyze():
 
 @app.route("/api/profile", methods=["POST"])
 def api_profile():
+    if not _service_consent_ok():
+        return _consent_required_json("/manage")
     try:
         db.init_db()
         data = request.get_json(force=True)
@@ -10384,6 +8949,62 @@ def api_profile():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
+@app.route("/api/handoff/candidates", methods=["GET"])
+def api_handoff_candidates():
+    try:
+        rows=advanced_features.user_analysis_rows(_data_user_id(),limit=12)
+        out=[{"id":r.get("id"),"timestamp":r.get("timestamp"),"symptoms":r.get("symptoms") or [],"risk_level":(r.get("result") or {}).get("risk_level") or r.get("urgency")} for r in rows]
+        return jsonify({"ok":True,"analyses":out})
+    except Exception as e:
+        return jsonify({"ok":False,"error":str(e)[:160]}),500
+
+
+@app.route("/api/handoff/create", methods=["POST"])
+def api_handoff_create():
+    try:
+        data=request.get_json(silent=True) or {}
+        result=privacy_features.create_handoff(_data_user_id(),int(data.get("record_id") or 0),data.get("selected") or {},data.get("previous_ids") or [],int(data.get("expires_minutes") or 60))
+        share_url=request.url_root.rstrip("/")+"/share/health/"+result["token"]
+        return jsonify({"ok":True,"token":result["token"],"share_url":share_url,"expires_at":result["expires_at"],"qr_data_uri":privacy_features.qr_png_data_uri(share_url)})
+    except PermissionError as e:
+        return jsonify({"ok":False,"error":str(e)}),403
+    except Exception as e:
+        return jsonify({"ok":False,"error":str(e)[:160]}),400
+
+
+@app.route("/api/handoff/revoke", methods=["POST"])
+def api_handoff_revoke():
+    try:
+        data=request.get_json(silent=True) or {}
+        ok=privacy_features.revoke_handoff(_data_user_id(),str(data.get("token") or ""))
+        return jsonify({"ok":bool(ok)}) if ok else (jsonify({"ok":False,"error":"not_found_or_not_owned"}),404)
+    except Exception as e:
+        return jsonify({"ok":False,"error":str(e)[:160]}),400
+
+
+@app.route("/share/health/<token>")
+def public_health_handoff(token):
+    item=privacy_features.get_handoff(token); ar=_lang()=="ar"
+    if not item or item.get("status") in ("expired","revoked"):
+        msg=("هذا الرابط لم يعد متاحًا." if item and item.get("status")=="revoked" else "انتهت صلاحية رابط الملخص الصحي أو أنه غير صالح.") if ar else ("This link is no longer available." if item and item.get("status")=="revoked" else "This health summary link has expired or is invalid.")
+        return _page("Health Summary",'<main class="v2-info-page"><section style="text-align:center"><h1>🔒 Health Summary</h1><p>%s</p></section></main>'%msg),410
+    payload=item.get("payload") or {}; sec=payload.get("sections") or {}; lang="en" if payload.get("lang")=="en" else "ar"; ar=lang=="ar"
+    labels={"symptoms":"الأعراض المبلغ عنها" if ar else "Reported Symptoms","duration":"المدة" if ar else "Duration","severity":"الشدة" if ar else "Severity","location":"المكان" if ar else "Location","notes":"معلومات إضافية" if ar else "Additional Information","medications":"معلومات الأدوية التي اختار المستخدم مشاركتها" if ar else "Medication information selected by the user","previous_assessments":"تقييمات سابقة مختارة" if ar else "Selected Previous Assessments"}
+    blocks=[]
+    for key in ("symptoms","duration","severity","location","notes","medications"):
+        val=sec.get(key)
+        if val not in (None,"",[]):
+            if isinstance(val,list): val="، ".join(map(str,val)) if ar else ", ".join(map(str,val))
+            blocks.append('<section><h2>%s</h2><p>%s</p></section>'%(labels[key],str(val).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')))
+    prev=sec.get("previous_assessments") or []
+    if prev:
+        lis=''.join('<li>%s — %s — %s</li>'%(("، ".join(x.get("symptoms") or []) if ar else ", ".join(x.get("symptoms") or [])),x.get("duration") or "—",x.get("risk_level") or "—") for x in prev)
+        blocks.append('<section><h2>%s</h2><ul>%s</ul></section>'%(labels["previous_assessments"],lis))
+    disc="يحتوي هذا الملخص على معلومات أبلغ عنها المستخدم ويهدف للمساعدة في توصيل المعلومات إلى مختص صحي. لا يحل محل التقييم الطبي المتخصص." if ar else "This summary contains user-reported information and is intended to help communicate information to a healthcare professional. It does not replace professional medical evaluation."
+    body='<main class="v2-info-page"><section><h1>🗣️ SymptoSense Health Summary</h1><p class="muted">%s</p></section>%s<section><p class="v2-disclaimer">%s</p></section></main>'%(payload.get("created_at") or "",''.join(blocks),disc)
+    return _page("SymptoSense Health Summary",body)
+
+
 @app.route("/api/analyze/export/<int:record_id>")
 def api_export_pdf(record_id):
     db.init_db()
@@ -10397,6 +9018,11 @@ def api_export_pdf(record_id):
         return _page(_t("title_history"), body)
     lang = "en" if result.get("lang") == "en" else "ar"
     buf = _pdf_report(result, lang)
+    try:
+        platform_v2.record_usage("report_generated", "/api/analyze/export", lang, request.headers.get("User-Agent", ""), 200, None)
+        admin_operational.record_journey(_analytics_session_id(), "report", request.headers.get("User-Agent", ""))
+    except Exception:
+        pass
     fname = "symptosense-report-%s.pdf" % record_id
     return send_file(
         buf, mimetype="application/pdf",
@@ -10406,6 +9032,8 @@ def api_export_pdf(record_id):
 
 @app.route("/api/followup", methods=["POST"])
 def api_followup():
+    if not _service_consent_ok():
+        return _consent_required_json("/chat")
     try:
         data = request.get_json(force=True)
         question = (data.get("question") or "").strip()
@@ -10494,6 +9122,8 @@ def _assistant_services(text, lang):
 def api_assistant():
     lang = "ar"
     services = []
+    if not _service_consent_ok():
+        return _consent_required_json("/assistant")
     try:
         data = request.get_json(force=True)
         lang = "en" if data.get("lang") == "en" else "ar"
@@ -10594,6 +9224,8 @@ def api_assistant():
 
 @app.route("/api/assistant/feedback", methods=["POST"])
 def api_assistant_feedback():
+    if not _analytics_consent_ok():
+        return jsonify({"ok":True,"recorded":False,"reason":"analytics_consent_disabled"})
     try:
         data = request.get_json(force=True)
         rating = int(data.get("rating") or 0)
@@ -10611,6 +9243,7 @@ def api_assistant_feedback():
 def api_checkin():
     uid = _data_user_id()
     if request.method == "POST":
+        if not _service_consent_ok(): return _consent_required_json("/checkin")
         try:
             data = request.get_json(force=True)
             rating = int(data.get("rating"))
@@ -10634,6 +9267,8 @@ def api_checkin():
 
 @app.route("/api/feedback", methods=["POST"])
 def api_feedback():
+    if not _analytics_consent_ok():
+        return jsonify({"ok":True,"recorded":False,"reason":"analytics_consent_disabled"})
     try:
         data = request.get_json(force=True)
         rating = data.get("rating")
@@ -10845,6 +9480,7 @@ def _extract_blood_from_image(client, image_bytes):
 
 @app.route("/api/blood", methods=["POST"])
 def api_blood():
+    if not _service_consent_ok(): return _consent_required_json("/blood")
     f = request.files.get("file")
     if not f:
         return jsonify({"ok": False, "error": "لم يتم رفع ملف"})
@@ -10933,6 +9569,11 @@ def api_blood():
 def run_webapp():
     db.init_db()
     medical_knowledge.init_schema()
+    platform_v2.init_schema()
+    advanced_features.init_schema()
+    admin_operational.init_schema()
+    medication_push.init_schema()
+    medication_push.start_embedded_worker_once()
     port = int(os.environ.get("PORT", 5000))
     try:
         from waitress import serve

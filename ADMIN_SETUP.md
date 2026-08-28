@@ -1,25 +1,52 @@
-# SymptoSense Admin — one-time owner setup
+# SymptoSense Admin — existing owner account
 
-This version uses the existing SymptoSense authentication session. It does **not** create a second Admin login and it does not store an email address or password in source code.
+This release uses the **existing SymptoSense authentication session**. It does not create a second Admin login and never stores or asks for the owner's password.
 
-## First deployment only
+## Owner account
 
-1. Deploy this version while preserving the existing production database.
-2. In Railway Variables, add `ADMIN_CLAIM_TOKEN` with a long private value (at least 24 characters). Do not put this value in the repository.
-3. Sign in to SymptoSense using the **existing account that must become Admin**.
-4. Open `/admin`. If no Admin has been assigned yet, the server redirects that authenticated account to `/admin/claim`.
-5. Enter the private `ADMIN_CLAIM_TOKEN` once. The server promotes the current authenticated `ss_user_id` to `role = admin`.
-6. Confirm `/admin` opens and the Admin navigation is visible.
-7. Remove `ADMIN_CLAIM_TOKEN` from Railway after the claim succeeds. The database role remains `admin`.
+The only account eligible for Admin is the existing user whose email is:
+
+`remasalsolami2020@gmail.com`
+
+The email can be overridden at deployment with `SYMPTOSENSE_ADMIN_EMAIL`, but the default is already set for this project.
+
+## How assignment works
+
+1. Keep the existing production database when deploying this version.
+2. Sign in through the normal SymptoSense login using the already-existing owner account.
+3. After authentication succeeds, the server reads the current `ss_user_id` from the session and verifies that the database row for that ID belongs to the configured owner email.
+4. Only that existing row is updated to `role = admin` when needed.
+5. Open `/admin`. Access is checked again server-side from the current authenticated session and database role.
+
+No `ADMIN_CLAIM_TOKEN` is needed anymore.
+
+## If the owner account does not exist
+
+The code does **not** create a replacement owner/Admin account. Registration using the reserved owner email is refused with `owner_account_must_exist`, and `/admin` remains unavailable until that existing production account is present.
+
+The project ZIP does not contain the Railway production database, so existence of the real production row must be verified after deployment against the preserved Railway database.
+
+## Verification
+
+After signing in with the owner account:
+
+- `/api/user-info` should return `role: "admin"` and `is_admin: true`.
+- The Profile menu should show `⚙️ Admin Dashboard`.
+- `/admin` should open normally.
+
+For an ordinary user:
+
+- `/api/user-info` should return `role: "user"` and `is_admin: false`.
+- Admin navigation is not rendered.
+- Direct `/admin` access returns `403`.
+- `/api/admin/*` requests return `403` (or `401` when logged out).
 
 ## Security behavior
 
-- New accounts always receive `role = user`.
-- The first V3 RBAC migration resets existing roles to `user` once, without deleting users or other data.
-- A database unique partial index allows at most one Admin account, regardless of account status.
-- The owner claim can only succeed when there is no Admin account yet.
-- `/admin` is checked server-side against the current authenticated session and database role.
+- New ordinary accounts always receive `role = user`.
+- No bulk role reset is performed and no other user's database row is modified during owner promotion.
+- Only the configured owner email can have an effective Admin role.
 - Admin write APIs require authenticated Admin role plus a session CSRF token.
-- Role changes from the dashboard/API are disabled (`403`).
-- Admin user listings expose only User ID, status, role, registration date, and last login.
-- No password, login secret, health profile, chat text, or personal medical result is exposed in Admin analytics.
+- Frontend/API role editing is disabled (`403 role_management_disabled`).
+- Passwords and authentication secrets are never exposed in Admin code or audit logs.
+- Admin analytics remain operational/aggregate and do not expose personal health records by default.

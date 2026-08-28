@@ -626,25 +626,32 @@ def _why_result(bundle, lang):
 
 def _urgent_result(bundle, lang):
     reasons = bundle.get("risk", {}).get("reasons") or []
-    reason_text = "\n".join("• " + str(r.get("message") or r.get("name") or "") for r in reasons)
+    reason_text = "\n".join("• " + str(r.get("message") or r.get("name") or "") for r in reasons if (r.get("message") or r.get("name")))
+    actions = []
+    for r in reasons:
+        action = r.get("recommended_action")
+        if action and action not in actions:
+            actions.append(str(action))
     if lang == "ar":
+        default_action = "اطلب الرعاية الطبية العاجلة أو تواصل مع خدمات الطوارئ المناسبة."
         return {
-            "personal_note": "بعض الأعراض التي ذكرتها قد تستدعي الحصول على رعاية طبية عاجلة. لا تنتظر استمرار التحليل أو تحسن الأعراض تلقائيًا.",
-            "possible_conditions": "تم إيقاف عرض الاحتمالات لأن طبقة الأمان اكتشفت علامة خطر محتملة.",
+            "personal_note": "الأعراض التي أدخلتها قد تشير إلى حالة تستدعي تقييمًا طبيًا عاجلًا. لا تعتمد على هذا التحليل وحده، واطلب المساعدة الطبية المناسبة.",
+            "possible_conditions": "تم إيقاف عرض الاحتمالات مؤقتًا لأن طبقة الأمان اكتشفت علامة خطر محتملة. الأولوية الآن للتقييم الطبي المناسب، وليس لتسمية حالة عبر الإنترنت.",
             "recommendations": [], "danger_signs": reason_text,
-            "when_to_seek_care": "اطلب الطوارئ أو توجّه إلى أقرب قسم طوارئ الآن، ولا تقد السيارة بنفسك إذا كنت تشعر بدوار أو ضعف أو صعوبة تنفس.",
+            "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
             "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
-            "simple_explanation": "الأولوية الآن هي الأمان والحصول على تقييم عاجل، وليس تحديد اسم الحالة عبر الإنترنت.",
-            "confidence": "high", "urgency": "high", "urgency_ar": "طوارئ",
+            "simple_explanation": "الأولوية الآن هي الأمان والحصول على تقييم طبي عاجل عند الحاجة. هذه النتيجة لا تعني تشخيصًا محددًا.",
+            "confidence": "high", "urgency": "high", "urgency_ar": "عاجل",
         }
+    default_action = "Seek urgent medical care or contact the appropriate emergency service."
     return {
-        "personal_note": "Some symptoms you reported may require urgent medical care. Do not wait for the assessment to continue or for symptoms to improve on their own.",
-        "possible_conditions": "Possible conditions are withheld because the independent safety layer detected a potential red flag.",
+        "personal_note": "The symptoms you entered may indicate a situation that needs urgent medical assessment. Do not rely on this assessment alone; seek appropriate medical help.",
+        "possible_conditions": "Possible conditions are temporarily withheld because the safety layer detected a potential red flag. The priority is appropriate medical assessment, not naming a condition online.",
         "recommendations": [], "danger_signs": reason_text,
-        "when_to_seek_care": "Call emergency services or go to the nearest emergency department now. Do not drive yourself if you feel dizzy, weak, or short of breath.",
+        "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
         "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
-        "simple_explanation": "The priority is safety and urgent assessment, not naming a condition online.",
-        "confidence": "high", "urgency": "high", "urgency_text": "Emergency",
+        "simple_explanation": "The priority is safety and timely medical assessment when needed. This result does not establish a diagnosis.",
+        "confidence": "high", "urgency": "high", "urgency_text": "Urgent",
     }
 
 
@@ -781,6 +788,251 @@ def _fallback_result(d, lang):
     }
 
 
+def _needed_information(d, bundle, lang):
+    ar = lang == "ar"
+    items = []
+    if not d.get("duration"):
+        items.append("مدة الأعراض" if ar else "Symptom duration")
+    if d.get("severity") in (None, "", 0):
+        items.append("شدة الأعراض" if ar else "Symptom severity")
+    if not d.get("location") and any(x in " ".join(map(str, d.get("symptoms") or [])).lower() for x in ("pain", "ألم", "وجع")):
+        items.append("مكان الألم" if ar else "Symptom/pain location")
+    if not d.get("notes"):
+        items.append("الأعراض المصاحبة أو تفاصيل إضافية" if ar else "Associated symptoms or additional details")
+    if not d.get("conditions"):
+        items.append("التاريخ الصحي ذي الصلة، إن وجد" if ar else "Relevant medical history, if any")
+    unmatched = ((bundle.get("normalization") or {}).get("unmatched") or [])
+    if unmatched:
+        items.append("توضيح وصف بعض الأعراض غير المعروفة" if ar else "Clarification of unrecognized symptom wording")
+    # Keep the request focused rather than asking for everything.
+    return items[:5]
+
+
+
+def assess_data_quality(patient, lang="ar", bundle=None):
+    """Return a transparent completeness/validity score for the current analysis input.
+
+    This score measures only whether information needed by the existing analysis flow
+    is available. It is NOT a disease probability, diagnostic accuracy estimate, or
+    statement about the user's health.
+    """
+    d = dict(patient or {})
+    lang = "en" if lang == "en" else "ar"
+    ar = lang == "ar"
+    if bundle is None:
+        try:
+            bundle = medical_knowledge.knowledge_bundle(
+                d.get("symptoms") or [], d.get("severity", 1), d.get("age"),
+                d.get("notes", ""), lang,
+            )
+        except Exception:
+            bundle = {"normalization": {"canonical": [], "unmatched": d.get("symptoms") or []}}
+    norm = bundle.get("normalization") or {}
+    canonical = norm.get("canonical") or []
+    raw_symptoms = [str(x).strip() for x in (d.get("symptoms") or []) if str(x).strip()]
+
+    try:
+        age = int(d.get("age")) if d.get("age") not in (None, "") else None
+    except Exception:
+        age = None
+    try:
+        severity = int(d.get("severity")) if d.get("severity") not in (None, "") else None
+    except Exception:
+        severity = None
+    gender = str(d.get("gender") or "").strip().lower()
+    duration = str(d.get("duration") or "").strip()
+    history_answered = bool(d.get("history_answered")) or any(
+        str(d.get(k) or "").strip() for k in ("conditions", "medications", "allergies")
+    )
+
+    fields = []
+    def add(key, label_ar, label_en, weight, required, status, detail_ar="", detail_en=""):
+        fields.append({
+            "key": key,
+            "label": label_ar if ar else label_en,
+            "weight": int(weight),
+            "required": bool(required),
+            "status": status,
+            "provided": status == "provided",
+            "detail": detail_ar if ar else detail_en,
+        })
+
+    # Required fields reflect the current production analysis path.
+    if canonical:
+        add("main_symptom", "العرض الرئيسي", "Main symptom", 30, True, "provided",
+            "تم التعرف على عرض واحد على الأقل في قاعدة المعرفة.",
+            "At least one symptom was recognized in the medical knowledge base.")
+    elif raw_symptoms:
+        add("main_symptom", "العرض الرئيسي", "Main symptom", 30, True, "needs_clarification",
+            "تم إدخال عرض لكن يحتاج إلى صياغة أو تحديد أوضح.",
+            "A symptom was entered but needs clearer wording or selection.")
+    else:
+        add("main_symptom", "العرض الرئيسي", "Main symptom", 30, True, "missing")
+
+    add("duration", "مدة الأعراض", "Symptom duration", 20, True,
+        "provided" if duration else "missing")
+    add("severity", "شدة الأعراض", "Symptom severity", 20, True,
+        "provided" if severity is not None and 1 <= severity <= 5 else "missing")
+
+    # Recommended context used by risk/safety or to reduce ambiguity.
+    add("age", "العمر", "Age", 10, False,
+        "provided" if age is not None and 1 <= age <= 120 else "missing")
+    add("gender", "الجنس", "Gender", 5, False,
+        "provided" if gender in {"m", "f", "male", "female", "ذكر", "أنثى", "انثى"} else "missing")
+    add("associated_symptoms", "الأعراض المصاحبة", "Associated symptoms", 10, False,
+        "provided" if len(canonical) >= 2 else "missing",
+        "وجود أكثر من عرض معروف يعطي سياقًا إضافيًا عند توفره.",
+        "More than one recognized symptom provides additional context when available.")
+    add("relevant_history", "التاريخ الصحي ذي الصلة", "Relevant medical history", 5, False,
+        "provided" if history_answered else "missing",
+        "يكفي أن يذكر المستخدم المعلومات ذات الصلة أو يوضح عدم وجودها.",
+        "It is enough for the user to provide relevant history or explicitly indicate none.")
+
+    total_weight = sum(x["weight"] for x in fields)
+    earned = 0.0
+    for item in fields:
+        if item["status"] == "provided":
+            earned += item["weight"]
+        elif item["status"] == "needs_clarification":
+            # The information exists, but its validity for analysis is incomplete.
+            earned += item["weight"] * 0.5
+    score = int(round(earned * 100 / total_weight)) if total_weight else 0
+
+    required = [x for x in fields if x["required"]]
+    recommended = [x for x in fields if not x["required"]]
+    req_total = sum(x["weight"] for x in required) or 1
+    rec_total = sum(x["weight"] for x in recommended) or 1
+    req_earned = sum(x["weight"] if x["status"] == "provided" else (x["weight"] * .5 if x["status"] == "needs_clarification" else 0) for x in required)
+    rec_earned = sum(x["weight"] if x["status"] == "provided" else 0 for x in recommended)
+    required_completion = int(round(req_earned * 100 / req_total))
+    recommended_completion = int(round(rec_earned * 100 / rec_total))
+
+    sufficient = all(x["status"] == "provided" for x in required)
+    level = "excellent" if score >= 90 else ("good" if score >= 70 else ("limited" if score >= 50 else "insufficient"))
+    labels = {
+        "ar": {"excellent": "ممتاز", "good": "جيد", "limited": "محدود", "insufficient": "غير كافٍ"},
+        "en": {"excellent": "Excellent", "good": "Good", "limited": "Limited", "insufficient": "Insufficient"},
+    }
+    missing = [x for x in fields if x["status"] != "provided"]
+    return {
+        "score": score,
+        "level": level,
+        "level_label": labels[lang][level],
+        "sufficient": sufficient,
+        "required_completion": required_completion,
+        "recommended_completion": recommended_completion,
+        "fields": fields,
+        "missing": [{"key": x["key"], "label": x["label"], "status": x["status"], "required": x["required"]} for x in missing],
+        "meaning": (
+            "تقيس هذه النسبة اكتمال المعلومات المتاحة للتحليل فقط، ولا تمثل احتمال مرض أو دقة تشخيص."
+            if ar else
+            "This score measures information completeness only; it is not a disease probability or diagnostic accuracy score."
+        ),
+    }
+
+
+def _influence_from_weight(weight, max_weight):
+    try:
+        ratio = float(weight or 0) / float(max_weight or 1)
+    except Exception:
+        ratio = 0
+    return "high" if ratio >= .67 else ("medium" if ratio >= .34 else "low")
+
+
+def build_explainability(patient, bundle, lang="ar", ml_explanation=None):
+    """Explain the *actual displayed assessment* without inventing feature importance.
+
+    Displayed conditions come from the Medical Knowledge Base matching engine and
+    displayed risk comes from deterministic safety/triage rules. The auxiliary
+    BernoulliNB model is explicitly marked as not used for the displayed result.
+    """
+    d = dict(patient or {})
+    lang = "en" if lang == "en" else "ar"
+    ar = lang == "ar"
+    factors = []
+    condition_evidence = []
+    risk = bundle.get("risk") or {}
+    matches = bundle.get("matches") or []
+
+    for reason in risk.get("reasons") or []:
+        factors.append({
+            "key": "safety_rule",
+            "label": reason.get("name") or ("قاعدة أمان" if ar else "Safety rule"),
+            "influence": "high" if reason.get("risk_level") == "urgent" else "medium",
+            "source": "safety_rules",
+            "detail": reason.get("description") or reason.get("message") or "",
+        })
+
+    top = matches[0] if matches else None
+    if top:
+        matched = top.get("matched_symptoms") or []
+        max_w = max((float(x.get("weight") or 0) for x in matched), default=1.0)
+        for symptom in matched:
+            nm = symptom.get("name_ar") if ar else symptom.get("name_en")
+            factors.append({
+                "key": "symptom_match",
+                "label": nm or symptom.get("slug") or ("عرض مطابق" if ar else "Matched symptom"),
+                "influence": _influence_from_weight(symptom.get("weight"), max_w),
+                "source": "knowledge_match",
+                "detail": symptom.get("notes") or (
+                    "هذا العرض مرتبط بهذه الإمكانية داخل قاعدة المعرفة الطبية."
+                    if ar else
+                    "This symptom is linked to this possibility in the medical knowledge base."
+                ),
+            })
+
+    for match in matches[:3]:
+        condition_evidence.append({
+            "condition": match.get("name_ar") if ar else match.get("name_en"),
+            "match_level": match.get("match_level"),
+            "matched_symptoms": [
+                (x.get("name_ar") if ar else x.get("name_en")) for x in (match.get("matched_symptoms") or [])
+                if (x.get("name_ar") or x.get("name_en"))
+            ],
+        })
+
+    # Severity and age are shown only when they actually triggered the existing
+    # clinical-review rule. They are not falsely attributed to the ML model.
+    if any((r.get("slug") == "clinical-review") for r in (risk.get("reasons") or [])):
+        try:
+            sev = int(d.get("severity") or 0)
+        except Exception:
+            sev = 0
+        if sev >= 4:
+            factors.append({
+                "key": "severity_rule", "label": "شدة الأعراض" if ar else "Symptom severity",
+                "influence": "high", "source": "clinical_review_rule",
+                "detail": "ساهمت الشدة المرتفعة في رفع مستوى المتابعة وفق قاعدة التقييم الحالية." if ar else "Higher severity contributed to the follow-up level under the current review rule.",
+            })
+        try:
+            age = int(d.get("age")) if d.get("age") not in (None, "") else None
+        except Exception:
+            age = None
+        if age is not None and age >= 65:
+            factors.append({
+                "key": "age_rule", "label": "العمر" if ar else "Age",
+                "influence": "medium", "source": "clinical_review_rule",
+                "detail": "دخل العمر في قاعدة المراجعة الطبية عندما اقترن بأعراض محددة." if ar else "Age was used by the medical-review rule when combined with specific symptoms.",
+            })
+
+    return {
+        "basis": "medical_knowledge_and_safety_rules",
+        "basis_label": "مطابقة قاعدة المعرفة + قواعد الأمان" if ar else "Medical knowledge matching + safety rules",
+        "factors": factors,
+        "condition_evidence": condition_evidence,
+        "auxiliary_model": ml_explanation or {"available": False, "used_for_display": False},
+        "auxiliary_model_note": (
+            "يوجد نموذج Bernoulli Naive Bayes مساعد، لكن الاحتمالات الطبية المعروضة للمستخدم لا تُبنى عليه مباشرة؛ لذلك لا نعرض درجاته كأسباب لهذا التقييم."
+            if ar else
+            "An auxiliary Bernoulli Naive Bayes model exists, but the medical possibilities shown to the user are not directly determined by it, so its scores are not presented as reasons for this assessment."
+        ),
+        "meaning": (
+            "العوامل المعروضة هي معلومات ساهمت في المطابقة أو قواعد الأمان. وهي لا تؤكد تشخيصًا ولا تحدد سبب الأعراض."
+            if ar else
+            "The factors shown contributed to matching or safety rules. They do not confirm a diagnosis or identify the cause of symptoms."
+        ),
+    }
+
 def run_analysis(patient, lang="ar"):
     """
     patient: dict with keys age, gender, symptoms(list), duration, severity,
@@ -804,6 +1056,8 @@ def run_analysis(patient, lang="ar"):
                   "matches": [], "sources": [],
                   "risk": {"level": "review", "label": "🟡 يحتاج مراجعة طبية" if lang == "ar" else "🟡 Needs medical review", "reasons": [], "emergency": False},
                   "last_updated": None}
+
+    data_quality = assess_data_quality(d, lang, bundle=bundle)
 
     # Preserve the app's existing broad red-flag detector as a second,
     # independent rule layer.  If either ruleset says emergency, stop before
@@ -880,9 +1134,34 @@ def run_analysis(patient, lang="ar"):
         # Safety, medication, follow-up, and red-flag wording must come from
         # deterministic data/rules rather than generated model output.
         result.update(_grounded_guidance(bundle, d, lang))
-    result["confidence"] = ({"strong": "high", "moderate": "medium", "weak": "low"}.get(
-        ((bundle.get("matches") or [{}])[0]).get("match_level"), "low"
-    ))
+    top_match_level = ((bundle.get("matches") or [{}])[0]).get("match_level")
+    result["confidence"] = ({"strong": "high", "moderate": "medium", "weak": "low"}.get(top_match_level, "low"))
+    assessment_status = "complete"
+    needed_information = []
+    # Safe uncertainty mode: incomplete required information or weak/no grounded
+    # match never becomes a forced diagnosis. Red flags still override this gate.
+    if bundle.get("risk", {}).get("level") != "urgent" and (not data_quality.get("sufficient") or not bundle.get("matches") or result.get("confidence") == "low"):
+        assessment_status = "insufficient" if (not data_quality.get("sufficient") or not bundle.get("matches")) else "low_confidence"
+        needed_information = _needed_information(d, bundle, lang)
+        quality_missing = [x.get("label") for x in (data_quality.get("missing") or []) if x.get("required") and x.get("label")]
+        for item in quality_missing:
+            if item not in needed_information:
+                needed_information.insert(0, item)
+        needed_information = needed_information[:5]
+        result["possible_conditions"] = ""
+        result["recommendations"] = []
+        result["personal_note"] = (
+            "🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق. أضف معلومات إضافية أو راجع المصادر الطبية الموثوقة، واطلب تقييمًا طبيًا إذا استمرت الأعراض أو ساءت."
+            if lang == "ar" else
+            "🧠 The available information is not sufficient for a reliable assessment. Add more information or review trusted medical sources, and seek professional evaluation if symptoms persist or worsen."
+        )
+        result["simple_explanation"] = (
+            "لن يعرض SymptoSense احتمالًا طبيًا عندما تكون المعلومات أو المطابقة غير كافية."
+            if lang == "ar" else
+            "SymptoSense will not show a medical possibility when the information or grounded match is insufficient."
+        )
+
+    display_matches = [] if assessment_status in {"insufficient", "low_confidence"} else (bundle.get("matches") or [])
 
     triage = pre_triage
     risk_level = bundle.get("risk", {}).get("level", "low")
@@ -904,10 +1183,15 @@ def run_analysis(patient, lang="ar"):
     low_conf = result.get("confidence") == "low"
 
     predicted = []
+    ml_explanation = {"available": False, "used_for_display": False}
     try:
-        predicted = ml_diagnosis.predict_conditions(_normalize_symptoms(d.get("symptoms", []))) or []
+        normalized_for_ml = _normalize_symptoms(d.get("symptoms", []))
+        predicted = ml_diagnosis.predict_conditions(normalized_for_ml) or []
+        ml_explanation = ml_diagnosis.explain_prediction(normalized_for_ml)
     except Exception:
         predicted = []
+        ml_explanation = {"available": False, "used_for_display": False}
+    explainability = build_explainability(d, bundle, lang, ml_explanation=ml_explanation)
 
     med_matches = []
     try:
@@ -935,6 +1219,12 @@ def run_analysis(patient, lang="ar"):
                     "age": d.get("age"),
                     "gender": d.get("gender"),
                     "symptoms": d.get("symptoms", []),
+                    "duration": d.get("duration"),
+                    "severity": d.get("severity"),
+                    "conditions": d.get("conditions", ""),
+                    "medications": d.get("medications", ""),
+                    "allergies": d.get("allergies", ""),
+                    "notes": d.get("notes", ""),
                     "urgency": result.get("urgency", "low"),
                     "possible_conditions": result.get("possible_conditions", ""),
                     "recommendations": [
@@ -954,11 +1244,19 @@ def run_analysis(patient, lang="ar"):
                     "questions_for_doctor": result.get("questions_for_doctor", ""),
                     "risk_level": risk_level,
                     "risk_label": bundle.get("risk", {}).get("label", ""),
-                    "knowledge_matches": bundle.get("matches", []),
+                    "risk_reasons": bundle.get("risk", {}).get("reasons", []),
+                    "emergency": bool(bundle.get("risk", {}).get("emergency")),
+                    "knowledge_matches": display_matches,
                     "medical_sources": bundle.get("sources", []),
                     "symptom_normalization": bundle.get("normalization", {}),
                     "knowledge_last_updated": bundle.get("last_updated"),
                     "why_result": _why_result(bundle, lang),
+                    "assessment_status": assessment_status,
+                    "needed_information": needed_information,
+                    "confidence": result.get("confidence", "low"),
+                    "data_quality": data_quality,
+                    "explainability": explainability,
+                    "location": d.get("location", ""),
                 },
             )
     except Exception:
@@ -972,6 +1270,10 @@ def run_analysis(patient, lang="ar"):
         "urgency_text": _md_safe(result.get("urgency_ar") or result.get("urgency_text", ""), lang),
         "confidence": result.get("confidence", "medium"),
         "low_confidence": low_conf,
+        "data_quality": data_quality,
+        "explainability": explainability,
+        "assessment_status": assessment_status,
+        "needed_information": needed_information,
         "rule_forced_high": rule_flag,
         "possible_conditions": _md_safe(result.get("possible_conditions", ""), lang),
         "recommendations": [
@@ -992,7 +1294,7 @@ def run_analysis(patient, lang="ar"):
         "risk_level": risk_level,
         "risk_label": bundle.get("risk", {}).get("label", ""),
         "risk_reasons": bundle.get("risk", {}).get("reasons", []),
-        "knowledge_matches": bundle.get("matches", []),
+        "knowledge_matches": display_matches,
         "medical_sources": bundle.get("sources", []),
         "symptom_normalization": bundle.get("normalization", {}),
         "knowledge_last_updated": bundle.get("last_updated"),

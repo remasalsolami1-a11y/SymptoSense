@@ -26,12 +26,12 @@
 ## مسارات V2 الرئيسية
 
 - المستخدم: `/`, `/home`, `/chat`, `/privacy`, `/terms`, `/sources`, `/profile`, `/login`, `/register`, `/forgot-password`.
-- الإدارة: `/admin`, ومسار التفعيل الآمن لمرة واحدة `/admin/claim`، وواجهات `/api/admin/*` المحمية Server-side.
+- الإدارة: `/admin` تعتمد على جلسة المستخدم العادية والـRole المخزن في قاعدة البيانات، وواجهات `/api/admin/*` محمية Server-side. المسار القديم `/admin/claim` محفوظ فقط للتوافق ويعيد 403 لغير Admin.
 - قاعدة المعرفة: واجهات القراءة `/api/diseases`, `/api/symptoms`, `/api/sources` وواجهات الإدارة الحالية تحت `/api/admin/*`.
 
 ## إعدادات الإنتاج المهمة
 
-اضبط قيمة طويلة عشوائية في `WEB_SECRET`، وفعّل `SESSION_COOKIE_SECURE=1` خلف HTTPS. لا تعتمد صلاحية Admin على بريد مكتوب في الكود أو قائمة بريد. عند أول نشر لهذه النسخة فقط، أضيفي `ADMIN_CLAIM_TOKEN` بقيمة خاصة طويلة (24 حرفًا على الأقل)، سجّلي الدخول بحسابك الحالي، ثم افتحي `/admin` وأكملي التفعيل لمرة واحدة. بعد نجاحه احذفي `ADMIN_CLAIM_TOKEN` من Railway.
+اضبط قيمة طويلة عشوائية في `WEB_SECRET`، وفعّل `SESSION_COOKIE_SECURE=1` خلف HTTPS. بعد تسجيل الدخول العادي، يقرأ السيرفر `ss_user_id` الحالي ويطابقه مع حساب المالكة الموجود مسبقًا (`remasalsolami2020@gmail.com` افتراضيًا، أو `SYMPTOSENSE_ADMIN_EMAIL` عند الحاجة). لا توجد كلمة مرور أو Claim Token داخل الكود، ولا يُنشأ حساب Admin بديل إذا لم يكن حساب المالكة موجودًا.
 
 يبقى البريد اختياريًا فقط لخدمات مثل الاستعادة: `RESEND_API_KEY`, `RESEND_FROM`.
 

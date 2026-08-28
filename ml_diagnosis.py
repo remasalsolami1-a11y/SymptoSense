@@ -89,5 +89,60 @@ def predict_conditions(symptoms, top_n=3, min_probability=0.08):
     return results[:top_n]
 
 
+
+def explain_prediction(symptoms):
+    """Explain the auxiliary BernoulliNB prediction using its real learned parameters.
+
+    The user-facing assessment in SymptoSense is grounded in the Medical Knowledge
+    Base and safety rules. This helper therefore returns an *auxiliary* model
+    explanation only; callers must not present it as the reason for the displayed
+    medical assessment unless that model is explicitly used for that output.
+
+    Contributions are exact log-likelihood margin contributions for the predicted
+    class versus the runner-up class. No synthetic feature importance is created.
+    """
+    x = _vectorize(symptoms)
+    if sum(x) == 0:
+        return {"available": False, "reason": "no_recognized_model_features", "used_for_display": False}
+
+    log_scores = []
+    for ci in range(len(CLASSES)):
+        score = CLASS_LOG_PRIOR[ci]
+        for fi, xi in enumerate(x):
+            score += FEATURE_LOG_PROB[ci][fi] if xi else FEATURE_LOG_NEG_PROB[ci][fi]
+        log_scores.append(score)
+    order = sorted(range(len(log_scores)), key=lambda i: log_scores[i], reverse=True)
+    top = order[0]
+    runner = order[1] if len(order) > 1 else order[0]
+
+    contributions = []
+    for fi, xi in enumerate(x):
+        if not xi:
+            continue
+        value = float(FEATURE_LOG_PROB[top][fi]) - float(FEATURE_LOG_PROB[runner][fi])
+        contributions.append({"feature": VOCAB[fi], "log_margin_contribution": round(value, 6)})
+    contributions.sort(key=lambda row: abs(row["log_margin_contribution"]), reverse=True)
+
+    max_abs = max((abs(x["log_margin_contribution"]) for x in contributions), default=0.0)
+    for row in contributions:
+        ratio = abs(row["log_margin_contribution"]) / max_abs if max_abs else 0.0
+        row["influence"] = "high" if ratio >= 0.67 else ("medium" if ratio >= 0.34 else "low")
+        row["direction"] = "supports_top" if row["log_margin_contribution"] >= 0 else "supports_runner_up"
+
+    return {
+        "available": True,
+        "used_for_display": False,
+        "algorithm": META.get("algorithm", "BernoulliNB"),
+        "top_class": CLASSES[top],
+        "top_name_ar": CLASS_NAMES[CLASSES[top]]["ar"],
+        "top_name_en": CLASS_NAMES[CLASSES[top]]["en"],
+        "runner_up_class": CLASSES[runner],
+        "runner_up_name_ar": CLASS_NAMES[CLASSES[runner]]["ar"],
+        "runner_up_name_en": CLASS_NAMES[CLASSES[runner]]["en"],
+        "log_margin": round(float(log_scores[top] - log_scores[runner]), 6),
+        "contributions": contributions,
+    }
+
+
 def model_info():
     return META

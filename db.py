@@ -13,6 +13,11 @@ DB_PATH = os.environ.get("DB_PATH", "symptosense.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL)
 
+# The project owner account is identified by email only after normal authentication.
+# This is not a credential and no password/token is stored in code. Override via
+# SYMPTOSENSE_ADMIN_EMAIL if the owner email ever changes.
+OWNER_ADMIN_EMAIL = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "remasalsolami2020@gmail.com").strip().lower()
+
 PH = "%s" if USE_POSTGRES else "?"
 
 _logger = logging.getLogger("SymptoSense")
@@ -588,7 +593,12 @@ def _create_ss_tables(c):
 
 
 def _migrate_ss_columns(conn, c):
-    """Add any new columns to existing ss_ tables."""
+    """Add new columns to existing account tables without deleting data.
+
+    The role/status columns are security-critical, so migration failures for
+    those columns are intentionally not swallowed. Optional profile migrations
+    remain best-effort for backward compatibility.
+    """
     def columns(table):
         if USE_POSTGRES:
             c.execute(
@@ -598,34 +608,33 @@ def _migrate_ss_columns(conn, c):
             return {row[0] for row in c.fetchall()}
         c.execute(f"PRAGMA table_info({table})")
         return {row[1] for row in c.fetchall()}
+
+    user_cols = columns("ss_users")
+    if "role" not in user_cols:
+        c.execute("ALTER TABLE ss_users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
+    if "status" not in user_cols:
+        c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+
+    # RBAC migration is non-destructive: no user is deleted, recreated, or
+    # bulk-demoted. Only the authenticated existing owner may be promoted later.
     try:
-        user_cols = columns("ss_users")
-        if "role" not in user_cols:
-            c.execute("ALTER TABLE ss_users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
-        if "status" not in user_cols:
-            c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
-        # V3 RBAC: only two roles are supported. On the first V3 migration,
-        # demote every existing account to `user` so there is no inherited or
-        # accidental administrator. The project owner then claims the *current
-        # authenticated account* once through the server-side owner-claim flow.
-        # A migration marker keeps the later claimed admin intact on restarts.
         c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-        c.execute("SELECT value FROM ss_schema_meta WHERE key='rbac_v3_owner_admin'")
-        if c.fetchone() is None:
-            c.execute("UPDATE ss_users SET role='user'")
-            c.execute("INSERT INTO ss_schema_meta (key, value) VALUES ('rbac_v3_owner_admin', 'initialized')")
-        else:
-            c.execute("UPDATE ss_users SET role='user' WHERE role IS NULL OR role NOT IN ('user','admin')")
-        # Database-level invariant: at most one active Admin can exist, even if
-        # two owner-claim requests race at the same time. Supported by SQLite
-        # and PostgreSQL, the two database engines used by this project.
+        # Remove obsolete indexes from the old claim-token implementation. A
+        # stale legacy role can never authorize Admin access because effective
+        # authorization also verifies the exact owner account server-side.
         c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
-        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_single_admin ON ss_users(role) WHERE role='admin'")
+        c.execute("DROP INDEX IF EXISTS idx_ss_single_admin")
+    except Exception:
+        # These legacy cleanup statements are not required for authentication.
+        pass
+
+    try:
         hp_cols = columns("ss_health_profiles")
         for col, default in [("extra_info", ""), ("activity_level", "")]:
             if col not in hp_cols:
                 c.execute(f"ALTER TABLE ss_health_profiles ADD COLUMN {col} TEXT DEFAULT '{default}'")
     except Exception:
+        # Optional profile columns must not prevent existing accounts from login.
         pass
 
 
@@ -1899,6 +1908,12 @@ def create_ss_user(email, name, password):
         return None, "invalid_name"
     if len(password) < 6:
         return None, "password_too_short"
+    # The designated owner must already exist. Never create a replacement Admin
+    # account if that production account is missing.
+    if email == OWNER_ADMIN_EMAIL:
+        existing = get_ss_user_by_email(email)
+        if not existing:
+            return None, "owner_account_must_exist"
     conn = _conn()
     try:
         c = conn.cursor()
@@ -1969,7 +1984,7 @@ def get_ss_user(user_id):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if (row[3] or "user") == "admin" else "user"
+        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active"}
     finally:
         conn.close()
@@ -1985,7 +2000,7 @@ def get_ss_user_by_email(email):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if (row[3] or "user") == "admin" else "user"
+        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active"}
     finally:
         conn.close()
@@ -2002,20 +2017,85 @@ def list_ss_admin_users():
         conn.close()
     out = []
     for row in rows:
-        role = "admin" if (row[3] or "user") == "admin" else "user"
+        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         out.append({"id": row[0], "email": row[1], "name": row[2], "role": role,
                     "created_at": row[4], "last_login": row[5]})
     return out
 
 
+def is_owner_admin_email(email):
+    """Return True only for the configured project-owner email."""
+    return (email or "").strip().lower() == OWNER_ADMIN_EMAIL
+
+
+def promote_existing_owner_admin(user_id):
+    """Promote the already-existing authenticated owner account only.
+
+    No account is created, no password is touched, and no other user's role is
+    modified. Returns True only when the supplied ID belongs to the owner.
+    """
+    if not user_id:
+        return False
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT email,status,role FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        row = c.fetchone()
+        if not row or (row[1] or "active") != "active" or not is_owner_admin_email(row[0]):
+            return False
+        if (row[2] or "user") != "admin":
+            c.execute("UPDATE ss_users SET role='admin' WHERE id=%s" % PH, (int(user_id),))
+            conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def ensure_owner_admin_by_email(email=None):
+    """Repair the role for the existing owner account without creating one.
+
+    This helper is safe for migrations/diagnostics: if the owner email does not
+    exist it returns ``found=False`` and makes no database changes.
+    """
+    target = (email or OWNER_ADMIN_EMAIL).strip().lower()
+    if target != OWNER_ADMIN_EMAIL:
+        return {"found": False, "promoted": False, "reason": "not_owner_email"}
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id,role,status FROM ss_users WHERE lower(email)=%s" % PH, (target,))
+        row = c.fetchone()
+        if not row:
+            return {"found": False, "promoted": False, "reason": "owner_not_found"}
+        if (row[2] or "active") != "active":
+            return {"found": True, "promoted": False, "reason": "owner_inactive", "user_id": row[0]}
+        promoted = (row[1] or "user") != "admin"
+        if promoted:
+            c.execute("UPDATE ss_users SET role='admin' WHERE id=%s" % PH, (int(row[0]),))
+            conn.commit()
+        return {"found": True, "promoted": promoted, "reason": "ok", "user_id": row[0]}
+    finally:
+        conn.close()
+
+
 def set_ss_user_role(user_id, role):
-    """Persist an account role.  Internal server-side use only."""
+    """Persist a role for internal server-side use only.
+
+    Only the configured owner can ever be assigned ``admin``. This function is
+    not exposed as a public/Admin API.
+    """
     role = (role or "").strip()
     if role not in _ADMIN_ROLES | {"user"}:
         raise ValueError("invalid_role")
     conn = _conn()
     try:
         c = conn.cursor()
+        c.execute("SELECT email FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        row = c.fetchone()
+        if not row:
+            return False
+        if role == "admin" and not is_owner_admin_email(row[0]):
+            raise PermissionError("admin_role_reserved_for_owner")
         c.execute("UPDATE ss_users SET role=%s WHERE id=%s" % (PH, PH), (role, int(user_id)))
         conn.commit()
         return bool(c.rowcount)
@@ -2024,191 +2104,135 @@ def set_ss_user_role(user_id, role):
 
 
 def admin_count():
-    """Return the number of persisted Admin accounts."""
+    """Return 1 only when the configured owner is the persisted Admin."""
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM ss_users WHERE role='admin'")
+        c.execute("SELECT COUNT(*) FROM ss_users WHERE role='admin' AND lower(email)=%s" % PH, (OWNER_ADMIN_EMAIL,))
         return int(c.fetchone()[0] or 0)
     finally:
         conn.close()
 
 
 def claim_current_user_as_admin(user_id):
-    """Atomically promote one already-authenticated active user.
-
-    This succeeds only when there is no active admin yet.  The caller must
-    enforce the server-side one-time claim secret before invoking it.
-    """
-    if not user_id:
-        return False
-    conn = _conn()
-    try:
-        c = conn.cursor()
-        c.execute(
-            "UPDATE ss_users SET role='admin' WHERE id=%s AND status='active' "
-            "AND NOT EXISTS (SELECT 1 FROM ss_users WHERE role='admin')" % PH,
-            (int(user_id),),
-        )
-        changed = bool(c.rowcount)
-        conn.commit()
-        return changed
-    except Exception:
-        # A database-level unique partial index also guarantees a single active
-        # Admin. In the extremely small race window, the losing claim safely
-        # rolls back and reports False instead of exposing a server error.
-        conn.rollback()
-        return False
-    finally:
-        conn.close()
-
-
-def save_health_profile(user_id, data):
-    """Save or update health profile for a user."""
-    if not user_id:
-        return
-    conn = _conn()
-    try:
-        c = conn.cursor()
-        now = datetime.now(timezone.utc).isoformat()
-        uid = int(user_id)
-        fields = {
-            "display_name": data.get("display_name", ""),
-            "dob": data.get("dob", ""),
-            "gender": data.get("gender", ""),
-            "height": data.get("height", ""),
-            "weight": data.get("weight", ""),
-            "activity_level": data.get("activity_level", ""),
-            "medications": data.get("medications", ""),
-            "allergies": data.get("allergies", ""),
-            "health_conditions": data.get("health_conditions", ""),
-            "extra_info": data.get("extra_info", ""),
-            "lang": data.get("lang", "ar"),
-            "updated_at": now,
-        }
-        all_cols = ["user_id"] + list(fields.keys())
-        all_vals = [uid] + list(fields.values())
-        if USE_POSTGRES:
-            cols = ", ".join(all_cols)
-            phs = ", ".join(["%s"] * len(all_cols))
-            updates = ", ".join(f"{k}=excluded.{k}" for k in fields.keys())
-            c.execute(
-                f"INSERT INTO ss_health_profiles ({cols}) VALUES ({phs}) "
-                f"ON CONFLICT(user_id) DO UPDATE SET {updates}",
-                tuple(all_vals),
-            )
-        else:
-            cols = ", ".join(all_cols)
-            phs = ", ".join(["?"] * len(all_cols))
-            c.execute(
-                f"INSERT OR REPLACE INTO ss_health_profiles ({cols}) VALUES ({phs})",
-                tuple(all_vals),
-            )
-        conn.commit()
-    finally:
-        conn.close()
+    """Backward-compatible alias for the authenticated-owner repair path."""
+    return promote_existing_owner_admin(user_id)
 
 
 def load_health_profile(user_id):
-    """Load health profile for a user."""
+    """Load only the authenticated user's optional health profile."""
     if not user_id:
         return None
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            "SELECT display_name, dob, gender, height, weight, activity_level, "
-            "medications, allergies, health_conditions, extra_info, lang, updated_at "
+            "SELECT user_id,display_name,dob,gender,height,weight,activity_level,medications,allergies,health_conditions,extra_info,lang,updated_at "
             "FROM ss_health_profiles WHERE user_id=%s" % PH,
             (int(user_id),),
         )
         row = c.fetchone()
         if not row:
             return None
-        return {
-            "display_name": row[0] or "",
-            "dob": row[1] or "",
-            "gender": row[2] or "",
-            "height": row[3] or "",
-            "weight": row[4] or "",
-            "activity_level": row[5] or "",
-            "medications": row[6] or "",
-            "allergies": row[7] or "",
-            "health_conditions": row[8] or "",
-            "extra_info": row[9] or "",
-            "lang": row[10] or "ar",
-            "updated_at": row[11] or "",
-        }
+        keys = ["user_id","display_name","dob","gender","height","weight","activity_level","medications","allergies","health_conditions","extra_info","lang","updated_at"]
+        return dict(zip(keys, row))
+    finally:
+        conn.close()
+
+
+def save_health_profile(user_id, data):
+    """Create/update an optional health profile without making health fields mandatory."""
+    if not user_id:
+        raise ValueError("login_required")
+    data = data or {}
+    allowed = ["display_name","dob","gender","height","weight","activity_level","medications","allergies","health_conditions","extra_info","lang"]
+    values = {k: str(data.get(k) or "").strip()[:4000] for k in allowed}
+    values["lang"] = "en" if values.get("lang") == "en" else "ar"
+    if values.get("gender") not in {"", "male", "female", "other", "prefer_not_to_say"}:
+        values["gender"] = ""
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        params = (int(user_id),) + tuple(values[k] for k in allowed) + (now,)
+        if USE_POSTGRES:
+            c.execute(
+                "INSERT INTO ss_health_profiles (user_id,display_name,dob,gender,height,weight,activity_level,medications,allergies,health_conditions,extra_info,lang,updated_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                "ON CONFLICT(user_id) DO UPDATE SET display_name=EXCLUDED.display_name,dob=EXCLUDED.dob,gender=EXCLUDED.gender,height=EXCLUDED.height,weight=EXCLUDED.weight,activity_level=EXCLUDED.activity_level,medications=EXCLUDED.medications,allergies=EXCLUDED.allergies,health_conditions=EXCLUDED.health_conditions,extra_info=EXCLUDED.extra_info,lang=EXCLUDED.lang,updated_at=EXCLUDED.updated_at",
+                params,
+            )
+        else:
+            c.execute(
+                "INSERT INTO ss_health_profiles (user_id,display_name,dob,gender,height,weight,activity_level,medications,allergies,health_conditions,extra_info,lang,updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(user_id) DO UPDATE SET display_name=excluded.display_name,dob=excluded.dob,gender=excluded.gender,height=excluded.height,weight=excluded.weight,activity_level=excluded.activity_level,medications=excluded.medications,allergies=excluded.allergies,health_conditions=excluded.health_conditions,extra_info=excluded.extra_info,lang=excluded.lang,updated_at=excluded.updated_at",
+                params,
+            )
+        conn.commit()
     finally:
         conn.close()
 
 
 def delete_health_profile(user_id):
-    """Delete health profile for a user."""
+    """Delete only the optional health-profile row; the account remains intact."""
     if not user_id:
-        return
+        return False
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (int(user_id),))
         conn.commit()
-    finally:
-        conn.close()
-
-
-def save_privacy_settings(user_id, data):
-    """Save privacy settings for a user."""
-    if not user_id:
-        return
-    conn = _conn()
-    try:
-        c = conn.cursor()
-        now = datetime.now(timezone.utc).isoformat()
-        use_assistant = 1 if data.get("use_in_assistant", True) else 0
-        use_analysis = 1 if data.get("use_in_analysis", True) else 0
-        use_calc = 1 if data.get("use_in_calculators", True) else 0
-        save_chat = 1 if data.get("save_chat_history", True) else 0
-        if USE_POSTGRES:
-            c.execute(
-                "INSERT INTO ss_privacy (user_id, use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history, updated_at) "
-                "VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT(user_id) DO UPDATE SET "
-                "use_in_assistant=excluded.use_in_assistant, use_in_analysis=excluded.use_in_analysis, "
-                "use_in_calculators=excluded.use_in_calculators, save_chat_history=excluded.save_chat_history, "
-                "updated_at=excluded.updated_at",
-                (int(user_id), use_assistant, use_analysis, use_calc, save_chat, now),
-            )
-        else:
-            c.execute(
-                "INSERT OR REPLACE INTO ss_privacy (user_id, use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history, updated_at) "
-                "VALUES (?,?,?,?,?,?)",
-                (int(user_id), use_assistant, use_analysis, use_calc, save_chat, now),
-            )
-        conn.commit()
+        return bool(c.rowcount)
     finally:
         conn.close()
 
 
 def load_privacy_settings(user_id):
-    """Load privacy settings for a user."""
+    """Return privacy choices with safe defaults when the user has not saved settings yet."""
+    defaults = {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
     if not user_id:
-        return {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
+        return defaults.copy()
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute(
-            "SELECT use_in_assistant, use_in_analysis, use_in_calculators, save_chat_history "
-            "FROM ss_privacy WHERE user_id=%s" % PH,
-            (int(user_id),),
-        )
+        c.execute("SELECT use_in_assistant,use_in_analysis,use_in_calculators,save_chat_history,updated_at FROM ss_privacy WHERE user_id=%s" % PH, (int(user_id),))
         row = c.fetchone()
         if not row:
-            return {"use_in_assistant": True, "use_in_analysis": True, "use_in_calculators": True, "save_chat_history": True}
-        return {
-            "use_in_assistant": bool(row[0]),
-            "use_in_analysis": bool(row[1]),
-            "use_in_calculators": bool(row[2]),
-            "save_chat_history": bool(row[3]),
-        }
+            return defaults.copy()
+        return {"use_in_assistant": bool(row[0]), "use_in_analysis": bool(row[1]), "use_in_calculators": bool(row[2]), "save_chat_history": bool(row[3]), "updated_at": row[4]}
+    finally:
+        conn.close()
+
+
+def save_privacy_settings(user_id, data):
+    if not user_id:
+        raise ValueError("login_required")
+    data = data or {}
+    vals = {
+        "use_in_assistant": int(bool(data.get("use_in_assistant", True))),
+        "use_in_analysis": int(bool(data.get("use_in_analysis", True))),
+        "use_in_calculators": int(bool(data.get("use_in_calculators", True))),
+        "save_chat_history": int(bool(data.get("save_chat_history", True))),
+    }
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        params = (int(user_id), vals["use_in_assistant"], vals["use_in_analysis"], vals["use_in_calculators"], vals["save_chat_history"], now)
+        if USE_POSTGRES:
+            c.execute(
+                "INSERT INTO ss_privacy(user_id,use_in_assistant,use_in_analysis,use_in_calculators,save_chat_history,updated_at) VALUES(%s,%s,%s,%s,%s,%s) "
+                "ON CONFLICT(user_id) DO UPDATE SET use_in_assistant=EXCLUDED.use_in_assistant,use_in_analysis=EXCLUDED.use_in_analysis,use_in_calculators=EXCLUDED.use_in_calculators,save_chat_history=EXCLUDED.save_chat_history,updated_at=EXCLUDED.updated_at",
+                params,
+            )
+        else:
+            c.execute(
+                "INSERT INTO ss_privacy(user_id,use_in_assistant,use_in_analysis,use_in_calculators,save_chat_history,updated_at) VALUES(?,?,?,?,?,?) "
+                "ON CONFLICT(user_id) DO UPDATE SET use_in_assistant=excluded.use_in_assistant,use_in_analysis=excluded.use_in_analysis,use_in_calculators=excluded.use_in_calculators,save_chat_history=excluded.save_chat_history,updated_at=excluded.updated_at",
+                params,
+            )
+        conn.commit()
     finally:
         conn.close()
 
@@ -2290,6 +2314,15 @@ def delete_ss_user(user_id):
         c.execute("DELETE FROM ss_chat_history WHERE user_id=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_privacy WHERE user_id=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (uid,))
+        # Optional advanced-feature tables may not exist on older deployments.
+        for table, column, value in (
+            ("ss_user_preferences", "user_id", uid),
+            ("ss_analysis_links", "user_hash", owner),
+        ):
+            try:
+                c.execute("DELETE FROM %s WHERE %s=%s" % (table, column, PH), (value,))
+            except Exception:
+                pass
         c.execute("DELETE FROM ss_users WHERE id=%s" % PH, (uid,))
         conn.commit()
     finally:

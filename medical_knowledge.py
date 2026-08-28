@@ -170,10 +170,13 @@ def init_schema():
             )""")
             c.execute(f"""CREATE TABLE IF NOT EXISTS mk_red_flags (
                 id {serial}, slug TEXT UNIQUE NOT NULL, name_ar TEXT NOT NULL, name_en TEXT NOT NULL,
+                description_ar TEXT DEFAULT '', description_en TEXT DEFAULT '',
                 required_symptoms TEXT NOT NULL DEFAULT '[]', match_mode TEXT NOT NULL DEFAULT 'all',
                 keywords_ar TEXT NOT NULL DEFAULT '[]', keywords_en TEXT NOT NULL DEFAULT '[]',
-                min_severity INTEGER NOT NULL DEFAULT 1, risk_level TEXT NOT NULL DEFAULT 'urgent',
-                message_ar TEXT NOT NULL, message_en TEXT NOT NULL, source_id INTEGER,
+                min_severity INTEGER NOT NULL DEFAULT 1, severity TEXT NOT NULL DEFAULT 'urgent', risk_level TEXT NOT NULL DEFAULT 'urgent',
+                message_ar TEXT NOT NULL, message_en TEXT NOT NULL,
+                recommended_action_ar TEXT DEFAULT '', recommended_action_en TEXT DEFAULT '',
+                source_id INTEGER, reference_url TEXT DEFAULT '', last_updated TEXT,
                 status TEXT NOT NULL DEFAULT 'active', version INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
                 FOREIGN KEY(source_id) REFERENCES mk_sources(id)
             )""")
@@ -192,6 +195,17 @@ def init_schema():
             for table in ("mk_sources", "mk_red_flags"):
                 if "version" not in _columns(c, table):
                     c.execute(f"ALTER TABLE {table} ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
+            # Non-destructive Red Flag schema upgrade. Existing rules remain in
+            # place and receive the new metadata fields without deleting data.
+            rf_cols = _columns(c, "mk_red_flags")
+            for col, ddl in (
+                ("description_ar", "TEXT DEFAULT ''"), ("description_en", "TEXT DEFAULT ''"),
+                ("severity", "TEXT NOT NULL DEFAULT 'urgent'"),
+                ("recommended_action_ar", "TEXT DEFAULT ''"), ("recommended_action_en", "TEXT DEFAULT ''"),
+                ("reference_url", "TEXT DEFAULT ''"), ("last_updated", "TEXT")
+            ):
+                if col not in rf_cols:
+                    c.execute(f"ALTER TABLE mk_red_flags ADD COLUMN {col} {ddl}")
             _seed(c)
             conn.commit()
             _READY = True
@@ -234,12 +248,12 @@ SYMPTOMS = [
     ("dizziness", "دوخة", "Dizziness", "neurological", ["دوار", "عدم توازن"], ["dizzy", "lightheaded"]),
     ("dehydration", "جفاف", "Dehydration", "general", ["قلة البول", "جفاف الفم"], ["dry mouth", "reduced urination"]),
     ("wheezing", "صفير التنفس", "Wheezing", "respiratory", ["صفير في الصدر"], ["wheeze"]),
-    ("shortness-of-breath", "ضيق التنفس", "Shortness of breath", "respiratory", ["صعوبة التنفس", "ما اقدر اتنفس", "لا استطيع التنفس"], ["difficulty breathing", "trouble breathing", "breathless"]),
+    ("shortness-of-breath", "ضيق التنفس", "Shortness of breath", "respiratory", ["صعوبة التنفس", "ما اقدر اتنفس", "لا استطيع التنفس", "ضيق شديد في التنفس", "ضيق شديد بالتنفس", "صعوبة شديدة في التنفس"], ["difficulty breathing", "trouble breathing", "breathless", "severe shortness of breath", "severe breathing difficulty"]),
     ("chest-tightness", "ضيق الصدر", "Chest tightness", "respiratory", ["شد في الصدر"], ["tight chest"]),
     ("chest-pain", "ألم الصدر", "Chest pain", "cardiovascular", ["الم في الصدر", "وجع الصدر"], ["pain in chest", "heart pain"]),
     ("sweating", "تعرق غير معتاد", "Unusual sweating", "general", ["عرق بارد", "تعرق شديد"], ["cold sweat", "sweating heavily"]),
-    ("one-sided-weakness", "ضعف في جانب واحد", "One-sided weakness", "neurological", ["ضعف جهة واحدة", "تنميل في جانب", "خدر في جانب"], ["weakness on one side", "one sided numbness", "arm weakness"]),
-    ("speech-difficulty", "صعوبة في الكلام", "Speech difficulty", "neurological", ["ثقل الكلام", "الكلام متداخل"], ["slurred speech", "trouble speaking"]),
+    ("one-sided-weakness", "ضعف في جانب واحد", "One-sided weakness", "neurological", ["ضعف جهة واحدة", "تنميل في جانب", "خدر في جانب", "ضعف مفاجئ", "ضعف مفاجئ في جهة واحدة", "تنميل مفاجئ في جانب"], ["weakness on one side", "one sided numbness", "arm weakness", "sudden weakness", "sudden arm weakness"]),
+    ("speech-difficulty", "صعوبة في الكلام", "Speech difficulty", "neurological", ["ثقل الكلام", "الكلام متداخل", "صعوبة مفاجئة في الكلام", "صعوبه مفاجئه في الكلام"], ["slurred speech", "trouble speaking", "speech difficulty", "sudden speech difficulty"]),
     ("face-drooping", "تدلي الوجه", "Face drooping", "neurological", ["اعوجاج الوجه"], ["facial droop"]),
     ("sudden-vision-loss", "فقدان مفاجئ للرؤية", "Sudden vision loss", "neurological", ["فقدت النظر فجأه", "فقدت الرؤية فجأة"], ["sudden loss of vision", "sudden blindness"]),
     ("loss-of-consciousness", "فقدان الوعي", "Loss of consciousness", "neurological", ["اغماء", "إغماء", "غيبوبه"], ["unconscious", "fainted", "passed out"]),
@@ -300,12 +314,72 @@ RED_RULES = [
     ("severe-bleeding", "نزيف شديد", "Severe bleeding", ["severe-bleeding"], "any", [], [], 1, "urgent", "النزيف الشديد أو الذي لا يتوقف يحتاج طوارئ.", "Severe or uncontrolled bleeding needs emergency care.", "nhs"),
     ("severe-head-neuro", "صداع شديد مع علامة عصبية", "Severe headache with neurological sign", ["severe-headache","one-sided-weakness"], "all", [], [], 1, "urgent", "الصداع الشديد المفاجئ مع ضعف في جانب واحد علامة طارئة.", "A sudden severe headache with one-sided weakness is an emergency sign.", "cdc"),
     ("self-harm", "خطر إيذاء النفس", "Risk of self-harm", ["suicidal-thoughts"], "any", [], [], 1, "urgent", "أفكار إيذاء النفس تحتاج دعمًا فوريًا وعدم البقاء وحيدًا.", "Thoughts of self-harm need immediate support; do not stay alone.", "who"),
-    ("severe-breathing", "ضيق تنفس شديد", "Severe breathing difficulty", ["shortness-of-breath"], "any", [], [], 4, "urgent", "ضيق التنفس الشديد يحتاج تقييمًا عاجلًا.", "Severe breathing difficulty needs urgent assessment.", "who"),
+    ("severe-breathing", "ضيق تنفس شديد", "Severe breathing difficulty", ["shortness-of-breath"], "any", [], [], 4, "urgent", "ضيق التنفس الشديد يحتاج تقييمًا عاجلًا.", "Severe breathing difficulty needs urgent assessment.", "nhs"),
     ("chest-review", "ألم في الصدر", "Chest pain", ["chest-pain"], "any", [], [], 1, "review", "ألم الصدر يحتاج تقييمًا طبيًا حتى دون علامات أخرى.", "Chest pain needs medical assessment even without other signs.", "nhs"),
 ]
 
+# Source-grounded metadata for the independent safety layer. These references
+# point to official pages and are never generated by the AI model.
+RED_RULE_DETAILS = {
+    "chest-breathing": {
+        "description_ar": "ألم الصدر المصحوب بضيق تنفس قد يكون علامة تستدعي تقييماً طارئاً.",
+        "description_en": "Chest pain with shortness of breath can be a sign requiring emergency assessment.",
+        "action_ar": "اطلب الرعاية الطبية العاجلة أو تواصل مع خدمات الطوارئ المناسبة.",
+        "action_en": "Seek urgent medical care or contact the appropriate emergency service.",
+        "url": "https://www.nhs.uk/symptoms/chest-pain/"},
+    "stroke-combination": {
+        "description_ar": "الضعف المفاجئ في جانب واحد مع صعوبة الكلام من علامات السكتة الدماغية المعروفة.",
+        "description_en": "Sudden one-sided weakness with speech difficulty is a recognized stroke warning sign.",
+        "action_ar": "اطلب خدمات الطوارئ فوراً ولا تنتظر زوال الأعراض.",
+        "action_en": "Contact emergency services immediately and do not wait for symptoms to pass.",
+        "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html"},
+    "face-droop": {
+        "description_ar": "تدلي الوجه المفاجئ قد يكون من علامات السكتة الدماغية.",
+        "description_en": "Sudden facial drooping can be a stroke warning sign.",
+        "action_ar": "اطلب خدمات الطوارئ فوراً.", "action_en": "Contact emergency services immediately.",
+        "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html"},
+    "sudden-vision": {
+        "description_ar": "التغير أو الفقدان المفاجئ للرؤية قد يظهر ضمن علامات السكتة الدماغية.",
+        "description_en": "Sudden vision trouble or loss can occur among stroke warning signs.",
+        "action_ar": "اطلب تقييماً طبياً طارئاً فوراً.", "action_en": "Seek emergency medical assessment immediately.",
+        "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html"},
+    "unconscious": {
+        "description_ar": "فقدان الوعي أو عدم الاستجابة قد يمثل حالة مهددة للحياة.",
+        "description_en": "Loss of consciousness or abnormal unresponsiveness can represent a life-threatening emergency.",
+        "action_ar": "تواصل مع خدمات الطوارئ المناسبة فوراً.", "action_en": "Contact the appropriate emergency service immediately.",
+        "url": "https://www.nhs.uk/nhs-services/urgent-and-emergency-care-services/when-to-call-999/"},
+    "severe-bleeding": {
+        "description_ar": "النزيف الغزير أو الذي لا يمكن إيقافه يحتاج إلى رعاية طارئة.",
+        "description_en": "Heavy or uncontrolled bleeding requires emergency care.",
+        "action_ar": "اطلب الطوارئ أو توجّه للرعاية العاجلة المناسبة.", "action_en": "Contact emergency services or obtain appropriate emergency care.",
+        "url": "https://www.nhs.uk/conditions/cuts-and-grazes/"},
+    "severe-head-neuro": {
+        "description_ar": "الصداع الشديد المفاجئ مع ضعف في جانب واحد من علامات الخطر العصبية.",
+        "description_en": "A sudden severe headache with one-sided weakness is a neurological red flag.",
+        "action_ar": "اطلب خدمات الطوارئ فوراً.", "action_en": "Contact emergency services immediately.",
+        "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html"},
+    "self-harm": {
+        "description_ar": "وجود أفكار لإيذاء النفس يحتاج دعماً فورياً وتقييماً للسلامة.",
+        "description_en": "Thoughts of self-harm require immediate support and a safety assessment.",
+        "action_ar": "إذا كان الخطر مباشراً فلا تبقَ وحيداً وتواصل مع خدمات الطوارئ أو جهة دعم مناسبة فوراً.",
+        "action_en": "If danger is immediate, do not stay alone and contact emergency services or an appropriate crisis service now.",
+        "url": "https://www.who.int/news-room/questions-and-answers/item/suicide"},
+    "severe-breathing": {
+        "description_ar": "صعوبة التنفس الشديدة، مثل اللهاث أو عدم القدرة على إخراج الكلمات، تحتاج رعاية طارئة.",
+        "description_en": "Severe breathing difficulty, such as gasping or being unable to get words out, needs emergency care.",
+        "action_ar": "تواصل مع خدمات الطوارئ المناسبة فوراً.", "action_en": "Contact the appropriate emergency service immediately.",
+        "url": "https://www.nhs.uk/symptoms/shortness-of-breath/"},
+    "chest-review": {
+        "description_ar": "ألم الصدر يحتاج إلى تقييم طبي لتحديد درجة الاستعجال حتى عند غياب علامات إضافية.",
+        "description_en": "Chest pain needs medical assessment to determine urgency even when other warning signs are absent.",
+        "action_ar": "اطلب تقييماً طبياً، واطلب الطوارئ فوراً إذا كان الألم مفاجئاً أو مستمراً أو ترافق مع ضيق تنفس أو دوار.",
+        "action_en": "Seek medical assessment; obtain emergency help if pain is sudden, persistent, or accompanied by breathlessness or light-headedness.",
+        "url": "https://www.nhs.uk/symptoms/chest-pain/"},
+}
+
 
 def _seed(c):
+
     now = _now()
     for slug, ar, en in CATEGORIES:
         c.execute(f"INSERT INTO mk_categories (slug,name_ar,name_en,status,created_at,updated_at) VALUES ({db.PH},{db.PH},{db.PH},'active',{db.PH},{db.PH}) ON CONFLICT(slug) DO NOTHING", (slug, ar, en, now, now))
@@ -319,6 +393,14 @@ def _seed(c):
     for slug, ar, en, cat, aliases_ar, aliases_en in SYMPTOMS:
         c.execute(f"INSERT INTO mk_symptoms (slug,name_ar,name_en,description_ar,description_en,category_id,severity_min,severity_max,aliases_ar,aliases_en,red_flags_ar,red_flags_en,status,version,created_at,updated_at) VALUES ({','.join([db.PH]*16)}) ON CONFLICT(slug) DO NOTHING",
                   (slug,ar,en,f"عرض عام: {ar}.",f"General symptom: {en}.",cats.get(cat),1,5,_dump(aliases_ar),_dump(aliases_en),"","","active",1,now,now))
+        # Add newly curated normalization aliases without deleting any aliases
+        # that an administrator may already have added in production.
+        c.execute(f"SELECT aliases_ar,aliases_en FROM mk_symptoms WHERE slug={db.PH}", (slug,))
+        current_aliases = c.fetchone()
+        if current_aliases:
+            merged_ar = list(dict.fromkeys(_json(current_aliases[0], []) + list(aliases_ar)))
+            merged_en = list(dict.fromkeys(_json(current_aliases[1], []) + list(aliases_en)))
+            c.execute(f"UPDATE mk_symptoms SET aliases_ar={db.PH},aliases_en={db.PH} WHERE slug={db.PH}", (_dump(merged_ar), _dump(merged_en), slug))
     c.execute("SELECT id,slug FROM mk_symptoms")
     symptoms = {slug:int(i) for i,slug in c.fetchall()}
     for disease in DISEASES:
@@ -339,7 +421,12 @@ def _seed(c):
                 sid = symptoms[symptom_slug]
                 c.execute(f"INSERT INTO mk_symptom_sources (symptom_id,source_id,reference_title_ar,reference_title_en,reference_url,last_verified,status,created_at,updated_at) VALUES ({','.join([db.PH]*9)}) ON CONFLICT(symptom_id,source_id) DO NOTHING", (sid,source_id,title_ar,title_en,ref_url,now[:10],"active",now,now))
     for slug, ar, en, req, mode, kw_ar, kw_en, min_sev, risk, msg_ar, msg_en, source_slug in RED_RULES:
-        c.execute(f"INSERT INTO mk_red_flags (slug,name_ar,name_en,required_symptoms,match_mode,keywords_ar,keywords_en,min_severity,risk_level,message_ar,message_en,source_id,status,version,created_at,updated_at) VALUES ({','.join([db.PH]*16)}) ON CONFLICT(slug) DO NOTHING", (slug,ar,en,_dump(req),mode,_dump(kw_ar),_dump(kw_en),min_sev,risk,msg_ar,msg_en,sources.get(source_slug),"active",1,now,now))
+        meta = RED_RULE_DETAILS.get(slug, {})
+        c.execute(f"INSERT INTO mk_red_flags (slug,name_ar,name_en,description_ar,description_en,required_symptoms,match_mode,keywords_ar,keywords_en,min_severity,severity,risk_level,message_ar,message_en,recommended_action_ar,recommended_action_en,source_id,reference_url,last_updated,status,version,created_at,updated_at) VALUES ({','.join([db.PH]*23)}) ON CONFLICT(slug) DO NOTHING",
+                  (slug,ar,en,meta.get("description_ar",msg_ar),meta.get("description_en",msg_en),_dump(req),mode,_dump(kw_ar),_dump(kw_en),min_sev,risk,risk,msg_ar,msg_en,meta.get("action_ar",msg_ar),meta.get("action_en",msg_en),sources.get(source_slug),meta.get("url", ""),now[:10],"active",1,now,now))
+        # Idempotently backfill metadata for rules created by older releases.
+        c.execute(f"UPDATE mk_red_flags SET description_ar={db.PH},description_en={db.PH},severity={db.PH},recommended_action_ar={db.PH},recommended_action_en={db.PH},reference_url={db.PH},last_updated={db.PH} WHERE slug={db.PH}",
+                  (meta.get("description_ar",msg_ar),meta.get("description_en",msg_en),risk,meta.get("action_ar",msg_ar),meta.get("action_en",msg_en),meta.get("url", ""),now[:10],slug))
 
 
 def _normalize_text(value):
@@ -447,7 +534,7 @@ def match_diseases(canonical, lang="ar", limit=5):
             matched_symptoms=[]
             for sid,weight,typicality,notes_ar,notes_en in matched:
                 sym=ids[int(sid)]
-                matched_symptoms.append({"slug":sym["slug"],"name_ar":sym["name_ar"],"name_en":sym["name_en"],"typicality":typicality,"notes":notes_ar if lang=="ar" else notes_en})
+                matched_symptoms.append({"slug":sym["slug"],"name_ar":sym["name_ar"],"name_en":sym["name_en"],"weight":float(weight or 0),"typicality":typicality,"notes":notes_ar if lang=="ar" else notes_en})
             sources=_source_rows_for_disease(c,did)
             if not sources:
                 continue
@@ -470,7 +557,12 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
     except Exception: age=None
     conn=db._conn()
     try:
-        c=conn.cursor(); c.execute("SELECT id,slug,name_ar,name_en,required_symptoms,match_mode,keywords_ar,keywords_en,min_severity,risk_level,message_ar,message_en FROM mk_red_flags WHERE status='active'")
+        c=conn.cursor(); c.execute("""SELECT rf.id,rf.slug,rf.name_ar,rf.name_en,rf.required_symptoms,rf.match_mode,rf.keywords_ar,rf.keywords_en,
+                                      rf.min_severity,rf.risk_level,rf.message_ar,rf.message_en,rf.description_ar,rf.description_en,
+                                      rf.recommended_action_ar,rf.recommended_action_en,rf.source_id,rf.reference_url,rf.last_updated,
+                                      s.source_name,s.organization,s.official_url,s.verification_status,s.status
+                               FROM mk_red_flags rf LEFT JOIN mk_sources s ON s.id=rf.source_id
+                               WHERE rf.status='active'""")
         rows=c.fetchall()
     finally: conn.close()
     hits=[]
@@ -479,7 +571,16 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
         req_hit=(not req) or (req.issubset(slugs) if mode=="all" else bool(req & slugs))
         kw_hit=any(_normalize_text(k) in text for k in kws if _normalize_text(k))
         if severity>=min_sev and (req_hit or kw_hit):
-            hits.append({"rule_id":r[0],"slug":r[1],"name":r[2] if lang=="ar" else r[3],"risk_level":r[9],"message":r[10] if lang=="ar" else r[11]})
+            source = None
+            if r[16] and r[19] and r[22] == "verified" and r[23] == "active":
+                ref_url = r[17] if _url_is_trusted(r[17]) else r[21]
+                source = {"id": r[16], "source_name": r[19], "organization": r[20],
+                          "official_url": r[21], "reference_url": ref_url, "last_verified": r[18]}
+            hits.append({"rule_id":r[0],"slug":r[1],"name":r[2] if lang=="ar" else r[3],"risk_level":r[9],
+                         "message":r[10] if lang=="ar" else r[11],
+                         "description":r[12] if lang=="ar" else r[13],
+                         "recommended_action":r[14] if lang=="ar" else r[15],
+                         "source": source, "last_updated": r[18]})
     level="urgent" if any(h["risk_level"]=="urgent" for h in hits) else ("review" if hits else "low")
     if level=="low" and (severity>=4 or (age and age>=65 and bool(slugs & {"shortness-of-breath","chest-pain","fever","dehydration"}))):
         level="review"
@@ -494,6 +595,16 @@ def knowledge_bundle(raw_symptoms, severity=1, age=None, notes="", lang="ar"):
     risk=evaluate_risk(norm["canonical"],raw_symptoms,notes,severity,age,lang)
     matches=[] if risk["level"]=="urgent" else match_diseases(norm["canonical"],lang)
     sources=[]; seen=set(); dates=[]
+    # Safety sources are included even when urgent risk intentionally suppresses
+    # disease matching. This keeps every emergency warning source-grounded.
+    for reason in risk.get("reasons", []):
+        source = reason.get("source") if isinstance(reason, dict) else None
+        if source:
+            source_key=(source.get("id"),source.get("reference_url") or source.get("official_url"))
+            if source_key not in seen:
+                seen.add(source_key); sources.append(source)
+        if isinstance(reason, dict) and reason.get("last_updated"):
+            dates.append(reason["last_updated"])
     for match in matches:
         if match.get("last_updated"): dates.append(match["last_updated"])
         for source in match["sources"]:
@@ -509,11 +620,11 @@ def _admin(admin):
 
 
 def _audit(c, admin, action, entity_type, entity_id, old, new):
-    aid,email=_admin(admin); now=_now()
-    c.execute(f"INSERT INTO mk_audit_log (admin_id,admin_email,action,entity_type,entity_id,previous_value,new_value,timestamp) VALUES ({','.join([db.PH]*8)})",(aid,email,action,entity_type,entity_id,_dump(old) if old is not None else None,_dump(new) if new is not None else None,now))
+    aid,_email=_admin(admin); now=_now()
+    c.execute(f"INSERT INTO mk_audit_log (admin_id,admin_email,action,entity_type,entity_id,previous_value,new_value,timestamp) VALUES ({','.join([db.PH]*8)})",(aid,None,action,entity_type,entity_id,_dump(old) if old is not None else None,_dump(new) if new is not None else None,now))
     version=int((new or old or {}).get("version") or 1)
     if new is not None and entity_type in {"disease","symptom","source","red_flag"}:
-        c.execute(f"INSERT INTO mk_versions (entity_type,entity_id,version,snapshot,admin_id,admin_email,timestamp) VALUES ({','.join([db.PH]*7)})",(entity_type,int(entity_id),version,_dump(new),aid,email,now))
+        c.execute(f"INSERT INTO mk_versions (entity_type,entity_id,version,snapshot,admin_id,admin_email,timestamp) VALUES ({','.join([db.PH]*7)})",(entity_type,int(entity_id),version,_dump(new),aid,None,now))
 
 
 def _record(c, table, entity_id):
@@ -781,8 +892,8 @@ def list_relationships(search=""):
 def save_red_flag(data, admin, entity_id=None):
     init_schema(); ar=str(data.get("name_ar") or "").strip(); en=str(data.get("name_en") or "").strip()
     if not ar or not en or not str(data.get("message_ar") or "").strip() or not str(data.get("message_en") or "").strip(): raise ValueError("missing_required_fields")
-    risk=str(data.get("risk_level") or "urgent"); mode=str(data.get("match_mode") or "all"); status=str(data.get("status") or "active")
-    if risk not in {"urgent","review"} or mode not in {"all","any"} or status not in VALID_CONTENT_STATUS: raise ValueError("invalid_red_flag")
+    risk=str(data.get("risk_level") or data.get("severity") or "urgent"); mode=str(data.get("match_mode") or "all"); status=str(data.get("status") or "active")
+    if risk not in {"urgent","review"} or mode not in {"all","any"} or status not in {"active","disabled"}: raise ValueError("invalid_red_flag")
     required=[str(x).strip() for x in (data.get("required_symptoms") or []) if str(x).strip()]
     keywords_ar=[str(x).strip() for x in (data.get("keywords_ar") or []) if str(x).strip()]
     keywords_en=[str(x).strip() for x in (data.get("keywords_en") or []) if str(x).strip()]
@@ -798,11 +909,18 @@ def save_red_flag(data, admin, entity_id=None):
         c.execute(f"SELECT official_url FROM mk_sources WHERE id={db.PH} AND status='active' AND verification_status='verified'",(int(source_id),))
         source_row=c.fetchone()
         if not source_row or not _url_is_trusted(source_row[0]): raise ValueError("verified_source_required")
-        vals=(slug,ar,en,_dump(required),mode,_dump(keywords_ar),_dump(keywords_en),max(1,min(5,int(data.get("min_severity") or 1))),risk,str(data.get("message_ar")),str(data.get("message_en")),int(source_id),status,version,now)
+        reference_url=str(data.get("reference_url") or source_row[0]).strip()
+        if not _source_url_matches(source_row[0], reference_url): raise ValueError("reference_url_must_match_source")
+        description_ar=str(data.get("description_ar") or data.get("message_ar") or "").strip()
+        description_en=str(data.get("description_en") or data.get("message_en") or "").strip()
+        action_ar=str(data.get("recommended_action_ar") or data.get("message_ar") or "").strip()
+        action_en=str(data.get("recommended_action_en") or data.get("message_en") or "").strip()
+        last_updated=str(data.get("last_updated") or now[:10])
+        vals=(slug,ar,en,description_ar,description_en,_dump(required),mode,_dump(keywords_ar),_dump(keywords_en),max(1,min(5,int(data.get("min_severity") or 1))),risk,risk,str(data.get("message_ar")),str(data.get("message_en")),action_ar,action_en,int(source_id),reference_url,last_updated,status,version,now)
         if entity_id:
-            c.execute(f"UPDATE mk_red_flags SET slug={db.PH},name_ar={db.PH},name_en={db.PH},required_symptoms={db.PH},match_mode={db.PH},keywords_ar={db.PH},keywords_en={db.PH},min_severity={db.PH},risk_level={db.PH},message_ar={db.PH},message_en={db.PH},source_id={db.PH},status={db.PH},version={db.PH},updated_at={db.PH} WHERE id={db.PH}",vals+(int(entity_id),)); eid=int(entity_id)
+            c.execute(f"UPDATE mk_red_flags SET slug={db.PH},name_ar={db.PH},name_en={db.PH},description_ar={db.PH},description_en={db.PH},required_symptoms={db.PH},match_mode={db.PH},keywords_ar={db.PH},keywords_en={db.PH},min_severity={db.PH},severity={db.PH},risk_level={db.PH},message_ar={db.PH},message_en={db.PH},recommended_action_ar={db.PH},recommended_action_en={db.PH},source_id={db.PH},reference_url={db.PH},last_updated={db.PH},status={db.PH},version={db.PH},updated_at={db.PH} WHERE id={db.PH}",vals+(int(entity_id),)); eid=int(entity_id)
         else:
-            c.execute(f"INSERT INTO mk_red_flags (slug,name_ar,name_en,required_symptoms,match_mode,keywords_ar,keywords_en,min_severity,risk_level,message_ar,message_en,source_id,status,version,created_at,updated_at) VALUES ({','.join([db.PH]*16)})",vals[:-1]+(now,now)); eid=_id(c)
+            c.execute(f"INSERT INTO mk_red_flags (slug,name_ar,name_en,description_ar,description_en,required_symptoms,match_mode,keywords_ar,keywords_en,min_severity,severity,risk_level,message_ar,message_en,recommended_action_ar,recommended_action_en,source_id,reference_url,last_updated,status,version,created_at,updated_at) VALUES ({','.join([db.PH]*23)})",vals[:-1]+(now,now)); eid=_id(c)
         new=_record(c,"mk_red_flags",eid); _audit(c,admin,"updated" if old else "created","red_flag",eid,old,new); conn.commit(); return new
     finally: conn.close()
 
@@ -846,8 +964,17 @@ def delete_entity(kind, entity_id, admin):
     try:
         c=conn.cursor()
         if kind=="source":
-            c.execute(f"SELECT COUNT(*) FROM mk_disease_sources WHERE source_id={db.PH} AND status='active'",(int(entity_id),))
-            if c.fetchone()[0]: raise ValueError("source_is_in_use_disable_instead")
+            c.execute(f"SELECT COUNT(*) FROM mk_disease_sources WHERE source_id={db.PH}",(int(entity_id),))
+            disease_links=int(c.fetchone()[0] or 0)
+            c.execute(f"SELECT COUNT(*) FROM mk_symptom_sources WHERE source_id={db.PH}",(int(entity_id),))
+            symptom_links=int(c.fetchone()[0] or 0)
+            # Sources with relationships are historical medical evidence. Keep
+            # the row/URLs intact and disable it instead of breaking old links.
+            if disease_links or symptom_links:
+                old=_record(c,table,entity_id)
+                if not old: return False
+                c.execute(f"UPDATE mk_sources SET status='disabled',updated_at={db.PH} WHERE id={db.PH}",(_now(),int(entity_id)))
+                new=_record(c,table,entity_id); _audit(c,admin,"disabled","source",int(entity_id),old,new); conn.commit(); return True
         if kind=="relationship":
             c.execute(f"SELECT id,disease_id,symptom_id,weight,typicality,notes_ar,notes_en,status FROM mk_disease_symptoms WHERE id={db.PH}",(int(entity_id),)); row=c.fetchone(); old=dict(zip(["id","disease_id","symptom_id","weight","typicality","notes_ar","notes_en","status"],row)) if row else None
         else: old=_record(c,table,entity_id)
@@ -920,7 +1047,7 @@ def delete_category(entity_id, admin):
 def audit_log(limit=100):
     init_schema(); conn=db._conn()
     try:
-        c=conn.cursor(); c.execute(f"SELECT id,admin_id,admin_email,action,entity_type,entity_id,previous_value,new_value,timestamp FROM mk_audit_log ORDER BY id DESC LIMIT {db.PH}",(max(1,min(int(limit),500)),)); return [dict(zip(["id","admin_id","admin_email","action","entity_type","entity_id","previous_value","new_value","timestamp"],r)) for r in c.fetchall()]
+        c=conn.cursor(); c.execute(f"SELECT id,admin_id,action,entity_type,entity_id,previous_value,new_value,timestamp FROM mk_audit_log ORDER BY id DESC LIMIT {db.PH}",(max(1,min(int(limit),500)),)); return [dict(zip(["id","admin_id","action","entity_type","entity_id","previous_value","new_value","timestamp"],r)) for r in c.fetchall()]
     finally: conn.close()
 
 

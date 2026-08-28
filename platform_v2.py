@@ -185,7 +185,7 @@ def analytics_summary(days: int = 30) -> dict:
         user_rows = [r[0] for r in c.fetchall()]
         c.execute("SELECT COUNT(*) AS n FROM records")
         total_analyses = int((_row(c) or {}).get("n") or 0)
-        c.execute("SELECT timestamp,symptoms FROM records WHERE timestamp >= %s ORDER BY timestamp" % PH, (since.isoformat(),))
+        c.execute("SELECT timestamp,symptoms FROM records WHERE timestamp >= %s AND COALESCE(analytics_eligible,0)=1 ORDER BY timestamp" % PH, (since.isoformat(),))
         analysis_rows = c.fetchall()
     finally:
         conn.close()
@@ -405,8 +405,14 @@ def list_users_admin() -> list[dict]:
     conn = db._conn()
     c = conn.cursor()
     try:
-        c.execute("SELECT id,status,created_at,last_login,role FROM ss_users ORDER BY created_at DESC")
-        return _rows(c)
+        c.execute("SELECT id,email,status,created_at,last_login,role FROM ss_users ORDER BY created_at DESC")
+        rows = _rows(c)
+        # Email is used only server-side to compute the effective owner role;
+        # it is deliberately removed from the Admin user listing response.
+        for row in rows:
+            row["role"] = "admin" if row.get("role") == "admin" and db.is_owner_admin_email(row.get("email")) else "user"
+            row.pop("email", None)
+        return rows
     finally:
         conn.close()
 
@@ -436,7 +442,7 @@ def set_user_status(user_id: int, status: str, admin_id: int) -> dict:
 def set_user_role(user_id: int, role: str, admin_id: int) -> dict:
     """Role changes are intentionally unavailable from the dashboard/API.
 
-    The single owner admin is established only through the one-time claim flow.
+    The single owner Admin is synchronized only from the authenticated existing owner account.
     """
     raise ValueError("role_management_disabled")
 
