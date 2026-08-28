@@ -20,7 +20,11 @@ import db
 PH = db.PH
 CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "1.0")
 PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "1.0")
-PRIVACY_THRESHOLD = max(3, int(os.environ.get("ANALYTICS_PRIVACY_THRESHOLD", "5") or 5))
+try:
+    PRIVACY_THRESHOLD = max(3, min(20, int(os.environ.get("ANALYTICS_PRIVACY_THRESHOLD", "5") or 5)))
+except (TypeError, ValueError):
+    PRIVACY_THRESHOLD = 5
+_EPHEMERAL_CONSENT_SECRET = secrets.token_bytes(32)
 # This project does not currently train/fine-tune an AI model from user health records.
 AI_IMPROVEMENT_ACTIVE = False
 
@@ -30,7 +34,8 @@ def _now():
 
 
 def _secret():
-    return (os.environ.get("CONSENT_HASH_SECRET") or os.environ.get("WEB_SECRET") or "symptosense-consent-dev").encode()
+    configured = os.environ.get("CONSENT_HASH_SECRET") or os.environ.get("WEB_SECRET")
+    return configured.encode() if configured else _EPHEMERAL_CONSENT_SECRET
 
 
 def _subject_hash(subject_key: str) -> str:
@@ -492,4 +497,3 @@ def anonymous_health_analytics() -> dict:
         "consent_metrics":metrics,
         "consent_subjects":total_consents,
     }
-

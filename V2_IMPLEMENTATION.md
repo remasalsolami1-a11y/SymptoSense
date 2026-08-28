@@ -10,6 +10,7 @@
 - مساعد بخمسة أوضاع، منها تجربة صحة نفسية توعوية، مع استرجاع قاعدة المعرفة ومنع اختلاق المصادر أو النسب.
 - تسجيل دخول اختياري، استعادة كلمة المرور، حذف الحساب والبيانات المحفوظة، وبوابة إدارة منفصلة.
 - لوحة Admin موحدة مرتبطة بحساب مالكة المشروع الحالي (`role = admin`) مع تحليلات مجمعة، إدارة المحتوى والمعرفة الطبية والمصادر، قائمة مستخدمين محدودة، Audit Log وSystem Health. جميع الحسابات الأخرى تبقى `role = user`.
+- لوحة Admin الكاملة تشمل Overview، Users Analytics، Symptom Analytics، Medication Analytics، تصدير Excel بخمس أوراق، Explainable AI بمعاملات النموذج الفعلية، Knowledge Graph، Automatic Insights، Anomaly Detection، Population Heatmaps، Ask Your Data، ملف Admin وتغيير كلمة المرور مع Session timeout.
 - طبقة Medical Knowledge Base المنظمة ومحرك التطبيع والمطابقة وقواعد Red Flags المستقلة عن AI.
 
 ## الجداول الإضافية

@@ -226,6 +226,7 @@ SOURCES = [
     ("who-emro", "WHO EMRO", "WHO Regional Office for the Eastern Mediterranean", "https://www.emro.who.int/", "international_organization", 21),
     ("nhs", "NHS", "National Health Service", "https://www.nhs.uk/", "national_health_service", 30),
     ("cdc", "CDC", "Centers for Disease Control and Prevention", "https://www.cdc.gov/", "government", 11),
+    ("medlineplus", "MedlinePlus", "U.S. National Library of Medicine", "https://medlineplus.gov/", "government", 12),
     ("mayo-clinic", "Mayo Clinic", "Mayo Foundation for Medical Education and Research", "https://www.mayoclinic.org/", "academic_medical_institution", 40),
 ]
 
@@ -621,10 +622,10 @@ def _admin(admin):
 
 def _audit(c, admin, action, entity_type, entity_id, old, new):
     aid,_email=_admin(admin); now=_now()
-    c.execute(f"INSERT INTO mk_audit_log (admin_id,admin_email,action,entity_type,entity_id,previous_value,new_value,timestamp) VALUES ({','.join([db.PH]*8)})",(aid,None,action,entity_type,entity_id,_dump(old) if old is not None else None,_dump(new) if new is not None else None,now))
+    c.execute(f"INSERT INTO mk_audit_log (admin_id,admin_email,action,entity_type,entity_id,previous_value,new_value,timestamp) VALUES ({','.join([db.PH]*8)})",(aid,_email,action,entity_type,entity_id,_dump(old) if old is not None else None,_dump(new) if new is not None else None,now))
     version=int((new or old or {}).get("version") or 1)
     if new is not None and entity_type in {"disease","symptom","source","red_flag"}:
-        c.execute(f"INSERT INTO mk_versions (entity_type,entity_id,version,snapshot,admin_id,admin_email,timestamp) VALUES ({','.join([db.PH]*7)})",(entity_type,int(entity_id),version,_dump(new),aid,None,now))
+        c.execute(f"INSERT INTO mk_versions (entity_type,entity_id,version,snapshot,admin_id,admin_email,timestamp) VALUES ({','.join([db.PH]*7)})",(entity_type,int(entity_id),version,_dump(new),aid,_email,now))
 
 
 def _record(c, table, entity_id):
@@ -1101,4 +1102,3 @@ def system_health():
     except Exception as e:
         health["authentication"]={"status":"offline","response_ms":round((time.perf_counter()-start)*1000,1),"error":str(e)[:160]}
     return {"checked_at":checked,"components":health}
-

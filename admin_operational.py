@@ -19,8 +19,10 @@ from zoneinfo import ZoneInfo
 
 import db
 import platform_v2
+import privacy_features
 
 PH = db.PH
+_EPHEMERAL_ANALYTICS_SECRET = secrets.token_hex(32)
 JOURNEY_STAGES = ("home", "start_analysis", "symptoms", "questionnaire", "analysis", "result", "reanalyze", "report")
 LIVE_TYPES = {
     "analysis_started": ("Analysis started", "analysis"),
@@ -75,7 +77,7 @@ def init_schema() -> None:
 
 
 def session_hash(raw_session_id: str) -> str:
-    salt = os.environ.get("ANALYTICS_SESSION_SALT") or os.environ.get("WEB_SECRET") or "symptosense-analytics"
+    salt = os.environ.get("ANALYTICS_SESSION_SALT") or os.environ.get("WEB_SECRET") or _EPHEMERAL_ANALYTICS_SECRET
     return hashlib.sha256((salt + "|" + str(raw_session_id or "")).encode("utf-8")).hexdigest()[:32]
 
 
@@ -239,6 +241,7 @@ def _norm(v: str) -> str:
 
 
 def _records_for_filters(filters: dict) -> list[dict]:
+    privacy_features.init_schema()
     period=filters.get("period") or "30d"; since,until=_bounds(period,filters.get("start"),filters.get("end"))
     conn=db._conn(); c=conn.cursor()
     try:

@@ -637,15 +637,26 @@ def _migrate_ss_columns(conn, c):
     if "status" not in user_cols:
         c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
 
-    # RBAC migration is non-destructive: no user is deleted, recreated, or
-    # bulk-demoted. Only the authenticated existing owner may be promoted later.
+    # Canonical single-owner RBAC.  No account is deleted or recreated, but any
+    # stale Admin-like role on a non-owner account is demoted to ``user``.  This
+    # makes the database match the server-side effective-role check instead of
+    # merely hiding an unsafe legacy role in the UI.
     try:
         c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-        # Remove obsolete indexes from the old claim-token implementation. A
-        # stale legacy role can never authorize Admin access because effective
-        # authorization also verifies the exact owner account server-side.
+        c.execute(
+            "UPDATE ss_users SET role='user' WHERE lower(email)<>%s "
+            "AND lower(COALESCE(role,'user'))<>'user'" % PH,
+            (OWNER_ADMIN_EMAIL,),
+        )
+        c.execute(
+            "UPDATE ss_users SET role='user' WHERE lower(email)<>%s AND role<>'user'" % PH,
+            (OWNER_ADMIN_EMAIL,),
+        )
+        # The partial unique index provides a database-level second line of
+        # defence: at most one canonical ``admin`` role can exist.
         c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
         c.execute("DROP INDEX IF EXISTS idx_ss_single_admin")
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_single_admin ON ss_users(role) WHERE role='admin'")
     except Exception:
         # These legacy cleanup statements are not required for authentication.
         pass
@@ -1995,6 +2006,38 @@ def authenticate_ss_user(email, password):
         conn.close()
 
 
+def change_ss_user_password(user_id, current_password, new_password):
+    """Change a signed-in account password after verifying the current value.
+
+    Password material is never logged or returned.  The same slow PBKDF2 format
+    used by account creation is applied to the replacement password.
+    """
+    if not user_id:
+        return False, "login_required"
+    if len(new_password or "") < 8:
+        return False, "password_too_short"
+    if hmac.compare_digest(str(current_password or ""), str(new_password or "")):
+        return False, "new_password_must_differ"
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT password_hash,status FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        row = c.fetchone()
+        if not row or (row[1] or "active") != "active":
+            return False, "account_unavailable"
+        valid, _ = _verify_password(current_password, row[0])
+        if not valid:
+            return False, "current_password_incorrect"
+        c.execute(
+            "UPDATE ss_users SET password_hash=%s WHERE id=%s" % (PH, PH),
+            (_hash_password(new_password), int(user_id)),
+        )
+        conn.commit()
+        return True, None
+    finally:
+        conn.close()
+
+
 def get_ss_user(user_id):
     """Get user info by ID."""
     if not user_id:
@@ -2117,8 +2160,11 @@ def set_ss_user_role(user_id, role):
         row = c.fetchone()
         if not row:
             return False
-        if role == "admin" and not is_owner_admin_email(row[0]):
+        owner = is_owner_admin_email(row[0])
+        if role == "admin" and not owner:
             raise PermissionError("admin_role_reserved_for_owner")
+        if role != "admin" and owner:
+            raise PermissionError("owner_admin_role_is_fixed")
         c.execute("UPDATE ss_users SET role=%s WHERE id=%s" % (PH, PH), (role, int(user_id)))
         conn.commit()
         return bool(c.rowcount)

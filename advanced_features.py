@@ -9,6 +9,7 @@ from __future__ import annotations
 import io
 import json
 import math
+import os
 import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta
@@ -16,6 +17,7 @@ from datetime import datetime, timezone, timedelta
 import db
 import medical_knowledge
 import platform_v2
+import privacy_features
 
 PH = db.PH
 
@@ -327,7 +329,7 @@ def _safe_unknown_label(value: str) -> str:
 
 
 def ai_performance(days=30) -> dict:
-    platform_v2.init_schema(); days=max(1,min(365,int(days)))
+    platform_v2.init_schema(); privacy_features.init_schema(); days=max(1,min(365,int(days)))
     since=(datetime.now(timezone.utc)-timedelta(days=days)).isoformat()
     conn=db._conn(); c=conn.cursor()
     try:
@@ -364,6 +366,7 @@ def ai_performance(days=30) -> dict:
 
 
 def _daily_metric(metric: str, days=30):
+    privacy_features.init_schema()
     since=datetime.now(timezone.utc)-timedelta(days=days)
     conn=db._conn(); c=conn.cursor(); counts=Counter(); samples=defaultdict(list)
     try:
@@ -405,6 +408,7 @@ def anomaly_detection() -> dict:
 
 
 def automatic_insights() -> dict:
+    privacy_features.init_schema()
     now=datetime.now(timezone.utc); cur_start=now-timedelta(days=30); prev_start=now-timedelta(days=60)
     conn=db._conn(); c=conn.cursor()
     try:
@@ -446,6 +450,7 @@ def ask_your_data(question: str, lang='en') -> dict:
 
     No user-provided SQL is ever executed. Only predefined read-only aggregations run.
     """
+    privacy_features.init_schema(); platform_v2.init_schema()
     q=(question or '').strip().lower()[:500]
     if not q: return {"ok":False,"error":"empty_question"}
     # Explicitly reject SQL-like administrative verbs even though no SQL path exists.
@@ -453,34 +458,63 @@ def ask_your_data(question: str, lang='en') -> dict:
         return {"ok":False,"error":"read_only_only"}
     conn=db._conn(); c=conn.cursor(); ar=lang=='ar'
     try:
+        threshold=max(3,min(20,int(os.environ.get('ANALYTICS_PRIVACY_THRESHOLD','5') or 5)))
+    except (TypeError,ValueError):
+        threshold=5
+    def not_enough():
+        return {"ok":True,"type":"bar","sufficient_data":False,"answer":("البيانات غير كافية للإجابة عن هذا السؤال." if ar else "Not enough data to answer this question."),"data":[]}
+    try:
         if any(x in q for x in ['أكثر','top','most common']) and any(x in q for x in ['عرض','symptom']):
-            c.execute("SELECT symptoms FROM records WHERE COALESCE(analytics_eligible,0)=1"); counter=Counter()
-            for (raw,) in c.fetchall(): counter.update(s.strip() for s in str(raw or '').split(',') if s.strip())
-            data=[{"label":k,"value":v} for k,v in counter.most_common(5)]
-            return {"ok":True,"type":"bar","answer":("أكثر الأعراض تسجيلًا موضحة في الرسم أدناه." if ar else "The most frequently recorded symptoms are shown below."),"data":data}
+            params=[]; where="COALESCE(analytics_eligible,0)=1"
+            if any(x in q for x in ['هذا الشهر','this month']):
+                start=datetime.now(timezone.utc).replace(day=1,hour=0,minute=0,second=0,microsecond=0).isoformat();where+=f" AND timestamp>={PH}";params.append(start)
+            c.execute("SELECT user_hash,symptoms FROM records WHERE "+where,tuple(params)); counter=Counter();users=defaultdict(set)
+            for user_hash,raw in c.fetchall():
+                for symptom in {s.strip() for s in str(raw or '').split(',') if s.strip()}:
+                    counter[symptom]+=1;users[symptom].add(str(user_hash))
+            data=[{"label":k,"value":v} for k,v in counter.most_common() if len(users[k])>=threshold][:5]
+            if not data:return not_enough()
+            return {"ok":True,"type":"bar","sufficient_data":True,"answer":("أكثر الأعراض تسجيلًا موضحة في الرسم أدناه." if ar else "The most frequently recorded symptoms are shown below."),"data":data}
         if any(x in q for x in ['هذا الشهر','this month','الشهر الماضي','last month','compare']) and any(x in q for x in ['تحليل','analys']):
             now=datetime.now(timezone.utc); start=now.replace(day=1,hour=0,minute=0,second=0,microsecond=0); prev_end=start; prev_start=(start-timedelta(days=1)).replace(day=1)
             c.execute(f"SELECT timestamp FROM records WHERE timestamp>={PH} AND COALESCE(analytics_eligible,0)=1",(prev_start.isoformat(),)); ts=[str(r[0]) for r in c.fetchall()]
             cur=sum(1 for x in ts if x>=start.isoformat()); prev=sum(1 for x in ts if x<start.isoformat())
-            return {"ok":True,"type":"bar","answer":(f"هذا الشهر: {cur} تحليل، الشهر الماضي: {prev}." if ar else f"This month: {cur} analyses; last month: {prev}."),"data":[{"label":"Current","value":cur},{"label":"Previous","value":prev}]}
+            if not ts:return not_enough()
+            return {"ok":True,"type":"bar","sufficient_data":True,"answer":(f"هذا الشهر: {cur} تحليل، الشهر الماضي: {prev}." if ar else f"This month: {cur} analyses; last month: {prev}."),"data":[{"label":"Current","value":cur},{"label":"Previous","value":prev}]}
+        if any(x in q for x in ['فئة عمرية','age group','age']) and any(x in q for x in ['متوسط','average','mean']) and any(x in q for x in ['شدة','severity']):
+            c.execute("SELECT user_hash,age,severity FROM records WHERE age IS NOT NULL AND severity IS NOT NULL AND COALESCE(analytics_eligible,0)=1");groups=defaultdict(list);users=defaultdict(set)
+            for user_hash,age,severity in c.fetchall():
+                try:a=int(age);sev=float(severity)
+                except (TypeError,ValueError):continue
+                key='0-17' if a<18 else '18-25' if a<=25 else '26-35' if a<=35 else '36-45' if a<=45 else '46-55' if a<=55 else '56+'
+                groups[key].append(sev);users[key].add(str(user_hash))
+            data=[{"label":key,"value":round(sum(vals)/len(vals),2)} for key,vals in groups.items() if len(users[key])>=threshold]
+            data.sort(key=lambda item:item['value'],reverse=True)
+            if not data:return not_enough()
+            top=data[0]
+            return {"ok":True,"type":"bar","sufficient_data":True,"answer":(f"أعلى متوسط شدة كان في الفئة {top['label']} وبلغ {top['value']}." if ar else f"The highest average severity was {top['value']} in age group {top['label']}."),"data":data}
         if any(x in q for x in ['فئة عمرية','age group','age']) and any(x in q for x in ['أكثر','most','top']):
-            c.execute("SELECT age FROM records WHERE age IS NOT NULL AND COALESCE(analytics_eligible,0)=1"); groups=Counter()
-            for (age,) in c.fetchall():
+            c.execute("SELECT user_hash,age FROM records WHERE age IS NOT NULL AND COALESCE(analytics_eligible,0)=1"); groups=Counter();users=defaultdict(set)
+            for user_hash,age in c.fetchall():
                 try:a=int(age)
                 except:continue
                 key='0-17' if a<18 else '18-29' if a<30 else '30-44' if a<45 else '45-59' if a<60 else '60+'
-                groups[key]+=1
-            data=[{"label":k,"value":v} for k,v in groups.most_common()]
-            return {"ok":True,"type":"bar","answer":("توزيع استخدام تحليل الأعراض حسب الفئة العمرية." if ar else "Symptom-analysis usage by age group."),"data":data}
+                groups[key]+=1;users[key].add(str(user_hash))
+            data=[{"label":k,"value":v} for k,v in groups.most_common() if len(users[k])>=threshold]
+            if not data:return not_enough()
+            return {"ok":True,"type":"bar","sufficient_data":True,"answer":("توزيع استخدام تحليل الأعراض حسب الفئة العمرية." if ar else "Symptom-analysis usage by age group."),"data":data}
         if any(x in q for x in ['عاجل','urgent']) and any(x in q for x in ['نسبة','percent','rate']):
             c.execute("SELECT urgency FROM records WHERE COALESCE(analytics_eligible,0)=1"); vals=[str(r[0] or '').lower() for r in c.fetchall()]; n=len(vals); urgent=sum(1 for v in vals if v=='high'); pct=round(urgent*100/n,1) if n else 0
-            return {"ok":True,"type":"donut","answer":(f"نسبة التحليلات المصنفة عاجلة: {pct}% ({urgent} من {n})." if ar else f"Urgent assessments: {pct}% ({urgent} of {n})."),"data":[{"label":"Urgent","value":urgent},{"label":"Other","value":n-urgent}]}
+            if n<threshold:return not_enough()
+            return {"ok":True,"type":"donut","sufficient_data":True,"answer":(f"نسبة التحليلات المصنفة عاجلة: {pct}% ({urgent} من {n})." if ar else f"Urgent assessments: {pct}% ({urgent} of {n})."),"data":[{"label":"Urgent","value":urgent},{"label":"Other","value":n-urgent}]}
         if any(x in q for x in ['لغة','language','arabic','english','العربية','الإنجليزية']):
             c.execute("SELECT lang,COUNT(*) FROM records WHERE COALESCE(analytics_eligible,0)=1 GROUP BY lang"); data=[{"label":r[0] or 'unknown',"value":int(r[1])} for r in c.fetchall()]
-            return {"ok":True,"type":"donut","answer":("توزيع التحليلات حسب اللغة." if ar else "Analysis distribution by language."),"data":data}
+            if not data:return not_enough()
+            return {"ok":True,"type":"donut","sufficient_data":True,"answer":("توزيع التحليلات حسب اللغة." if ar else "Analysis distribution by language."),"data":data}
         if any(x in q for x in ['جوال','mobile','desktop','device']):
             c.execute("SELECT device_type,COUNT(*) FROM ss_usage_events GROUP BY device_type"); data=[{"label":r[0] or 'unknown',"value":int(r[1])} for r in c.fetchall()]
-            return {"ok":True,"type":"bar","answer":("توزيع الاستخدام حسب نوع الجهاز." if ar else "Usage distribution by device type."),"data":data}
+            if not data:return not_enough()
+            return {"ok":True,"type":"bar","sufficient_data":True,"answer":("توزيع الاستخدام حسب نوع الجهاز." if ar else "Usage distribution by device type."),"data":data}
         return {"ok":False,"error":"unsupported_question","examples":["ما أكثر 5 أعراض تم تسجيلها؟","قارن عدد التحليلات هذا الشهر بالشهر الماضي.","ما أكثر فئة عمرية استخدمت تحليل الأعراض؟","ما نسبة الحالات العاجلة؟"]}
     finally: conn.close()
 
@@ -504,7 +538,7 @@ def export_admin_excel() -> io.BytesIO:
     from openpyxl.styles import Font, PatternFill, Alignment
     from openpyxl.utils import get_column_letter
 
-    medical_knowledge.init_schema(); platform_v2.init_schema()
+    medical_knowledge.init_schema(); platform_v2.init_schema(); privacy_features.init_schema()
     conn=db._conn(); c=conn.cursor()
     try:
         c.execute("SELECT r.id,r.age,r.gender,r.symptoms,r.duration,r.severity,r.urgency,r.timestamp,res.data FROM records r LEFT JOIN results res ON res.record_id=r.id AND res.user_hash=r.user_hash WHERE COALESCE(r.analytics_eligible,0)=1 ORDER BY r.id")
@@ -575,8 +609,11 @@ def export_audit_excel() -> io.BytesIO:
     from openpyxl import Workbook
     from openpyxl.styles import Font,PatternFill
     rows=platform_v2.audit_log(limit=1000)
-    wb=Workbook(); ws=wb.active; ws.title='Audit Log'; headers=['Event ID','Timestamp','Admin User ID','Action','Entity Type','Entity ID','Status']
+    wb=Workbook(); ws=wb.active; ws.title='Audit Log'; headers=['Event ID','Timestamp','Admin User ID','Admin Account','Action','Entity Type','Entity ID','Result']
     ws.append(headers)
-    for r in rows: ws.append([r.get('id'),r.get('timestamp'),r.get('admin_id'),r.get('action'),r.get('entity_type'),r.get('entity_id'),'success'])
+    for r in rows:
+        action=str(r.get('action') or '')
+        result='failed' if ('failed' in action or 'denied' in action) else ('expired' if 'timeout' in action else 'success')
+        ws.append([r.get('id'),r.get('timestamp'),r.get('admin_id'),db.OWNER_ADMIN_EMAIL if r.get('admin_id') else 'System',action,r.get('entity_type'),r.get('entity_id'),result])
     for c in ws[1]: c.font=Font(bold=True,color='FFFFFF'); c.fill=PatternFill('solid',fgColor='163B5C')
     out=io.BytesIO(); wb.save(out); out.seek(0); return out

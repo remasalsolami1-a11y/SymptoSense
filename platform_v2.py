@@ -23,6 +23,7 @@ ALLOWED_CONTENT_TYPES = {"health_tip", "faq", "educational", "mental_health", "a
 ALLOWED_STATUSES = {"active", "draft", "disabled"}
 ALLOWED_ROLES = {"user", "admin"}
 _SCHEMA_KEY = None
+_EPHEMERAL_IDENTITY_SECRET = secrets.token_bytes(32)
 
 
 def _now() -> str:
@@ -168,6 +169,9 @@ def record_usage(event_type: str, path: str, lang: str, user_agent: str,
 def analytics_summary(days: int = 30) -> dict:
     """Return aggregate, privacy-preserving operational analytics only."""
     init_schema()
+    # The consent module owns the additive analytics_eligible migration.
+    import privacy_features
+    privacy_features.init_schema()
     days = max(1, min(365, int(days or 30)))
     since = datetime.now(timezone.utc) - timedelta(days=days)
     conn = db._conn()
@@ -448,7 +452,8 @@ def set_user_role(user_id: int, role: str, admin_id: int) -> dict:
 
 
 def identity_hash(email: str) -> str:
-    key = os.environ.get("WEB_SECRET", "symptosense-audit").encode()
+    configured = os.environ.get("WEB_SECRET")
+    key = configured.encode() if configured else _EPHEMERAL_IDENTITY_SECRET
     return hashlib.sha256(key + (email or "").strip().lower().encode()).hexdigest()[:24]
 
 

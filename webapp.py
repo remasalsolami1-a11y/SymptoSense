@@ -9,9 +9,10 @@ import json
 import base64
 import secrets
 import hashlib
+import hmac
 import random
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
@@ -32,18 +33,26 @@ import medical_knowledge
 import platform_v2
 import advanced_features
 import admin_operational
+import admin_complete
 import medication_push
 import privacy_features
 
 from dashboard import DASHBOARD_HTML
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("WEB_SECRET", "symptosense-dev-secret-change-me")
+_configured_web_secret = os.environ.get("WEB_SECRET", "").strip()
+# Never ship a publicly known session-signing key.  A generated development
+# key is safer than a hard-coded fallback (but restarts invalidate sessions),
+# while production deployments should always provide a stable WEB_SECRET.
+app.secret_key = _configured_web_secret or secrets.token_hex(32)
+if not _configured_web_secret:
+    app.logger.warning("WEB_SECRET is not configured; using an ephemeral session key for this process")
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
 )
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -1939,12 +1948,31 @@ def _admin_allowed(scope="access"):
 
 
 def _admin_session_valid(touch=True):
-    """Validate the normal authenticated session against the database."""
+    """Validate the normal session, persisted role, and Admin idle timeout."""
     user = _ss_user()
     if not user or user.get("status") != "active" or user.get("role") != "admin":
         return False
+    try:
+        timeout_minutes = max(5, min(240, int(os.environ.get("ADMIN_SESSION_TIMEOUT_MINUTES", "30"))))
+    except (TypeError, ValueError):
+        timeout_minutes = 30
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    last_seen = session.get("admin_last_seen")
+    if last_seen is not None:
+        try:
+            expired = now_ts - int(last_seen) > timeout_minutes * 60
+        except (TypeError, ValueError):
+            expired = True
+        if expired:
+            try:
+                platform_v2.audit(int(user.get("id")), "session_timeout", "admin_session", "self", None, {"status": "expired"})
+            except Exception:
+                pass
+            session.clear()
+            g.admin_session_expired = True
+            return False
     if touch:
-        session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
+        session["admin_last_seen"] = now_ts
     return True
 
 
@@ -1989,7 +2017,12 @@ def admin_api_required(scope="access"):
                 _admin_auth_debug("admin_api", None, granted=False, redirect_target="401")
                 return jsonify({"ok": False, "error": "login_required", "login_url": url_for("login", next="/admin")}), 401
             current_user = _ss_user()
-            if not _admin_session_valid() or not _admin_allowed(scope):
+            if not _admin_session_valid():
+                if not _ss_user_id() and getattr(g, "admin_session_expired", False):
+                    return jsonify({"ok": False, "error": "admin_session_expired", "login_url": url_for("login", next="/admin")}), 401
+                _admin_auth_debug("admin_api", current_user, granted=False, redirect_target="403")
+                return jsonify({"ok": False, "error": "forbidden"}), 403
+            if not _admin_allowed(scope):
                 _admin_auth_debug("admin_api", current_user, granted=False, redirect_target="403")
                 return jsonify({"ok": False, "error": "forbidden"}), 403
             _admin_auth_debug("admin_api", current_user, granted=True, redirect_target=request.path)
@@ -7169,16 +7202,21 @@ def login():
         login_user = db.get_ss_user(user_id) if user_id else None
         platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
+            session.clear()
             session["ss_user_id"] = user_id
             session.permanent = True
             is_admin = bool(login_user and login_user.get("role") == "admin")
             if is_admin:
+                session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
                 try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
                 except Exception: pass
             redirect_target = "/admin" if is_admin else next_param
             _admin_auth_debug("login_success", login_user, granted=is_admin, redirect_target=redirect_target)
             return redirect(redirect_target)
         _admin_auth_debug("login_failed", None, granted=False, redirect_target=None)
+        if db.is_owner_admin_email(email):
+            try: platform_v2.audit(None, "login_failed", "admin_session", "owner", None, {"status": "failed"})
+            except Exception: pass
         error = t["login_error"]
     body = """
     <div class="auth-wrap">
@@ -7497,7 +7535,9 @@ def api_register():
             return jsonify({"ok": False, "error": "terms_required"}), 400
         user_id, err = db.create_ss_user(email, name, password)
         if user_id:
+            session.clear()
             session["ss_user_id"] = user_id
+            session.permanent = True
             return jsonify({"ok": True, "redirect_url": "/profile"})
         return jsonify({"ok": False, "error": err})
     except Exception as e:
@@ -7517,16 +7557,21 @@ def api_login():
         login_user = db.get_ss_user(user_id) if user_id else None
         platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
+            session.clear()
             session["ss_user_id"] = user_id
             session.permanent = True
             is_admin = bool(login_user and login_user.get("role") == "admin")
             if is_admin:
+                session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
                 try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
                 except Exception: pass
             redirect_target = "/admin" if is_admin else "/profile"
             _admin_auth_debug("api_login_success", login_user, granted=is_admin, redirect_target=redirect_target)
             return jsonify({"ok": True, "redirect_url": redirect_target, "role": login_user.get("role", "user"), "is_admin": is_admin, "user": login_user})
         _admin_auth_debug("api_login_failed", None, granted=False, redirect_target=None)
+        if db.is_owner_admin_email(email):
+            try: platform_v2.audit(None, "login_failed", "admin_session", "owner", None, {"status": "failed"})
+            except Exception: pass
         return jsonify({"ok": False, "error": "invalid_credentials"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
@@ -7838,6 +7883,8 @@ def admin():
         return redirect(url_for("login", next="/admin"))
     current_user = _ss_user()
     if not _admin_session_valid():
+        if getattr(g, "admin_session_expired", False):
+            return redirect(url_for("login", next="/admin"))
         _admin_auth_debug("admin_route", current_user, granted=False, redirect_target="403")
         t = L["en" if _lang() == "en" else "ar"]
         msg = "هذه الصفحة متاحة لحساب Admin فقط." if _lang() == "ar" else "This page is available to the Admin account only."
@@ -7854,12 +7901,14 @@ def admin():
 
 @app.route("/admin/<section>")
 def admin_section(section):
-    allowed={"knowledge-graph","anomalies","audit-log","ask-data","insights","ai-performance","data-export","privacy-analytics","dropoff","live-activity"}
+    allowed={"knowledge-graph","anomalies","audit-log","ask-data","insights","ai-performance","explainable-ai","data-export","privacy-analytics","health-analytics","medications","heatmap","settings","dropoff","live-activity"}
     if section not in allowed:
         return redirect(url_for("admin"))
     if not _ss_user_id():
         return redirect(url_for("login", next=request.path))
     if not _admin_session_valid():
+        if getattr(g, "admin_session_expired", False):
+            return redirect(url_for("login", next=request.path))
         return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center"><h2>🔒 403</h2><p class="muted">Admin access only.</p><a class="btn" href="/home">Home</a></div>'), 403
     return redirect(url_for("admin") + "#" + section)
 
@@ -7902,10 +7951,6 @@ def api_stats():
         elif a <= 60: age_groups["46-60"] += 1
         else: age_groups["60+"] += 1
     feedback = db.feedback_counts()
-    fb_comments = db.fetchall(
-        "SELECT rating, comment, timestamp FROM feedback "
-        "WHERE comment IS NOT NULL AND comment != '' ORDER BY timestamp DESC LIMIT 20"
-    )
     return jsonify({
         "stats": stats,
         "symptoms": top_symptoms,
@@ -7913,7 +7958,9 @@ def api_stats():
         "lang": lang,
         "age_groups": list(age_groups.items()),
         "feedback": feedback,
-        "fb_comments": [{"rating": r, "comment": c, "timestamp": t} for r, c, t in fb_comments],
+        # Free-text feedback may contain health or identifying information, so
+        # the Admin analytics endpoint exposes aggregate counts only.
+        "fb_comments": [],
         "assistant_feedback": db.assistant_feedback_stats(),
         "db_backend": "PostgreSQL" if db.USE_POSTGRES else "SQLite",
     })
@@ -8196,6 +8243,9 @@ def api_admin_system_health():
         "response_ms": round((time.perf_counter() - started) * 1000, 1),
         "error": None if not missing else "Missing routes: " + ", ".join(missing),
     }
+    if not _configured_web_secret and health["components"].get("authentication", {}).get("status") == "online":
+        health["components"]["authentication"]["status"] = "degraded"
+        health["components"]["authentication"]["error"] = "WEB_SECRET is not configured; sessions use an ephemeral process key"
     return jsonify({"ok": True, "health": health})
 
 
@@ -8214,6 +8264,10 @@ def api_admin_audit():
             "previous_value": row.get("previous_value"), "new_value": row.get("new_value"), "timestamp": row.get("timestamp"), "source": "system",
         })
     rows.extend(privacy_rows)
+    for row in rows:
+        action = str(row.get("action") or "")
+        row["result"] = "failed" if ("failed" in action or "denied" in action) else ("expired" if "timeout" in action else "success")
+        row["admin_account"] = db.OWNER_ADMIN_EMAIL if (row.get("admin_id") or row.get("entity_id") == "owner") else ("User/Privacy" if row.get("source") == "privacy" else "System")
     rows.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
     return jsonify({"ok": True, "audit": rows[:limit]})
 
@@ -8235,6 +8289,15 @@ def api_admin_user_role(user_id):
 def api_admin_v2_analytics():
     try:
         return jsonify({"ok": True, "analytics": platform_v2.analytics_summary(request.args.get("days", 30))})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/complete-analytics", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_complete_analytics():
+    try:
+        return jsonify({"ok": True, "analytics": admin_complete.complete_analytics(request.args.get("days", 30))})
     except Exception as exc:
         return _mk_error(exc)
 
@@ -8326,6 +8389,9 @@ def api_admin_analytics_export_preview():
 def api_admin_analytics_export_xlsx():
     filters=_admin_analytics_filters()
     try:
+        supplied=request.headers.get("X-CSRF-Token",""); expected=session.get("admin_csrf","")
+        if not expected or not secrets.compare_digest(supplied,expected):
+            return jsonify({"ok":False,"error":"csrf_failed"}),403
         buf=admin_operational.export_medication_analytics_excel(filters)
         filter_types=[k for k in ("age_group","gender","medication","symptom","risk") if filters.get(k)]
         platform_v2.audit(int(_ss_user_id()),"exported","analytics","medication_analytics",None,{"period":filters.get("period"),"filter_types":filter_types,"privacy":"aggregated_anonymized"})
@@ -8375,11 +8441,11 @@ def api_admin_ui_audit():
 @admin_api_required("access")
 def api_admin_export_xlsx():
     try:
-        # The legacy overview export now uses the same privacy-thresholded,
-        # aggregate report as Data Analytics Export. It never exports individual
-        # health rows.
-        buf = admin_operational.export_medication_analytics_excel({"period": "all"})
-        platform_v2.audit(int(_ss_user_id()), "exported", "admin_data", "excel", None, {"format": "xlsx", "privacy": "aggregated_anonymized"})
+        supplied=request.headers.get("X-CSRF-Token",""); expected=session.get("admin_csrf","")
+        if not expected or not secrets.compare_digest(supplied,expected):
+            return jsonify({"ok":False,"error":"csrf_failed"}),403
+        buf = admin_complete.export_admin_workbook()
+        platform_v2.audit(int(_ss_user_id()), "exported", "admin_data", "excel", None, {"format": "xlsx", "privacy": "pseudonymized_consent_eligible", "sheets": 5})
         stamp = datetime.now().strftime("%Y-%m-%d")
         return send_file(buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=f"SymptoSense_Export_{stamp}.xlsx")
     except Exception as exc:
@@ -8392,6 +8458,9 @@ def api_admin_export_xlsx():
 @admin_api_required("access")
 def api_admin_audit_export():
     try:
+        supplied=request.headers.get("X-CSRF-Token",""); expected=session.get("admin_csrf","")
+        if not expected or not secrets.compare_digest(supplied,expected):
+            return jsonify({"ok":False,"error":"csrf_failed"}),403
         buf = advanced_features.export_audit_excel()
         platform_v2.audit(int(_ss_user_id()), "exported", "audit_log", "excel", None, {"format": "xlsx"})
         stamp = datetime.now().strftime("%Y-%m-%d")
@@ -8403,8 +8472,53 @@ def api_admin_audit_export():
 @app.route("/api/admin/ai-performance", methods=["GET"])
 @admin_api_required("analytics")
 def api_admin_ai_performance():
-    try: return jsonify({"ok": True, "performance": advanced_features.ai_performance(request.args.get("days", 30))})
+    try:
+        performance=advanced_features.ai_performance(request.args.get("days",30))
+        performance["model"]=admin_complete.model_card()
+        return jsonify({"ok":True,"performance":performance})
     except Exception as exc: return _mk_error(exc)
+
+
+@app.route("/api/admin/explainable-ai", methods=["GET"])
+@admin_api_required("analytics")
+def api_admin_explainable_ai():
+    try:
+        return jsonify({"ok": True, "explainability": admin_complete.explainable_ai()})
+    except Exception as exc:
+        return _mk_error(exc)
+
+
+@app.route("/api/admin/profile", methods=["GET"])
+@admin_api_required("access")
+def api_admin_profile():
+    user=_ss_user() or {}
+    try: timeout=max(5,min(240,int(os.environ.get("ADMIN_SESSION_TIMEOUT_MINUTES","30"))))
+    except (TypeError,ValueError): timeout=30
+    return jsonify({"ok":True,"profile":{
+        "email":user.get("email"),"role":"Administrator","last_login":user.get("last_login"),
+        "session_timeout_minutes":timeout,"change_password_available":True,
+        "two_factor_available":False,"two_factor_status":"not_supported_by_current_authentication_backend",
+    }})
+
+
+@app.route("/api/admin/profile/password", methods=["POST"])
+@admin_api_required("access")
+def api_admin_profile_password():
+    data=request.get_json(silent=True) or {}
+    current=str(data.get("current_password") or ""); new=str(data.get("new_password") or "")
+    confirm=str(data.get("confirm_password") or "")
+    if not hmac.compare_digest(new,confirm):
+        return jsonify({"ok":False,"error":"password_mismatch"}),400
+    ok,error=db.change_ss_user_password(int(_ss_user_id()),current,new)
+    if not ok:
+        try: platform_v2.audit(int(_ss_user_id()),"password_change_failed","admin_security","self",None,{"status":"failed","reason":error})
+        except Exception: pass
+        return jsonify({"ok":False,"error":error}),400
+    platform_v2.audit(int(_ss_user_id()),"password_changed","admin_security","self",None,{"status":"success"})
+    # Rotate all session state after a credential change to prevent fixation.
+    user_id=int(_ss_user_id()); session.clear(); session["ss_user_id"]=user_id; session.permanent=True
+    session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp()); _admin_csrf_token()
+    return jsonify({"ok":True,"message":"password_changed"})
 
 
 @app.route("/api/admin/knowledge-graph", methods=["GET"])
@@ -9621,6 +9735,7 @@ def run_webapp():
         app.logger.error("ADMIN_AUTH startup role synchronization failed: %s", type(exc).__name__)
     medical_knowledge.init_schema()
     platform_v2.init_schema()
+    privacy_features.init_schema()
     advanced_features.init_schema()
     admin_operational.init_schema()
     medication_push.init_schema()

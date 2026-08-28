@@ -44,9 +44,11 @@ For an ordinary user:
 ## Security behavior
 
 - New ordinary accounts always receive `role = user`.
-- No bulk role reset is performed and no other user's database row is modified during owner promotion.
+- Non-owner accounts are always canonicalized to `role = user`; a database index allows only one canonical `admin` row.
 - Only the configured owner email can have an effective Admin role.
 - Admin write APIs require authenticated Admin role plus a session CSRF token.
+- Admin Excel downloads also require the session CSRF token and never include emails, passwords, tokens, secrets, or chat content.
+- The Admin idle timeout defaults to 30 minutes and can be adjusted with `ADMIN_SESSION_TIMEOUT_MINUTES` (5–240 minutes).
 - Frontend/API role editing is disabled (`403 role_management_disabled`).
 - Passwords and authentication secrets are never exposed in Admin code or audit logs.
 - Admin analytics remain operational/aggregate and do not expose personal health records by default.
