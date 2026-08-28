@@ -13,10 +13,15 @@ DB_PATH = os.environ.get("DB_PATH", "symptosense.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL)
 
-# The project owner account is identified by email only after normal authentication.
-# This is not a credential and no password/token is stored in code. Override via
-# SYMPTOSENSE_ADMIN_EMAIL if the owner email ever changes.
-OWNER_ADMIN_EMAIL = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "remasalsolami2020@gmail.com").strip().lower()
+# The project owner account is fixed by the project owner's explicit request.
+# This value is an account identifier, not a credential; no password/token is
+# stored in code. A stale deployment environment override must never silently
+# assign Admin access to a different account.
+OWNER_ADMIN_EMAIL = "remasalsolami2020@gmail.com"
+_legacy_admin_email_override = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "").strip().lower()
+if _legacy_admin_email_override and _legacy_admin_email_override != OWNER_ADMIN_EMAIL:
+    _logger = logging.getLogger("SymptoSense")
+    _logger.warning("Ignoring conflicting legacy SYMPTOSENSE_ADMIN_EMAIL override; fixed project-owner Admin account remains authoritative")
 
 PH = "%s" if USE_POSTGRES else "?"
 
@@ -423,6 +428,23 @@ def init_db():
         conn.commit()
     finally:
         conn.close()
+
+    # Keep the existing project-owner account synchronized with the persisted
+    # Admin role. This never creates an account and never changes another
+    # user's role. It also repairs legacy values such as Admin/ADMIN by writing
+    # the canonical lowercase value ``admin`` only for the configured owner.
+    try:
+        owner_state = ensure_owner_admin_by_email()
+        if not owner_state.get("found"):
+            _logger.warning("Admin owner account not found in ss_users; no account was created")
+        elif owner_state.get("reason") == "owner_inactive":
+            _logger.warning("Admin owner account exists but is inactive; Admin access remains denied")
+        elif owner_state.get("promoted"):
+            _logger.info("Admin owner role synchronized to canonical role=admin")
+    except Exception as exc:
+        # Schema initialization should surface the reason in logs but must not
+        # mutate or recreate user accounts as a fallback.
+        _logger.error("Admin owner role synchronization failed: %s", type(exc).__name__)
 
 
 def _create_push_tables(c):
@@ -1984,7 +2006,7 @@ def get_ss_user(user_id):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active"}
     finally:
         conn.close()
@@ -2000,7 +2022,7 @@ def get_ss_user_by_email(email):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active"}
     finally:
         conn.close()
@@ -2017,7 +2039,7 @@ def list_ss_admin_users():
         conn.close()
     out = []
     for row in rows:
-        role = "admin" if ((row[3] or "user") == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
         out.append({"id": row[0], "email": row[1], "name": row[2], "role": role,
                     "created_at": row[4], "last_login": row[5]})
     return out
@@ -2069,7 +2091,8 @@ def ensure_owner_admin_by_email(email=None):
             return {"found": False, "promoted": False, "reason": "owner_not_found"}
         if (row[2] or "active") != "active":
             return {"found": True, "promoted": False, "reason": "owner_inactive", "user_id": row[0]}
-        promoted = (row[1] or "user") != "admin"
+        stored_role = str(row[1] or "user").strip().lower()
+        promoted = stored_role != "admin" or (row[1] or "") != "admin"
         if promoted:
             c.execute("UPDATE ss_users SET role='admin' WHERE id=%s" % PH, (int(row[0]),))
             conn.commit()

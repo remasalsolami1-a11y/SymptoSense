@@ -8,15 +8,15 @@ The only account eligible for Admin is the existing user whose email is:
 
 `remasalsolami2020@gmail.com`
 
-The email can be overridden at deployment with `SYMPTOSENSE_ADMIN_EMAIL`, but the default is already set for this project.
+This release fixes the Admin owner to `remasalsolami2020@gmail.com` exactly. A conflicting legacy `SYMPTOSENSE_ADMIN_EMAIL` environment value is ignored so an old Railway setting cannot assign Admin access to a different account.
 
 ## How assignment works
 
 1. Keep the existing production database when deploying this version.
-2. Sign in through the normal SymptoSense login using the already-existing owner account.
-3. After authentication succeeds, the server reads the current `ss_user_id` from the session and verifies that the database row for that ID belongs to the configured owner email.
-4. Only that existing row is updated to `role = admin` when needed.
-5. Open `/admin`. Access is checked again server-side from the current authenticated session and database role.
+2. Deploy while preserving the existing production database. During schema initialization, the server checks whether that exact existing owner row is present and synchronizes only that row to the canonical lowercase `role = admin`. No account is created if it is missing.
+3. Sign in through the normal SymptoSense login using the already-existing owner account.
+4. After authentication succeeds, the server reads the authenticated `ss_user_id`, re-verifies the database row and role, and redirects the Admin directly to `/admin`.
+5. `/admin` and every `/api/admin/*` endpoint verify the authenticated session and persisted role again on the server.
 
 No `ADMIN_CLAIM_TOKEN` is needed anymore.
 
@@ -50,3 +50,14 @@ For an ordinary user:
 - Frontend/API role editing is disabled (`403 role_management_disabled`).
 - Passwords and authentication secrets are never exposed in Admin code or audit logs.
 - Admin analytics remain operational/aggregate and do not expose personal health records by default.
+
+
+## Temporary Admin authentication diagnostics
+
+This release logs only non-sensitive Admin auth diagnostics: authenticated state, numeric user ID, effective role, owner-match result, Admin authorization result, and redirect target. It never logs passwords, tokens, raw email addresses, medical data, or request bodies.
+
+After the production flow is verified, set:
+
+`ADMIN_AUTH_DEBUG=0`
+
+to disable these temporary diagnostic messages.

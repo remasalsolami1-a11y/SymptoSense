@@ -1954,15 +1954,45 @@ def _admin_csrf_token():
     return session["admin_csrf"]
 
 
+def _admin_auth_debug(event, user=None, granted=None, redirect_target=None):
+    """Temporary, non-sensitive Admin authentication diagnostics.
+
+    Logs only authentication state, numeric user id, effective role, whether the
+    account matches the configured owner, authorization result, and redirect.
+    Passwords, tokens, email addresses, medical data, and request bodies are
+    never logged here. Set ADMIN_AUTH_DEBUG=0 to disable after verification.
+    """
+    if os.environ.get("ADMIN_AUTH_DEBUG", "1") != "1":
+        return
+    try:
+        u = user if isinstance(user, dict) else (_ss_user() if _ss_user_id() else None)
+        app.logger.info(
+            "ADMIN_AUTH event=%s authenticated=%s user_id=%s role=%s owner_match=%s admin_access=%s redirect=%s",
+            str(event)[:40],
+            bool(u),
+            (u or {}).get("id"),
+            (u or {}).get("role", "user"),
+            bool(u and db.is_owner_admin_email(u.get("email"))),
+            ("granted" if granted is True else "denied" if granted is False else "n/a"),
+            (redirect_target or "-"),
+        )
+    except Exception:
+        pass
+
+
 def admin_api_required(scope="access"):
     """Protect every Admin API with server-side authentication, RBAC, and CSRF."""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
             if not _ss_user_id():
+                _admin_auth_debug("admin_api", None, granted=False, redirect_target="401")
                 return jsonify({"ok": False, "error": "login_required", "login_url": url_for("login", next="/admin")}), 401
+            current_user = _ss_user()
             if not _admin_session_valid() or not _admin_allowed(scope):
+                _admin_auth_debug("admin_api", current_user, granted=False, redirect_target="403")
                 return jsonify({"ok": False, "error": "forbidden"}), 403
+            _admin_auth_debug("admin_api", current_user, granted=True, redirect_target=request.path)
             if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
                 supplied = request.headers.get("X-CSRF-Token", "")
                 expected = session.get("admin_csrf", "")
@@ -7141,10 +7171,14 @@ def login():
         if user_id:
             session["ss_user_id"] = user_id
             session.permanent = True
-            if login_user and login_user.get("role") == "admin":
+            is_admin = bool(login_user and login_user.get("role") == "admin")
+            if is_admin:
                 try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
                 except Exception: pass
-            return redirect(next_param)
+            redirect_target = "/admin" if is_admin else next_param
+            _admin_auth_debug("login_success", login_user, granted=is_admin, redirect_target=redirect_target)
+            return redirect(redirect_target)
+        _admin_auth_debug("login_failed", None, granted=False, redirect_target=None)
         error = t["login_error"]
     body = """
     <div class="auth-wrap">
@@ -7484,10 +7518,15 @@ def api_login():
         platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
         if user_id:
             session["ss_user_id"] = user_id
-            if login_user and login_user.get("role") == "admin":
+            session.permanent = True
+            is_admin = bool(login_user and login_user.get("role") == "admin")
+            if is_admin:
                 try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
                 except Exception: pass
-            return jsonify({"ok": True, "redirect_url": "/profile", "role": login_user.get("role", "user"), "user": login_user})
+            redirect_target = "/admin" if is_admin else "/profile"
+            _admin_auth_debug("api_login_success", login_user, granted=is_admin, redirect_target=redirect_target)
+            return jsonify({"ok": True, "redirect_url": redirect_target, "role": login_user.get("role", "user"), "is_admin": is_admin, "user": login_user})
+        _admin_auth_debug("api_login_failed", None, granted=False, redirect_target=None)
         return jsonify({"ok": False, "error": "invalid_credentials"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:200]})
@@ -7795,11 +7834,15 @@ def admin_claim():
 @app.route("/admin")
 def admin():
     if not _ss_user_id():
+        _admin_auth_debug("admin_route", None, granted=False, redirect_target="/login?next=/admin")
         return redirect(url_for("login", next="/admin"))
+    current_user = _ss_user()
     if not _admin_session_valid():
+        _admin_auth_debug("admin_route", current_user, granted=False, redirect_target="403")
         t = L["en" if _lang() == "en" else "ar"]
         msg = "هذه الصفحة متاحة لحساب Admin فقط." if _lang() == "ar" else "This page is available to the Admin account only."
         return _page("Admin", '<div class="card" style="max-width:560px;margin:40px auto;text-align:center;"><h2>🔒 Admin</h2><p class="muted">%s</p><a class="btn" href="/home">%s</a></div>' % (msg, t.get("nav_home", "Home"))), 403
+    _admin_auth_debug("admin_route", current_user, granted=True, redirect_target="/admin")
     medical_knowledge.init_schema()
     return render_template_string(
         DASHBOARD_HTML,
@@ -9568,6 +9611,14 @@ def api_blood():
 
 def run_webapp():
     db.init_db()
+    try:
+        owner_state = db.ensure_owner_admin_by_email()
+        app.logger.info(
+            "ADMIN_AUTH startup owner_found=%s role_sync=%s reason=%s",
+            bool(owner_state.get("found")), bool(owner_state.get("promoted")), owner_state.get("reason", "unknown")
+        )
+    except Exception as exc:
+        app.logger.error("ADMIN_AUTH startup role synchronization failed: %s", type(exc).__name__)
     medical_knowledge.init_schema()
     platform_v2.init_schema()
     advanced_features.init_schema()

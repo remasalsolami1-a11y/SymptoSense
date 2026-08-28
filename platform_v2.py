@@ -410,7 +410,7 @@ def list_users_admin() -> list[dict]:
         # Email is used only server-side to compute the effective owner role;
         # it is deliberately removed from the Admin user listing response.
         for row in rows:
-            row["role"] = "admin" if row.get("role") == "admin" and db.is_owner_admin_email(row.get("email")) else "user"
+            row["role"] = "admin" if str(row.get("role") or "user").strip().lower() == "admin" and db.is_owner_admin_email(row.get("email")) else "user"
             row.pop("email", None)
         return rows
     finally:
