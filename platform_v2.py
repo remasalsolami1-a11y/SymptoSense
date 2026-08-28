@@ -100,6 +100,14 @@ def init_schema() -> None:
             )
         """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_ss_password_reset_exp ON ss_password_resets(expires_at)")
+        c.execute(f"""
+            CREATE TABLE IF NOT EXISTS ss_email_verifications (
+                id {serial}, user_id INTEGER NOT NULL, token_hash TEXT UNIQUE NOT NULL,
+                expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_ss_email_verification_user ON ss_email_verifications(user_id, created_at)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_ss_email_verification_exp ON ss_email_verifications(expires_at)")
         if db.USE_POSTGRES:
             c.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s", ("ss_users",))
             cols = {row[0] for row in c.fetchall()}
@@ -108,6 +116,10 @@ def init_schema() -> None:
             cols = {row[1] for row in c.fetchall()}
         if "status" not in cols:
             c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+        if "email_verified" not in cols:
+            c.execute("ALTER TABLE ss_users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+        if "email_verified_at" not in cols:
+            c.execute("ALTER TABLE ss_users ADD COLUMN email_verified_at TEXT")
         conn.commit()
         _SCHEMA_KEY = schema_key
     finally:
@@ -409,7 +421,7 @@ def list_users_admin() -> list[dict]:
     conn = db._conn()
     c = conn.cursor()
     try:
-        c.execute("SELECT id,email,status,created_at,last_login,role FROM ss_users ORDER BY created_at DESC")
+        c.execute("SELECT id,email,status,created_at,last_login,role,COALESCE(email_verified,1) AS email_verified FROM ss_users ORDER BY created_at DESC")
         rows = _rows(c)
         # Email is used only server-side to compute the effective owner role;
         # it is deliberately removed from the Admin user listing response.
@@ -498,25 +510,88 @@ def audit_log(limit: int = 200) -> list[dict]:
         conn.close()
 
 
+def _parse_iso(value: str) -> datetime:
+    return datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+
+
+def _recent_request_guard(c, table: str, user_id: int, cooldown_seconds: int = 60, max_per_hour: int = 5):
+    """Return (allowed, reason) without storing recipient addresses or secrets."""
+    c.execute(
+        f"SELECT created_at FROM {table} WHERE user_id={PH} ORDER BY created_at DESC LIMIT 1",
+        (int(user_id),),
+    )
+    last = _row(c)
+    now = datetime.now(timezone.utc)
+    if last and last.get("created_at"):
+        try:
+            if (now - _parse_iso(last["created_at"])).total_seconds() < int(cooldown_seconds):
+                return False, "cooldown"
+        except Exception:
+            pass
+    since = (now - timedelta(hours=1)).isoformat()
+    c.execute(
+        f"SELECT COUNT(*) AS n FROM {table} WHERE user_id={PH} AND created_at>={PH}",
+        (int(user_id), since),
+    )
+    row = _row(c) or {"n": 0}
+    if int(row.get("n") or 0) >= int(max_per_hour):
+        return False, "rate_limited"
+    return True, None
+
+
 def create_password_reset(email: str, minutes: int = 30):
+    """Create a single-use password reset token with resend throttling.
+
+    The caller should always display a generic response to avoid exposing
+    whether an email address has an account.
+    """
     init_schema()
     conn = db._conn()
     c = conn.cursor()
-    token = secrets.token_urlsafe(36)
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
     try:
-        c.execute(f"SELECT id,status FROM ss_users WHERE email={PH}", ((email or "").strip().lower(),))
+        c.execute(f"SELECT id,status FROM ss_users WHERE lower(email)={PH}", ((email or "").strip().lower(),))
         user = _row(c)
         if not user or user.get("status") != "active":
-            return None, None
+            return None, None, "not_available"
+        allowed, reason = _recent_request_guard(c, "ss_password_resets", int(user["id"]), 60, 5)
+        if not allowed:
+            return None, int(user["id"]), reason
+        token = secrets.token_urlsafe(36)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
         now = datetime.now(timezone.utc)
+        # Invalidate earlier unused links so the newest request is authoritative.
+        c.execute(
+            f"UPDATE ss_password_resets SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
+            (now.isoformat(), int(user["id"])),
+        )
         c.execute(
             "INSERT INTO ss_password_resets (user_id,token_hash,expires_at,created_at) "
             f"VALUES ({','.join([PH] * 4)})",
             (user["id"], token_hash, (now + timedelta(minutes=minutes)).isoformat(), now.isoformat()),
         )
         conn.commit()
-        return token, user["id"]
+        return token, int(user["id"]), None
+    finally:
+        conn.close()
+
+
+def password_reset_status(token: str) -> str:
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()
+    try:
+        c.execute(f"SELECT expires_at,used_at FROM ss_password_resets WHERE token_hash={PH}", (token_hash,))
+        row = _row(c)
+        if not row:
+            return "invalid"
+        if row.get("used_at"):
+            return "used"
+        try:
+            if _parse_iso(row.get("expires_at")) < datetime.now(timezone.utc):
+                return "expired"
+        except Exception:
+            return "invalid"
+        return "valid"
     finally:
         conn.close()
 
@@ -533,13 +608,160 @@ def consume_password_reset(token: str, password: str) -> bool:
         row = _row(c)
         if not row or row.get("used_at"):
             return False
-        expires = datetime.fromisoformat(str(row["expires_at"]).replace("Z", "+00:00"))
-        if expires < datetime.now(timezone.utc):
+        if _parse_iso(row["expires_at"]) < datetime.now(timezone.utc):
+            return False
+        now = _now()
+        # Claim the one-time token before changing the password so concurrent
+        # requests cannot both consume the same link.
+        c.execute(
+            f"UPDATE ss_password_resets SET used_at={PH} WHERE id={PH} AND used_at IS NULL",
+            (now, row["id"]),
+        )
+        if getattr(c, "rowcount", 1) == 0:
+            conn.rollback()
             return False
         c.execute(f"UPDATE ss_users SET password_hash={PH} WHERE id={PH}", (db._hash_password(password), row["user_id"]))
-        c.execute(f"UPDATE ss_password_resets SET used_at={PH} WHERE id={PH}", (_now(), row["id"]))
+        # Invalidate all other reset links for that account after a successful reset.
+        c.execute(
+            f"UPDATE ss_password_resets SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
+            (now, row["user_id"]),
+        )
         conn.commit()
         return True
+    finally:
+        conn.close()
+
+
+def create_email_verification(user_id: int, minutes: int = 24 * 60, cooldown_seconds: int = 60, max_per_hour: int = 5):
+    """Create a random, hashed, single-use verification token for an existing account."""
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    try:
+        c.execute(
+            f"SELECT id,email,status,COALESCE(email_verified,1) AS email_verified FROM ss_users WHERE id={PH}",
+            (int(user_id),),
+        )
+        user = _row(c)
+        if not user or user.get("status") != "active":
+            return None, None, "account_unavailable"
+        if bool(user.get("email_verified")):
+            return None, user.get("email"), "already_verified"
+        allowed, reason = _recent_request_guard(c, "ss_email_verifications", int(user_id), cooldown_seconds, max_per_hour)
+        if not allowed:
+            return None, user.get("email"), reason
+        token = secrets.token_urlsafe(36)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        now = datetime.now(timezone.utc)
+        c.execute(
+            f"UPDATE ss_email_verifications SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
+            (now.isoformat(), int(user_id)),
+        )
+        c.execute(
+            "INSERT INTO ss_email_verifications (user_id,token_hash,expires_at,created_at) "
+            f"VALUES ({','.join([PH] * 4)})",
+            (int(user_id), token_hash, (now + timedelta(minutes=minutes)).isoformat(), now.isoformat()),
+        )
+        conn.commit()
+        return token, user.get("email"), None
+    finally:
+        conn.close()
+
+
+def email_verification_status(token: str) -> str:
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()
+    try:
+        c.execute(f"SELECT expires_at,used_at FROM ss_email_verifications WHERE token_hash={PH}", (token_hash,))
+        row = _row(c)
+        if not row:
+            return "invalid"
+        if row.get("used_at"):
+            return "used"
+        try:
+            if _parse_iso(row.get("expires_at")) < datetime.now(timezone.utc):
+                return "expired"
+        except Exception:
+            return "invalid"
+        return "valid"
+    finally:
+        conn.close()
+
+
+def consume_email_verification(token: str):
+    """Verify the account represented by token. Returns (user_id, status)."""
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()
+    try:
+        c.execute(
+            f"SELECT id,user_id,expires_at,used_at FROM ss_email_verifications WHERE token_hash={PH}",
+            (token_hash,),
+        )
+        row = _row(c)
+        if not row:
+            return None, "invalid"
+        if row.get("used_at"):
+            return None, "used"
+        if _parse_iso(row.get("expires_at")) < datetime.now(timezone.utc):
+            return None, "expired"
+        now = _now()
+        # Atomic enough for both supported DBs: only an unused token can win.
+        c.execute(
+            f"UPDATE ss_email_verifications SET used_at={PH} WHERE id={PH} AND used_at IS NULL",
+            (now, row["id"]),
+        )
+        if getattr(c, "rowcount", 1) == 0:
+            conn.rollback()
+            return None, "used"
+        c.execute(
+            f"UPDATE ss_users SET email_verified=1,email_verified_at={PH} WHERE id={PH}",
+            (now, row["user_id"]),
+        )
+        c.execute(
+            f"UPDATE ss_email_verifications SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
+            (now, row["user_id"]),
+        )
+        conn.commit()
+        return int(row["user_id"]), "verified"
+    finally:
+        conn.close()
+
+
+
+def discard_email_verification_token(token: str):
+    """Remove an unsent verification token so provider failures do not trigger cooldown."""
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()
+    try:
+        c.execute(f"DELETE FROM ss_email_verifications WHERE token_hash={PH} AND used_at IS NULL", (token_hash,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def discard_password_reset_token(token: str):
+    """Remove an unsent reset token without exposing it to logs or clients."""
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()
+    try:
+        c.execute(f"DELETE FROM ss_password_resets WHERE token_hash={PH} AND used_at IS NULL", (token_hash,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def invalidate_email_verifications(user_id: int):
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    try:
+        now = _now()
+        c.execute(
+            f"UPDATE ss_email_verifications SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
+            (now, int(user_id)),
+        )
+        conn.commit()
     finally:
         conn.close()
 

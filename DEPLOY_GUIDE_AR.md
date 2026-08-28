@@ -60,3 +60,18 @@
 
 ### فحص Admin المؤقت
 يمكن إبقاء `ADMIN_AUTH_DEBUG=1` أثناء أول اختبار Production. السجل لا يطبع كلمة المرور أو Token أو البريد الخام أو بيانات صحية. بعد التأكد من عمل الحساب، استخدمي `ADMIN_AUTH_DEBUG=0`.
+
+---
+
+## Authentication Email Verification / Password Reset
+
+لتفعيل التحقق من البريد وForgot Password فعليًا على Railway، راجع `AUTHENTICATION_SETUP.md` وأضف:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM` من دومين موثق في Resend
+- `SITE_URL` = رابط Railway العام الحالي
+- `WEB_SECRET` ثابت وقوي
+- `SESSION_COOKIE_SECURE=1`
+- `AUTH_EMAIL_DEBUG=0`
+
+إذا لم يتم إعداد مزود البريد، سيُنشأ الحساب بحالة Unverified لكن لن يدّعي النظام أن رسالة التحقق وصلت؛ صفحة التحقق تعرض خطأ إعداد واضح للحساب الذي أنشأ التسجيل.

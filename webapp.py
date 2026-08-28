@@ -1910,27 +1910,52 @@ def _ss_privacy():
 
 
 def login_required(f):
-    """Decorator that redirects to /login if user is not authenticated."""
+    """Require an authenticated *and email-verified* account."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not _ss_user_id():
+        uid = _ss_user_id()
+        if not uid:
             next_url = request.full_path.rstrip("?")
             return redirect(url_for("login", next=next_url))
+        user = db.get_ss_user(uid)
+        if not user:
+            session.clear()
+            return redirect(url_for("login"))
+        if not bool(user.get("email_verified", True)):
+            session.pop("ss_user_id", None)
+            session.pop("admin_last_seen", None)
+            session["pending_verification_user_id"] = int(uid)
+            session.permanent = True
+            return redirect(url_for("verify_email_pending"))
         return f(*args, **kwargs)
     return decorated
 
 
 def api_login_required(f):
-    """JSON-friendly login guard for private family and medication APIs."""
+    """JSON-friendly guard for private APIs, including verification status."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not _ss_user_id():
+        uid = _ss_user_id()
+        if not uid:
             destination = "/family" if request.path.startswith("/api/family") else "/meds"
             return jsonify({
                 "ok": False,
                 "error": "login_required",
                 "login_url": url_for("login", next=destination),
             }), 401
+        user = db.get_ss_user(uid)
+        if not user:
+            session.clear()
+            return jsonify({"ok": False, "error": "login_required"}), 401
+        if not bool(user.get("email_verified", True)):
+            session.pop("ss_user_id", None)
+            session.pop("admin_last_seen", None)
+            session["pending_verification_user_id"] = int(uid)
+            return jsonify({
+                "ok": False,
+                "error": "verification_required",
+                "verification_url": url_for("verify_email_pending"),
+            }), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -7178,273 +7203,345 @@ def health_history_aliases():
 
 # ---- Smart Account System routes ----
 
+def _auth_email_provider_state():
+    missing=[]
+    if not os.environ.get("RESEND_API_KEY", "").strip(): missing.append("RESEND_API_KEY")
+    if not os.environ.get("RESEND_FROM", "").strip(): missing.append("RESEND_FROM")
+    return {"configured": not missing, "missing": missing}
+
+
+def _send_auth_email(email, subject, html, category="auth"):
+    """Send transactional auth email through Resend without logging secrets/recipients."""
+    state=_auth_email_provider_state()
+    if not state["configured"]:
+        app.logger.warning("Auth email provider not configured; missing=%s", ",".join(state["missing"]))
+        return False, "email_not_configured"
+    try:
+        import requests
+        response=requests.post(
+            "https://api.resend.com/emails", timeout=10,
+            headers={"Authorization":"Bearer "+os.environ.get("RESEND_API_KEY", "").strip(), "Content-Type":"application/json"},
+            json={
+                "from": os.environ.get("RESEND_FROM", "").strip(),
+                "to": [email],
+                "subject": subject,
+                "html": html,
+                "tags": [{"name":"category","value":re.sub(r"[^A-Za-z0-9_-]", "_", category)[:64] or "auth"}],
+            },
+        )
+        if response.status_code < 300:
+            return True, None
+        app.logger.warning("Auth email provider rejected request; category=%s status=%s", category, response.status_code)
+        return False, "email_provider_error"
+    except Exception as exc:
+        app.logger.warning("Auth email send failed; category=%s error_type=%s", category, type(exc).__name__)
+        return False, "email_provider_error"
+
+
+def _issue_verification_email(user_id, lang=None):
+    lang = lang or _lang()
+    token, email, reason = platform_v2.create_email_verification(int(user_id))
+    if not token:
+        return False, reason or "verification_unavailable"
+    verify_url=_site_url().rstrip("/")+"/verify-email/"+token
+    ar=lang=="ar"
+    subject="تحقق من بريدك الإلكتروني — SymptoSense" if ar else "Verify your email — SymptoSense"
+    html=(
+        '<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><h2>تحقق من بريدك الإلكتروني</h2>'
+        '<p>اضغط الرابط التالي لإكمال إنشاء حسابك في SymptoSense. الرابط صالح لمدة 24 ساعة.</p>'
+        '<p><a href="%s">تحقق من البريد الإلكتروني</a></p>'
+        '<p>إذا لم تنشئ هذا الحساب، فتجاهل الرسالة.</p></div>' % verify_url
+        if ar else
+        '<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>Verify your email</h2>'
+        '<p>Use the link below to complete your SymptoSense account. The link is valid for 24 hours.</p>'
+        '<p><a href="%s">Verify email</a></p>'
+        '<p>If you did not create this account, you can ignore this message.</p></div>' % verify_url
+    )
+    sent, send_error=_send_auth_email(email, subject, html, "verify_email")
+    if not sent:
+        try: platform_v2.discard_email_verification_token(token)
+        except Exception: pass
+        return False, send_error
+    if os.environ.get("AUTH_EMAIL_DEBUG") == "1":
+        session["_debug_verify_url"] = verify_url
+    return True, None
+
+
+def _send_password_reset_email(email, reset_url, lang=None):
+    lang=lang or _lang(); ar=lang=="ar"
+    subject="استعادة كلمة مرور SymptoSense" if ar else "Reset your SymptoSense password"
+    html=(
+        '<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><h2>استعادة كلمة المرور</h2>'
+        '<p>استخدم الرابط التالي خلال 30 دقيقة لتعيين كلمة مرور جديدة:</p><p><a href="%s">تعيين كلمة مرور جديدة</a></p>'
+        '<p>إذا لم تطلب هذا، فتجاهل الرسالة.</p></div>' % reset_url
+        if ar else
+        '<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>Password reset</h2>'
+        '<p>Use this link within 30 minutes to set a new password:</p><p><a href="%s">Set a new password</a></p>'
+        '<p>If you did not request this, ignore this email.</p></div>' % reset_url
+    )
+    return _send_auth_email(email, subject, html, "password_reset")
+
+
+def _auth_login_error(lang, code):
+    ar=lang=="ar"
+    messages={
+        "account_not_found": "لا يوجد حساب بهذا البريد. أنشئ حسابًا أولًا." if ar else "No account found. Please create an account first.",
+        "incorrect_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة." if ar else "Incorrect email or password.",
+        "account_unavailable": "يتعذر تسجيل الدخول إلى هذا الحساب حاليًا." if ar else "This account is currently unavailable.",
+        "verification_required": "يجب التحقق من البريد الإلكتروني قبل تسجيل الدخول." if ar else "Please verify your email before signing in.",
+    }
+    return messages.get(code, "تعذر تسجيل الدخول. حاول مرة أخرى." if ar else "Unable to sign in. Please try again.")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    db.init_db()
-    lang = _lang()
-    t = L["en" if lang == "en" else "ar"]
-    error = None
-    next_param = _safe_next_url("/profile")
+    db.init_db(); platform_v2.init_schema()
+    lang=_lang(); t=L["en" if lang=="en" else "ar"]
+    error=None; error_code=None
+    next_param=_safe_next_url("/profile")
     if next_param.startswith("/family"):
-        reason = "سجّلي الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang == "ar" else "Sign in to securely save and access family profiles on any device."
+        reason="سجّلي الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang=="ar" else "Sign in to securely save and access family profiles on any device."
     elif next_param.startswith("/meds"):
-        reason = "سجّلي الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang == "ar" else "Sign in to save medication reminders to your account."
+        reason="سجّلي الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang=="ar" else "Sign in to save medication reminders to your account."
     else:
-        reason = "بعد تسجيل الدخول سيفتح ملفك الصحي الخاص: الأعراض والتحليلات والأدوية والفحوصات والعائلة في مكان واحد." if lang == "ar" else "After signing in, your private health file opens with symptoms, analyses, medicines, tests, and family profiles in one place."
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip()
-        password = request.form.get("password") or ""
-        user_id = db.authenticate_ss_user(email, password)
+        reason="بعد تسجيل الدخول يمكنك الوصول إلى ملفك ونتائجك المحفوظة." if lang=="ar" else "After signing in, you can access your profile and saved results."
+    if request.method=="POST":
+        email=(request.form.get("email") or "").strip().lower(); password=request.form.get("password") or ""
+        result=db.authenticate_ss_user_status(email,password)
+        user_id=result.get("user_id") if result.get("ok") else None
+        if result.get("error")=="verification_required" and result.get("user_id"):
+            session.clear(); session["pending_verification_user_id"]=int(result["user_id"]); session.permanent=True
+            try:
+                sent,reason=_issue_verification_email(int(result["user_id"]), lang)
+                session["verification_send_state"]="sent" if sent else (reason or "failed")
+            except Exception:
+                session["verification_send_state"]="failed"
+            return redirect(url_for("verify_email_pending"))
         if user_id:
-            # Repair only the existing authenticated owner account. A normal
-            # user can never gain Admin through this path.
             db.promote_existing_owner_admin(user_id)
-        login_user = db.get_ss_user(user_id) if user_id else None
-        platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
+        login_user=db.get_ss_user(user_id) if user_id else None
+        platform_v2.log_login(email,user_id,bool(user_id),bool(login_user and login_user.get("role")=="admin"),request.headers.get("User-Agent",""))
         if user_id:
-            session.clear()
-            session["ss_user_id"] = user_id
-            session.permanent = True
-            is_admin = bool(login_user and login_user.get("role") == "admin")
+            session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
+            is_admin=bool(login_user and login_user.get("role")=="admin")
             if is_admin:
-                session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
-                try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
+                session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())
+                try: platform_v2.audit(int(user_id),"login","admin_session","self",None,{"status":"success"})
                 except Exception: pass
-            redirect_target = "/admin" if is_admin else next_param
-            _admin_auth_debug("login_success", login_user, granted=is_admin, redirect_target=redirect_target)
+            redirect_target="/admin" if is_admin else next_param
+            _admin_auth_debug("login_success",login_user,granted=is_admin,redirect_target=redirect_target)
             return redirect(redirect_target)
-        _admin_auth_debug("login_failed", None, granted=False, redirect_target=None)
+        error_code=result.get("error") or "incorrect_credentials"
+        _admin_auth_debug("login_failed",None,granted=False,redirect_target=None)
         if db.is_owner_admin_email(email):
-            try: platform_v2.audit(None, "login_failed", "admin_session", "owner", None, {"status": "failed"})
+            try: platform_v2.audit(None,"login_failed","admin_session","owner",None,{"status":"failed"})
             except Exception: pass
-        error = t["login_error"]
-    body = """
-    <div class="auth-wrap">
-      <div class="auth-card">
-        <div class="auth-icon">🩺</div>
-        <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
-        <h1>__H__</h1>
-        <p class="auth-sub">__SUB__</p>
-        <div class="auth-reason" style="__REASON_STYLE__">🔐 __REASON__</div>
-        <div class="auth-error __ERR_CLASS__">__ERR__</div>
-        <form method="POST" action="/login?next=__NEXT__">
-          <div class="auth-field">
-            <label>__EMAIL__</label>
-            <input type="email" name="email" required placeholder="name@example.com" autocomplete="email">
-          </div>
-          <div class="auth-field">
-            <label>__PASS__</label>
-            <input type="password" name="password" required placeholder="••••••" autocomplete="current-password">
-          </div>
-          <button type="submit" class="auth-btn">__BTN__</button>
-        </form>
-        <p class="auth-link" style="margin-top:12px"><a href="/forgot-password">__FORGOT__</a></p>
-        <p class="auth-link">__NOACCT__ <a href="/register?next=__NEXT__">__REG__</a></p>
-        <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#94A3B8"><span style="height:1px;background:#DCE8F0;flex:1"></span><span>__OR__</span><span style="height:1px;background:#DCE8F0;flex:1"></span></div>
-        <a class="btn ghost" style="width:100%;justify-content:center" href="/home">__GUEST__</a>
-      </div>
-    </div>
+        error=_auth_login_error(lang,error_code)
+    create_action=('<div style="margin-top:12px"><a class="auth-btn" style="display:inline-flex;text-decoration:none;justify-content:center;background:#fff!important;color:#287FC1!important;border:1px solid #BFD9EC" href="/register?next=__NEXT__">__CREATE__</a></div>') if error_code=="account_not_found" else ""
+    body="""
+    <div class="auth-wrap"><div class="auth-card">
+      <div class="auth-icon">🩺</div><div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
+      <h1>__H__</h1><p class="auth-sub">__SUB__</p><div class="auth-reason">🔐 __REASON__</div>
+      <div class="auth-error __ERR_CLASS__">__ERR__</div>__CREATE_ACTION__
+      <form method="POST" action="/login?next=__NEXT__">
+        <div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required placeholder="name@example.com" autocomplete="email"></div>
+        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required placeholder="••••••••" autocomplete="current-password"></div>
+        <button type="submit" class="auth-btn">__BTN__</button>
+      </form>
+      <p class="auth-link" style="margin-top:12px"><a href="/forgot-password">__FORGOT__</a></p>
+      <p class="auth-link">__NOACCT__ <a href="/register?next=__NEXT__">__REG__</a></p>
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#94A3B8"><span style="height:1px;background:#DCE8F0;flex:1"></span><span>__OR__</span><span style="height:1px;background:#DCE8F0;flex:1"></span></div>
+      <a class="btn ghost" style="width:100%;justify-content:center" href="/home">__GUEST__</a>
+    </div></div>
     """
     from html import escape
-    body = body.replace("__H__", "مرحبًا بعودتك" if lang == "ar" else "Welcome back")
-    body = body.replace("__SUB__", "سجّل الدخول للوصول إلى معلوماتك ونتائجك المحفوظة." if lang == "ar" else "Sign in to access your saved information and results.")
-    body = body.replace("__EMAIL__", t["login_email"]).replace("__PASS__", t["login_pass"])
-    body = body.replace("__BTN__", t["login_btn"]).replace("__NOACCT__", t["login_noaccount"])
-    body = body.replace("__REG__", t["login_register"])
-    body = body.replace("__FORGOT__", "نسيت كلمة المرور؟" if lang == "ar" else "Forgot password?")
-    body = body.replace("__OR__", "أو" if lang == "ar" else "or")
-    body = body.replace("__GUEST__", "المتابعة كزائر" if lang == "ar" else "Continue as guest")
-    body = body.replace("__NEXT__", escape(next_param))
-    body = body.replace("__REASON__", reason).replace("__REASON_STYLE__", "margin:0 0 16px;padding:11px 13px;border-radius:12px;background:#EAF4FF;color:#123B70;font-size:13px;font-weight:700;line-height:1.7;" if reason else "display:none;")
-    if error:
-        body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
-    else:
-        body = body.replace("__ERR_CLASS__", "").replace("__ERR__", "")
-    return _page(t["title_login"], body)
+    vals={"__H__":"مرحبًا بعودتك" if lang=="ar" else "Welcome back","__SUB__":"سجّل الدخول للوصول إلى معلوماتك ونتائجك المحفوظة." if lang=="ar" else "Sign in to access your saved information and results.","__REASON__":reason,"__EMAIL__":t["login_email"],"__PASS__":t["login_pass"],"__BTN__":t["login_btn"],"__FORGOT__":"نسيت كلمة المرور؟" if lang=="ar" else "Forgot password?","__NOACCT__":t["login_noaccount"],"__REG__":t["login_register"],"__OR__":"أو" if lang=="ar" else "or","__GUEST__":"المتابعة كزائر" if lang=="ar" else "Continue as guest","__NEXT__":escape(next_param),"__ERR_CLASS__":"show" if error else "","__ERR__":error or "","__CREATE__":"إنشاء حساب" if lang=="ar" else "Create Account"}
+    create_action=create_action.replace("__NEXT__",escape(next_param)).replace("__CREATE__",vals["__CREATE__"])
+    vals["__CREATE_ACTION__"]=create_action
+    for k,v in vals.items(): body=body.replace(k,v)
+    return _page(t["title_login"],body)
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    db.init_db()
-    lang = _lang()
-    t = L["en" if lang == "en" else "ar"]
-    error = None
-    next_param = _safe_next_url("/profile")
-    if request.method == "POST":
-        name = (request.form.get("name") or "").strip()
-        email = (request.form.get("email") or "").strip()
-        password = request.form.get("password") or ""
-        confirm = request.form.get("confirm") or ""
-        accepted = request.form.get("accept_terms") == "on"
-        if not accepted:
-            error = "يجب الموافقة على سياسة الخصوصية وشروط الاستخدام." if lang == "ar" else "You must accept the privacy policy and terms of use."
-        elif password != confirm:
-            error = t["register_pass_mismatch"]
+    db.init_db(); platform_v2.init_schema()
+    lang=_lang(); t=L["en" if lang=="en" else "ar"]; error=None
+    next_param=_safe_next_url("/profile")
+    if request.method=="POST":
+        name=(request.form.get("name") or "").strip(); email=(request.form.get("email") or "").strip().lower()
+        password=request.form.get("password") or ""; confirm=request.form.get("confirm") or ""; accepted=request.form.get("accept_terms")=="on"
+        if not accepted: error="يجب الموافقة على سياسة الخصوصية وشروط الاستخدام." if lang=="ar" else "You must accept the privacy policy and terms of use."
+        elif password!=confirm: error=t["register_pass_mismatch"]
+        elif len(password)<8: error="استخدم 8 أحرف على الأقل لكلمة المرور." if lang=="ar" else "Use at least 8 characters for your password."
         else:
-            user_id, err = db.create_ss_user(email, name, password)
+            user_id,err=db.create_ss_user(email,name,password)
             if user_id:
-                session["ss_user_id"] = user_id
-                try: platform_v2.record_usage("new_account", "/register", lang, request.headers.get("User-Agent", ""), 201, None)
+                session.clear(); session["pending_verification_user_id"]=int(user_id); session["post_verify_next"]=next_param; session.permanent=True
+                sent,send_error=_issue_verification_email(int(user_id),lang)
+                try: platform_v2.record_usage("new_account","/register",lang,request.headers.get("User-Agent",""),201,None)
                 except Exception: pass
-                return redirect(next_param)
-            error = t["register_error"]
-    body = """
-    <div class="auth-wrap">
-      <div class="auth-card">
-        <div class="auth-icon">🩺</div>
-        <div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
-        <h1>__H__</h1>
-        <p class="auth-sub">__SUB__</p>
-        <div class="auth-error __ERR_CLASS__">__ERR__</div>
-        <form method="POST" action="/register?next=__NEXT__">
-          <div class="auth-field">
-            <label>__NAME__</label>
-            <input type="text" name="name" required placeholder="___" autocomplete="name">
-          </div>
-          <div class="auth-field">
-            <label>__EMAIL__</label>
-            <input type="email" name="email" required placeholder="name@example.com" autocomplete="email">
-          </div>
-          <div class="auth-field">
-            <label>__PASS__</label>
-            <input type="password" name="password" required minlength="6" placeholder="••••••" autocomplete="new-password">
-          </div>
-          <div class="auth-field">
-            <label>__CONFIRM__</label>
-            <input type="password" name="confirm" required minlength="6" placeholder="••••••" autocomplete="new-password">
-          </div>
-          <label style="display:flex;align-items:flex-start;gap:9px;text-align:start;font-size:13px;line-height:1.7;margin:12px 0;color:#40566F">
-            <input type="checkbox" name="accept_terms" required style="width:18px;height:18px;margin-top:3px;flex:0 0 auto">
-            <span>__ACCEPT__</span>
-          </label>
-          <button type="submit" class="auth-btn">__BTN__</button>
-        </form>
-        <p class="auth-link">__HASACCT__ <a href="/login?next=__NEXT__">__LOGIN__</a></p>
-      </div>
-    </div>
+                session["verification_send_state"]="sent" if sent else (send_error or "failed")
+                return redirect(url_for("verify_email_pending"))
+            mapping={"email_exists":"يوجد حساب بهذا البريد بالفعل. سجّل الدخول بدلًا من إنشاء حساب جديد." if lang=="ar" else "An account with this email already exists. Please sign in instead.","owner_account_must_exist":"حساب مالك المشروع يجب أن يكون موجودًا مسبقًا ولا يمكن إنشاؤه من صفحة التسجيل." if lang=="ar" else "The project owner account must already exist and cannot be created from this page.","password_too_short":"استخدم 8 أحرف على الأقل لكلمة المرور." if lang=="ar" else "Use at least 8 characters for your password.","invalid_email":"أدخل بريدًا إلكترونيًا صالحًا." if lang=="ar" else "Enter a valid email address.","invalid_name":"أدخل اسمًا صالحًا." if lang=="ar" else "Enter a valid name."}
+            error=mapping.get(err,t["register_error"])
+    body="""
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🩺</div><div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
+      <h1>__H__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR_CLASS__">__ERR__</div>
+      <form method="POST" action="/register?next=__NEXT__">
+        <div class="auth-field"><label>__NAME__</label><input type="text" name="name" required autocomplete="name"></div>
+        <div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required placeholder="name@example.com" autocomplete="email"></div>
+        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div>
+        <div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" autocomplete="new-password"></div>
+        <label style="display:flex;align-items:flex-start;gap:9px;text-align:start;font-size:13px;line-height:1.7;margin:12px 0;color:#40566F"><input type="checkbox" name="accept_terms" required style="width:18px;height:18px;margin-top:3px"><span>__ACCEPT__</span></label>
+        <button type="submit" class="auth-btn">__BTN__</button>
+      </form><p class="auth-link">__HASACCT__ <a href="/login?next=__NEXT__">__LOGIN__</a></p>
+    </div></div>
     """
-    body = body.replace("__H__", t["register_h"]).replace("__SUB__", t["register_sub"])
-    body = body.replace("__NAME__", t["register_name"]).replace("__EMAIL__", t["register_email"])
-    body = body.replace("__PASS__", t["register_pass"]).replace("__CONFIRM__", t["register_confirm"])
-    body = body.replace("__BTN__", t["register_btn"]).replace("__HASACCT__", t["register_hasaccount"])
-    body = body.replace("__LOGIN__", t["register_login"])
-    accept = ('أوافق على <a href="/privacy" target="_blank">سياسة الخصوصية</a> و<a href="/terms" target="_blank">شروط الاستخدام</a>.' if lang == "ar" else
-              'I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms of Use</a>.')
-    body = body.replace("__ACCEPT__", accept)
     from html import escape
-    body = body.replace("__NEXT__", escape(next_param))
-    if error:
-        body = body.replace("__ERR_CLASS__", "show").replace("__ERR__", error)
-    else:
-        body = body.replace("__ERR_CLASS__", "").replace("__ERR__", "")
-    return _page(t["title_register"], body)
+    accept=('أوافق على <a href="/privacy" target="_blank">سياسة الخصوصية</a> و<a href="/terms" target="_blank">شروط الاستخدام</a>.' if lang=="ar" else 'I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and <a href="/terms" target="_blank">Terms of Use</a>.')
+    vals={"__H__":t["register_h"],"__SUB__":"أنشئ حسابك، ثم تحقّق من بريدك الإلكتروني قبل تسجيل الدخول." if lang=="ar" else "Create your account, then verify your email before signing in.","__NAME__":t["register_name"],"__EMAIL__":t["register_email"],"__PASS__":t["register_pass"],"__CONFIRM__":t["register_confirm"],"__BTN__":t["register_btn"],"__HASACCT__":t["register_hasaccount"],"__LOGIN__":t["register_login"],"__ACCEPT__":accept,"__NEXT__":escape(next_param),"__ERR_CLASS__":"show" if error else "","__ERR__":error or ""}
+    for k,v in vals.items(): body=body.replace(k,v)
+    return _page(t["title_register"],body)
 
 
-def _send_password_reset_email(email, reset_url):
-    """Send through the optional HTTPS mail provider; fail without leaking data."""
-    api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    sender = os.environ.get("RESEND_FROM", "").strip()
-    if not api_key or not sender:
-        return False
-    try:
-        import requests
-        ar = _lang() == "ar"
-        subject = "استعادة كلمة مرور SymptoSense" if ar else "Reset your SymptoSense password"
-        html = ('<div dir="rtl"><h2>استعادة كلمة المرور</h2><p>استخدم الرابط التالي خلال 30 دقيقة:</p><p><a href="%s">تعيين كلمة مرور جديدة</a></p><p>إذا لم تطلب هذا، فتجاهل الرسالة.</p></div>' % reset_url
-                if ar else '<h2>Password reset</h2><p>Use this link within 30 minutes:</p><p><a href="%s">Set a new password</a></p><p>If you did not request this, ignore this email.</p>' % reset_url)
-        response = requests.post(
-            "https://api.resend.com/emails", timeout=10,
-            headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
-            json={"from": sender, "to": [email], "subject": subject, "html": html},
-        )
-        return response.status_code < 300
-    except Exception:
-        return False
+@app.route("/verify-email", methods=["GET", "POST"])
+def verify_email_pending():
+    db.init_db(); platform_v2.init_schema(); ar=_lang()=="ar"
+    uid=session.get("pending_verification_user_id"); notice=""; error=""
+    user=db.get_ss_user(uid) if uid else None
+    if user and user.get("email_verified"):
+        session.pop("pending_verification_user_id",None)
+        return redirect("/login")
+    if request.method=="POST":
+        action=request.form.get("action") or "resend"
+        if not user:
+            error="ابدأ من تسجيل الدخول أو إنشاء حساب." if ar else "Start from sign in or create an account."
+        elif action=="change_email":
+            new_email=(request.form.get("new_email") or "").strip().lower()
+            ok,err=db.update_unverified_email(int(uid),new_email)
+            if ok:
+                try: platform_v2.invalidate_email_verifications(int(uid))
+                except Exception: pass
+                user=db.get_ss_user(uid)
+                sent,reason=_issue_verification_email(int(uid),_lang())
+                notice=("تم تحديث البريد وإرسال رابط تحقق جديد." if ar else "Email updated and a new verification link was sent.") if sent else ("تم تحديث البريد، لكن تعذر إرسال الرسالة. تحقق من إعداد مزود البريد." if ar else "Email updated, but the message could not be sent. Check the email provider configuration.")
+            else:
+                error=("البريد غير صالح أو مستخدم بالفعل." if ar else "The email is invalid or already in use.") if err in {"invalid_email","email_exists"} else ("تعذر تغيير البريد." if ar else "Unable to change the email.")
+        else:
+            sent,reason=_issue_verification_email(int(uid),_lang())
+            if sent: notice="أرسلنا رابط تحقق جديدًا إلى بريدك الإلكتروني." if ar else "We sent a new verification link to your email."
+            elif reason in {"cooldown","rate_limited"}: error="يرجى الانتظار قبل طلب رسالة تحقق أخرى." if ar else "Please wait before requesting another verification email."
+            elif reason=="email_not_configured": error="خدمة البريد غير مضبوطة بعد. يلزم إعداد RESEND_API_KEY وRESEND_FROM في Railway." if ar else "Email delivery is not configured yet. RESEND_API_KEY and RESEND_FROM must be configured in Railway."
+            else: error="تعذر إرسال رسالة التحقق الآن. حاول لاحقًا." if ar else "Unable to send the verification email right now. Please try again later."
+    state=session.pop("verification_send_state",None)
+    if state and not notice and not error:
+        if state=="sent":
+            notice="أرسلنا رابط التحقق إلى بريدك الإلكتروني." if ar else "We sent a verification link to your email."
+        elif state in {"cooldown","rate_limited"}:
+            notice="تم إرسال رابط تحقق مؤخرًا. استخدم الرسالة الموجودة أو انتظر قليلًا قبل طلب رسالة جديدة." if ar else "A verification link was sent recently. Use the existing message or wait before requesting another one."
+        elif state=="email_not_configured":
+            error="خدمة البريد غير مضبوطة. أضف RESEND_API_KEY وRESEND_FROM في Railway قبل محاولة الإرسال." if ar else "Email delivery is not configured. Add RESEND_API_KEY and RESEND_FROM in Railway before resending."
+        else:
+            error="تعذر إرسال رسالة التحقق حاليًا. حاول مرة أخرى لاحقًا." if ar else "The verification email could not be sent right now. Please try again later."
+    masked=""
+    if user and user.get("email"):
+        e=str(user["email"]); parts=e.split("@",1); masked=(parts[0][:2]+"***@"+parts[1]) if len(parts)==2 else "***"
+    debug_url=session.pop("_debug_verify_url","") if os.environ.get("AUTH_EMAIL_DEBUG")=="1" else ""
+    body="""
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">📧</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><p class="muted" style="direction:ltr">__MASKED__</p>
+      __NOTICE____ERROR__
+      <form method="post"><input type="hidden" name="action" value="resend"><button class="auth-btn" type="submit">__RESEND__</button></form>
+      <details style="margin-top:14px;text-align:start"><summary style="cursor:pointer;font-weight:700">__CHANGE__</summary><form method="post" style="margin-top:10px"><input type="hidden" name="action" value="change_email"><div class="auth-field"><label>__NEWEMAIL__</label><input type="email" name="new_email" required autocomplete="email"></div><button class="btn ghost" type="submit">__SAVEEMAIL__</button></form></details>
+      <p class="auth-link"><a href="/login">__BACK__</a></p>__DEBUG__
+    </div></div>
+    """
+    notice_html='<div class="ss-msg success" style="display:block">'+notice+'</div>' if notice else ""
+    error_html='<div class="auth-error show">'+error+'</div>' if error else ""
+    debug_html=('<p class="muted" style="direction:ltr;word-break:break-all"><a href="%s">Development verification link</a></p>' % debug_url) if debug_url else ""
+    vals={"__TITLE__":"📧 تحقق من بريدك الإلكتروني" if ar else "📧 Verify Your Email","__SUB__":"تحقق من بريدك الإلكتروني لإكمال إنشاء الحساب. إذا لم تصلك الرسالة، يمكنك طلب إعادة الإرسال." if ar else "Verify your email to complete your account. If you did not receive the message, you can request another one.","__MASKED__":masked,"__NOTICE__":notice_html,"__ERROR__":error_html,"__RESEND__":"إعادة إرسال رسالة التحقق" if ar else "Resend Verification Email","__CHANGE__":"تغيير البريد الإلكتروني" if ar else "Change Email","__NEWEMAIL__":"البريد الإلكتروني الجديد" if ar else "New email","__SAVEEMAIL__":"حفظ وإرسال رابط جديد" if ar else "Save & send new link","__BACK__":"العودة إلى تسجيل الدخول" if ar else "Back to Login","__DEBUG__":debug_html}
+    for k,v in vals.items(): body=body.replace(k,v)
+    return _page("تحقق من البريد" if ar else "Verify Email",body)
+
+
+@app.route("/verify-email/<token>")
+def verify_email_token(token):
+    ar=_lang()=="ar"; status=platform_v2.email_verification_status(token)
+    if status=="valid":
+        uid,result=platform_v2.consume_email_verification(token)
+        if uid:
+            session.pop("pending_verification_user_id",None); session.pop("post_verify_next",None)
+            body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (("تم التحقق من البريد الإلكتروني" if ar else "Email verified"),("يمكنك تسجيل الدخول الآن." if ar else "You can sign in now."),("تسجيل الدخول" if ar else "Back to Login"))
+            return _page("تم التحقق" if ar else "Email Verified",body)
+        status=result
+    msg={"expired":"انتهت صلاحية رابط التحقق." if ar else "This verification link has expired.","used":"تم استخدام رابط التحقق بالفعل." if ar else "This verification link has already been used.","invalid":"رابط التحقق غير صالح." if ar else "This verification link is invalid."}.get(status,"تعذر التحقق من الرابط." if ar else "Unable to verify this link.")
+    body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">⚠️</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (("تعذر التحقق" if ar else "Verification unavailable"),msg,("العودة إلى تسجيل الدخول" if ar else "Back to Login"))
+    return _page("تحقق من البريد" if ar else "Verify Email",body),400
 
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
-    ar = _lang() == "ar"
-    sent = False
-    debug_url = ""
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        if platform_v2.email_is_valid(email):
-            token, user_id = platform_v2.create_password_reset(email)
+    db.init_db(); platform_v2.init_schema(); ar=_lang()=="ar"; sent=False; provider_error=False; throttled=False
+    if request.method=="POST":
+        email=(request.form.get("email") or "").strip().lower()
+        provider_state=_auth_email_provider_state()
+        provider_error=not provider_state.get("configured")
+        if platform_v2.email_is_valid(email) and not provider_error:
+            token,user_id,reason=platform_v2.create_password_reset(email)
             if token and user_id:
-                reset_url = _site_url().rstrip("/") + "/reset-password/" + token
-                _send_password_reset_email(email, reset_url)
-                if os.environ.get("PASSWORD_RESET_DEBUG") == "1":
-                    debug_url = reset_url
-        sent = True
-    body = """
-    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔑</div>
-      <h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>__NOTICE__
-      <form method="post"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="email" placeholder="name@example.com"></div><button class="auth-btn" type="submit">__BTN__</button></form>
-      <p class="auth-link"><a href="/login">__BACK__</a></p>__DEBUG__
-    </div></div>
-    """
-    notice = ('<div class="ss-msg success" style="display:block">%s</div>' % (
-        "إذا كان الحساب موجودًا، أرسلنا رابط الاستعادة. تحقق من البريد والرسائل غير المرغوبة." if ar else
-        "If the account exists, a reset link has been sent. Check your inbox and spam folder.")) if sent else ""
-    debug = ('<p class="muted" style="direction:ltr;word-break:break-all"><a href="%s">Debug reset link</a></p>' % debug_url) if debug_url else ""
-    values = {"__TITLE__": "نسيت كلمة المرور؟" if ar else "Forgot your password?",
-              "__SUB__": "أدخل بريدك لإرسال رابط صالح لمدة 30 دقيقة." if ar else "Enter your email to receive a link valid for 30 minutes.",
-              "__EMAIL__": "البريد الإلكتروني" if ar else "Email address",
-              "__BTN__": "إرسال رابط الاستعادة" if ar else "Send reset link",
-              "__BACK__": "العودة إلى تسجيل الدخول" if ar else "Back to sign in",
-              "__NOTICE__": notice, "__DEBUG__": debug}
-    for key, value in values.items():
-        body = body.replace(key, value)
-    return _page(values["__TITLE__"], body)
+                reset_url=_site_url().rstrip("/")+"/reset-password/"+token
+                ok,send_error=_send_password_reset_email(email,reset_url,_lang())
+                if not ok:
+                    try: platform_v2.discard_password_reset_token(token)
+                    except Exception: pass
+                    provider_error=True
+                elif os.environ.get("AUTH_EMAIL_DEBUG")=="1": session["_debug_reset_url"]=reset_url
+            elif reason in {"cooldown","rate_limited"}: throttled=True
+        sent=True
+    generic="إذا كان الحساب موجودًا لهذا البريد، فقد تم إرسال رابط إعادة تعيين كلمة المرور." if ar else "If an account exists for this email, a password reset link has been sent."
+    # Keep the public response identical whether the account exists, the
+    # request was throttled, or the provider had a transient failure. Details
+    # remain in server logs/configuration diagnostics only.
+    extra=""
+    debug_url=session.pop("_debug_reset_url","") if os.environ.get("AUTH_EMAIL_DEBUG")=="1" else ""
+    body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔑</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>__NOTICE__<form method="post"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="email" placeholder="name@example.com"></div><button class="auth-btn" type="submit">__BTN__</button></form><p class="auth-link"><a href="/login">__BACK__</a></p>__DEBUG__</div></div>"""
+    notice=('<div class="ss-msg success" style="display:block">%s</div>' % (generic+extra)) if sent else ""
+    debug=('<p class="muted" style="direction:ltr;word-break:break-all"><a href="%s">Development reset link</a></p>' % debug_url) if debug_url else ""
+    vals={"__TITLE__":"نسيت كلمة المرور؟" if ar else "Forgot Password?","__SUB__":"أدخل بريدك لإرسال رابط إعادة تعيين مؤقت." if ar else "Enter your email to receive a temporary reset link.","__EMAIL__":"البريد الإلكتروني" if ar else "Email","__BTN__":"إرسال رابط الاستعادة" if ar else "Send Reset Link","__BACK__":"العودة إلى تسجيل الدخول" if ar else "Back to Login","__NOTICE__":notice,"__DEBUG__":debug}
+    for k,v in vals.items(): body=body.replace(k,v)
+    return _page(vals["__TITLE__"],body)
 
 
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
-    ar = _lang() == "ar"
-    error = ""
-    success = False
-    if request.method == "POST":
-        password = request.form.get("password") or ""
-        confirm = request.form.get("confirm") or ""
-        if password != confirm:
-            error = "كلمتا المرور غير متطابقتين." if ar else "Passwords do not match."
+    ar=_lang()=="ar"; status=platform_v2.password_reset_status(token); error=""; success=False
+    if status!="valid":
+        msg={"expired":"انتهت صلاحية رابط إعادة التعيين." if ar else "This password reset link has expired.","used":"تم استخدام رابط إعادة التعيين بالفعل." if ar else "This password reset link has already been used.","invalid":"رابط إعادة التعيين غير صالح." if ar else "This password reset link is invalid."}.get(status,"الرابط غير متاح." if ar else "This link is unavailable.")
+        body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">⚠️</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/forgot-password">%s</a></div></div>' % (("تعذر إعادة التعيين" if ar else "Reset unavailable"),msg,("طلب رابط جديد" if ar else "Request a new link"))
+        return _page("استعادة كلمة المرور" if ar else "Reset Password",body),400
+    if request.method=="POST":
+        password=request.form.get("password") or ""; confirm=request.form.get("confirm") or ""
+        if password!=confirm: error="كلمتا المرور غير متطابقتين." if ar else "Passwords do not match."
         else:
             try:
-                success = platform_v2.consume_password_reset(token, password)
-                if not success:
-                    error = "الرابط غير صالح أو انتهت صلاحيته." if ar else "This link is invalid or has expired."
-            except ValueError:
-                error = "استخدم 8 أحرف على الأقل." if ar else "Use at least 8 characters."
+                success=platform_v2.consume_password_reset(token,password)
+                if not success: error="الرابط غير صالح أو انتهت صلاحيته." if ar else "This link is invalid or has expired."
+            except ValueError: error="استخدم 8 أحرف على الأقل." if ar else "Use at least 8 characters."
     if success:
-        body = '<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (
-            "تم تحديث كلمة المرور" if ar else "Password updated",
-            "يمكنك تسجيل الدخول الآن." if ar else "You can sign in now.",
-            "تسجيل الدخول" if ar else "Sign in")
+        body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (("تمت إعادة تعيين كلمة المرور بنجاح" if ar else "Password reset successfully"),("يمكنك تسجيل الدخول بكلمة المرور الجديدة." if ar else "You can now sign in with your new password."),("العودة إلى تسجيل الدخول" if ar else "Back to Login"))
     else:
-        body = """
-        <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔐</div><h1>__TITLE__</h1>
-        <div class="auth-error __ERR_CLASS__">__ERROR__</div><form method="post">
-        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div>
-        <div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" autocomplete="new-password"></div>
-        <button class="auth-btn" type="submit">__BTN__</button></form></div></div>
-        """
-        vals = {"__TITLE__": "كلمة مرور جديدة" if ar else "New password", "__PASS__": "كلمة المرور" if ar else "Password",
-                "__CONFIRM__": "تأكيد كلمة المرور" if ar else "Confirm password", "__BTN__": "حفظ كلمة المرور" if ar else "Save password",
-                "__ERR_CLASS__": "show" if error else "", "__ERROR__": error}
-        for key, value in vals.items():
-            body = body.replace(key, value)
-    return _page("استعادة كلمة المرور" if ar else "Reset password", body)
+        body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔐</div><h1>__TITLE__</h1><div class="auth-error __ERR_CLASS__">__ERROR__</div><form method="post"><div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div><div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" autocomplete="new-password"></div><button class="auth-btn" type="submit">__BTN__</button></form></div></div>"""
+        vals={"__TITLE__":"إعادة تعيين كلمة المرور" if ar else "Reset Password","__PASS__":"كلمة المرور الجديدة" if ar else "New Password","__CONFIRM__":"تأكيد كلمة المرور الجديدة" if ar else "Confirm New Password","__BTN__":"إعادة تعيين كلمة المرور" if ar else "Reset Password","__ERR_CLASS__":"show" if error else "","__ERROR__":error}
+        for k,v in vals.items(): body=body.replace(k,v)
+    return _page("استعادة كلمة المرور" if ar else "Reset Password",body)
 
 
 @app.route("/logout")
 def logout():
     try:
         u=_ss_user()
-        if u and u.get("role")=="admin": platform_v2.audit(int(u.get("id")), "logout", "admin_session", "self", None, {"status": "success"})
+        if u and u.get("role")=="admin": platform_v2.audit(int(u.get("id")),"logout","admin_session","self",None,{"status":"success"})
     except Exception: pass
-    session.clear()
-    return redirect("/home")
+    session.clear(); return redirect("/home")
 
 
 @app.route("/settings", methods=["GET", "POST"])
@@ -7520,61 +7617,67 @@ def settings():
 
 @app.route("/api/auth/register", methods=["POST"])
 def api_register():
-    db.init_db()
+    db.init_db(); platform_v2.init_schema()
     try:
-        data = request.get_json(force=True)
-        name = (data.get("name") or "").strip()
-        email = (data.get("email") or "").strip()
-        password = data.get("password") or ""
-        confirm = data.get("confirm", password) or ""
-        if password != confirm:
-            return jsonify({"ok": False, "error": "password_mismatch"}), 400
-        # Existing API clients did not send this field; keep that contract
-        # working while enforcing consent whenever the V2 field is supplied.
-        if "accept_terms" in data and data.get("accept_terms") is not True:
-            return jsonify({"ok": False, "error": "terms_required"}), 400
-        user_id, err = db.create_ss_user(email, name, password)
-        if user_id:
-            session.clear()
-            session["ss_user_id"] = user_id
-            session.permanent = True
-            return jsonify({"ok": True, "redirect_url": "/profile"})
-        return jsonify({"ok": False, "error": err})
+        data=request.get_json(force=True)
+        name=(data.get("name") or "").strip(); email=(data.get("email") or "").strip().lower()
+        password=data.get("password") or ""; confirm=data.get("confirm",password) or ""
+        if password!=confirm: return jsonify({"ok":False,"error":"password_mismatch"}),400
+        if len(password)<8: return jsonify({"ok":False,"error":"password_too_short"}),400
+        if "accept_terms" in data and data.get("accept_terms") is not True: return jsonify({"ok":False,"error":"terms_required"}),400
+        user_id,err=db.create_ss_user(email,name,password)
+        if not user_id: return jsonify({"ok":False,"error":err}),400
+        session.clear(); session["pending_verification_user_id"]=int(user_id); session.permanent=True
+        sent,send_error=_issue_verification_email(int(user_id),_lang())
+        return jsonify({"ok":True,"verification_required":True,"email_sent":bool(sent),"email_error":send_error if not sent else None,"redirect_url":"/verify-email"}),201
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        app.logger.warning("API register failed; error_type=%s",type(e).__name__)
+        return jsonify({"ok":False,"error":"registration_failed"}),500
 
 
 @app.route("/api/auth/login", methods=["POST"])
 def api_login():
-    db.init_db()
+    db.init_db(); platform_v2.init_schema()
     try:
-        data = request.get_json(force=True)
-        email = (data.get("email") or "").strip()
-        password = data.get("password") or ""
-        user_id = db.authenticate_ss_user(email, password)
+        data=request.get_json(force=True); email=(data.get("email") or "").strip().lower(); password=data.get("password") or ""
+        result=db.authenticate_ss_user_status(email,password); user_id=result.get("user_id") if result.get("ok") else None
+        if result.get("error")=="verification_required" and result.get("user_id"):
+            session.clear(); session["pending_verification_user_id"]=int(result["user_id"]); session.permanent=True
+            return jsonify({"ok":False,"error":"verification_required","redirect_url":"/verify-email"}),403
+        if user_id: db.promote_existing_owner_admin(user_id)
+        login_user=db.get_ss_user(user_id) if user_id else None
+        platform_v2.log_login(email,user_id,bool(user_id),bool(login_user and login_user.get("role")=="admin"),request.headers.get("User-Agent",""))
         if user_id:
-            db.promote_existing_owner_admin(user_id)
-        login_user = db.get_ss_user(user_id) if user_id else None
-        platform_v2.log_login(email, user_id, bool(user_id), bool(login_user and login_user.get("role") == "admin"), request.headers.get("User-Agent", ""))
-        if user_id:
-            session.clear()
-            session["ss_user_id"] = user_id
-            session.permanent = True
-            is_admin = bool(login_user and login_user.get("role") == "admin")
+            session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
+            is_admin=bool(login_user and login_user.get("role")=="admin")
             if is_admin:
-                session["admin_last_seen"] = int(datetime.now(timezone.utc).timestamp())
-                try: platform_v2.audit(int(user_id), "login", "admin_session", "self", None, {"status": "success"})
+                session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())
+                try: platform_v2.audit(int(user_id),"login","admin_session","self",None,{"status":"success"})
                 except Exception: pass
-            redirect_target = "/admin" if is_admin else "/profile"
-            _admin_auth_debug("api_login_success", login_user, granted=is_admin, redirect_target=redirect_target)
-            return jsonify({"ok": True, "redirect_url": redirect_target, "role": login_user.get("role", "user"), "is_admin": is_admin, "user": login_user})
-        _admin_auth_debug("api_login_failed", None, granted=False, redirect_target=None)
+            redirect_target="/admin" if is_admin else "/profile"
+            _admin_auth_debug("api_login_success",login_user,granted=is_admin,redirect_target=redirect_target)
+            return jsonify({"ok":True,"redirect_url":redirect_target,"role":login_user.get("role","user"),"is_admin":is_admin,"user":login_user})
+        _admin_auth_debug("api_login_failed",None,granted=False,redirect_target=None)
+        code=result.get("error") or "incorrect_credentials"
         if db.is_owner_admin_email(email):
-            try: platform_v2.audit(None, "login_failed", "admin_session", "owner", None, {"status": "failed"})
+            try: platform_v2.audit(None,"login_failed","admin_session","owner",None,{"status":"failed"})
             except Exception: pass
-        return jsonify({"ok": False, "error": "invalid_credentials"})
+        status=404 if code=="account_not_found" else 401
+        if code=="account_unavailable": status=403
+        return jsonify({"ok":False,"error":code,"create_account_url":"/register" if code=="account_not_found" else None}),status
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        app.logger.warning("API login failed; error_type=%s",type(e).__name__)
+        return jsonify({"ok":False,"error":"login_failed"}),500
+
+
+@app.route("/api/auth/resend-verification", methods=["POST"])
+def api_resend_verification():
+    uid=session.get("pending_verification_user_id")
+    if not uid: return jsonify({"ok":False,"error":"verification_session_required"}),401
+    sent,reason=_issue_verification_email(int(uid),_lang())
+    if sent: return jsonify({"ok":True})
+    if reason in {"cooldown","rate_limited"}: return jsonify({"ok":False,"error":"please_wait"}),429
+    return jsonify({"ok":False,"error":reason or "email_send_failed"}),503
 
 
 @app.route("/api/health-profile", methods=["GET", "POST"])

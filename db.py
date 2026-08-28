@@ -518,6 +518,8 @@ def _create_ss_tables(c):
                 password_hash TEXT NOT NULL,
                 role TEXT NOT NULL DEFAULT 'user',
                 status TEXT NOT NULL DEFAULT 'active',
+                email_verified INTEGER NOT NULL DEFAULT 1,
+                email_verified_at TEXT,
                 created_at TEXT NOT NULL,
                 last_login TEXT
             )
@@ -568,6 +570,8 @@ def _create_ss_tables(c):
                 password_hash TEXT NOT NULL,
                 role TEXT NOT NULL DEFAULT 'user',
                 status TEXT NOT NULL DEFAULT 'active',
+                email_verified INTEGER NOT NULL DEFAULT 1,
+                email_verified_at TEXT,
                 created_at TEXT NOT NULL,
                 last_login TEXT
             )
@@ -636,6 +640,12 @@ def _migrate_ss_columns(conn, c):
         c.execute("ALTER TABLE ss_users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
     if "status" not in user_cols:
         c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
+    if "email_verified" not in user_cols:
+        # Existing accounts pre-date email verification. Keep them working by
+        # treating them as verified; all newly-created accounts explicitly use 0.
+        c.execute("ALTER TABLE ss_users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
+    if "email_verified_at" not in user_cols:
+        c.execute("ALTER TABLE ss_users ADD COLUMN email_verified_at TEXT")
 
     # Canonical single-owner RBAC.  No account is deleted or recreated, but any
     # stale Admin-like role on a non-owner account is demoted to ``user``.  This
@@ -1939,7 +1949,7 @@ def create_ss_user(email, name, password):
         return None, "invalid_email"
     if not name or len(name) < 2:
         return None, "invalid_name"
-    if len(password) < 6:
+    if len(password) < 8:
         return None, "password_too_short"
     # The designated owner must already exist. Never create a replacement Admin
     # account if that production account is missing.
@@ -1955,14 +1965,14 @@ def create_ss_user(email, name, password):
         role = "user"
         if USE_POSTGRES:
             c.execute(
-                "INSERT INTO ss_users (email, name, password_hash, role, created_at) VALUES (%s,%s,%s,%s,%s) RETURNING id",
-                (email, name, pw_hash, role, now),
+                "INSERT INTO ss_users (email, name, password_hash, role, email_verified, email_verified_at, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+                (email, name, pw_hash, role, 0, None, now),
             )
             user_id = c.fetchone()[0]
         else:
             c.execute(
-                "INSERT INTO ss_users (email, name, password_hash, role, created_at) VALUES (?,?,?,?,?)",
-                (email, name, pw_hash, role, now),
+                "INSERT INTO ss_users (email, name, password_hash, role, email_verified, email_verified_at, created_at) VALUES (?,?,?,?,?,?,?)",
+                (email, name, pw_hash, role, 0, None, now),
             )
             user_id = c.lastrowid
         conn.commit()
@@ -1973,25 +1983,32 @@ def create_ss_user(email, name, password):
         conn.close()
 
 
-def authenticate_ss_user(email, password):
-    """Authenticate user. Returns user_id or None."""
+def authenticate_ss_user_status(email, password):
+    """Authenticate without exposing password material.
+
+    Returns a small status dict so the UI can distinguish a missing account,
+    invalid credentials, disabled account, and an unverified email.  last_login
+    is updated only after the account is verified and authentication succeeds.
+    """
     email = (email or "").strip().lower()
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            "SELECT id, password_hash, status FROM ss_users WHERE email=%s" % PH,
+            "SELECT id, password_hash, status, COALESCE(email_verified,1) FROM ss_users WHERE lower(email)=%s" % PH,
             (email,),
         )
         row = c.fetchone()
         if not row:
-            return None
-        user_id, stored_hash, status = row
+            return {"ok": False, "error": "account_not_found"}
+        user_id, stored_hash, status, email_verified = row
         if (status or "active") != "active":
-            return None
+            return {"ok": False, "error": "account_unavailable"}
         valid, needs_upgrade = _verify_password(password, stored_hash)
         if not valid:
-            return None
+            return {"ok": False, "error": "incorrect_credentials"}
+        if not bool(email_verified):
+            return {"ok": False, "error": "verification_required", "user_id": int(user_id)}
         now = datetime.now(timezone.utc).isoformat()
         if needs_upgrade:
             c.execute(
@@ -2001,9 +2018,15 @@ def authenticate_ss_user(email, password):
         else:
             c.execute("UPDATE ss_users SET last_login=%s WHERE id=%s" % (PH, PH), (now, user_id))
         conn.commit()
-        return user_id
+        return {"ok": True, "user_id": int(user_id)}
     finally:
         conn.close()
+
+
+def authenticate_ss_user(email, password):
+    """Backward-compatible authentication helper returning user_id or None."""
+    result = authenticate_ss_user_status(email, password)
+    return result.get("user_id") if result.get("ok") else None
 
 
 def change_ss_user_password(user_id, current_password, new_password):
@@ -2045,12 +2068,12 @@ def get_ss_user(user_id):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT id, email, name, role, created_at, last_login, status FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        c.execute("SELECT id, email, name, role, created_at, last_login, status, COALESCE(email_verified,1), email_verified_at FROM ss_users WHERE id=%s" % PH, (int(user_id),))
         row = c.fetchone()
         if not row:
             return None
         role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
-        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active"}
+        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active", "email_verified": bool(row[7]), "email_verified_at": row[8]}
     finally:
         conn.close()
 
@@ -2061,12 +2084,12 @@ def get_ss_user_by_email(email):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT id, email, name, role, status FROM ss_users WHERE email=%s" % PH, (email,))
+        c.execute("SELECT id, email, name, role, status, COALESCE(email_verified,1), email_verified_at FROM ss_users WHERE lower(email)=%s" % PH, (email,))
         row = c.fetchone()
         if not row:
             return None
         role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
-        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active"}
+        return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active", "email_verified": bool(row[5]), "email_verified_at": row[6]}
     finally:
         conn.close()
 
@@ -2087,6 +2110,39 @@ def list_ss_admin_users():
                     "created_at": row[4], "last_login": row[5]})
     return out
 
+
+
+def update_unverified_email(user_id, new_email):
+    """Change the email only for an unverified, active account.
+
+    This is intended for the post-registration verification flow. It never
+    changes passwords, roles, or verified accounts.
+    """
+    new_email = (new_email or "").strip().lower()
+    if not new_email or not _re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', new_email):
+        return False, "invalid_email"
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT email,status,COALESCE(email_verified,1) FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        row = c.fetchone()
+        if not row:
+            return False, "account_not_found"
+        if (row[1] or "active") != "active":
+            return False, "account_unavailable"
+        if bool(row[2]):
+            return False, "already_verified"
+        # The project-owner email must refer to the existing owner account only.
+        if is_owner_admin_email(new_email) and new_email != (row[0] or "").strip().lower():
+            return False, "email_exists"
+        c.execute("SELECT id FROM ss_users WHERE lower(email)=%s AND id<>%s" % (PH, PH), (new_email, int(user_id)))
+        if c.fetchone():
+            return False, "email_exists"
+        c.execute("UPDATE ss_users SET email=%s WHERE id=%s" % (PH, PH), (new_email, int(user_id)))
+        conn.commit()
+        return True, None
+    finally:
+        conn.close()
 
 def is_owner_admin_email(email):
     """Return True only for the configured project-owner email."""
