@@ -6,6 +6,10 @@ on simple keyword matching against the patient's free-text notes.
 """
 
 import re
+import json
+from datetime import datetime, timezone
+
+import db
 
 # key -> (ar name, en name, {ar/en keyword variants}, ar warning, en warning,
 #          ar uses, en uses, ar interactions, en interactions)
@@ -142,18 +146,52 @@ def check_medications(notes: str):
 
 
 def lookup_drug(name: str):
-    """Returns the full medication info dict if the given name matches a known drug, else None."""
+    """Return a medication record from the production database.
+
+    The bundled curated records are only used to seed an empty database. All
+    runtime searches then go through the database, so Admin/database updates
+    are reflected without changing the frontend.
+    """
     if not name:
         return None
-    text = name.lower()
-    for entry in MEDICATIONS.values():
-        name_ar, name_en, keywords, warn_ar, warn_en, uses_ar, uses_en, interact_ar, interact_en = _unpack(entry)
-        for kw in keywords:
-            if kw.lower() in text or text in kw.lower():
-                return {
-                    "name_ar": name_ar, "name_en": name_en,
-                    "warning_ar": warn_ar, "warning_en": warn_en,
-                    "uses_ar": uses_ar, "uses_en": uses_en,
-                    "interact_ar": interact_ar, "interact_en": interact_en,
-                }
+    init_schema()
+    text = _norm(name)
+    conn = db._conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id,name_ar,name_en,aliases,warning_ar,warning_en,uses_ar,uses_en,interactions_ar,interactions_en,updated_at FROM medical_medications WHERE status='active'")
+        for row in c.fetchall():
+            aliases = json.loads(row[3] or "[]")
+            choices = [row[1], row[2], *aliases]
+            if any(text == _norm(x) or (len(text) >= 3 and text in _norm(x)) for x in choices):
+                return {"id":row[0],"name_ar":row[1],"name_en":row[2],"warning_ar":row[4],"warning_en":row[5],"uses_ar":row[6],"uses_en":row[7],"interact_ar":row[8],"interact_en":row[9],"updated_at":row[10]}
+    finally:
+        conn.close()
     return None
+
+
+def _norm(value):
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
+def init_schema():
+    db.init_db()
+    conn = db._conn()
+    try:
+        c = conn.cursor()
+        serial = "SERIAL PRIMARY KEY" if db.USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
+        c.execute(f"""CREATE TABLE IF NOT EXISTS medical_medications (
+            id {serial}, slug TEXT UNIQUE NOT NULL, name_ar TEXT NOT NULL,
+            name_en TEXT NOT NULL, aliases TEXT NOT NULL, warning_ar TEXT,
+            warning_en TEXT, uses_ar TEXT, uses_en TEXT, interactions_ar TEXT,
+            interactions_en TEXT, status TEXT NOT NULL DEFAULT 'active',
+            updated_at TEXT NOT NULL
+        )""")
+        now = datetime.now(timezone.utc).isoformat()
+        for slug, entry in MEDICATIONS.items():
+            name_ar,name_en,keywords,warn_ar,warn_en,uses_ar,uses_en,interact_ar,interact_en = _unpack(entry)
+            values=(slug,name_ar,name_en,json.dumps(sorted(keywords),ensure_ascii=False),warn_ar,warn_en,uses_ar,uses_en,interact_ar,interact_en,"active",now)
+            c.execute(f"INSERT INTO medical_medications(slug,name_ar,name_en,aliases,warning_ar,warning_en,uses_ar,uses_en,interactions_ar,interactions_en,status,updated_at) VALUES({','.join([db.PH]*12)}) ON CONFLICT(slug) DO NOTHING", values)
+        conn.commit()
+    finally:
+        conn.close()

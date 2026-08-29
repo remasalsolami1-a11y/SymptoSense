@@ -3512,36 +3512,30 @@ ABOUT_US_CSS = """
 def about_us_page():
     from html import escape
     ar = _lang() == "ar"
-    bi = lambda a,e: a if ar else e
-    tx = lambda key: escape(_t(key))
+    bi = lambda a,e: escape(a if ar else e)
+    portrait_path=os.path.join(BASE_DIR,"static","images","remas.jpg")
+    portrait = '<img class="au-personal-img" src="/static/images/remas.jpg" alt="Remas Hameed Alsolami">' if os.path.isfile(portrait_path) else '<div class="au-photo-placeholder"><span>R</span><small>'+bi('مكان صورة ريماس','Remas photo placeholder')+'</small></div>'
     body = """
     <main class="about-us-page" aria-labelledby="aboutUsTitle">
       <section class="au-section au-hero au-reveal"><div class="au-split">
-        <div><span class="au-kicker">👩🏻‍💻 __ABOUT_ME__</span><h1 id="aboutUsTitle">__HELLO__</h1><div class="au-role">Data Science Student &amp; Creator of SymptoSense</div><div class="au-copy"><p>__P2__</p><p>__P1__</p></div></div>
-        <div class="au-visual" aria-label="__ABSTRACT_ALT__"><div class="au-portrait-abstract"><div class="au-r">R</div><div class="au-float au-f1">📊</div><div class="au-float au-f2">🤖</div><div class="au-float au-f3">🩺</div><div class="au-float au-f4">💡</div></div></div>
+        <div><span class="au-kicker">01 · 👩🏻‍💻 __ABOUT__</span><h1 id="aboutUsTitle">__NAME__</h1><div class="au-role">__ROLE__</div><div class="au-copy"><p>__HERO__</p></div></div>
+        <div class="au-visual">__PORTRAIT__</div>
       </div></section>
       <section class="au-section au-story au-reveal"><div class="au-split">
-        <div class="au-visual"><div class="au-story-flow" aria-label="__STORY_ARIA__"><div class="au-story-node"><span>💡</span>__S1__</div><div class="au-story-node"><span>📊</span>__S2__</div><div class="au-story-node"><span>🩺</span>__S3__</div><div class="au-story-node"><span>✨</span>SymptoSense</div></div></div>
-        <div><span class="au-kicker">💡 __MY_STORY__</span><h2>__STORY_TITLE__</h2><div class="au-copy"><p>__P1__</p><p>__P3__</p></div></div>
+        <div class="au-visual"><img class="au-project-art" src="/icons/about-us-phone.webp" alt="__ART_ALT__" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><div class="au-photo-placeholder" hidden><span>🩺</span><small>SymptoSense</small></div></div>
+        <div><span class="au-kicker">02 · 💡</span><h2>__IDEA_TITLE__</h2><div class="au-copy"><p>__IDEA__</p></div></div>
       </div></section>
-      <section class="au-section au-reveal"><div class="au-split">
-        <div><span class="au-kicker">🩺 __IDEA_KICK__</span><h2>__WHAT_TITLE__</h2><div class="au-copy"><p>__WHAT_TEXT__</p><p>__WHAT_SHORT__</p></div></div>
-        <div class="au-visual"><figure class="au-idea-visual"><img src="/icons/about-us-phone.webp" alt="__IMG_ALT__" width="621" height="677" loading="lazy"><span class="au-chip au-c1">🩺 Healthcare</span><span class="au-chip au-c2">🤖 AI</span><span class="au-chip au-c3">📊 Data</span><span class="au-chip au-c4">👤 User</span></figure></div>
-      </div></section>
-      <section class="au-section au-purpose au-reveal"><span class="au-kicker">❤️ __PURPOSE_KICK__</span><h2>__PURPOSE_TITLE__</h2><div class="au-copy"><p>__P4__</p></div><div class="au-purpose-icons"><div class="au-purpose-item"><span>💡</span>__PURPOSE_1__</div><div class="au-purpose-item"><span>❤️</span>__PURPOSE_2__</div><div class="au-purpose-item"><span>🩺</span>__PURPOSE_3__</div></div></section>
-      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">💻 __PROJECT_KICK__</span><h2>__PROJECT_TITLE__</h2><div class="au-copy" style="margin:auto"><p>__P3__</p></div></div><div class="au-device" aria-label="__MOCKUP_ARIA__"><div class="au-laptop"><div class="au-screen"><iframe src="/home" title="SymptoSense live website preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-base"></div></div><div class="au-phone"><iframe src="/home" title="SymptoSense mobile live preview" loading="lazy" tabindex="-1"></iframe></div></div></section>
-      <section class="au-section au-message au-reveal"><div class="au-message-card"><div><span class="au-kicker">✨ __MESSAGE_KICK__</span><h2>__MESSAGE_TITLE__</h2><div class="au-copy"><p>__P4__</p><p>__P1__</p></div></div><div class="au-voice-mark" aria-hidden="true"><div class="au-voice-icons"><span>📚</span><span>🌱</span><span>💡</span></div></div></div></section>
-      <section class="au-section au-final au-reveal"><span class="au-kicker">🌟 SymptoSense</span><h2>__FINAL_TITLE__</h2><p>__FINAL_TEXT__</p><a class="btn pri" href="/chat">__CTA__</a></section>
+      <section class="au-section au-purpose au-reveal"><span class="au-kicker">03 · 👩🏻‍💻</span><h2>__MY_ROLE__</h2><div class="au-role-grid">__ROLE_CARDS__</div></section>
+      <section class="au-section au-purpose au-tech au-reveal"><span class="au-kicker">04 · 🛠️</span><h2>Technologies</h2><div class="au-purpose-icons"><div class="au-purpose-item"><span>🐍</span>Python &amp; Flask</div><div class="au-purpose-item"><span>📊</span>Data Processing</div><div class="au-purpose-item"><span>🗄️</span>PostgreSQL / SQLite</div><div class="au-purpose-item"><span>🌐</span>HTML, CSS &amp; JavaScript</div></div></section>
+      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">05 · 📸</span><h2>__PROJECT_VISUALS__</h2></div><div class="au-device"><div class="au-laptop"><div class="au-screen"><iframe src="/home" title="SymptoSense project preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-base"></div></div></div></section>
+      <section class="au-section au-final au-reveal"><span class="au-kicker">06 · 🌟 SymptoSense</span><p>__FINAL__</p><a class="btn pri" href="/chat">__CTA__</a></section>
     </main>"""
-    rep={
-      '__ABOUT_ME__':bi('عنّي','About me'),'__HELLO__':bi('مرحبًا، أنا ريماس حميد السلمي 👋',"Hi, I'm Remas Hameed Alsolami 👋"),'__P1__':tx('about_us_p1'),'__P2__':tx('about_us_p2'),'__P3__':tx('about_us_p3'),'__P4__':tx('about_us_p4'),
-      '__ABSTRACT_ALT__':bi('رسم تجريدي يعبّر عن ريماس واهتماماتها في علم البيانات والذكاء الاصطناعي والصحة','Abstract visual representing Remas and her interests in data science, AI and healthcare'),'__MY_STORY__':bi('قصتي مع SymptoSense','My story with SymptoSense'),'__STORY_TITLE__':bi('كيف بدأت فكرة SymptoSense؟','How did SymptoSense begin?'),'__STORY_ARIA__':bi('الفكرة ثم علم البيانات ثم الصحة ثم SymptoSense','Idea, data science, healthcare, then SymptoSense'),'__S1__':bi('سؤال وفكرة','A question & idea'),'__S2__':bi('علم البيانات والذكاء الاصطناعي','Data & AI'),'__S3__':bi('فهم الأعراض بصورة أوضح','Clearer symptom understanding'),
-      '__IDEA_KICK__':bi('فكرة المشروع','The idea'),'__WHAT_TITLE__':bi('ما هو SymptoSense؟','What is SymptoSense?'),'__WHAT_TEXT__':tx('ab_p1'),'__WHAT_SHORT__':bi('الفكرة هي مساعدة المستخدم على فهم ما يشعر به والحصول على توجيه توعوي أوضح للخطوة التالية، دون تقديم تشخيص طبي قطعي.','The idea is to help people understand what they are feeling and get clearer educational guidance for the next step, without presenting a definitive medical diagnosis.'),'__IMG_ALT__':tx('about_us_img1_alt'),
-      '__PURPOSE_KICK__':bi('لماذا يهمني؟','Why it matters to me'),'__PURPOSE_TITLE__':bi('لماذا هذا المشروع مهم بالنسبة لي؟','Why this project matters to me'),'__PURPOSE_1__':bi('فكرة لها معنى','A meaningful idea'),'__PURPOSE_2__':bi('أثر إنساني','Human purpose'),'__PURPOSE_3__':bi('وعي صحي أبسط','Simpler health awareness'),
-      '__PROJECT_KICK__':bi('المشروع الحقيقي','The real project'),'__PROJECT_TITLE__':bi('من فكرة إلى مشروع حقيقي','From an idea to a real project'),'__MOCKUP_ARIA__':bi('معاينة حية للموقع الحقيقي داخل لابتوب وجوال','Live preview of the real website inside laptop and mobile mockups'),
-      '__MESSAGE_KICK__':bi('رسالة ريماس','A message from Remas'),'__MESSAGE_TITLE__':bi('أكثر من مجرد مشروع','More than just a project'),'__FINAL_TITLE__':bi('تعرّف على SymptoSense 🩺','Discover SymptoSense 🩺'),'__FINAL_TEXT__':bi('فكرة بدأت من اهتمامي بالبيانات والذكاء الاصطناعي، وأطمح أن تتطور إلى حل أكثر فائدة وتأثيرًا.','An idea that began from my interest in data and artificial intelligence, with the ambition to grow into a more useful and impactful solution.'),'__CTA__':bi('جرّب SymptoSense','Try SymptoSense')}
+    roles=[('📊','Data Analysis'),('⚙️','Data Processing'),('🤖','AI / Machine Learning'),('🧠','Medical Knowledge Base'),('✨','User Experience'),('📈','Admin Analytics'),('🧩','System Design')]
+    cards=''.join('<div class="au-role-card"><span>'+icon+'</span><b>'+label+'</b></div>' for icon,label in roles)
+    rep={'__ABOUT__':bi('عني','About me'),'__NAME__':bi('ريماس حميد السلمي','Remas Hameed Alsolami'),'__ROLE__':bi('طالبة علوم بيانات ومطورة مشروع SymptoSense','Data Science student and creator of SymptoSense'),'__HERO__':bi('طورت SymptoSense كفكرة تجمع بين علوم البيانات والذكاء الاصطناعي لمساعدة المستخدم على فهم أعراضه وتنظيم المعلومات الصحية بطريقة أبسط وأكثر وضوحًا.','I developed SymptoSense as an idea combining data science and artificial intelligence to help people understand symptoms and organize health information more simply and clearly.'),'__PORTRAIT__':portrait,'__ART_ALT__':bi('تصميم من مشروع SymptoSense يجمع الصحة والذكاء الاصطناعي','A SymptoSense project visual combining healthcare and AI'),'__IDEA_TITLE__':bi('فكرة SymptoSense','The SymptoSense idea'),'__IDEA__':bi('بدأت الفكرة من ملاحظة صعوبة فهم الأعراض والمعلومات الصحية المتفرقة. صممت تجربة تستخدم معالجة البيانات وقاعدة معرفة طبية وطبقة أمان، ثم تستفيد من الذكاء الاصطناعي لشرح المعلومات بلغة مبسطة ومساعدة المستخدم على معرفة الخطوة التالية دون تقديم تشخيص قطعي.','The idea began with how difficult it can be to understand symptoms and fragmented health information. I designed an experience using data processing, a medical knowledge base, and a safety layer, then AI to explain information simply and help users understand the next step without giving a definitive diagnosis.'),'__MY_ROLE__':bi('دوري في SymptoSense','My role in SymptoSense'),'__ROLE_CARDS__':cards,'__PROJECT_VISUALS__':bi('صور من المشروع','Project visuals'),'__FINAL__':bi('SymptoSense هو مشروعي لتطبيق ما تعلمته في علوم البيانات والذكاء الاصطناعي على فكرة صحية تهدف إلى تقديم تجربة أبسط وأكثر تنظيمًا للمستخدم.','SymptoSense is my project for applying what I have learned in data science and artificial intelligence to a health-focused idea that aims to give users a simpler, more organized experience.'),'__CTA__':bi('ابدأ باستخدام SymptoSense','Start using SymptoSense')}
     for k,v in rep.items(): body=body.replace(k,v)
-    return _page(_t('title_about_us'),body,desc=_t('about_us_p1'),extra_css=ABOUT_US_CSS)
+    extra=ABOUT_US_CSS+""".au-photo-placeholder{width:min(360px,94%);aspect-ratio:1;border-radius:34px;background:linear-gradient(145deg,#e7f6ff,#f3efff);border:1px dashed #91bdda;display:grid;place-items:center;align-content:center;gap:12px;color:#174a73}.au-photo-placeholder span{width:100px;height:100px;border-radius:32px;background:#287fc1;color:white;display:grid;place-items:center;font-size:44px;font-weight:900}.au-personal-img,.au-project-art{width:min(390px,96%);max-height:430px;object-fit:contain;border-radius:30px;box-shadow:0 16px 36px rgba(31,86,127,.12)}.au-role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:24px}.au-role-card{min-height:120px;border:1px solid #d5e6ef;border-radius:20px;background:linear-gradient(145deg,#fff,#f4faff);display:grid;place-items:center;align-content:center;gap:8px}.au-role-card span{font-size:30px}.au-tech .au-purpose-icons{grid-template-columns:repeat(4,1fr);max-width:none}@media(max-width:760px){.au-tech .au-purpose-icons{grid-template-columns:1fr 1fr}.au-role-grid{grid-template-columns:1fr 1fr}}"""
+    return _page(bi('من نحن — ريماس حميد السلمي','About — Remas Hameed Alsolami'),body,desc=bi('تعرف على ريماس حميد السلمي وفكرة SymptoSense.','Meet Remas Hameed Alsolami and the idea behind SymptoSense.'),extra_css=extra)
 
 
 def about_page():
@@ -6750,7 +6744,7 @@ def meds_page():
     async function enablePush(){if(!pushSupported())return;const cfg=await fetch('/api/push/vapid-public').then(r=>r.json());if(!cfg.configured||!cfg.public_key){alert(AR?'خدمة Push غير مهيأة على الخادم.':'Push is not configured on the server.');return}const perm=await Notification.requestPermission();if(perm!=='granted'){refreshPush();return}const reg=await navigator.serviceWorker.register('/service-worker.js');const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(cfg.public_key)});const r=await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),timezone,lang:AR?'ar':'en'})});if(!r.ok){alert(AR?'تعذر تفعيل الإشعارات.':'Unable to enable notifications.');return}await saveNotifSettings();refreshPush()}
     async function disablePush(){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await fetch('/api/push/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe()}}catch(e){}document.getElementById('notifEnabled').checked=false;await saveNotifSettings();refreshPush()}
     async function saveNotifSettings(){if(!LOGGED_IN)return;await fetch('/api/meds/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:document.getElementById('notifEnabled').checked,sound:document.getElementById('notifSound').checked,snooze_minutes:Number(document.getElementById('snoozeMinutes').value||10),timezone})})}
-    async function searchDrug(){const name=document.getElementById('medInput').value.trim(),box=document.getElementById('medRes');if(!name)return;box.innerHTML='<p class="muted">'+(AR?'جاري البحث في المعلومات المتاحة…':'Searching available verified information…')+'</p>';try{const d=await fetch('/api/drug?name='+encodeURIComponent(name)).then(r=>r.json());if(!d.ok){box.innerHTML='<p class="muted">'+(AR?'لا تتوفر معلومات دوائية موثقة لهذا الاسم حاليًا.':'No verified medication information is currently available for this name.')+'</p>';return}box.innerHTML='<article class="drug-card"><div class="drug-name">💊 '+esc(d.name)+'</div><div class="drug-sec"><b>'+(AR?'معلومات عامة':'General information')+'</b><p>'+esc(d.uses||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'تنبيهات مهمة':'Important warnings')+'</b><p>'+esc(d.warning||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'التداخلات المتوفرة':'Available interaction information')+'</b><p>'+esc(d.interactions||'—')+'</p></div><p class="privacy-note">'+(AR?'هذه المعلومات توعوية فقط. لا تبدأ أو توقف أو تغيّر دواءً أو جرعةً بناءً على هذه الصفحة.':'This is awareness information only. Do not start, stop, or change a medication or dose based on this page.')+'</p></article>'}catch(e){box.innerHTML='<p class="muted">'+(AR?'تعذر تحميل المعلومات الآن.':'Unable to load information right now.')+'</p>'}}
+    async function searchDrug(){const name=document.getElementById('medInput').value.trim(),box=document.getElementById('medRes');if(!name)return;box.innerHTML='<div class="med-loading"><span class="spin"></span>'+(AR?'جاري تحميل المعلومات…':'Loading information…')+'</div>';try{const r=await fetch('/api/drug?name='+encodeURIComponent(name));if(!r.ok)throw new Error('http');const d=await r.json();if(!d.ok)throw new Error('api');if(!d.result){box.innerHTML='<p class="muted">'+(AR?'لم يتم العثور على معلومات موثوقة لهذا البحث.':'No trusted information was found for this search.')+'</p>';return}box.innerHTML='<article class="drug-card"><div class="drug-name">💊 '+esc(d.name)+'</div><div class="drug-sec"><b>'+(AR?'معلومات عامة':'General information')+'</b><p>'+esc(d.uses||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'تنبيهات مهمة':'Important warnings')+'</b><p>'+esc(d.warning||'—')+'</p></div><div class="drug-sec"><b>'+(AR?'التداخلات المتوفرة':'Available interaction information')+'</b><p>'+esc(d.interactions||'—')+'</p></div><p class="privacy-note">'+(AR?'هذه المعلومات توعوية فقط. لا تبدأ أو توقف أو تغيّر دواءً أو جرعةً بناءً على هذه الصفحة.':'This is awareness information only. Do not start, stop, or change a medication or dose based on this page.')+'</p></article>'}catch(e){box.innerHTML='<div class="med-error">'+(AR?'حدث خطأ. تعذر تحميل المعلومات حاليًا. حاول مرة أخرى.':'Something went wrong. We could not load this information right now. Please try again.')+'<br><button class="med-retry" onclick="searchDrug()">'+(AR?'إعادة المحاولة':'Try Again')+'</button></div>'}}
     if(LOGGED_IN){document.getElementById('startDate').value=today();document.getElementById('planTimezone').value=timezone;renderWeekdays();loadPlans();loadCalendar();refreshPush()}
     </script>
     '''
@@ -6764,7 +6758,7 @@ def meds_page():
       '__AR__':'true' if ar else 'false','__LOGGED_IN__':'true' if logged_in else 'false','__GATE_HIDE__':'hide' if logged_in else '','__PRIVATE_HIDE__':'' if logged_in else 'hide'
     }
     for k,v in repl.items(): body=body.replace(k,str(v))
-    return _page(tx('الأدوية والتذكيرات','Medications & Reminders'), body, extra_css=FAM_CSS)
+    return _page(tx('الأدوية والتذكيرات','Medications & Reminders'), body, extra_css=MEDS_CSS)
 
 
 @app.route("/service-worker.js")
@@ -6796,6 +6790,12 @@ def offline():
 
 
 # ---------------------------------------------------------------- family health hub
+MEDS_CSS = """
+.med-error{padding:14px;border:1px solid #fecaca;border-radius:14px;background:#fff1f2;color:#991b1b}
+.med-retry{margin-top:10px;border:0;border-radius:10px;background:#1976d2;color:#fff;padding:9px 14px;font:inherit;font-weight:800;cursor:pointer}
+.med-loading{display:flex;align-items:center;gap:10px;padding:18px;color:#5f7185}
+"""
+
 FAM_CSS = """
 .fam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-top: 16px; }
 .fam-card { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 18px; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; text-align: center; }
@@ -7221,7 +7221,7 @@ def search_page():
           if (!d.ok) { box.innerHTML = '<div class="warn">' + esc(d.error || sT('sea_err')) + '</div>'; return; }
           if (!d.result) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_noresult')) + '</div>'; return; }
           renderResult(d.result);
-        }).catch(function() { box.innerHTML = '<div class="warn">' + esc(sT('sea_err')) + '</div>'; });
+        }).catch(function() { box.innerHTML = '<div class="warn">' + esc(API_LANG()==='ar'?'حدث خطأ. تعذر تحميل المعلومات حاليًا. حاول مرة أخرى.':"Something went wrong. We could not load this information right now. Please try again.") + '<br><button class="btn pri" style="margin-top:10px" onclick="doSearch()">'+esc(API_LANG()==='ar'?'إعادة المحاولة':'Try Again')+'</button></div>'; });
     }
     function catTxt(c) {
       const m = { symptom: 'sea_cat_symp', test: 'sea_cat_test', term: 'sea_cat_term', medication: 'sea_cat_med' };
@@ -7239,6 +7239,7 @@ def search_page():
       }
       if (r.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(r.worry) + '</div>';
       if (r.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(r.doctor) + '</div>';
+      if (r.sources && r.sources.length) { h += '<div class="sr-sec"><b>'+(API_LANG()==='ar'?'📚 المصادر الطبية':'📚 Medical sources')+'</b><ul class="sr-causes">'; r.sources.forEach(function(s){h+='<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name||s.organization)+'</a></li>'}); h += '</ul></div>'; }
       h += '<div class="sea-actions">' +
         '<button class="btn" onclick="openExplain(\\'' + esc(r.title).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(sT('sea_explain')) + '</button>' +
         '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>' +
@@ -7265,7 +7266,7 @@ def search_page():
     ]
     for k, v in repl:
         body = body.replace(k, v)
-    return _page(_t("title_search"), body, extra_css=SEARCH_CSS)
+    return _page("البحث الصحي" if _lang()=="ar" else "Health Search", body, extra_css=SEARCH_CSS)
 
 
 # ---------------------------------------------------------------- health calculators
@@ -11146,9 +11147,28 @@ def api_search():
         q = (request.args.get("q") or "").strip()
         if not q:
             return jsonify({"ok": True, "result": None, "suggestions": health_search.suggestion_terms(lang)})
+        result = health_search.search_health(q, lang)
+        # Prefer the editable Medical Knowledge Base for symptoms. The curated
+        # glossary remains a safe fallback for tests and general terms.
+        normalized = medical_knowledge.normalize_symptoms([q], lang)
+        if normalized.get("canonical"):
+            symptom = normalized["canonical"][0]
+            entity = medical_knowledge.get_entity("symptom", symptom["symptom_id"], public=True)
+            if entity:
+                sources=[]
+                for source in entity.get("sources",[]):
+                    sources.append({"name":source.get("source_name"),"organization":source.get("organization"),"url":source.get("reference_url") or source.get("official_url")})
+                result = {
+                    "key": entity.get("slug"), "emoji":"🩺", "category":"symptom",
+                    "title": entity.get("name_en") if lang=="en" else entity.get("name_ar"),
+                    "what": entity.get("description_en") if lang=="en" else entity.get("description_ar"),
+                    "causes": [], "worry": entity.get("red_flags_en") if lang=="en" else entity.get("red_flags_ar"),
+                    "doctor": "Seek medical review if symptoms persist, worsen, or a red flag appears." if lang=="en" else "اطلب مراجعة طبية إذا استمرت الأعراض أو ساءت أو ظهرت علامة خطر.",
+                    "sources": sources,
+                }
         return jsonify({
             "ok": True,
-            "result": health_search.search_health(q, lang),
+            "result": result,
             "suggestions": health_search.suggestion_terms(lang),
         })
     except Exception as e:
@@ -11277,14 +11297,15 @@ def api_drug():
     name = (request.args.get("name") or "").strip()
     d = medication_warnings.lookup_drug(name)
     if not d:
-        return jsonify({"ok": False})
+        return jsonify({"ok": True, "result": None})
     lang = "en" if _lang() == "en" else "ar"
     return jsonify({
-        "ok": True,
+        "ok": True, "result": True,
         "name": d["name_en"] if lang == "en" else d["name_ar"],
         "uses": d["uses_en"] if lang == "en" else d["uses_ar"],
         "warning": d["warning_en"] if lang == "en" else d["warning_ar"],
         "interactions": d["interact_en"] if lang == "en" else d["interact_ar"],
+        "last_updated": d.get("updated_at"),
     })
 
 
