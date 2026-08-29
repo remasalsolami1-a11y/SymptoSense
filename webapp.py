@@ -6719,6 +6719,1205 @@ def offline():
     return send_from_directory(BASE_DIR, "offline.html")
 
 
+# ---------------------------------------------------------------- family health hub
+FAM_CSS = """
+.fam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-top: 16px; }
+.fam-card { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 18px; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; text-align: center; }
+.fam-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(18,59,112,.12); }
+.fam-av { width: 58px; height: 58px; margin: 0 auto 10px; border-radius: 50%; background: #EAF4FF; border: 2px solid #DCEBFA; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.fam-name { font-weight: 800; font-size: 16px; color: #123B70; }
+.fam-meta { font-size: 13px; color: #5F7185; margin-top: 4px; }
+.fam-stat { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 12px; color: #40566F; }
+.fam-stat b { color: #1976D2; }
+.fam-form { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 20px; margin-top: 16px; }
+.fam-rel-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.fam-chip { padding: 8px 14px; border-radius: 999px; border: 1.5px solid #1976D2; background: #FFFFFF; color: #1976D2; font-size: 13px; font-weight: 700; cursor: pointer; }
+.fam-chip.sel { background: #1976D2; color: #FFFFFF; }
+.tl-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed #DCEBFA; font-size: 14px; }
+.tl-dot { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; background: #EAF4FF; flex: 0 0 34px; }
+.tl-date { color: #94A3B8; font-size: 12px; }
+.tl-type { color: #40566F; }
+.tl-type b { color: #123B70; }
+.mplan-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #F5F9FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+.mplan-time { font-weight: 800; color: #1976D2; min-width: 52px; }
+.mplan-name { font-weight: 700; color: #40566F; }
+.mplan-status { display: flex; gap: 6px; flex-wrap: wrap; }
+.mini-btn { border: 1px solid #DCEBFA; background: #FFFFFF; color: #40566F; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.mini-btn.tk { border-color: #86EFAC; color: #166534; }
+.mini-btn.sk { border-color: #FECACA; color: #991B1B; }
+.mini-btn.lt { border-color: #FDE68A; color: #92400E; }
+.mini-btn.done { opacity: .55; pointer-events: none; }
+.adh-bar { height: 8px; background: #DCEBFA; border-radius: 8px; overflow: hidden; margin-top: 6px; }
+.adh-fill { height: 100%; background: #1976D2; border-radius: 8px; }
+"""
+
+
+def _fam_emoji(relation):
+    return {
+        "me": "👤", "mother": "👩", "father": "👨", "daughter": "👧",
+        "son": "👦", "grandparent": "👵", "other": "🧑",
+    }.get(relation, "🧑")
+
+
+def family_page():
+    ar = _lang() == "ar"
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <div class="card">
+      <h2>__H__</h2>
+      <p class="muted">__SUB__</p>
+      <div class="muted" style="font-size:13px;margin-top:6px;">__INTRO__</div>
+      <div class="fam-grid" id="famGrid"><div class="muted">...</div></div>
+    </div>
+    <div class="fam-form">
+      <h3 style="color:#123B70;">__ADD__</h3>
+      <label class="lbl">__WHO__</label>
+      <div class="fam-rel-chips" id="relChips"></div>
+      <div class="grid2" style="margin-top:6px;">
+        <div><label class="lbl">__NAME__</label><input class="inp" id="fName" placeholder="__NAMEPH__"></div>
+        <div><label class="lbl">__AGE__</label><input class="inp" id="fAge" placeholder="__AGEPH__"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="lbl">__GEN__</label>
+          <select class="inp" id="fGender"><option value="f">__GF__</option><option value="m">__GM__</option></select>
+        </div>
+        <div><label class="lbl">__COND__</label><input class="inp" id="fCond" placeholder="..."></div>
+      </div>
+      <div class="grid2">
+        <div><label class="lbl">__MEDS__</label><input class="inp" id="fMeds" placeholder="..."></div>
+        <div><label class="lbl">__ALL__</label><input class="inp" id="fAll" placeholder="..."></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn pri" onclick="saveFam()">__SAVE__</button>
+        <span id="famMsg" style="font-weight:700;color:#1976D2;"></span>
+      </div>
+    </div>
+    <script>
+    const T = __PT__;
+    const LANG = "__LANG__";
+    function TT(k) { return T[k] || k; }
+    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
+    const RELS = [
+      ['me', TT('fam_rel_me')], ['mother', TT('fam_rel_mother')], ['father', TT('fam_rel_father')],
+      ['daughter', TT('fam_rel_daughter')], ['son', TT('fam_rel_son')],
+      ['grandparent', TT('fam_rel_grandparent')], ['other', TT('fam_rel_other')]
+    ];
+    const EMO = {'me':'👤','mother':'👩','father':'👨','daughter':'👧','son':'👦','grandparent':'👵','other':'🧑'};
+    let rel = 'other';
+    function renderChips() {
+      document.getElementById('relChips').innerHTML = RELS.map(r =>
+        '<span class="fam-chip' + (r[0]===rel?' sel':'') + '" onclick="pickRel(\\'' + r[0] + '\\')">' + r[1] + '</span>').join('');
+    }
+    function pickRel(r) { rel = r; renderChips(); }
+    function loadFam() {
+      fetch('/api/family').then(r=>r.json()).then(d=>{
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
+        const box = document.getElementById('famGrid');
+        if (!d.ok || !d.members.length) { box.innerHTML = '<div class="muted">' + TT('fam_empty') + '</div>'; return; }
+        let h = '<div class="fam-card" onclick="location.href=\\'/profile\\'"><div class="fam-av">👤</div><div class="fam-name">' + TT('me_short') + '</div><div class="fam-meta">' + TT('fam_rel_me') + '</div></div>';
+        d.members.forEach(m => {
+          const adh = m.adherence !== null && m.adherence !== undefined ? m.adherence + '%' : TT('fam_no_adherence');
+          h += '<div class="fam-card" onclick="location.href=\\'/family/' + m.id + '\\'">' +
+            '<div class="fam-av">' + EMO[m.relation] + '</div>' +
+            '<div class="fam-name">' + esc(m.name) + '</div>' +
+            '<div class="fam-meta">' + (m.age ? m.age + ' ' + TT('fam_years') : '') + (m.gender ? ' • ' + (m.gender==='f'?TT('fam_g_f'):TT('fam_g_m')) : '') + '</div>' +
+            '<div class="fam-stat"><span>🩺 <b>' + m.records_count + '</b></span><span>💊 <b>' + adh + '</b></span></div>' +
+            '</div>';
+        });
+        box.innerHTML = h;
+      }).catch(()=>{ document.getElementById('famGrid').innerHTML = '<div class="warn">' + TT('fam_err') + '</div>'; });
+    }
+    function saveFam() {
+      const name = document.getElementById('fName').value.trim();
+      const msg = document.getElementById('famMsg');
+      if (!name) { msg.textContent = TT('fam_name'); msg.style.color = '#B91C1C'; return; }
+      fetch('/api/family', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        relation: rel, name: name,
+        age: document.getElementById('fAge').value.trim(),
+        gender: document.getElementById('fGender').value,
+        conditions: document.getElementById('fCond').value.trim(),
+        medications: document.getElementById('fMeds').value.trim(),
+        allergies: document.getElementById('fAll').value.trim()
+      })}).then(r=>r.json()).then(d=>{
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
+        if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
+        msg.textContent = TT('fam_saved'); msg.style.color = '#1976D2';
+        ['fName','fAge','fCond','fMeds','fAll'].forEach(i=>document.getElementById(i).value='');
+        loadFam();
+      });
+    }
+    renderChips();
+    loadFam();
+    </script>
+    """
+    for k, v in [
+        ("__PT__", json.dumps(t, ensure_ascii=False)),
+        ("__LANG__", "en" if _lang() == "en" else "ar"),
+        ("__H__", t["fam_h"]), ("__SUB__", t["fam_sub"]), ("__INTRO__", t["fam_hub_intro"]),
+        ("__ADD__", t["fam_add"]), ("__WHO__", t["fam_who"]),
+        ("__NAME__", t["fam_name"]), ("__NAMEPH__", t["fam_name_ph"]),
+        ("__AGE__", t["fam_age"]), ("__AGEPH__", t["fam_age_ph"]),
+        ("__GEN__", t["fam_gender"]), ("__GF__", t["fam_g_f"]), ("__GM__", t["fam_g_m"]),
+        ("__COND__", t["fam_conditions"]), ("__MEDS__", t["fam_meds"]),
+        ("__ALL__", t["fam_allergies"]), ("__SAVE__", t["fam_save"]),
+    ]:
+        body = body.replace(k, v)
+    return _page(_t("title_home"), body, extra_css=FAM_CSS)
+
+
+def family_detail_page(mid):
+    ar = _lang() == "ar"
+    t = CT["en" if _lang() == "en" else "ar"]
+    uid = _data_user_id()
+    member = db.get_member(uid, mid) if mid else None
+    if not member:
+        body = ('<div class="card" style="max-width:520px;margin:40px auto;text-align:center;">'
+                '<h2>%s</h2><p style="margin-top:10px;"><a class="btn" href="/family">%s</a></p></div>'
+                % (t["fam_empty"], t["fam_back"]))
+        return _page(_t("title_home"), body)
+    last_rec = None
+    try:
+        recs = db.get_records(uid, limit=1, member_id=mid)
+        if recs:
+            last_rec = recs[0]
+    except Exception:
+        pass
+    last_blood = None
+    try:
+        bts = db.get_blood_tests(uid, limit=1, member_id=mid)
+        if bts:
+            last_blood = bts[0]
+    except Exception:
+        pass
+    adh = db.med_adherence(uid, member_id=mid)["percent"]
+    plans = db.list_med_plans(uid, member_id=mid)
+    gender_txt = (t["fam_g_f"] if member["gender"] == "f" else t["fam_g_m"]) if member["gender"] else ""
+    ana_txt = (", ".join(last_rec["symptoms"][:3]) + " • " + last_rec["timestamp"][:10]) if last_rec else t["fam_no_analysis"]
+    cbc_txt = (last_blood["data"].get("level", "") + " • " + (last_blood["timestamp"] or "")[:10]) if last_blood else t["fam_no_cbc"]
+    meds_txt = "; ".join(p["med_name"] for p in plans[:4]) if plans else t["fam_no_meds"]
+    body = """
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="fam-av" style="width:64px;height:64px;font-size:32px;margin:0;">__AV__</div>
+          <div>
+            <h2 style="color:#123B70;">__NAME__</h2>
+            <div class="muted">__META__</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a class="btn small" href="/chat?m=__MID__">__ANA__</a>
+          <a class="btn small" href="/blood?m=__MID__">__CBC__</a>
+          <a class="btn small ghost" href="/family">__BACK__</a>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:16px;">
+        <div class="card" style="background:#F5F9FF;">
+          <b>__LASTANA__</b>
+          <div style="margin-top:6px;font-size:14px;color:#40566F;">__ANA_TXT__</div>
+        </div>
+        <div class="card" style="background:#F5F9FF;">
+          <b>__LASTCBC__</b>
+          <div style="margin-top:6px;font-size:14px;color:#40566F;">__CBC_TXT__</div>
+        </div>
+      </div>
+      <div class="card" style="background:#F5F9FF;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <b>__ADH__</b>
+          <b style="color:#1976D2;">__ADH_PCT__</b>
+        </div>
+        <div class="adh-bar"><div class="adh-fill" style="width:__ADH_W__%;"></div></div>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:#40566F;">
+        <b>__MEDSREG__:</b> <span id="medsTxt">__MEDS_TXT__</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 style="color:#123B70;">__PLANT__</h3>
+      <p class="muted">__PLANSUB__</p>
+      <div id="planList" style="margin-top:12px;"><div class="muted">...</div></div>
+      <div style="margin-top:16px;border-top:1px dashed #DCEBFA;padding-top:14px;">
+        <div class="grid2">
+          <div><label class="lbl">__PNAME__</label><input class="inp" id="pName" placeholder="__PNAMEPH__"></div>
+          <div><label class="lbl">__PDOSE__</label><input class="inp" id="pDose" placeholder="500mg"></div>
+        </div>
+        <div class="grid2">
+          <div><label class="lbl">__PTIMES__</label><input class="inp" id="pTimes" placeholder="__PTIMESPH__"></div>
+          <div><label class="lbl">__PDAYS__</label><input class="inp" id="pDays" type="number" min="1" placeholder="7"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn pri" onclick="savePlan()">__PSAVE__</button>
+          <span id="planMsg" style="font-weight:700;color:#1976D2;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 style="color:#123B70;">__TL__</h3>
+      <div id="timeline" style="margin-top:10px;"><div class="muted">...</div></div>
+    </div>
+    <script>
+    const T = __PT__;
+    const LANG = "__LANG__";
+    const MID = __MID__;
+    const MEMNAME = "__MEMNAME__";
+    function TT(k) { return T[k] || k; }
+    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
+    function todayStr() { const d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+    function loadPlans() {
+      fetch('/api/meds/today').then(r=>r.json()).then(d=>{
+        const box = document.getElementById('planList');
+        const mine = (d.plans||[]).filter(p => p.member_id === MID);
+        if (!mine.length) { box.innerHTML = '<div class="muted">' + TT('fam_no_meds') + '</div>'; return; }
+        let h = '';
+        mine.forEach(p => {
+          h += '<div class="rc-title">' + esc(p.med_name) + (p.dose ? ' <span class="muted">(' + esc(p.dose) + ')</span>' : '') + '</div>';
+          p.times.forEach(tm => {
+            const st = p.status[tm] || '';
+            let btn = '';
+            if (st) { btn = '<span class="mini-btn done">' + TT('fam_today_logged') + '</span>'; }
+            else {
+              btn = '<span class="mini-btn tk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'taken\\')">' + TT('fam_take') + '</span>' +
+                    '<span class="mini-btn sk" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'skipped\\')">' + TT('fam_skip') + '</span>' +
+                    '<span class="mini-btn lt" onclick="logMed(' + p.id + ',\\'' + tm + '\\',\\'deferred\\')">' + TT('fam_later') + '</span>';
+            }
+            h += '<div class="mplan-row"><span class="mplan-time">🕐 ' + tm + '</span><span class="mplan-name">' + (st?('💊 '+esc(st)):'') + '</span><span class="mplan-status">' + btn + '</span></div>';
+          });
+        });
+        box.innerHTML = h;
+      }).catch(()=>{});
+    }
+    function logMed(pid, tm, st) {
+      fetch('/api/meds/log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        plan_id: pid, time: tm, status: st, member_id: MID, date: todayStr()
+      })}).then(r=>r.json()).then(()=>{ loadPlans(); refreshAdh(); });
+    }
+    function refreshAdh() {
+      fetch('/api/meds/weekly?member=' + MID).then(r=>r.json()).then(d=>{
+        if (d.ok && d.percent !== null && d.percent !== undefined) {
+          document.querySelector('.adh-fill').style.width = d.percent + '%';
+          const el = document.querySelector('.adh-bar').previousElementSibling;
+          el.querySelector('b').textContent = TT('fam_week_adh').replace('%s', d.percent);
+        }
+      }).catch(()=>{});
+    }
+    function savePlan() {
+      const name = document.getElementById('pName').value.trim();
+      const tval = document.getElementById('pTimes').value;
+      const msg = document.getElementById('planMsg');
+      const times = tval.split(/[,،\\s]+/).filter(Boolean);
+      if (!name || !times.length) { msg.textContent = TT('fam_name'); msg.style.color='#B91C1C'; return; }
+      fetch('/api/meds/plan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        member_id: MID, med_name: name, dose: document.getElementById('pDose').value.trim(),
+        times: times, days: document.getElementById('pDays').value || null
+      })}).then(r=>r.json()).then(d=>{
+        if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
+        msg.textContent = TT('fam_saved'); msg.style.color = '#1976D2';
+        document.getElementById('pName').value=''; document.getElementById('pDose').value=''; document.getElementById('pTimes').value=''; document.getElementById('pDays').value='';
+        loadPlans();
+        if (('Notification' in window) && Notification.permission === 'default') Notification.requestPermission();
+      });
+    }
+    function loadTimeline() {
+      fetch('/api/timeline?member=' + MID + '&days=30').then(r=>r.json()).then(d=>{
+        const box = document.getElementById('timeline');
+        if (!d.ok || !d.events.length) { box.innerHTML = '<div class="muted">' + TT('fam_no_events') + '</div>'; return; }
+        const EMO = {'analysis':'🩺','blood':'🩸','med':'💊'};
+        let h = '';
+        d.events.forEach(e => {
+          const title = LANG === 'en' ? e.en_title : e.title;
+          h += '<div class="tl-item"><div class="tl-dot">' + (EMO[e.type]||'📋') + '</div>' +
+               '<div><div class="tl-date">' + e.date + '</div><div class="tl-type">' + esc(title) + (e.detail?' — <span class="muted">'+esc(e.detail)+'</span>':'') + '</div></div></div>';
+        });
+        box.innerHTML = h;
+      }).catch(()=>{});
+    }
+    loadPlans();
+    loadTimeline();
+    </script>
+    """
+    for k, v in [
+        ("__PT__", json.dumps(t, ensure_ascii=False)),
+        ("__LANG__", "en" if _lang() == "en" else "ar"),
+        ("__MID__", str(mid)),
+        ("__MEMNAME__", member["name"]),
+        ("__AV__", _fam_emoji(member.get("relation", "other"))),
+        ("__NAME__", member["name"]),
+        ("__META__", (member.get("age") or "?") + " " + t["fam_years"] + (" • " + gender_txt if gender_txt else "")),
+        ("__ANA__", t["fam_add_analysis"]), ("__CBC__", t["fam_add_cbc"]), ("__BACK__", t["fam_back"]),
+        ("__LASTANA__", t["fam_last_analysis"]), ("__ANA_TXT__", ana_txt),
+        ("__LASTCBC__", t["fam_last_cbc"]), ("__CBC_TXT__", cbc_txt),
+        ("__ADH__", t["fam_week_adh"]), ("__ADH_PCT__", (str(adh) + "%") if adh is not None else t["fam_no_adherence"]),
+        ("__ADH_W__", str(int(adh)) if adh is not None else "0"),
+        ("__MEDSREG__", t["fam_meds_reg"]), ("__MEDS_TXT__", meds_txt),
+        ("__PLANT__", t["fam_plan_title"]), ("__PLANSUB__", t["fam_plan_sub"] % member["name"]),
+        ("__PNAME__", t["fam_plan_name"]), ("__PNAMEPH__", t["fam_plan_name_ph"]),
+        ("__PDOSE__", t["fam_plan_dose"]), ("__PTIMES__", t["fam_plan_times"]),
+        ("__PTIMESPH__", t["fam_plan_times_ph"]), ("__PDAYS__", t["fam_plan_days"]),
+        ("__PSAVE__", t["fam_plan_save"]), ("__TL__", t["fam_timeline"]),
+    ]:
+        body = body.replace(k, v)
+    return _page(_t("title_home"), body, extra_css=FAM_CSS)
+
+
+# ---------------------------------------------------------------- health search
+SEARCH_CSS = """
+.sea-wrap { max-width: 720px; margin: 0 auto; }
+.sea-box { display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 2px solid #1976D2; border-radius: 999px; padding: 7px 8px 7px 18px; box-shadow: 0 10px 30px rgba(25,118,210,.14); transition: box-shadow .25s ease, border-color .25s ease; }
+.sea-box:focus-within { box-shadow: 0 14px 38px rgba(25,118,210,.22); border-color: #123B70; }
+.sea-box .sea-ic { font-size: 20px; color: #1976D2; }
+.sea-box input { flex: 1; border: none; outline: none; font-size: 16px; font-family: inherit; padding: 11px 4px; background: transparent; color: #123B70; min-width: 0; }
+.sea-box input::placeholder { color: #94A3B8; }
+.sea-box .sea-btn { border: none; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; font-weight: 800; font-size: 15px; padding: 12px 26px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.sea-box .sea-btn:hover { filter: brightness(1.12); }
+.sea-hint { text-align: center; color: #5F7185; font-size: 13px; margin-top: 12px; }
+.sea-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+.sea-chip { border: 1px solid #DCEBFA; background: #EAF4FF; color: #1976D2; border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .2s; }
+.sea-chip:hover { background: #EAF4FF; }
+.sea-result { margin-top: 22px; background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 20px; padding: 22px; box-shadow: 0 8px 24px rgba(18,59,112,.08); }
+.sea-result .sr-head { display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed #DCEBFA; padding-bottom: 12px; margin-bottom: 14px; }
+.sea-result .sr-emoji { font-size: 34px; }
+.sea-result .sr-title { font-size: 21px; font-weight: 800; color: #123B70; }
+.sea-result .sr-cat { display: inline-block; background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 3px 10px; margin-top: 4px; }
+.sea-result .sr-sec { font-size: 14.5px; line-height: 1.9; color: #40566F; margin-bottom: 12px; }
+.sea-result .sr-sec b { color: #1976D2; display: block; margin-bottom: 4px; }
+.sea-result .sr-causes { list-style: none; padding: 0; margin: 0 0 14px; }
+.sea-result .sr-causes li { padding: 6px 22px 6px 0; position: relative; font-size: 14px; color: #40566F; line-height: 1.7; }
+.sea-result .sr-causes li::before { content: '•'; position: absolute; right: 4px; color: #1976D2; font-weight: 900; }
+[dir="ltr"] .sea-result .sr-causes li { padding: 6px 0 6px 22px; }
+[dir="ltr"] .sea-result .sr-causes li::before { right: auto; left: 4px; }
+.sea-worry { background: #FEF2F2; border: 1px solid #FECACA; color: #7F1D1D; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 10px; }
+.sea-doctor { background: #EAF4FF; border: 1px solid #DCEBFA; color: #123B70; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+.sea-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.sea-actions .btn.sea-assist { background: linear-gradient(135deg, #1976D2, #1976D2); }
+.sea-no { text-align: center; color: #5F7185; margin-top: 22px; font-size: 14px; }
+.sea-disc { background: #FFF7ED; border: 1px dashed #FDBA74; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.7; margin-top: 16px; text-align: center; }
+@media (max-width: 560px) { .sea-box { flex-wrap: wrap; border-radius: 22px; padding: 12px; } .sea-box .sea-btn { width: 100%; } }
+"""
+
+
+def search_page():
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <div class="card">
+      <h2>__SEAH__</h2>
+      <p class="muted">__SEASUB__</p>
+      <div class="sea-wrap">
+        <div class="sea-box">
+          <span class="sea-ic">🔎</span>
+          <input id="seaInput" placeholder="__SEAPH__" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="sea-btn" onclick="doSearch()">__SEABTN__</button>
+        </div>
+        <p class="sea-hint">__SEAHINT__</p>
+        <div class="sea-chips" id="seaChips"></div>
+      </div>
+      <div id="seaRes" style="margin-top:8px;"></div>
+    </div>
+    <div class="warn">__SEAWARN__</div>
+    <script>
+    const ST = __PT__;
+    function sT(k) { return ST[k] || k; }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    let curTopic = '';
+    const API_LANG = function() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; };
+    function loadSuggestions() {
+      fetch('/api/search?lang=' + API_LANG())
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          const box = document.getElementById('seaChips');
+          if (!box || !d.suggestions) return;
+          box.innerHTML = d.suggestions.map(function(s) {
+            return '<button class="sea-chip" onclick="pickSug(\\'' + s[1].replace(/["'\\\\]/g, '') + '\\')">' + esc(s[0]) + ' ' + esc(s[1]) + '</button>';
+          }).join('');
+        }).catch(function() {});
+    }
+    function pickSug(q) { document.getElementById('seaInput').value = q; doSearch(); }
+    function doSearch() {
+      const inp = document.getElementById('seaInput');
+      const q = (inp ? inp.value : '').trim();
+      const box = document.getElementById('seaRes');
+      if (!q) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_ph')) + '</div>'; return; }
+      box.innerHTML = '<div style="text-align:center;padding:24px;">... <span class="spin"></span></div>';
+      fetch('/api/search?q=' + encodeURIComponent(q) + '&lang=' + API_LANG())
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) { box.innerHTML = '<div class="warn">' + esc(d.error || sT('sea_err')) + '</div>'; return; }
+          if (!d.result) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_noresult')) + '</div>'; return; }
+          renderResult(d.result);
+        }).catch(function() { box.innerHTML = '<div class="warn">' + esc(sT('sea_err')) + '</div>'; });
+    }
+    function catTxt(c) {
+      const m = { symptom: 'sea_cat_symp', test: 'sea_cat_test', term: 'sea_cat_term', medication: 'sea_cat_med' };
+      return sT(m[c] || 'sea_cat_term');
+    }
+    function renderResult(r) {
+      const box = document.getElementById('seaRes');
+      let h = '<div class="sea-result">';
+      h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(r.title) + '</div><span class="sr-cat">' + esc(catTxt(r.category)) + '</span></div></div>';
+      h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
+      if (r.causes && r.causes.length) {
+        h += '<b style="color:#1976D2;">' + esc(r.causes_label || sT('sea_causes')) + '</b><ul class="sr-causes">';
+        r.causes.forEach(function(c) { h += '<li>' + esc(c) + '</li>'; });
+        h += '</ul>';
+      }
+      if (r.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(r.worry) + '</div>';
+      if (r.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(r.doctor) + '</div>';
+      h += '<div class="sea-actions">' +
+        '<button class="btn" onclick="openExplain(\\'' + esc(r.title).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(sT('sea_explain')) + '</button>' +
+        '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>' +
+        '</div>';
+      h += '</div>';
+      h += '<div class="sea-disc">' + esc(sT('sea_disc')) + '</div>';
+      box.innerHTML = h;
+      curTopic = r.title;
+    }
+    function askAboutTopic() {
+      if (typeof asstOpenWithContext === 'function') asstOpenWithContext(curTopic);
+    }
+    const seaInp = document.getElementById('seaInput');
+    if (seaInp) seaInp.addEventListener('focus', loadSuggestions);
+    loadSuggestions();
+    </script>
+    """
+    repl = [
+        ("__PT__", json.dumps(t, ensure_ascii=False)),
+        ("__SEAH__", t["sea_h"]), ("__SEASUB__", t["sea_sub"]),
+        ("__SEAPH__", t["sea_ph"]), ("__SEABTN__", t["sea_btn"]),
+        ("__SEAHINT__", t["sea_hint"]), ("__SEAWARN__", t["sea_warn"]),
+        ("__SEAASK__", t["sea_ask_assist"]),
+    ]
+    for k, v in repl:
+        body = body.replace(k, v)
+    return _page(_t("title_search"), body, extra_css=SEARCH_CSS)
+
+
+# ---------------------------------------------------------------- health calculators
+CALC_CSS = """
+.calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 6px; }
+.calc-card { background: #FFFFFF; border: 1.5px solid #DCEBFA; border-radius: 18px; padding: 22px 18px; cursor: pointer; text-align: center; font-family: inherit; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.calc-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(25,118,210,.16); border-color: #1976D2; }
+.calc-card .cc-ic { font-size: 40px; }
+.calc-card h3 { font-size: 17px; font-weight: 800; color: #123B70; margin: 8px 0 6px; }
+.calc-card p { font-size: 13.5px; color: #40566F; line-height: 1.8; margin-bottom: 14px; }
+.calc-card .cc-btn { display: inline-block; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; font-weight: 800; font-size: 13.5px; padding: 10px 22px; border-radius: 999px; }
+.calc-card .cc-tag { display: inline-block; background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; margin-bottom: 4px; }
+.calc-card.cal-fea { grid-column: 1 / -1; background: linear-gradient(120deg, #FFFFFF, #F2F8FF); border: 2px solid #1976D2; box-shadow: 0 8px 24px rgba(25,118,210,.10); }
+.calc-card.cal-fea .cc-ic { font-size: 44px; }
+.calc-card.cal-fea p { font-size: 14px; }
+.calc-sub { max-width: 720px; }
+.calc-pane { display: none; }
+.calc-pane.open { display: block; animation: fadeIn .35s ease both; }
+.calc-back { margin-bottom: 12px; }
+.calc-form .cf-row { margin-bottom: 14px; }
+.calc-sug-hint { display: flex; gap: 10px; align-items: flex-start; background: #EAF4FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.8; color: #123B70; margin-bottom: 14px; }
+.calc-result { margin-top: 16px; background: #FFFFFF; border: 1.5px solid #DCEBFA; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(18,59,112,.08); }
+.cr-value { font-size: 18px; font-weight: 800; color: #123B70; }
+.cr-value .cr-num { font-size: 26px; }
+.cr-cat { display: inline-block; margin-top: 10px; font-weight: 800; font-size: 15px; padding: 8px 18px; border-radius: 999px; }
+.cr-cat.c-green { background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; }
+.cr-cat.c-blue { background: #EAF4FF; color: #1976D2; border: 1px solid #DCEBFA; }
+.cr-cat.c-yellow { background: #FEF9C3; color: #854D0E; border: 1px solid #FDE68A; }
+.cr-cat.c-orange { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+.cr-cat.c-red { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+.cr-note { margin-top: 12px; font-size: 14px; line-height: 1.9; color: #40566F; }
+.cr-note .ped { display: block; margin-top: 8px; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+.cr-alert { margin-top: 14px; background: #FEF2F2; border: 1.5px solid #FCA5A5; color: #7F1D1D; border-radius: 14px; padding: 14px 16px; font-size: 14px; line-height: 1.8; }
+.cr-alert a { color: #B91C1C; font-weight: 800; text-decoration: underline; }
+.cr-assist { margin-top: 16px; border-top: 1px dashed #DCEBFA; padding-top: 14px; text-align: center; }
+.cr-assist .cr-follow { font-size: 15px; font-weight: 800; color: #123B70; margin-bottom: 10px; }
+.cr-assist .btn { min-width: 250px; background: linear-gradient(135deg, #1976D2, #123B70); color: #FFF; border: none; }
+.cr-assist .btn:hover { transform: translateY(-1px); }
+.calc-rows { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.cd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F5F9FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.cd-row b { color: #123B70; }
+.cd-row .cd-first { background: #EAF4FF; border: 1px solid #DCEBFA; color: #1976D2; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 3px 10px; }
+.cd-note { margin-top: 12px; background: #FFF7ED; border: 1px dashed #FDBA74; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.8; }
+.calc-unit-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.calc-unit-row label { flex: 1; min-width: 140px; border: 2px solid #DCEBFA; border-radius: 12px; padding: 11px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 700; color: #40566F; font-family: inherit; }
+.calc-unit-row input[type="radio"] { display: none; }
+.calc-unit-row input[type="radio"]:checked + label { border-color: #1976D2; background: #EAF4FF; color: #1976D2; }
+.calc-a1c-hint { font-size: 12.5px; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 8px 12px; margin-top: 8px; }
+.calc-disc-card { display: flex; gap: 12px; align-items: flex-start; background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 16px; padding: 16px 18px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(18,59,112,.05); }
+.calc-disc-card .cdc-ic { font-size: 22px; line-height: 1.4; }
+.calc-disc-card .cdc-t { font-weight: 800; color: #123B70; margin-bottom: 4px; font-size: 15px; }
+.calc-disc-card .cdc-p { font-size: 13.5px; color: #40566F; line-height: 1.9; }
+@media (max-width: 640px) { .calc-grid { grid-template-columns: 1fr; } }
+"""
+
+
+def calculators_page():
+    t = CT["en" if _lang() == "en" else "ar"]
+    cards = [
+        ("bmi", "⚖️", "calc_bmi_name", "calc_bmi_desc", ""),
+        ("fluids", "💧", "calc_fluids_name", "calc_fluids_desc", ""),
+        ("dose", "💊", "calc_dose_name", "calc_dose_desc", ""),
+        ("cal", "🔥", "calc_cal_name", "calc_cal_desc", ""),
+        ("sug", "🩸", "calc_sug_name", "calc_sug_desc", "cal-fea"),
+    ]
+    cards_html = "".join(
+        '<button class="calc-card %s" onclick="showCalc(\'%s\')"><div class="cc-ic">%s</div>'
+        '<h3>%s</h3>%s<p>%s</p><span class="cc-btn">%s</span></button>'
+        % (cls, k, ic, t[n], ('<span class="cc-tag">%s</span>' % t["calc_sug_tag"]) if cls else "", t[d], t["calc_now"])
+        for k, ic, n, d, cls in cards
+    )
+    body = """
+    <div class="card">
+      <h2>__CALCH__</h2>
+      <p class="muted calc-sub">__CALCSUB__</p>
+      <div class="calc-grid">__CARDS__</div>
+    </div>
+
+    <div id="calcPaneArea" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+        <h2 id="paneTitle" style="color:#123B70;"></h2>
+        <button class="btn ghost calc-back" onclick="backToGrid()">__CALCBACK__</button>
+      </div>
+
+      <div class="calc-pane open" id="pane-bmi">
+        <div class="card">
+          <div class="calc-form">
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__BW__</label><input class="inp" id="bmiW" type="number" inputmode="decimal" placeholder="__BWPH__"></div>
+              <div class="cf-row"><label class="lbl">__BH__</label><input class="inp" id="bmiH" type="number" inputmode="decimal" placeholder="__BHPH__"></div>
+            </div>
+            <button class="btn pri start-btn" onclick="runBMI()">__BBTN__</button>
+          </div>
+          <div id="resBMI"></div>
+        </div>
+      </div>
+
+      <div class="calc-pane" id="pane-fluids">
+        <div class="card">
+          <div class="calc-form">
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="flAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
+              <div class="cf-row"><label class="lbl">__WEIGHT__</label><input class="inp" id="flW" type="number" inputmode="decimal" placeholder="__WPH__"></div>
+            </div>
+            <div class="cf-row"><label class="lbl">__ACT__</label>
+              <select class="inp" id="flAct">
+                <option value="low">__ACTLOW__</option>
+                <option value="medium">__ACTMED__</option>
+                <option value="high">__ACTHIGH__</option>
+              </select>
+            </div>
+            <button class="btn pri start-btn" onclick="runFluids()">__FBTN__</button>
+          </div>
+          <div id="resFluids"></div>
+        </div>
+      </div>
+
+      <div class="calc-pane" id="pane-dose">
+        <div class="card">
+          <div class="warn">__DWARN__</div>
+          <div class="calc-form">
+            <div class="cf-row"><label class="lbl">__DMED__</label><input class="inp" id="dMed" placeholder="__DMEDPH__"></div>
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__DFIRST__</label><input class="inp" id="dFirst" type="time" value="08:00"></div>
+              <div class="cf-row"><label class="lbl">__DIV__</label><select class="inp" id="dIv"></select></div>
+            </div>
+            <button class="btn pri start-btn" onclick="runDose()">__DBTN__</button>
+          </div>
+          <div id="resDose"></div>
+        </div>
+      </div>
+
+      <div class="calc-pane" id="pane-cal">
+        <div class="card">
+          <div class="calc-form">
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="calAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
+              <div class="cf-row"><label class="lbl">__GENDER__</label>
+                <select class="inp" id="calG">
+                  <option value="male">__MALE__</option>
+                  <option value="female">__FEMALE__</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__HGT__</label><input class="inp" id="calH" type="number" inputmode="decimal" placeholder="__HGTPH__"></div>
+              <div class="cf-row"><label class="lbl">__WEIGHT__</label><input class="inp" id="calW" type="number" inputmode="decimal" placeholder="__WPH__"></div>
+            </div>
+            <div class="cf-row"><label class="lbl">__ACT__</label>
+              <select class="inp" id="calAct">
+                <option value="low">__ACT2LOW__</option>
+                <option value="medium">__ACT2MED__</option>
+                <option value="high">__ACT2HIGH__</option>
+              </select>
+            </div>
+            <button class="btn pri start-btn" onclick="runCal()">__CBTN__</button>
+          </div>
+          <div id="resCal"></div>
+        </div>
+      </div>
+
+      <div class="calc-pane" id="pane-sug">
+        <div class="card">
+          <div class="calc-sug-hint">🩸 __SUGHINT__</div>
+          <div class="calc-form">
+            <div class="grid2">
+              <div class="cf-row"><label class="lbl">__AGE__</label><input class="inp" id="sgAge" type="number" inputmode="numeric" placeholder="__AGEPH__"></div>
+              <div class="cf-row"><label class="lbl">__STYPE__</label>
+                <select class="inp" id="sgType" onchange="sugTypeChange()">
+                  <option value="fasting">__SFAST__</option>
+                  <option value="post">__SPOST__</option>
+                  <option value="random">__SRAND__</option>
+                  <option value="a1c">__SA1C__</option>
+                </select>
+              </div>
+            </div>
+            <div class="cf-row"><label class="lbl">__SREAD__</label><input class="inp" id="sgVal" type="number" inputmode="decimal" placeholder="__SREADPH__"></div>
+            <div class="cf-row" id="sgUnitRow">
+              <label class="lbl">__SUNIT__</label>
+              <div class="calc-unit-row">
+                <input type="radio" name="sgUnit" id="sgMg" value="mg" checked>
+                <label for="sgMg">__SUNMG__</label>
+                <input type="radio" name="sgUnit" id="sgMmol" value="mmol">
+                <label for="sgMmol">__SUNMMOL__</label>
+              </div>
+            </div>
+            <div class="calc-a1c-hint" id="sgA1cHint" style="display:none;">__SA1CHINT__</div>
+            <button class="btn pri start-btn" onclick="runSugar()">__SBTN__</button>
+          </div>
+          <div id="resSug"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-disc-card">
+      <div class="cdc-ic">⚠️</div>
+      <div>
+        <div class="cdc-t">__CALCDISCT__</div>
+        <div class="cdc-p">__CALCDISC__</div>
+      </div>
+    </div>
+    <script>
+    const T = __PT__;
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    function CTT(k) { return T[k] || k; }
+    function APILang() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; }
+    const PANE_TITLES = { bmi: 'calc_bmi_name', fluids: 'calc_fluids_name', dose: 'calc_dose_name', cal: 'calc_cal_name', sug: 'calc_sug_name' };
+    const CAT_EMOJI = { green: '🟢', blue: '🔵', yellow: '🟡', orange: '🟠', red: '🔴' };
+    let calcCtx = '';
+    let asstCalcKind = 'calc';
+    if (typeof asstSetCtx === 'function') asstSetCtx('calc');
+
+    function showCalc(k) {
+      asstCalcKind = k;
+      if (typeof asstSetCtx === 'function') asstSetCtx(k);
+      document.getElementById('calcPaneArea').style.display = '';
+      document.getElementById('paneTitle').textContent = CTT(PANE_TITLES[k]);
+      document.querySelectorAll('.calc-pane').forEach(function(p) { p.classList.remove('open'); });
+      document.getElementById('pane-' + k).classList.add('open');
+      if (k === 'dose') initIv();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function backToGrid() {
+      document.getElementById('calcPaneArea').style.display = 'none';
+      document.getElementById('calcPaneArea').scrollIntoView({ behavior: 'smooth' });
+    }
+    function initIv() {
+      const sel = document.getElementById('dIv');
+      if (sel.dataset.init) return;
+      sel.dataset.init = '1';
+      const opts = [4, 6, 8, 12, 24];
+      sel.innerHTML = opts.map(function(v) {
+        return '<option value="' + v + '">' + CTT('calc_dose_every').replace('%s', v) + '</option>';
+      }).join('');
+      sel.value = '8';
+    }
+    function sugTypeChange() {
+      const a1c = document.getElementById('sgType').value === 'a1c';
+      document.getElementById('sgUnitRow').style.display = a1c ? 'none' : '';
+      document.getElementById('sgA1cHint').style.display = a1c ? '' : 'none';
+    }
+    function askCalc() {
+      if (typeof asstSetCtx === 'function') asstSetCtx(asstCalcKind || 'calc');
+      if (calcCtx && typeof asstSendContextText === 'function') asstSendContextText(calcCtx);
+    }
+    function assistHTML(kind) {
+      let askT = CTT('calc_follow'), askB = CTT('calc_ask');
+      if (kind === 'bmi') { askT = CTT('calc_ask_bmi_t'); askB = CTT('calc_ask_bmi_b'); }
+      else if (kind === 'sug') { askT = CTT('calc_ask_sug_t'); askB = CTT('calc_ask_sug_b'); }
+      return '<div class="cr-assist"><div class="cr-follow">' + esc(askT) + '</div>' +
+        '<button class="btn pri" onclick="askCalc()">' + esc(askB) + '</button></div>';
+    }
+    function fmtNum(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
+    function fmtTime(h, m) {
+      const p = h < 12 ? CTT('calc_am') : CTT('calc_pm');
+      let hh = h % 12; if (hh === 0) hh = 12;
+      return hh + ':' + (m < 10 ? '0' + m : m) + ' ' + p;
+    }
+    function catHTML(d, kind) {
+      if (!d.category) return '';
+      const lbl = CTT('calc_' + kind + '_cat_' + d.category);
+      return '<div class="cr-cat c-' + d.color + '">' + (CAT_EMOJI[d.color] || '') + ' ' + esc(lbl) + '</div>';
+    }
+    function noteHTML(d, kind, extraPed) {
+      let n = CTT('calc_' + kind + '_note_' + d.category) || '';
+      if (extraPed) n += ' <span class="ped">⚠️ ' + esc(CTT('calc_sug_note_ped')) + '</span>';
+      return '<div class="cr-note">' + esc(n) + '</div>';
+    }
+    function alertHTML(d) {
+      if (!d.alert) return '';
+      let msg = CTT('calc_alert_msg');
+      if (d.alert_kind === 'high') msg = CTT('calc_alert_high');
+      if (d.alert_kind === 'low') msg = CTT('calc_alert_low');
+      return '<div class="cr-alert">' + esc(CTT('calc_alert_t')) + ' — ' + esc(msg) +
+        ' <br><a href="/emergency">' + esc(CTT('calc_em_btn')) + ' →</a></div>';
+    }
+    function renderBox(id, d, kind, valueLabel, unit, extraPed) {
+      const box = document.getElementById(id);
+      let h = '<div class="calc-result">';
+      h += '<div class="cr-value">' + esc(valueLabel) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(unit || '') + '</div>';
+      h += catHTML(d, kind) + noteHTML(d, kind, extraPed);
+      h += alertHTML(d) + assistHTML(kind);
+      h += '</div>';
+      box.innerHTML = h;
+    }
+    function calcGet(params, cb, errId) {
+      const box = document.getElementById(errId || 'resBMI');
+      fetch('/api/calc?' + params).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) cb(d); else box.innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>';
+      }).catch(function() { box.innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; });
+    }
+    function runBMI() {
+      const w = parseFloat(document.getElementById('bmiW').value);
+      const h = parseFloat(document.getElementById('bmiH').value);
+      if (!w || !h) { document.getElementById('resBMI').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
+      calcGet('kind=bmi&w=' + w + '&h=' + h + '&lang=' + APILang(), function(d) {
+        renderBox('resBMI', d, 'bmi', CTT('calc_bmi_val'), CTT('calc_bmi_unit'));
+        calcCtx = CTT('calc_bmi_ctx').replace('%s', fmtNum(d.value));
+      }, 'resBMI');
+    }
+    function runFluids() {
+      const a = parseFloat(document.getElementById('flAge').value);
+      const w = parseFloat(document.getElementById('flW').value);
+      if (!a || !w) { document.getElementById('resFluids').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
+      const act = document.getElementById('flAct').value;
+      calcGet('kind=fluids&age=' + a + '&w=' + w + '&act=' + act + '&lang=' + APILang(), function(d) {
+        let h = '<div class="calc-result">';
+        h += '<div class="cr-value">' + esc(CTT('calc_fluids_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_fluids_unit')) + '</div>';
+        h += '<div class="cr-note">' + esc(CTT('calc_fluids_note')) + '</div>';
+        h += alertHTML(d) + assistHTML('fluids') + '</div>';
+        document.getElementById('resFluids').innerHTML = h;
+        calcCtx = CTT('calc_fluids_ctx').replace('%s', fmtNum(d.value));
+      }, 'resFluids');
+    }
+    function runDose() {
+      const val = document.getElementById('dFirst').value || '08:00';
+      const parts = val.split(':');
+      const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+      const iv = document.getElementById('dIv').value || '8';
+      const med = document.getElementById('dMed').value.trim() || '—';
+      calcGet('kind=dose&h=' + h + '&m=' + m + '&iv=' + iv + '&lang=' + APILang(), function(d) {
+        let hh = '<div class="calc-result">';
+        hh += '<div class="cr-value">' + esc(CTT('calc_dose_table')) + '</div>';
+        hh += '<div class="calc-rows">';
+        d.schedule.forEach(function(s) {
+          hh += '<div class="cd-row"><span>💊 <b>' + esc(fmtTime(s.h, s.m)) + '</b></span>' +
+            (s.first ? '<span class="cd-first">' + esc(CTT('calc_dose_first_dose')) + '</span>' : '<span class="muted">' + esc(CTT('calc_dose_next')) + '</span>') + '</div>';
+        });
+        hh += '</div><div class="cd-note">' + esc(CTT('calc_dose_note')) + '</div>';
+        hh += assistHTML('dose') + '</div>';
+        document.getElementById('resDose').innerHTML = hh;
+        calcCtx = CTT('calc_dose_ctx').replace('%s', med);
+      }, 'resDose');
+    }
+    function runCal() {
+      const a = parseFloat(document.getElementById('calAge').value);
+      const h = parseFloat(document.getElementById('calH').value);
+      const w = parseFloat(document.getElementById('calW').value);
+      if (!a || !h || !w) { document.getElementById('resCal').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
+      const g = document.getElementById('calG').value;
+      const act = document.getElementById('calAct').value;
+      calcGet('kind=cal&age=' + a + '&g=' + g + '&h=' + h + '&w=' + w + '&act=' + act + '&lang=' + APILang(), function(d) {
+        let bb = '<div class="calc-result">';
+        bb += '<div class="cr-value">' + esc(CTT('calc_cal_val')) + ' <span class="cr-num">≈ ' + fmtNum(d.value) + '</span> ' + esc(CTT('calc_cal_unit')) + '</div>';
+        bb += '<div class="cr-note">' + esc(CTT('calc_cal_note')) + '</div>';
+        bb += alertHTML(d) + assistHTML('cal') + '</div>';
+        document.getElementById('resCal').innerHTML = bb;
+        calcCtx = CTT('calc_cal_ctx').replace('%s', fmtNum(d.value));
+      }, 'resCal');
+    }
+    function runSugar() {
+      const a = parseFloat(document.getElementById('sgAge').value);
+      const val = parseFloat(document.getElementById('sgVal').value);
+      if (!val) { document.getElementById('resSug').innerHTML = '<div class="warn">' + esc(CTT('calc_err')) + '</div>'; return; }
+      const type = document.getElementById('sgType').value;
+      const unit = type === 'a1c' ? 'a1c' : (document.querySelector('input[name="sgUnit"]:checked') || { value: 'mg' }).value;
+      calcGet('kind=sugar&val=' + val + '&unit=' + unit + '&type=' + type + '&age=' + (a || '') + '&lang=' + APILang(), function(d) {
+        const typeLabel = CTT('calc_sug_' + ({ fasting: 'fast', post: 'post', random: 'random', a1c: 'a1c' })[d.type]);
+        let hh = '<div class="calc-result">';
+        hh += '<div class="cr-value">' + esc(CTT('calc_sug_val')) + ' <span class="cr-num">' + fmtNum(d.value) + '</span> ' + esc(d.unit) + ' · ' + esc(typeLabel) + '</div>';
+        hh += catHTML(d, 'sug') + noteHTML(d, 'sug', !!d.pediatric);
+        hh += alertHTML(d) + assistHTML('sug') + '</div>';
+        document.getElementById('resSug').innerHTML = hh;
+        if (d.type === 'a1c') calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', '%').replace('%t', 'HbA1c');
+        else calcCtx = CTT('calc_sug_ctx').replace('%v', fmtNum(d.value)).replace('%u', d.unit).replace('%t', typeLabel);
+      }, 'resSug');
+    }
+    (function(){
+      fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
+        if (ui.ok && ui.logged_in && ui.profile) {
+          var p = ui.profile;
+          var age = p.age;
+          if (!age && p.dob) {
+            try { var bd = new Date(p.dob); var now = new Date(); age = Math.floor((now - bd) / (365.25 * 24 * 60 * 60 * 1000)); } catch(e) {}
+          }
+          if (age) {
+            var fields = ['flAge', 'calAge', 'sgAge'];
+            fields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = age;
+            });
+          }
+          if (p.weight) {
+            var wFields = ['bmiW', 'flW', 'calW'];
+            wFields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = p.weight;
+            });
+          }
+          if (p.height) {
+            var hFields = ['bmiH', 'calH'];
+            hFields.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el && !el.value) el.value = p.height;
+            });
+          }
+          if (p.gender) {
+            var gFields = ['calG'];
+            var gVal = p.gender === 'male' ? 'm' : (p.gender === 'female' ? 'f' : '');
+            if (gVal) {
+              gFields.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && !el.value) el.value = gVal;
+              });
+            }
+          }
+        }
+      }).catch(function(){});
+    })();
+    </script>
+    """
+    repl = [
+        ("__PT__", json.dumps(t, ensure_ascii=False)),
+        ("__CALCH__", t["calc_h"]), ("__CALCSUB__", t["calc_sub"]),
+        ("__CARDS__", cards_html), ("__CALCBACK__", t["calc_back"]),
+        ("__CALCDISC__", t["calc_disc"]), ("__CALCDISCT__", t["calc_disc_t"]),
+        ("__SUGHINT__", t["calc_sug_hint"]),
+        ("__BW__", t["calc_bmi_w"]), ("__BWPH__", t["calc_bmi_w_ph"]),
+        ("__BH__", t["calc_bmi_h"]), ("__BHPH__", t["calc_bmi_h_ph"]),
+        ("__BBTN__", t["calc_bmi_btn"]),
+        ("__AGE__", t["calc_age"]), ("__AGEPH__", t["calc_age_ph"]),
+        ("__WEIGHT__", t["calc_weight"]), ("__WPH__", t["calc_weight_ph"]),
+        ("__ACT__", t["calc_act"]), ("__ACTLOW__", t["calc_act_low"]),
+        ("__ACTMED__", t["calc_act_med"]), ("__ACTHIGH__", t["calc_act_high"]),
+        ("__FBTN__", t["calc_fluids_btn"]),
+        ("__DWARN__", t["calc_dose_warn"]), ("__DMED__", t["calc_dose_med"]),
+        ("__DMEDPH__", t["calc_dose_med_ph"]), ("__DFIRST__", t["calc_dose_first"]),
+        ("__DIV__", t["calc_dose_iv"]), ("__DBTN__", t["calc_dose_btn"]),
+        ("__GENDER__", t["calc_gender"]), ("__MALE__", t["calc_male"]),
+        ("__FEMALE__", t["calc_female"]), ("__HGT__", t["calc_hgt"]),
+        ("__HGTPH__", t["calc_hgt_ph"]),
+        ("__ACT2LOW__", t["calc_act2_low"]), ("__ACT2MED__", t["calc_act2_med"]),
+        ("__ACT2HIGH__", t["calc_act2_high"]), ("__CBTN__", t["calc_cal_btn"]),
+        ("__STYPE__", t["calc_sug_type"]), ("__SFAST__", t["calc_sug_fast"]),
+        ("__SPOST__", t["calc_sug_post"]), ("__SRAND__", t["calc_sug_random"]),
+        ("__SA1C__", t["calc_sug_a1c"]), ("__SREAD__", t["calc_sug_reading"]),
+        ("__SREADPH__", t["calc_sug_reading_ph"]), ("__SUNIT__", t["calc_sug_unit"]),
+        ("__SUNMG__", t["calc_sug_unit_mg"]), ("__SUNMMOL__", t["calc_sug_unit_mmol"]),
+        ("__SA1CHINT__", t["calc_sug_a1c_hint"]), ("__SBTN__", t["calc_sug_btn"]),
+    ]
+    for k, v in repl:
+        body = body.replace(k, v)
+    return _page(_t("title_calculators"), body, extra_css=CALC_CSS)
+
+
+# ---------------------------------------------------------------- first aid
+FA_VIDEOS = {
+    "burns": {"ar": "HaC2oiBB7sI", "en": "ASY_ImKX6B0"},
+    "choking": {"ar": "dZ9-i_UpjlA", "en": "HGBBu4zr8sM"},
+    "bleeding": {"ar": "gjQ8VCMGClc", "en": "NxO5LvgqZe0"},
+    "poisoning": {"ar": "KEfLi97i_mI", "en": "eTrlm6Nyo6g"},
+    "fracture": {"ar": "lY7DLGaz4ek", "en": "2v8vlXgGXwE"},
+    "fainting": {"ar": "3CJt648ex8M", "en": "ddHKwkMwNyI"},
+    "heatstroke": {"ar": "lp1Q0K9cJ8E", "en": "R6VdoV8dZRc"},
+    "cpr": {"ar": "Lc5rSYTnqLM", "en": "BQNNOh8c8ks"},
+}
+
+
+def firstaid_page():
+    lang = "en" if _lang() == "en" else "ar"
+    cats = wellbeing.first_aid_categories(lang)
+    t = CT["en" if _lang() == "en" else "ar"]
+    vids = {}
+    for k, v in FA_VIDEOS.items():
+        yid = v.get(lang)
+        if yid:
+            vids[k] = "https://www.youtube-nocookie.com/embed/%s?rel=0&hl=%s" % (yid, lang)
+    body = """
+    <div class="card">
+      <h2>__FAH__</h2>
+      <p class="muted">__FASUB__</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;" id="faBtns"></div>
+      <div id="faRes" style="margin-top:18px;"></div>
+    </div>
+    <div class="warn">__FAWARN__</div>
+    <script>
+    const CATS = __CATS__;
+    const VIDS = __VIDS__;
+    const wrap = document.getElementById('faBtns');
+    CATS.forEach(([k, label]) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = label;
+      b.onclick = async () => {
+        const r = await fetch('/api/firstaid/' + k);
+        const d = await r.json();
+        let html = '<div class="bubble bot" style="max-width:100%"><b>' + esc(d.label) + '</b>\\n\\n' + esc(d.text) + '</div>';
+        const vid = VIDS[k];
+        if (vid) {
+          html += '<div class="vidbtn" onclick="loadVid(this,\\'' + vid + '\\')">' + esc('__FAVIDEO__') + '</div><div class="vidwrap"></div>';
+        }
+        document.getElementById('faRes').innerHTML = html;
+      };
+      wrap.appendChild(b);
+    });
+    function loadVid(el, url) {
+      el.outerHTML = '<iframe src="' + url + '" title="First aid video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin-top:12px;" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+    }
+    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
+    </script>
+    """
+    body = body.replace("__CATS__", json.dumps(cats, ensure_ascii=False))
+    body = body.replace("__VIDS__", json.dumps(vids, ensure_ascii=False))
+    body = body.replace("__FAH__", t["fa_h"]).replace("__FASUB__", t["fa_sub"]).replace("__FAWARN__", t["fa_warn"])
+    body = body.replace("__FAVIDEO__", t["fa_video"])
+    return _page(_t("title_firstaid"), body)
+
+
+# ---------------------------------------------------------------- tips
+def tips_page():
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <div class="card">
+      <h2>__TIPSH__</h2>
+      <p class="muted">__TIPSSUB__</p>
+      <div id="tipBox" style="margin-top:16px;"></div>
+      <div style="text-align:center;margin-top:14px;"><button class="btn" onclick="loadTip()">__TIPSB__</button></div>
+    </div>
+    <div class="warn">__TIPSWARN__</div>
+    <script>
+    async function loadTip() {
+      const box = document.getElementById('tipBox');
+      box.innerHTML = '<div style="text-align:center;padding:24px;">... <span class="spin"></span></div>';
+      const r = await fetch('/api/tip');
+      const d = await r.json();
+      box.innerHTML =
+        '<div class="tip-card">' +
+        '<div class="tip-top"><span class="tip-icon">' + esc(d.icon) + '</span>' +
+        '<div><span class="tip-cat">' + esc(d.cat) + '</span><h3>' + esc(d.title) + '</h3></div></div>' +
+        '<p class="tip-text">' + esc(d.text) + '</p>' +
+        '<div class="tip-tip">💡 ' + esc(d.tip) + '</div>' +
+        '</div>';
+    }
+    function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
+    loadTip();
+    </script>
+    """
+    body = body.replace("__TIPSH__", t["tips_h"]).replace("__TIPSB__", t["tips_btn"])
+    body = body.replace("__TIPSSUB__", t["tips_sub"]).replace("__TIPSWARN__", t["tips_warn"])
+    return _page(_t("title_tips"), body)
+
+
+# ---------------------------------------------------------------- relax
+def relax_page():
+    lang = "en" if _lang() == "en" else "ar"
+    txt = wellbeing.relax_guide(lang)
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <div class="card">
+      <h2>__RELAXH__</h2>
+      <div style="font-size:16px;line-height:2;background:#EAF4FF;border-radius:12px;padding:20px;white-space:pre-wrap;">__TXT__</div>
+      <div style="text-align:center;margin-top:16px;"><div id="breathBox" style="font-size:30px;font-weight:800;color:#1976D2;height:70px;display:flex;align-items:center;justify-content:center;"></div></div>
+    </div>
+    <script>
+    const phases = [['__BRIN__', 4], ['__BRHOLD__', 7], ['__BROUT__', 8]];
+    let pi = 0;
+    function tick() {
+      const [label, secs] = phases[pi];
+      document.getElementById('breathBox').textContent = label;
+      pi = (pi + 1) % phases.length;
+      setTimeout(tick, secs * 1000);
+    }
+    tick();
+    </script>
+    """
+    body = body.replace("__TXT__", txt)
+    body = body.replace("__RELAXH__", t["relax_h"])
+    body = body.replace("__BRIN__", t["br_in"]).replace("__BRHOLD__", t["br_hold"]).replace("__BROUT__", t["br_out"])
+    return _page(_t("title_relax"), body)
+
+
+# ---------------------------------------------------------------- emergency
+def emergency_page():
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <style>body { background: #F5F9FF; }</style>
+    <div class="card">
+      <h2>__EMH__</h2>
+      <p class="muted">__EMSUB__</p>
+      <div class="em-alert">__EMALERT__</div>
+      <div class="em-grid3">
+        <div class="em-card">
+          <div class="em-ic">🚑</div>
+          <h3>__EMRED__</h3>
+          <p class="em-desc">__EMREDD__</p>
+          <div class="em-num red">997</div>
+          <a class="em-call" href="tel:997">📞 __EMCALL__</a>
+        </div>
+        <div class="em-card">
+          <div class="em-ic">📞</div>
+          <h3>__EMUNI__</h3>
+          <p class="em-desc">__EMUNID__</p>
+          <div class="em-num red">911</div>
+          <a class="em-call" href="tel:911">📞 __EMCALL__</a>
+        </div>
+        <div class="em-card">
+          <div class="em-ic">🩺</div>
+          <h3>__EM937__</h3>
+          <p class="em-desc">__EM937D__</p>
+          <div class="em-num blue">937</div>
+          <a class="em-call blue" href="tel:937">📞 __EMCALL__</a>
+        </div>
+      </div>
+      <div class="em-mini">
+        <div class="em-mini-card">🚓 <b>__EMPOL__</b><span class="em-mini-num">999</span><p class="muted" style="flex-basis:100%;">__EMPOLD__</p></div>
+        <div class="em-mini-card">🚒 <b>__EMCIV__</b><span class="em-mini-num">998</span><p class="muted" style="flex-basis:100%;">__EMCIVD__</p></div>
+      </div>
+    </div>
+    <div class="card em-danger">
+      <h2 class="em-danger-h">__EMSIGNH__</h2>
+      <div class="em-signs">
+        <div class="em-sign">__EMS1__</div>
+        <div class="em-sign">__EMS2__</div>
+        <div class="em-sign">__EMS3__</div>
+        <div class="em-sign">__EMS4__</div>
+        <div class="em-sign">__EMS5__</div>
+      </div>
+      <div style="text-align:center;margin-top:16px;">
+        <a class="em-call big" href="tel:997">__EMCALLBTN__</a>
+      </div>
+    </div>
+    <div class="card" id="geo">
+      <h2>__EMGEOT__</h2>
+      <p class="muted">__EMGEOSUB__</p>
+      <div style="text-align:center;margin-top:14px;">
+        <span class="em-24h">🕐 __EMGEO24H__</span>
+        <div style="margin-top:14px;"><button class="btn pri big" onclick="nearMe()">__EMGEOBTN__</button></div>
+      </div>
+      <div id="geoMsg" style="text-align:center;margin-top:10px;font-weight:700;color:#1976D2;"></div>
+      <div id="geoList" style="margin-top:12px;"></div>
+    </div>
+    <div class="warn em-safety">__EMSAFETY__</div>
+    <script>
+    const EM = __PT__;
+    async function nearMe() {
+      const msg = document.getElementById('geoMsg');
+      const list = document.getElementById('geoList');
+      msg.textContent = EM.em_geo_searching;
+      list.innerHTML = '';
+      if (!navigator.geolocation) { msg.textContent = EM.em_geo_err; return; }
+      navigator.geolocation.getCurrentPosition(async function(pos) {
+        try {
+          const r = await fetch('/api/hospitals', {method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude})});
+          const d = await r.json();
+          if (!d.ok) { msg.textContent = EM.em_geo_err + (d.error ? ' (' + d.error + ')' : ''); return; }
+          if (!d.hospitals || !d.hospitals.length) { msg.textContent = EM.em_geo_empty; return; }
+          msg.textContent = '';
+          let html = '<h3 style="margin-bottom:8px;">' + EM.em_nearby + '</h3>';
+          d.hospitals.forEach(function(h) {
+            html += '<div class="hist-card"><div class="hist-head"><b>🏥 ' + (h.name || '?') + '</b></div>' +
+              '<p class="muted">📍 ' + (h.distance_km || '') + ' km</p>' +
+              (h.maps_url ? '<a class="btn ghost small" href="' + h.maps_url + '" target="_blank" rel="noopener">🗺️ ' + EM.em_geo_btn + '</a>' : '') +
+              '</div>';
+          });
+          list.innerHTML = html;
+        } catch(e) { msg.textContent = EM.em_geo_err; }
+      }, function() { msg.textContent = EM.em_geo_err; }, {timeout: 15000});
+    }
+    </script>
+    """
+    repl = [
+        ("__EMH__", t["em_h"]), ("__EMSUB__", t["em_sub"]),
+        ("__EMALERT__", t["em_alert"]),
+        ("__EMRED__", t["em_red"]), ("__EMUNI__", t["em_unified"]), ("__EM937__", t["em_937"]),
+        ("__EMREDD__", t["em_red_desc"]), ("__EMUNID__", t["em_unified_desc"]), ("__EM937D__", t["em_937_desc"]),
+        ("__EMCALL__", t["em_call"]),
+        ("__EMPOL__", t["em_police"]), ("__EMCIV__", t["em_civil"]),
+        ("__EMPOLD__", t["em_police_desc"]), ("__EMCIVD__", t["em_civil_desc"]),
+        ("__EMSIGNH__", t["em_signs_h"]),
+        ("__EMS1__", t["em_s1"]), ("__EMS2__", t["em_s2"]), ("__EMS3__", t["em_s3"]),
+        ("__EMS4__", t["em_s4"]), ("__EMS5__", t["em_s5"]),
+        ("__EMCALLBTN__", t["em_call_btn"]),
+        ("__EMGEOT__", t["em_geo_title"]), ("__EMGEOSUB__", t["em_geo_sub"]),
+        ("__EMGEO24H__", t["em_geo_24h"]), ("__EMGEOBTN__", t["em_geo_btn"]),
+        ("__EMSAFETY__", t["em_safety"]),
+        ("__PT__", json.dumps({
+            "em_geo_searching": t["em_geo_searching"], "em_geo_err": t["em_geo_err"],
+            "em_geo_empty": t["em_geo_empty"], "em_nearby": t["em_nearby"],
+            "em_geo_btn": t["em_geo_btn"],
+        }, ensure_ascii=False)),
+    ]
+    for k, v in repl:
+        body = body.replace(k, v)
+    return _page(_t("title_emergency"), body)
+
+
+# ---------------------------------------------------------------- checkin
+def checkin_page():
+    t = CT["en" if _lang() == "en" else "ar"]
+    body = """
+    <div class="card">
+      <h2>__CIH__</h2>
+      <p class="muted">__CISUB__</p>
+      <div style="margin-top:14px;text-align:center;">
+        <button class="btn ghost" onclick="ci(1)">😞 1</button>
+        <button class="btn ghost" onclick="ci(2)">😕 2</button>
+        <button class="btn ghost" onclick="ci(3)">😐 3</button>
+        <button class="btn ghost" onclick="ci(4)">🙂 4</button>
+        <button class="btn ghost" onclick="ci(5)">😊 5</button>
+      </div>
+      <div id="ciMsg" style="margin-top:10px;font-weight:700;color:#1976D2;text-align:center;"></div>
+      <div id="ciChart" style="margin-top:20px;text-align:center;"></div>
+    </div>
+    <script>
+    const T = __PT__;
+    function TT(k) { return T[k] || k; }
+    async function ci(rating) {
+      const r = await fetch('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rating: rating})});
+      const d = await r.json();
+      if (d.ok) { document.getElementById('ciMsg').textContent = TT('ci_saved'); loadChart(); }
+      else document.getElementById('ciMsg').textContent = TT('ci_err') + (d.error || '?');
+    }
+    async function loadChart() {
+      const r = await fetch('/api/checkin');
+      const d = await r.json();
+      const box = document.getElementById('ciChart');
+      if (!d.ok) { box.innerHTML = '<div class="muted">' + TT('ci_chart_err') + '</div>'; return; }
+      if (!d.rows.length) { box.innerHTML = '<div class="muted">' + TT('ci_empty') + '</div>'; return; }
+      box.innerHTML = '<img src="' + d.chart + '" alt="' + TT('ci_alt') + '" style="max-width:100%;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08);">';
+    }
+    loadChart();
+    </script>
+    """
+    body = body.replace("__PT__", json.dumps(t, ensure_ascii=False))
+    body = body.replace("__CIH__", t["ci_h"]).replace("__CISUB__", t["ci_sub"])
+    return _page(_t("title_checkin"), body)
+
 # ---------------------------------------------------------------- routes
 @app.route("/")
 def index():
