@@ -507,6 +507,7 @@ async function loadAdminProfile(){
   if((m.invalid||[]).length)details+='<div class="privacy-banner" style="margin-top:10px">'+txt('إعدادات غير صالحة: ','Invalid configuration: ')+esc(m.invalid.join(', '))+'</div>';
   if(m.uses_resend_test_domain)details+='<div class="privacy-banner" style="margin-top:10px">'+txt('resend.dev للاختبار فقط. وثّقي دومينًا حقيقيًا للإرسال لكل المستخدمين.','resend.dev is test-only. Verify a real domain to send to all users.')+'</div>';
   if(m.provider==='smtp')details+='<div class="privacy-banner" style="margin-top:10px">'+txt('الإرسال مضبوط عبر Gmail SMTP.','Email delivery is configured through Gmail SMTP.')+'</div>';
+  if(m.provider==='brevo')details+='<div class="privacy-banner" style="margin-top:10px">'+txt('الإرسال مضبوط عبر Brevo HTTPS API ومتوافق مع Railway.','Email delivery is configured through the Brevo HTTPS API and is compatible with Railway.')+'</div>';
   document.getElementById('authEmailStatus').innerHTML=diagnostics.map(x=>'<div class="health-item"><small class="muted">'+esc(x[0])+'</small><div class="profile-value">'+statusBadge(x[2]?'verified':'disabled')+' '+esc(x[1])+'</div></div>').join('')+details;
  }catch(e){const el=document.getElementById('authEmailStatus');if(el)el.innerHTML='<div class="empty">'+esc(e.message)+'</div>'}
 }

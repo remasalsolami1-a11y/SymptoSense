@@ -335,6 +335,31 @@ class AuthenticationIntegrationTest(unittest.TestCase):
             ok,reason=self.original_sender("recipient@example.test","Subject","<b>Hello</b>","password_reset")
         self.assertFalse(ok); self.assertEqual(reason,"email_smtp_auth_failed")
 
+    def test_brevo_https_api_is_preferred_over_smtp(self):
+        brevo_env={
+            "BREVO_API_KEY":"test-brevo-secret",
+            "BREVO_FROM_EMAIL":"remasalsolami1@gmail.com",
+            "BREVO_FROM_NAME":"SymptoSense",
+            "SMTP_HOST":"smtp.gmail.com",
+        }
+        accepted=mock.MagicMock(status_code=201)
+        with mock.patch.dict(os.environ,brevo_env,clear=False), mock.patch("requests.post",return_value=accepted) as post:
+            state=webapp._auth_email_provider_state()
+            self.assertEqual(state["provider"],"brevo")
+            self.assertTrue(state["configured"])
+            ok,reason=self.original_sender("recipient@example.test","Verify","<b>Verify</b>","verify_email")
+        self.assertTrue(ok); self.assertIsNone(reason)
+        args,kwargs=post.call_args
+        self.assertEqual(args[0],"https://api.brevo.com/v3/smtp/email")
+        self.assertEqual(kwargs["json"]["sender"]["email"],"remasalsolami1@gmail.com")
+        self.assertEqual(kwargs["json"]["to"][0]["email"],"recipient@example.test")
+
+        rejected=mock.MagicMock(status_code=401)
+        rejected.json.return_value={"code":"unauthorized"}
+        with mock.patch.dict(os.environ,brevo_env,clear=False), mock.patch("requests.post",return_value=rejected):
+            ok,reason=self.original_sender("recipient@example.test","Reset","<b>Reset</b>","password_reset")
+        self.assertFalse(ok); self.assertEqual(reason,"email_brevo_auth_failed")
+
     def test_bilingual_auth_pages_and_private_route_redirects(self):
         for lang, expected in (("ar", "تسجيل الدخول"), ("en", "Welcome back")):
             client = self.client(lang)

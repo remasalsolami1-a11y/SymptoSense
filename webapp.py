@@ -8497,6 +8497,33 @@ def _auth_form_expired_message(lang):
     return "انتهت صلاحية النموذج. حدّث الصفحة وحاول مجددًا." if lang == "ar" else "This form expired. Refresh the page and try again."
 
 def _auth_email_provider_state():
+    brevo_values={
+        "api_key":os.environ.get("BREVO_API_KEY","").strip(),
+        "sender_email":os.environ.get("BREVO_FROM_EMAIL","").strip().lower(),
+        "sender_name":os.environ.get("BREVO_FROM_NAME","").strip(),
+    }
+    # Brevo uses HTTPS, so it works on Railway plans where outbound SMTP is
+    # disabled. Its presence takes priority over SMTP and Resend.
+    if any(brevo_values.values()):
+        missing=[]
+        if not brevo_values["api_key"]: missing.append("BREVO_API_KEY")
+        if not brevo_values["sender_email"]: missing.append("BREVO_FROM_EMAIL")
+        if not brevo_values["sender_name"]: missing.append("BREVO_FROM_NAME")
+        invalid=[]
+        if brevo_values["api_key"].lower() in {"replace_me","changeme","your_brevo_api_key"} or "ضع" in brevo_values["api_key"]:
+            invalid.append("BREVO_API_KEY_PLACEHOLDER")
+        if brevo_values["sender_email"] and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$",brevo_values["sender_email"]):
+            invalid.append("BREVO_FROM_EMAIL_INVALID")
+        return {
+            "provider":"brevo","configured":not missing and not invalid,
+            "missing":missing,"invalid":invalid,
+            "sender_address_valid":bool(brevo_values["sender_email"] and "BREVO_FROM_EMAIL_INVALID" not in invalid),
+            "sender_domain":brevo_values["sender_email"].rsplit("@",1)[1] if "@" in brevo_values["sender_email"] else "",
+            "uses_resend_test_domain":False,
+            "production_recipient_delivery_ready":bool(not missing and not invalid),
+            "site_url":_site_url(),
+            "site_url_source": ("SITE_URL" if os.environ.get("SITE_URL", "").strip() else ("RAILWAY_PUBLIC_DOMAIN" if os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip() else ("request_host" if has_request_context() else "local_fallback"))),
+        }
     smtp_values={
         "host": os.environ.get("SMTP_HOST", "").strip(),
         "port": os.environ.get("SMTP_PORT", "").strip(),
@@ -8596,6 +8623,43 @@ def _send_auth_email_smtp(email, subject, html, category, state):
         return False,"email_smtp_connection_failed"
 
 
+def _send_auth_email_brevo(email, subject, html, category):
+    """Send auth mail through Brevo's HTTPS API without logging PII/secrets."""
+    try:
+        import requests
+        response=requests.post(
+            "https://api.brevo.com/v3/smtp/email",timeout=15,
+            headers={
+                "accept":"application/json","content-type":"application/json",
+                "api-key":os.environ.get("BREVO_API_KEY","").strip(),
+            },
+            json={
+                "sender":{"name":os.environ.get("BREVO_FROM_NAME","").strip(),"email":os.environ.get("BREVO_FROM_EMAIL","").strip().lower()},
+                "to":[{"email":email}],"subject":subject,"htmlContent":html,
+                "tags":[re.sub(r"[^A-Za-z0-9_-]","_",category)[:64] or "auth"],
+            },
+        )
+        if response.status_code < 300:
+            app.logger.info("Auth email accepted by Brevo API; category=%s status=%s",category,response.status_code)
+            return True,None
+        status=int(response.status_code or 0); code=""
+        try:
+            payload=response.json() or {}; code=str(payload.get("code") or "").lower()
+        except Exception: pass
+        if status in {401,403}: reason="email_brevo_auth_failed"
+        elif status==429: reason="email_brevo_rate_limited"
+        elif status in {400,404} and ("sender" in code or "invalid_parameter" in code): reason="email_brevo_sender_invalid"
+        else: reason="email_brevo_delivery_failed"
+        app.logger.warning("Auth Brevo API rejected request; category=%s status=%s diagnostic=%s",category,status,reason)
+        return False,reason
+    except (OSError,TimeoutError):
+        app.logger.warning("Auth Brevo API connection failed; category=%s",category)
+        return False,"email_brevo_connection_failed"
+    except Exception as exc:
+        app.logger.warning("Auth Brevo API delivery failed; category=%s error_type=%s",category,type(exc).__name__)
+        return False,"email_brevo_delivery_failed"
+
+
 def _classify_resend_error(response):
     """Map Resend failures to safe diagnostic codes without logging PII."""
     status=int(getattr(response,"status_code",0) or 0)
@@ -8623,6 +8687,10 @@ def _send_auth_email(email, subject, html, category="auth"):
     state=_auth_email_provider_state()
     if not state["configured"]:
         app.logger.warning("Auth email provider not configured; missing=%s invalid=%s", ",".join(state["missing"]), ",".join(state.get("invalid") or []))
+        if state.get("provider")=="brevo":
+            if "BREVO_API_KEY_PLACEHOLDER" in (state.get("invalid") or []): return False,"email_brevo_key_placeholder"
+            if "BREVO_FROM_EMAIL_INVALID" in (state.get("invalid") or []): return False,"email_brevo_sender_invalid"
+            return False,"email_brevo_not_configured"
         if state.get("provider")=="smtp":
             if "SMTP_FROM_INVALID" in (state.get("invalid") or []): return False,"email_smtp_sender_invalid"
             if "SMTP_PORT_INVALID" in (state.get("invalid") or []): return False,"email_smtp_port_invalid"
@@ -8634,6 +8702,8 @@ def _send_auth_email(email, subject, html, category="auth"):
         if state.get("invalid"):
             return False, "email_sender_invalid"
         return False, "email_not_configured"
+    if state.get("provider")=="brevo":
+        return _send_auth_email_brevo(email,subject,html,category)
     if state.get("provider")=="smtp":
         return _send_auth_email_smtp(email,subject,html,category,state)
     try:
@@ -8877,6 +8947,11 @@ def verify_email_pending():
             elif reason=="email_smtp_connection_failed": error="تعذر الاتصال بخادم Gmail. تحقق من إعدادات SMTP ثم حاول مجددًا." if ar else "Could not connect to Gmail. Check the SMTP settings and try again."
             elif reason=="email_smtp_sender_invalid": error="صيغة SMTP_FROM غير صحيحة. استخدم: SymptoSense <your-email@gmail.com>." if ar else "SMTP_FROM is invalid. Use: SymptoSense <your-email@gmail.com>."
             elif reason=="email_smtp_port_invalid": error="قيمة SMTP_PORT غير صحيحة. استخدم 587 مع TLS." if ar else "SMTP_PORT is invalid. Use 587 with TLS."
+            elif reason=="email_brevo_not_configured": error="إعداد Brevo غير مكتمل. أضف متغيرات BREVO الثلاثة في Railway." if ar else "Brevo is incomplete. Add all three BREVO variables in Railway."
+            elif reason in {"email_brevo_auth_failed","email_brevo_key_placeholder"}: error="مفتاح Brevo غير صالح. أنشئ API Key جديدًا وحدّث BREVO_API_KEY في Railway." if ar else "The Brevo API key is invalid. Create a new key and update BREVO_API_KEY in Railway."
+            elif reason=="email_brevo_sender_invalid": error="بريد المرسل في Brevo غير صالح أو غير موثق. تحقق من BREVO_FROM_EMAIL وحالة Verified." if ar else "The Brevo sender is invalid or unverified. Check BREVO_FROM_EMAIL and its Verified status."
+            elif reason=="email_brevo_rate_limited": error="تم بلوغ حد الإرسال في Brevo. انتظر تجدد الحد اليومي ثم حاول مجددًا." if ar else "The Brevo sending limit was reached. Wait for the daily allowance to reset."
+            elif reason in {"email_brevo_connection_failed","email_brevo_delivery_failed"}: error="تعذر إرسال الرسالة عبر Brevo الآن. تحقق من الإعدادات ثم حاول مجددًا." if ar else "Brevo could not send the email. Check the configuration and try again."
             else: error="تعذر إرسال رسالة التحقق الآن. تحقق من إعدادات البريد في Railway ثم حاول مرة أخرى." if ar else "Unable to send the verification email. Check the email configuration in Railway and try again."
     state=session.pop("verification_send_state",None)
     if state and not notice and not error:
@@ -8908,6 +8983,16 @@ def verify_email_pending():
             error="صيغة SMTP_FROM غير صحيحة." if ar else "SMTP_FROM is invalid."
         elif state=="email_smtp_port_invalid":
             error="قيمة SMTP_PORT غير صحيحة؛ استخدم 587." if ar else "SMTP_PORT is invalid; use 587."
+        elif state=="email_brevo_not_configured":
+            error="إعداد Brevo غير مكتمل. أضف متغيرات BREVO الثلاثة في Railway." if ar else "Brevo is incomplete. Add all three BREVO variables in Railway."
+        elif state in {"email_brevo_auth_failed","email_brevo_key_placeholder"}:
+            error="مفتاح Brevo غير صالح. حدّث BREVO_API_KEY في Railway." if ar else "The Brevo API key is invalid. Update BREVO_API_KEY in Railway."
+        elif state=="email_brevo_sender_invalid":
+            error="بريد Brevo المرسل غير صالح أو غير موثق." if ar else "The Brevo sender is invalid or unverified."
+        elif state=="email_brevo_rate_limited":
+            error="تم بلوغ حد Brevo اليومي. حاول بعد تجدد الحد." if ar else "The Brevo daily sending limit was reached. Try again after it resets."
+        elif state in {"email_brevo_connection_failed","email_brevo_delivery_failed"}:
+            error="تعذر إرسال الرسالة عبر Brevo الآن. حاول مجددًا." if ar else "Brevo could not send the email. Try again."
         elif state=="verification_required":
             notice="يرجى التحقق من بريدك الإلكتروني أولًا. إذا لم تصل الرسالة، استخدم إعادة الإرسال." if ar else "Please verify your email first. If the message did not arrive, use resend."
         else:

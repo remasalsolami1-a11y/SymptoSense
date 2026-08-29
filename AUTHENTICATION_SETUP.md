@@ -13,26 +13,23 @@
 
 لا تحتوي الشفرة على كلمة مرور له، ولا تنشئ بديلًا إذا لم يكن موجودًا. جميع الحسابات الجديدة تُنشأ بدور `user`.
 
-## متغيرات Railway المطلوبة — Gmail SMTP المجاني
+## متغيرات Railway المطلوبة — Brevo HTTPS API
 
 أضيفي القيم التالية من Railway → Service → Variables، ثم أعيدي النشر:
 
 ```text
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=remasalsolami1@gmail.com
-SMTP_PASSWORD=<GOOGLE_APP_PASSWORD>
-SMTP_FROM=SymptoSense <remasalsolami1@gmail.com>
-SMTP_USE_TLS=1
+BREVO_API_KEY=<BREVO_API_KEY>
+BREVO_FROM_EMAIL=remasalsolami1@gmail.com
+BREVO_FROM_NAME=SymptoSense
 SITE_URL=https://symptosense-production-b2e5.up.railway.app
 WEB_SECRET=<LONG_RANDOM_STABLE_SECRET>
 SESSION_COOKIE_SECURE=1
 ADMIN_AUTH_DEBUG=0
 ```
 
-`SMTP_PASSWORD` هو App Password المكوّن من 16 حرفًا الذي ينشأ بعد تفعيل التحقق بخطوتين في Google، وليس كلمة مرور Gmail العادية. لا تضعيه في GitHub أو ترسليه لأي شخص. يقبل التطبيق الرمز سواء ألصقته مع المسافات أو بدونها.
+`BREVO_API_KEY` مفتاح سري ينشأ من Brevo → SMTP & API → API Keys. لا تضعيه في GitHub أو ترسليه لأي شخص. يجب أن يكون البريد الموجود في `BREVO_FROM_EMAIL` بحالة Verified داخل Brevo.
 
-عند وجود أي متغير `SMTP_*` يختار التطبيق SMTP تلقائيًا، حتى لو بقيت متغيرات Resend القديمة. يمكن حذف `RESEND_API_KEY` و`RESEND_FROM` لتفادي الالتباس. إذا لم توجد متغيرات SMTP، يبقى Resend خيارًا احتياطيًا مدعومًا:
+عند وجود أي متغير `BREVO_*` يختار التطبيق Brevo تلقائيًا قبل SMTP وResend. يعمل Brevo عبر HTTPS، ولذلك يتوافق مع خطط Railway التي تمنع SMTP. يمكن حذف متغيرات `SMTP_*` وResend بعد نجاح الاختبار لتفادي الالتباس.
 
 ```text
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
@@ -54,7 +51,7 @@ RESEND_FROM=SymptoSense <noreply@mail.your-verified-domain.com>
    - `production_recipient_delivery_ready: true`
    - `site_url` مساويًا لرابط Railway الحالي.
 3. من واجهة Admin أرسلي `POST /api/admin/auth-email-test` مع CSRF الإداري. الرسالة تُرسل إلى بريد Admin الحالي فقط.
-4. عند استخدام Gmail، افحصي Inbox وSpam في البريد المستلم، وكذلك Sent في Gmail المرسل.
+4. راجعي Brevo → Transactional → Logs، ثم Inbox وSpam في البريد المستلم.
 
 لا يعرض مسار التشخيص API key أو Password أو Token أو عنوان المرسل الكامل.
 
@@ -70,6 +67,11 @@ RESEND_FROM=SymptoSense <noreply@mail.your-verified-domain.com>
 - `email_smtp_auth_failed`: Gmail رفض البريد أو App Password.
 - `email_smtp_connection_failed`: تعذر الاتصال بخادم SMTP أو TLS.
 - `email_smtp_sender_invalid`: صيغة SMTP_FROM غير صحيحة.
+- `email_brevo_not_configured`: أحد متغيرات Brevo الثلاثة ناقص.
+- `email_brevo_auth_failed`: مفتاح Brevo مرفوض.
+- `email_brevo_sender_invalid`: البريد المرسل غير صالح أو غير موثق.
+- `email_brevo_rate_limited`: تم بلوغ حد الإرسال.
+- `email_brevo_connection_failed`: تعذر الوصول إلى Brevo API.
 - `Auth email accepted by provider`: Resend قبل الطلب؛ راجعي حالة الرسالة في Resend إذا لم تظهر في Inbox.
 - `Auth email accepted by SMTP provider`: Gmail قبل الرسالة للإرسال.
 
