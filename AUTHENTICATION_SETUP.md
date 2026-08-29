@@ -13,23 +13,30 @@
 
 لا تحتوي الشفرة على كلمة مرور له، ولا تنشئ بديلًا إذا لم يكن موجودًا. جميع الحسابات الجديدة تُنشأ بدور `user`.
 
-## متغيرات Railway المطلوبة
+## متغيرات Railway المطلوبة — Gmail SMTP المجاني
 
 أضيفي القيم التالية من Railway → Service → Variables، ثم أعيدي النشر:
 
 ```text
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
-RESEND_FROM=SymptoSense <noreply@YOUR_REAL_VERIFIED_DOMAIN>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=remasalsolami1@gmail.com
+SMTP_PASSWORD=<GOOGLE_APP_PASSWORD>
+SMTP_FROM=SymptoSense <remasalsolami1@gmail.com>
+SMTP_USE_TLS=1
 SITE_URL=https://symptosense-production-b2e5.up.railway.app
 WEB_SECRET=<LONG_RANDOM_STABLE_SECRET>
 SESSION_COOKIE_SECURE=1
 ADMIN_AUTH_DEBUG=0
 ```
 
-مهم: `YOUR_REAL_VERIFIED_DOMAIN` مثال يجب استبداله، وليس قيمة تُنسخ حرفيًا. أضيفي دومينًا تملكينه إلى Resend، أضيفي سجلات DNS التي يعطيك إياها، وانتظري حتى تصبح حالته `Verified`، ثم استخدمي عنوانًا منه مثل:
+`SMTP_PASSWORD` هو App Password المكوّن من 16 حرفًا الذي ينشأ بعد تفعيل التحقق بخطوتين في Google، وليس كلمة مرور Gmail العادية. لا تضعيه في GitHub أو ترسليه لأي شخص. يقبل التطبيق الرمز سواء ألصقته مع المسافات أو بدونها.
+
+عند وجود أي متغير `SMTP_*` يختار التطبيق SMTP تلقائيًا، حتى لو بقيت متغيرات Resend القديمة. يمكن حذف `RESEND_API_KEY` و`RESEND_FROM` لتفادي الالتباس. إذا لم توجد متغيرات SMTP، يبقى Resend خيارًا احتياطيًا مدعومًا:
 
 ```text
-RESEND_FROM=SymptoSense <noreply@mail.your-domain.com>
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
+RESEND_FROM=SymptoSense <noreply@mail.your-verified-domain.com>
 ```
 
 `onboarding@resend.dev` مخصص للاختبار، ولا يستطيع في الوضع العادي الإرسال إلى كل مستخدمي الموقع. كذلك لا تضعي `RESEND_API_KEY` أو `WEB_SECRET` في Frontend أو GitHub.
@@ -47,7 +54,7 @@ RESEND_FROM=SymptoSense <noreply@mail.your-domain.com>
    - `production_recipient_delivery_ready: true`
    - `site_url` مساويًا لرابط Railway الحالي.
 3. من واجهة Admin أرسلي `POST /api/admin/auth-email-test` مع CSRF الإداري. الرسالة تُرسل إلى بريد Admin الحالي فقط.
-4. راجعي Resend → Emails وتحققي أن الحدث `delivered`، ثم افحصي Inbox وSpam.
+4. عند استخدام Gmail، افحصي Inbox وSpam في البريد المستلم، وكذلك Sent في Gmail المرسل.
 
 لا يعرض مسار التشخيص API key أو Password أو Token أو عنوان المرسل الكامل.
 
@@ -59,7 +66,12 @@ RESEND_FROM=SymptoSense <noreply@mail.your-domain.com>
 - `email_invalid_api_key`: مفتاح Resend مرفوض.
 - `email_test_domain_restricted`: المرسل `resend.dev` لا يستطيع الإرسال لهذا المستلم.
 - `email_sender_domain_unverified`: الدومين غير موثق في Resend.
+- `email_smtp_not_configured`: أحد متغيرات SMTP المطلوبة ناقص.
+- `email_smtp_auth_failed`: Gmail رفض البريد أو App Password.
+- `email_smtp_connection_failed`: تعذر الاتصال بخادم SMTP أو TLS.
+- `email_smtp_sender_invalid`: صيغة SMTP_FROM غير صحيحة.
 - `Auth email accepted by provider`: Resend قبل الطلب؛ راجعي حالة الرسالة في Resend إذا لم تظهر في Inbox.
+- `Auth email accepted by SMTP provider`: Gmail قبل الرسالة للإرسال.
 
 ## خصائص الأمان
 
@@ -67,7 +79,7 @@ RESEND_FROM=SymptoSense <noreply@mail.your-domain.com>
 - Verification token عشوائي، مخزن كـSHA-256 hash، صالح 24 ساعة، وأحادي الاستخدام.
 - Reset token عشوائي، مخزن كـSHA-256 hash، صالح 30 دقيقة، وأحادي الاستخدام.
 - استهلاك أي Reset token يبطل جميع روابط Reset الأخرى للحساب.
-- Resend محدود بـ60 ثانية بين الطلبات و5 طلبات في الساعة لكل حساب.
+- طلبات إعادة الإرسال محدودة بـ60 ثانية بين الطلبات و5 طلبات في الساعة لكل حساب، بغض النظر عن مزود البريد.
 - تغيير بريد الحساب غير الموثق يحتاج Pending Verification Session وكلمة المرور الحالية.
 - كلمات المرور تستخدم PBKDF2-SHA256 بـ600,000 دورة؛ الحسابات القديمة تستمر وتُرقّى بعد Login صحيح.
 - Login/Registration/Verification/Reset HTML Forms محمية بـCSRF.

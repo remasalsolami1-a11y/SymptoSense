@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -306,6 +307,33 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         finally:
             os.environ["RESEND_FROM"] = old_sender or ""
             os.environ["RESEND_API_KEY"] = old_key or ""
+
+    def test_gmail_smtp_is_preferred_and_uses_starttls(self):
+        smtp_env={
+            "SMTP_HOST":"smtp.gmail.com","SMTP_PORT":"587",
+            "SMTP_USERNAME":"remasalsolami1@gmail.com",
+            "SMTP_PASSWORD":"abcd efgh ijkl mnop",
+            "SMTP_FROM":"SymptoSense <remasalsolami1@gmail.com>",
+            "SMTP_USE_TLS":"1",
+        }
+        server=mock.MagicMock()
+        server.__enter__.return_value=server
+        with mock.patch.dict(os.environ,smtp_env,clear=False), mock.patch.object(webapp.smtplib,"SMTP",return_value=server) as smtp:
+            state=webapp._auth_email_provider_state()
+            self.assertEqual(state["provider"],"smtp")
+            self.assertTrue(state["configured"])
+            ok,reason=self.original_sender("recipient@example.test","Subject","<b>Hello</b>","verify_email")
+        self.assertTrue(ok); self.assertIsNone(reason)
+        smtp.assert_called_once_with("smtp.gmail.com",587,timeout=15)
+        server.starttls.assert_called_once()
+        server.login.assert_called_once_with("remasalsolami1@gmail.com","abcdefghijklmnop")
+        server.send_message.assert_called_once()
+
+        failed=mock.MagicMock(); failed.__enter__.return_value=failed
+        failed.login.side_effect=webapp.smtplib.SMTPAuthenticationError(535,b"rejected")
+        with mock.patch.dict(os.environ,smtp_env,clear=False), mock.patch.object(webapp.smtplib,"SMTP",return_value=failed):
+            ok,reason=self.original_sender("recipient@example.test","Subject","<b>Hello</b>","password_reset")
+        self.assertFalse(ok); self.assertEqual(reason,"email_smtp_auth_failed")
 
     def test_bilingual_auth_pages_and_private_route_redirects(self):
         for lang, expected in (("ar", "تسجيل الدخول"), ("en", "Welcome back")):

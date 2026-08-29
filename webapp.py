@@ -12,7 +12,10 @@ import hashlib
 import hmac
 import random
 import time
+import smtplib
+import ssl
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from email.utils import parseaddr
 
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
@@ -8494,6 +8497,42 @@ def _auth_form_expired_message(lang):
     return "انتهت صلاحية النموذج. حدّث الصفحة وحاول مجددًا." if lang == "ar" else "This form expired. Refresh the page and try again."
 
 def _auth_email_provider_state():
+    smtp_values={
+        "host": os.environ.get("SMTP_HOST", "").strip(),
+        "port": os.environ.get("SMTP_PORT", "").strip(),
+        "username": os.environ.get("SMTP_USERNAME", "").strip(),
+        "password": os.environ.get("SMTP_PASSWORD", "").strip(),
+        "sender": os.environ.get("SMTP_FROM", "").strip(),
+    }
+    # Any SMTP value explicitly selects SMTP, so stale Resend variables cannot
+    # override a Gmail deployment.
+    if any(smtp_values.values()):
+        missing=[]
+        env_names={"host":"SMTP_HOST","port":"SMTP_PORT","username":"SMTP_USERNAME","password":"SMTP_PASSWORD","sender":"SMTP_FROM"}
+        for key,env_name in env_names.items():
+            if not smtp_values[key]: missing.append(env_name)
+        invalid=[]
+        sender_address=parseaddr(smtp_values["sender"])[1].strip().lower() if smtp_values["sender"] else ""
+        if smtp_values["sender"] and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$",sender_address):
+            invalid.append("SMTP_FROM_INVALID")
+        try:
+            smtp_port=int(smtp_values["port"] or 0)
+            if not (1 <= smtp_port <= 65535): raise ValueError
+        except (TypeError,ValueError):
+            smtp_port=0
+            if smtp_values["port"]: invalid.append("SMTP_PORT_INVALID")
+        use_tls=os.environ.get("SMTP_USE_TLS", "1").strip().lower() not in {"0","false","no","off"}
+        return {
+            "provider":"smtp","configured":not missing and not invalid,
+            "missing":missing,"invalid":invalid,
+            "sender_address_valid":bool(sender_address and "SMTP_FROM_INVALID" not in invalid),
+            "sender_domain":sender_address.rsplit("@",1)[1] if "@" in sender_address else "",
+            "uses_resend_test_domain":False,
+            "production_recipient_delivery_ready":bool(not missing and not invalid),
+            "smtp_host":smtp_values["host"],"smtp_port":smtp_port,"smtp_use_tls":use_tls,
+            "site_url":_site_url(),
+            "site_url_source": ("SITE_URL" if os.environ.get("SITE_URL", "").strip() else ("RAILWAY_PUBLIC_DOMAIN" if os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip() else ("request_host" if has_request_context() else "local_fallback"))),
+        }
     missing=[]
     api_key=os.environ.get("RESEND_API_KEY", "").strip()
     sender=os.environ.get("RESEND_FROM", "").strip()
@@ -8508,6 +8547,7 @@ def _auth_email_provider_state():
     if sender_domain in {"your_verified_domain","your_verified_domain.com","example.com"} or "your_" in sender_domain or "your_verified_domain" in sender_domain:
         invalid.append("RESEND_FROM_PLACEHOLDER")
     return {
+        "provider":"resend",
         "configured": not missing and not invalid,
         "missing": missing,
         "invalid": invalid,
@@ -8518,6 +8558,42 @@ def _auth_email_provider_state():
         "site_url": _site_url(),
         "site_url_source": ("SITE_URL" if os.environ.get("SITE_URL", "").strip() else ("RAILWAY_PUBLIC_DOMAIN" if os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip() else ("request_host" if has_request_context() else "local_fallback"))),
     }
+
+
+def _send_auth_email_smtp(email, subject, html, category, state):
+    """Send auth mail over STARTTLS/SSL without logging credentials or PII."""
+    sender=os.environ.get("SMTP_FROM", "").strip()
+    username=os.environ.get("SMTP_USERNAME", "").strip()
+    password=os.environ.get("SMTP_PASSWORD", "").strip()
+    if str(state.get("smtp_host") or "").lower()=="smtp.gmail.com":
+        password=password.replace(" ", "")
+    message=EmailMessage()
+    message["From"]=sender; message["To"]=email; message["Subject"]=subject
+    plain=re.sub(r"<[^>]+>", " ", html or "")
+    message.set_content(re.sub(r"\s+", " ", plain).strip())
+    message.add_alternative(html, subtype="html")
+    host=state["smtp_host"]; port=int(state["smtp_port"])
+    try:
+        if port==465:
+            with smtplib.SMTP_SSL(host,port,timeout=15,context=ssl.create_default_context()) as server:
+                server.login(username,password); server.send_message(message)
+        else:
+            with smtplib.SMTP(host,port,timeout=15) as server:
+                server.ehlo()
+                if state.get("smtp_use_tls",True):
+                    server.starttls(context=ssl.create_default_context()); server.ehlo()
+                server.login(username,password); server.send_message(message)
+        app.logger.info("Auth email accepted by SMTP provider; category=%s",category)
+        return True,None
+    except smtplib.SMTPAuthenticationError:
+        app.logger.warning("Auth SMTP authentication failed; category=%s",category)
+        return False,"email_smtp_auth_failed"
+    except smtplib.SMTPRecipientsRefused:
+        app.logger.warning("Auth SMTP recipient rejected; category=%s",category)
+        return False,"email_recipient_rejected"
+    except (smtplib.SMTPException,OSError,TimeoutError):
+        app.logger.warning("Auth SMTP delivery failed; category=%s",category)
+        return False,"email_smtp_connection_failed"
 
 
 def _classify_resend_error(response):
@@ -8543,10 +8619,14 @@ def _classify_resend_error(response):
 
 
 def _send_auth_email(email, subject, html, category="auth"):
-    """Send transactional auth email through Resend without logging secrets/recipients."""
+    """Send transactional auth email through configured SMTP or Resend."""
     state=_auth_email_provider_state()
     if not state["configured"]:
         app.logger.warning("Auth email provider not configured; missing=%s invalid=%s", ",".join(state["missing"]), ",".join(state.get("invalid") or []))
+        if state.get("provider")=="smtp":
+            if "SMTP_FROM_INVALID" in (state.get("invalid") or []): return False,"email_smtp_sender_invalid"
+            if "SMTP_PORT_INVALID" in (state.get("invalid") or []): return False,"email_smtp_port_invalid"
+            return False,"email_smtp_not_configured"
         if "RESEND_FROM_PLACEHOLDER" in (state.get("invalid") or []):
             return False, "email_sender_placeholder"
         if "RESEND_API_KEY_PLACEHOLDER" in (state.get("invalid") or []):
@@ -8554,6 +8634,8 @@ def _send_auth_email(email, subject, html, category="auth"):
         if state.get("invalid"):
             return False, "email_sender_invalid"
         return False, "email_not_configured"
+    if state.get("provider")=="smtp":
+        return _send_auth_email_smtp(email,subject,html,category,state)
     try:
         import requests
         response=requests.post(
@@ -8783,14 +8865,19 @@ def verify_email_pending():
             sent,reason=_issue_verification_email(int(uid),_lang())
             if sent: notice="أرسلنا رابط تحقق جديدًا إلى بريدك الإلكتروني." if ar else "We sent a new verification link to your email."
             elif reason in {"cooldown","rate_limited"}: error="يرجى الانتظار قبل طلب رسالة تحقق أخرى." if ar else "Please wait before requesting another verification email."
-            elif reason=="email_not_configured": error="خدمة البريد غير مضبوطة بعد. يلزم إعداد RESEND_API_KEY وRESEND_FROM في Railway." if ar else "Email delivery is not configured yet. RESEND_API_KEY and RESEND_FROM must be configured in Railway."
+            elif reason=="email_not_configured": error="خدمة البريد غير مضبوطة بعد. أضف إعدادات SMTP أو Resend في Railway." if ar else "Email delivery is not configured. Add SMTP or Resend settings in Railway."
             elif reason=="email_invalid_api_key": error="مفتاح Resend غير صالح. حدّث RESEND_API_KEY في Railway." if ar else "The Resend API key is invalid. Update RESEND_API_KEY in Railway."
             elif reason=="email_test_domain_restricted": error="إعداد Resend الحالي مخصص للاختبار فقط. لإرسال الرسائل لكل المستخدمين يجب توثيق Domain في Resend واستخدامه في RESEND_FROM." if ar else "The current Resend sender is test-only. Verify a domain in Resend and use it in RESEND_FROM to email all users."
             elif reason=="email_sender_domain_unverified": error="الدومين المستخدم في RESEND_FROM غير موثق في Resend." if ar else "The domain used by RESEND_FROM is not verified in Resend."
             elif reason=="email_sender_placeholder": error="قيمة RESEND_FROM ما زالت مثالًا تجريبيًا. استبدلها بعنوان من دومين موثق في Resend." if ar else "RESEND_FROM is still a placeholder. Replace it with an address on a verified Resend domain."
             elif reason=="email_api_key_placeholder": error="قيمة RESEND_API_KEY ما زالت مثالًا وليست مفتاح Resend فعليًا." if ar else "RESEND_API_KEY is still a placeholder, not a real Resend API key."
             elif reason=="email_sender_invalid": error="صيغة RESEND_FROM غير صحيحة. استخدم: SymptoSense <noreply@your-domain.com>." if ar else "RESEND_FROM is invalid. Use: SymptoSense <noreply@your-domain.com>."
-            else: error="تعذر إرسال رسالة التحقق الآن. تحقق من إعدادات Resend في Railway ثم حاول مرة أخرى." if ar else "Unable to send the verification email. Check the Resend configuration in Railway and try again."
+            elif reason=="email_smtp_not_configured": error="إعداد Gmail غير مكتمل. تأكد من إضافة جميع متغيرات SMTP في Railway." if ar else "Gmail configuration is incomplete. Add all SMTP variables in Railway."
+            elif reason=="email_smtp_auth_failed": error="رفض Gmail تسجيل الدخول. تأكد من البريد وكلمة مرور التطبيق App Password، وليس كلمة مرور Gmail العادية." if ar else "Gmail rejected the sign-in. Check the email and App Password; do not use the normal Gmail password."
+            elif reason=="email_smtp_connection_failed": error="تعذر الاتصال بخادم Gmail. تحقق من إعدادات SMTP ثم حاول مجددًا." if ar else "Could not connect to Gmail. Check the SMTP settings and try again."
+            elif reason=="email_smtp_sender_invalid": error="صيغة SMTP_FROM غير صحيحة. استخدم: SymptoSense <your-email@gmail.com>." if ar else "SMTP_FROM is invalid. Use: SymptoSense <your-email@gmail.com>."
+            elif reason=="email_smtp_port_invalid": error="قيمة SMTP_PORT غير صحيحة. استخدم 587 مع TLS." if ar else "SMTP_PORT is invalid. Use 587 with TLS."
+            else: error="تعذر إرسال رسالة التحقق الآن. تحقق من إعدادات البريد في Railway ثم حاول مرة أخرى." if ar else "Unable to send the verification email. Check the email configuration in Railway and try again."
     state=session.pop("verification_send_state",None)
     if state and not notice and not error:
         if state=="sent":
@@ -8798,7 +8885,7 @@ def verify_email_pending():
         elif state in {"cooldown","rate_limited"}:
             notice="تم إرسال رابط تحقق مؤخرًا. استخدم الرسالة الموجودة أو انتظر قليلًا قبل طلب رسالة جديدة." if ar else "A verification link was sent recently. Use the existing message or wait before requesting another one."
         elif state=="email_not_configured":
-            error="خدمة البريد غير مضبوطة. أضف RESEND_API_KEY وRESEND_FROM في Railway قبل محاولة الإرسال." if ar else "Email delivery is not configured. Add RESEND_API_KEY and RESEND_FROM in Railway before resending."
+            error="خدمة البريد غير مضبوطة. أضف إعدادات SMTP أو Resend في Railway قبل محاولة الإرسال." if ar else "Email delivery is not configured. Add SMTP or Resend settings in Railway before resending."
         elif state=="email_invalid_api_key":
             error="مفتاح Resend غير صالح. حدّث RESEND_API_KEY في Railway." if ar else "The Resend API key is invalid. Update RESEND_API_KEY in Railway."
         elif state=="email_test_domain_restricted":
@@ -8811,10 +8898,20 @@ def verify_email_pending():
             error="قيمة RESEND_API_KEY ما زالت مثالًا وليست مفتاح Resend فعليًا." if ar else "RESEND_API_KEY is still a placeholder, not a real Resend API key."
         elif state=="email_sender_invalid":
             error="صيغة RESEND_FROM غير صحيحة." if ar else "RESEND_FROM is invalid."
+        elif state=="email_smtp_not_configured":
+            error="إعداد Gmail غير مكتمل. أضف جميع متغيرات SMTP في Railway." if ar else "Gmail configuration is incomplete. Add all SMTP variables in Railway."
+        elif state=="email_smtp_auth_failed":
+            error="رفض Gmail تسجيل الدخول. تحقّق من App Password والبريد المرسل." if ar else "Gmail rejected the sign-in. Check the App Password and sender email."
+        elif state=="email_smtp_connection_failed":
+            error="تعذر الاتصال بخادم Gmail. تحقق من إعدادات SMTP وحاول مجددًا." if ar else "Could not connect to Gmail. Check the SMTP settings and try again."
+        elif state=="email_smtp_sender_invalid":
+            error="صيغة SMTP_FROM غير صحيحة." if ar else "SMTP_FROM is invalid."
+        elif state=="email_smtp_port_invalid":
+            error="قيمة SMTP_PORT غير صحيحة؛ استخدم 587." if ar else "SMTP_PORT is invalid; use 587."
         elif state=="verification_required":
             notice="يرجى التحقق من بريدك الإلكتروني أولًا. إذا لم تصل الرسالة، استخدم إعادة الإرسال." if ar else "Please verify your email first. If the message did not arrive, use resend."
         else:
-            error="تعذر إرسال رسالة التحقق حاليًا. تحقق من إعدادات Resend في Railway ثم حاول مرة أخرى." if ar else "The verification email could not be sent. Check the Resend configuration in Railway and try again."
+            error="تعذر إرسال رسالة التحقق حاليًا. تحقق من إعدادات البريد في Railway ثم حاول مرة أخرى." if ar else "The verification email could not be sent. Check the email configuration in Railway and try again."
     masked=""
     if user and user.get("email"):
         e=str(user["email"]); parts=e.split("@",1); masked=(parts[0][:2]+"***@"+parts[1]) if len(parts)==2 else "***"
@@ -8995,7 +9092,7 @@ def api_admin_auth_email_status():
     state=_auth_email_provider_state()
     return jsonify({
         "ok": True,
-        "provider": "resend",
+        "provider": state.get("provider") or "none",
         "configured": bool(state.get("configured")),
         "missing": state.get("missing") or [],
         "invalid": state.get("invalid") or [],
