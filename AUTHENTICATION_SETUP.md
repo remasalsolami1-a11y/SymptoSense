@@ -1,90 +1,88 @@
-# SymptoSense Authentication Setup
+# إعداد Authentication في SymptoSense
 
-## ما تم إصلاحه
+## المسارات الفعلية
 
-تم تحويل مسار الحسابات الجديدة إلى:
+- مستخدم جديد: `Create Account → Verify Email → Login → /profile`
+- مستخدم موجود: `Login → /profile`
+- استعادة كلمة المرور: `Forgot Password → Reset Email → Reset Password → Login`
+- Admin: `Login → role=admin → /admin`
 
-Create Account → Verify Email → Login → User/Admin Dashboard
-
-المستخدمون الموجودون قبل هذا التحديث لا يتم حذفهم أو تغيير كلمات مرورهم. Migration تضيف `email_verified` و`email_verified_at` بطريقة محافظة، وتعتبر الحسابات القديمة موثقة حتى تستمر بالعمل.
-
-## إعداد البريد المطلوب على Railway
-
-نظام التحقق واستعادة كلمة المرور يستخدم Resend عبر HTTPS API. أضف المتغيرات التالية في Railway Variables:
-
-```text
-RESEND_API_KEY=re_xxxxxxxxx
-RESEND_FROM=SymptoSense <noreply@YOUR_VERIFIED_DOMAIN>
-SITE_URL=https://YOUR-CURRENT-RAILWAY-DOMAIN   # optional on Railway; auto-detected from RAILWAY_PUBLIC_DOMAIN if omitted
-WEB_SECRET=<LONG_RANDOM_STABLE_SECRET>
-SESSION_COOKIE_SECURE=1
-AUTH_EMAIL_DEBUG=0
-```
-
-### مهم
-
-- يجب أن يكون الدومين المستخدم في `RESEND_FROM` مضافًا وموثقًا في Resend للإرسال في Production.
-- `SITE_URL` إذا وضعته يجب أن يكون رابط الموقع الحالي بالضبط. في النسخة الحالية، إذا تركته فارغًا على Railway سيستخدم النظام `RAILWAY_PUBLIC_DOMAIN` تلقائيًا بدل رابط قديم ثابت.
-- إذا كان `RESEND_FROM` يستخدم `@resend.dev` فهو مناسب للاختبار فقط، وعادةً لا يرسل إلى مستخدمين آخرين غير بريد حساب Resend. لإرسال Verification/Reset لكل المستخدمين، وثّق Domain في Resend واستخدم عنوانًا منه.
-- لا تضع `RESEND_API_KEY` أو `WEB_SECRET` في Frontend أو GitHub.
-- اترك `AUTH_EMAIL_DEBUG=0` في Production. القيمة `1` مخصصة للتطوير المحلي فقط وتعرض رابط الاختبار داخل الصفحة ولا تطبعه في logs.
-
-## سلوك Email Verification
-
-- الحساب الجديد يبدأ `email_verified = 0`.
-- رابط التحقق عشوائي، ولا يُخزن Token الخام في قاعدة البيانات؛ المخزن هو SHA-256 hash فقط.
-- الرابط صالح 24 ساعة.
-- الرابط Single-use.
-- Resend Verification محمي بـ cooldown 60 ثانية وبحد 5 طلبات/ساعة لكل حساب.
-- تغيير البريد مسموح فقط للحساب غير الموثق ومن جلسة التسجيل/التحقق نفسها.
-
-## Password Reset
-
-- الرسالة العامة لا تكشف هل البريد لديه حساب أم لا.
-- الرابط عشوائي وغير قابل للتخمين، والمخزن في DB هو hash فقط.
-- الصلاحية 30 دقيقة.
-- Single-use، وعند نجاح Reset تُبطل جميع روابط Reset الأخرى للحساب.
-- لا يتم تسجيل Password أو Reset Token في logs.
-
-## Admin
-
-الحساب الإداري يبقى الحساب الموجود مسبقًا:
+الحساب الإداري الوحيد هو الحساب الموجود مسبقًا:
 
 `remasalsolami2020@gmail.com`
 
-لا يتم إنشاء بديل له. الحسابات القديمة تعتبر Verified عند Migration؛ لذلك لا يتوقف Admin بسبب إضافة Email Verification.
+لا تحتوي الشفرة على كلمة مرور له، ولا تنشئ بديلًا إذا لم يكن موجودًا. جميع الحسابات الجديدة تُنشأ بدور `user`.
 
-## فحص Production بعد النشر
+## متغيرات Railway المطلوبة
 
-1. أنشئ حساب User جديد ببريد تملكه.
-2. تأكد أن `/profile` لا يفتح قبل التحقق.
-3. افتح رسالة Verify Email واضغط الرابط.
-4. سجل الدخول وتأكد أن User يذهب إلى `/profile`.
-5. جرّب Forgot Password وتأكد أن Reset Link يصل ويعمل مرة واحدة فقط.
-6. سجل الدخول بحساب Admin الموجود وتأكد أنه يذهب إلى `/admin`.
-7. تأكد أن User العادي يحصل على 403 عند محاولة `/admin` أو Admin APIs.
-
-
-## تشخيص Email Verification / Forgot Password
-
-بعد تسجيل الدخول بحساب Admin افتح:
+أضيفي القيم التالية من Railway → Service → Variables، ثم أعيدي النشر:
 
 ```text
-/api/admin/auth-email-status
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
+RESEND_FROM=SymptoSense <noreply@YOUR_REAL_VERIFIED_DOMAIN>
+SITE_URL=https://symptosense-production-b2e5.up.railway.app
+WEB_SECRET=<LONG_RANDOM_STABLE_SECRET>
+SESSION_COOKIE_SECURE=1
+ADMIN_AUTH_DEBUG=0
 ```
 
-لا يعرض هذا المسار API key أو أي token. يعرض فقط هل إعداد البريد مكتمل، مصدر رابط الموقع، وهل المرسل ما زال يستخدم `resend.dev`.
-
-ولإرسال رسالة اختبار إلى بريد حساب الـAdmin الحالي فقط:
+مهم: `YOUR_REAL_VERIFIED_DOMAIN` مثال يجب استبداله، وليس قيمة تُنسخ حرفيًا. أضيفي دومينًا تملكينه إلى Resend، أضيفي سجلات DNS التي يعطيك إياها، وانتظري حتى تصبح حالته `Verified`، ثم استخدمي عنوانًا منه مثل:
 
 ```text
-POST /api/admin/auth-email-test
+RESEND_FROM=SymptoSense <noreply@mail.your-domain.com>
 ```
 
-في Railway Logs ابحث عن أحد الأكواد الآمنة التالية:
+`onboarding@resend.dev` مخصص للاختبار، ولا يستطيع في الوضع العادي الإرسال إلى كل مستخدمي الموقع. كذلك لا تضعي `RESEND_API_KEY` أو `WEB_SECRET` في Frontend أو GitHub.
 
-- `email_not_configured` → متغيرات Resend ناقصة.
-- `email_invalid_api_key` → مفتاح API غير صالح.
-- `email_test_domain_restricted` → تستخدم مرسل Resend التجريبي ولا يمكنه الإرسال لكل المستخدمين.
-- `email_sender_domain_unverified` → الدومين الموجود في `RESEND_FROM` غير موثق.
-- `Auth email accepted by provider` → Resend قبل الرسالة، وبعدها راجع Resend Email Logs/Spam إن لم تصل.
+إذا لم تضبطي `SITE_URL`، يستخدم التطبيق `RAILWAY_PUBLIC_DOMAIN` تلقائيًا. ضبطه صراحة بالرابط أعلاه يمنع Redirect URL خاطئًا في رسائل Verification وReset.
+
+## فحص إعداد البريد بعد النشر
+
+بعد الدخول بحساب Admin:
+
+1. افتحي `GET /api/admin/auth-email-status`.
+2. يجب أن تكون القيم:
+   - `configured: true`
+   - `sender_address_valid: true`
+   - `production_recipient_delivery_ready: true`
+   - `site_url` مساويًا لرابط Railway الحالي.
+3. من واجهة Admin أرسلي `POST /api/admin/auth-email-test` مع CSRF الإداري. الرسالة تُرسل إلى بريد Admin الحالي فقط.
+4. راجعي Resend → Emails وتحققي أن الحدث `delivered`، ثم افحصي Inbox وSpam.
+
+لا يعرض مسار التشخيص API key أو Password أو Token أو عنوان المرسل الكامل.
+
+أكواد Logs الآمنة:
+
+- `email_not_configured`: متغير مطلوب ناقص.
+- `email_api_key_placeholder`: قيمة API key ما زالت مثالًا.
+- `email_sender_placeholder`: قيمة sender ما زالت مثالًا.
+- `email_invalid_api_key`: مفتاح Resend مرفوض.
+- `email_test_domain_restricted`: المرسل `resend.dev` لا يستطيع الإرسال لهذا المستلم.
+- `email_sender_domain_unverified`: الدومين غير موثق في Resend.
+- `Auth email accepted by provider`: Resend قبل الطلب؛ راجعي حالة الرسالة في Resend إذا لم تظهر في Inbox.
+
+## خصائص الأمان
+
+- الحساب الجديد يبدأ `email_verified=0`، بينما Migration تعتبر الحسابات القديمة موثقة حتى لا تتوقف.
+- Verification token عشوائي، مخزن كـSHA-256 hash، صالح 24 ساعة، وأحادي الاستخدام.
+- Reset token عشوائي، مخزن كـSHA-256 hash، صالح 30 دقيقة، وأحادي الاستخدام.
+- استهلاك أي Reset token يبطل جميع روابط Reset الأخرى للحساب.
+- Resend محدود بـ60 ثانية بين الطلبات و5 طلبات في الساعة لكل حساب.
+- تغيير بريد الحساب غير الموثق يحتاج Pending Verification Session وكلمة المرور الحالية.
+- كلمات المرور تستخدم PBKDF2-SHA256 بـ600,000 دورة؛ الحسابات القديمة تستمر وتُرقّى بعد Login صحيح.
+- Login/Registration/Verification/Reset HTML Forms محمية بـCSRF.
+- الجلسات `HttpOnly` و`SameSite=Lax`، ومع `SESSION_COOKIE_SECURE=1` لا تُرسل إلا عبر HTTPS.
+- لا تُعرض أو تُسجل روابط Debug أو Passwords أو raw tokens.
+
+## اختبار القبول على Production
+
+استخدمي بريدًا حقيقيًا تملكينه ونفذي بالترتيب:
+
+1. Create Account، ثم تأكدي أن `/profile` محجوب قبل التحقق.
+2. افتحي رسالة Verify واضغطي الرابط؛ المحاولة الثانية للرابط يجب أن تُرفض.
+3. سجلي الدخول؛ يجب أن يظهر Toast مرة واحدة ثم يفتح `/profile`.
+4. نفذي Forgot Password؛ استخدمي الرابط مرة واحدة، ثم تأكدي أن كلمة المرور القديمة رُفضت والجديدة عملت.
+5. سجلي دخول Admin؛ يجب أن يظهر Toast الخاص بريماس ويكون Redirect إلى `/admin`.
+6. من User عادي، يجب أن يعيد `/admin` حالة 403، وأن تعيد Admin APIs حالة 403/401.
+
+قبول Resend للطلب لا يثبت وحده وصوله إلى Inbox؛ إثبات التسليم النهائي يكون من Event في Resend ومن صندوق البريد المستلم.

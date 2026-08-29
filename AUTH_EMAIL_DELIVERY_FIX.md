@@ -1,54 +1,47 @@
-# SymptoSense — Email Verification & Password Reset Delivery Fix
+# إصلاح Email Verification وForgot Password
 
-## السبب الذي تم إصلاحه في الكود
+تاريخ المراجعة: 2026-08-29
 
-كان `_site_url()` يستخدم رابطًا افتراضيًا ثابتًا قديمًا:
+## الأسباب الفعلية التي عالجها التحديث
 
-`https://symptosense.up.railway.app`
+1. روابط الرسائل كانت قد تعتمد على Production URL قديم. أصبح البناء بالترتيب: `SITE_URL` ثم `RAILWAY_PUBLIC_DOMAIN` ثم نطاق الطلب في التطوير فقط.
+2. إعداد Resend كان يُعتبر مكتملًا حتى لو احتوى `RESEND_FROM` أو `RESEND_API_KEY` على Placeholder. أصبح التطبيق يرفض هذه القيم ويعرض كود تشخيص آمن.
+3. `resend.dev` كان يبدو كأنه إعداد Production صالح رغم أنه Test Sender محدود. يعرض تشخيص Admin الآن `production_recipient_delivery_ready=false` لهذه الحالة.
+4. كان مسارا تشخيص البريد يستخدمان Admin decorator بطريقة خاطئة، ما كان يسبب Flask endpoint collision عند تحميل التطبيق. تم إصلاحهما ليستخدما Backend RBAC الفعلي.
+5. Login لحساب غير موثق كان قد يعيد إرسال Verification تلقائيًا في كل محاولة. أصبح يعرض صفحة التحقق فقط، والإرسال الجديد يتم من زر Resend المحدود.
+6. كانت روابط Debug قد تُعرض داخل صفحات Verification/Reset عند تفعيل متغير تطوير. أزيل هذا السلوك بالكامل حتى لا يظهر raw token في الصفحة أو Logs.
+7. نماذج Login/Register/Verify/Forgot/Reset أصبحت محمية بـCSRF.
+8. تغيير البريد قبل التحقق أصبح يتطلب كلمة المرور الحالية، وليس Pending Session وحدها.
+9. فشل مزود البريد أثناء Resend لم يعد يُبطل رابطًا أقدم ما زال صالحًا. عند استهلاك أي رابط بنجاح تُبطل الروابط الأخرى.
 
-بينما خدمة المشروع الحالية تستخدم نطاق Railway مختلفًا. إذا لم يكن `SITE_URL` مضبوطًا، تصل رسالة Verification/Reset برابط إلى Deployment خاطئ.
+## الاختبار الآلي المنفذ
 
-تم تغيير بناء الروابط إلى الترتيب التالي:
+`python -m unittest -v tests/test_authentication.py`
 
-1. `SITE_URL` إن كان مضبوطًا.
-2. `RAILWAY_PUBLIC_DOMAIN` الذي توفره Railway تلقائيًا.
-3. نطاق الطلب الحالي عند التطوير.
-4. `localhost` فقط كـfallback محلي.
+يغطي الاختبار الحقيقي على Flask + SQLite مع استبدال نقل البريد بـin-memory capture:
 
-لم يعد هناك نطاق Production ثابت داخل الكود.
+- إنشاء حساب جديد وحالة Unverified.
+- منع Login قبل Verification وعدم إرسال رسالة مكررة تلقائيًا.
+- Resend cooldown.
+- Verification valid / used / invalid.
+- Forgot Password برسالة عامة لا تكشف وجود الحساب.
+- Reset valid / expired / invalid / single-use.
+- رفض كلمة المرور القديمة وقبول الجديدة.
+- استمرار الحسابات القديمة وكلمات مرورها بعد Migration.
+- Toast مستخدم وAdmin مرة واحدة فقط.
+- Redirect Admin إلى `/admin` وحماية الخادم من User عادي.
+- العربية والإنجليزية والمسارات المحمية.
+- اكتشاف Placeholder و`resend.dev` في إعداد البريد.
 
-## تحسين تشخيص Resend
+كما مرّت جميع ملفات Python عبر `py_compile`.
 
-لم يعد Log يكتفي بـHTTP status فقط. أصبح يصنف الأخطاء بدون تسجيل البريد أو Password أو Verification/Reset token:
+## ما لا يمكن إثباته من الحزمة وحدها
 
-- invalid API key
-- Resend test-domain restriction
-- unverified sender domain
-- validation/provider error
+لا توجد داخل ZIP أسرار Railway، أو حساب Resend، أو Inbox يمكن الوصول إليه. لذلك يمكن إثبات منطق التطبيق محليًا، لكن لا يمكن الادعاء بوصول رسالة Production قبل:
 
-وأضيف Admin-only diagnostics:
+- نشر هذه النسخة على Railway.
+- ضبط القيم الموضحة في `AUTHENTICATION_SETUP.md`.
+- تنفيذ Admin email test.
+- رؤية `delivered` في Resend ووصول الرسالة إلى البريد المستلم.
 
-- `GET /api/admin/auth-email-status`
-- `POST /api/admin/auth-email-test`
-
-## ما تم اختباره محليًا
-
-- إنشاء User جديد: `email_verified=false`.
-- Login قبل التحقق: `verification_required`.
-- Verification token: valid → single-use → used.
-- Login بعد التحقق: يعمل.
-- Password reset token: valid → reset → used.
-- كلمة المرور القديمة بعد Reset: مرفوضة.
-- كلمة المرور الجديدة: تعمل.
-- Python compilation للملفات المعدلة.
-
-## ما يتطلب إعداد Production خارجي
-
-إرسال الرسائل الفعلي يعتمد على Resend ولا يمكن ضمانه من الكود إذا كانت Variables أو Domain غير مضبوطة. يلزم في Railway:
-
-- `RESEND_API_KEY`
-- `RESEND_FROM`
-- `WEB_SECRET`
-- `SESSION_COOKIE_SECURE=1`
-
-ولإرسال البريد إلى حسابات عامة يجب أن يستخدم `RESEND_FROM` Domain موثق في Resend.
+لم يتم تغيير أو حذف قاعدة بيانات Production أو المستخدمين الموجودين في هذه الحزمة.

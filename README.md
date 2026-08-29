@@ -113,7 +113,8 @@ python webapp.py
 | `ANALYTICS_SESSION_SALT` *(موصى به)* | Salt ثابت وعشوائي لمعرّفات جلسات التحليلات التشغيلية المجهولة |
 | `SYMPTOSENSE_ADMIN_EMAIL` *(قديم/غير مستخدم لتغيير المالك)* | يتم تجاهل أي قيمة متعارضة؛ حساب Admin المثبت في هذه النسخة هو `remasalsolami2020@gmail.com` فقط. |
 | `ADMIN_AUTH_DEBUG` *(اختياري)* | `1` أثناء اختبار Admin لإظهار سجلات تشخيصية غير حساسة، ثم `0` بعد التحقق. |
-| `RESEND_API_KEY` و`RESEND_FROM` *(اختياري)* | إرسال رموز 2FA وروابط استعادة كلمة المرور |
+| `RESEND_API_KEY` و`RESEND_FROM` | إرسال Email Verification وروابط استعادة كلمة المرور؛ يجب أن يستخدم `RESEND_FROM` دومينًا موثقًا في Resend |
+| `SITE_URL` | رابط الموقع العام المستخدم داخل رسائل التحقق والاستعادة؛ في Railway يمكن استنتاجه من `RAILWAY_PUBLIC_DOMAIN` |
 | `SESSION_COOKIE_SECURE=1` *(للإنتاج)* | إرسال ملف جلسة الدخول عبر HTTPS فقط |
 | `MEDICAL_SOURCE_ALLOWED_DOMAINS` *(اختياري)* | نطاقات موثوقة إضافية، مفصولة بفواصل؛ الافتراضي يسمح بالجهات الطبية الرسمية المضمنة فقط |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_CLAIMS_EMAIL` | مفاتيح Web Push لتذكيرات الأدوية الخلفية |

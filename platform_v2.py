@@ -559,11 +559,9 @@ def create_password_reset(email: str, minutes: int = 30):
         token = secrets.token_urlsafe(36)
         token_hash = hashlib.sha256(token.encode()).hexdigest()
         now = datetime.now(timezone.utc)
-        # Invalidate earlier unused links so the newest request is authoritative.
-        c.execute(
-            f"UPDATE ss_password_resets SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
-            (now.isoformat(), int(user["id"])),
-        )
+        # Keep an earlier unexpired link usable until this new message is
+        # actually delivered. A provider failure must not destroy the user's
+        # only working recovery path. Consuming any link invalidates all others.
         c.execute(
             "INSERT INTO ss_password_resets (user_id,token_hash,expires_at,created_at) "
             f"VALUES ({','.join([PH] * 4)})",
@@ -652,10 +650,8 @@ def create_email_verification(user_id: int, minutes: int = 24 * 60, cooldown_sec
         token = secrets.token_urlsafe(36)
         token_hash = hashlib.sha256(token.encode()).hexdigest()
         now = datetime.now(timezone.utc)
-        c.execute(
-            f"UPDATE ss_email_verifications SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL",
-            (now.isoformat(), int(user_id)),
-        )
+        # Keep earlier unexpired links valid until one is consumed. This avoids
+        # a failed resend revoking the only verification email the user has.
         c.execute(
             "INSERT INTO ss_email_verifications (user_id,token_hash,expires_at,created_at) "
             f"VALUES ({','.join([PH] * 4)})",

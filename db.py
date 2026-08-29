@@ -2112,11 +2112,13 @@ def list_ss_admin_users():
 
 
 
-def update_unverified_email(user_id, new_email):
+def update_unverified_email(user_id, new_email, current_password):
     """Change the email only for an unverified, active account.
 
     This is intended for the post-registration verification flow. It never
-    changes passwords, roles, or verified accounts.
+    changes passwords, roles, or verified accounts. The current password is
+    required because the pending-verification browser session alone is not
+    sufficient authority to move an account to another email address.
     """
     new_email = (new_email or "").strip().lower()
     if not new_email or not _re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', new_email):
@@ -2124,7 +2126,7 @@ def update_unverified_email(user_id, new_email):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT email,status,COALESCE(email_verified,1) FROM ss_users WHERE id=%s" % PH, (int(user_id),))
+        c.execute("SELECT email,status,COALESCE(email_verified,1),password_hash FROM ss_users WHERE id=%s" % PH, (int(user_id),))
         row = c.fetchone()
         if not row:
             return False, "account_not_found"
@@ -2132,6 +2134,9 @@ def update_unverified_email(user_id, new_email):
             return False, "account_unavailable"
         if bool(row[2]):
             return False, "already_verified"
+        password_valid, _ = _verify_password(current_password or "", row[3])
+        if not password_valid:
+            return False, "incorrect_password"
         # The project-owner email must refer to the existing owner account only.
         if is_owner_admin_email(new_email) and new_email != (row[0] or "").strip().lower():
             return False, "email_exists"
