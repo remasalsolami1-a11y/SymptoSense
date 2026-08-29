@@ -94,6 +94,13 @@ def init_schema() -> None:
         """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_ss_login_activity_time ON ss_login_activity(occurred_at)")
         c.execute(f"""
+            CREATE TABLE IF NOT EXISTS ss_auth_rate_limits (
+                id {serial}, key_hash TEXT NOT NULL, success INTEGER NOT NULL,
+                attempted_at TEXT NOT NULL
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_ss_auth_rate_key_time ON ss_auth_rate_limits(key_hash, attempted_at)")
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS ss_password_resets (
                 id {serial}, user_id INTEGER NOT NULL, token_hash TEXT UNIQUE NOT NULL,
                 expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL
@@ -467,6 +474,51 @@ def identity_hash(email: str) -> str:
     configured = os.environ.get("WEB_SECRET")
     key = configured.encode() if configured else _EPHEMERAL_IDENTITY_SECRET
     return hashlib.sha256(key + (email or "").strip().lower().encode()).hexdigest()[:24]
+
+
+def _auth_rate_key(email: str, network_origin: str) -> str:
+    """Pseudonymous login-throttle key; raw email/IP are never persisted."""
+    configured = os.environ.get("WEB_SECRET")
+    key = configured.encode() if configured else _EPHEMERAL_IDENTITY_SECRET
+    value = f"login-rate:{(email or '').strip().lower()}|{network_origin or 'unknown'}".encode()
+    return hashlib.sha256(key + value).hexdigest()
+
+
+def login_attempt_allowed(email: str, network_origin: str, max_failures: int = 10,
+                          window_minutes: int = 15) -> bool:
+    """Return False after repeated failures for the same email/network pair."""
+    init_schema()
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=window_minutes)).isoformat()
+    conn = db._conn()
+    c = conn.cursor()
+    try:
+        c.execute(
+            f"SELECT COUNT(*) FROM ss_auth_rate_limits WHERE key_hash={PH} AND success=0 AND attempted_at>={PH}",
+            (_auth_rate_key(email, network_origin), cutoff),
+        )
+        return int(c.fetchone()[0] or 0) < max(1, int(max_failures))
+    finally:
+        conn.close()
+
+
+def record_login_attempt(email: str, network_origin: str, success: bool) -> None:
+    """Record a minimal throttle event and clear failures after a valid login."""
+    try:
+        init_schema()
+        conn = db._conn()
+        c = conn.cursor()
+        key_hash = _auth_rate_key(email, network_origin)
+        if success:
+            c.execute(f"DELETE FROM ss_auth_rate_limits WHERE key_hash={PH}", (key_hash,))
+        else:
+            c.execute(
+                f"INSERT INTO ss_auth_rate_limits (key_hash,success,attempted_at) VALUES ({','.join([PH] * 3)})",
+                (key_hash, 0, _now()),
+            )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 
 def log_login(email: str, user_id: int | None, success: bool, is_admin: bool, user_agent: str) -> None:

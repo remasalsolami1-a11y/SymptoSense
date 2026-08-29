@@ -29,8 +29,13 @@ _logger = logging.getLogger("SymptoSense")
 
 
 def _init_backend():
-    """Validates the PostgreSQL connection once. On failure, falls back to SQLite
-    so the bot keeps running instead of crashing, and logs the real error."""
+    """Validate PostgreSQL without silently splitting production data.
+
+    When DATABASE_URL is configured, using an ephemeral local SQLite file after
+    a connection failure would make accounts and health records appear to vanish
+    after a Railway restart. Production therefore fails closed. A developer may
+    explicitly opt into the legacy fallback only with ALLOW_SQLITE_FALLBACK=1.
+    """
     global USE_POSTGRES, PH
     if not USE_POSTGRES:
         return
@@ -39,12 +44,13 @@ def _init_backend():
         conn = psycopg2.connect(DATABASE_URL)
         conn.close()
     except Exception as e:
-        _logger.error(
-            f"PostgreSQL connection failed ({e!r}) — falling back to SQLite. "
-            f"Fix DATABASE_URL to enable persistent storage."
-        )
-        USE_POSTGRES = False
-        PH = "?"
+        _logger.error("PostgreSQL connection failed; refusing unsafe local database fallback")
+        if os.environ.get("ALLOW_SQLITE_FALLBACK", "0").strip() == "1":
+            _logger.warning("ALLOW_SQLITE_FALLBACK=1 enabled; using local SQLite for development only")
+            USE_POSTGRES = False
+            PH = "?"
+            return
+        raise RuntimeError("Persistent database is unavailable") from e
 
 
 def _conn():

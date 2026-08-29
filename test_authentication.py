@@ -179,13 +179,18 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         self.assertIn("current password is incorrect", wrong_change.get_data(as_text=True).lower())
         self.assertEqual(db.get_ss_user_by_email(email)["email"], email)
 
-        # Verify once; replay is rejected.
+        # Verify once in the registration browser: verification establishes a
+        # session only because the pending account matches this browser's
+        # registration session. Replay is rejected.
         verified = client.get(verify_path)
-        self.assertEqual(verified.status_code, 200)
+        self.assertEqual(verified.status_code, 302)
+        self.assertEqual(urlparse(verified.headers["Location"]).path, "/profile")
         self.assertTrue(db.get_ss_user_by_email(email)["email_verified"])
+        self.assertEqual(client.get("/profile").status_code, 200)
         replay = client.get(verify_path)
         self.assertEqual(replay.status_code, 400)
         self.assertIn("already been used", replay.get_data(as_text=True))
+        client.get("/logout")
 
         # Successful user login redirects to profile and injects a single
         # responsive in-site toast. Normal users are rejected by /admin.
@@ -255,6 +260,19 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         expired_token, _, _ = platform_v2.create_password_reset(email, minutes=-1)
         self.assertIsNotNone(expired_token)
         self.assertEqual(client.get("/reset-password/" + expired_token).status_code, 400)
+
+    def test_verification_on_different_browser_does_not_create_session(self):
+        registration_browser=self.client("en")
+        email="different-browser@example.test"; password="StrongPassword1!"
+        page=registration_browser.get("/register")
+        created=registration_browser.post("/register",data={"name":"Different Browser","email":email,"password":password,"confirm":password,"accept_terms":"on","csrf_token":_csrf(page.get_data(as_text=True))})
+        self.assertEqual(created.status_code,302)
+        verify_path=_first_auth_link(self.sent[-1]["html"],"/verify-email/")
+        other_browser=self.client("en")
+        verified=other_browser.get(verify_path)
+        self.assertEqual(verified.status_code,200)
+        self.assertIn("You can sign in now",verified.get_data(as_text=True))
+        self.assertEqual(other_browser.get("/profile").status_code,302)
 
     def test_admin_redirect_toast_and_server_side_protection(self):
         email = db.OWNER_ADMIN_EMAIL

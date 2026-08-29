@@ -2023,7 +2023,7 @@ def _admin_auth_debug(event, user=None, granted=None, redirect_target=None):
     Passwords, tokens, email addresses, medical data, and request bodies are
     never logged here. Set ADMIN_AUTH_DEBUG=0 to disable after verification.
     """
-    if os.environ.get("ADMIN_AUTH_DEBUG", "1") != "1":
+    if os.environ.get("ADMIN_AUTH_DEBUG", "0") != "1":
         return
     try:
         u = user if isinstance(user, dict) else (_ss_user() if _ss_user_id() else None)
@@ -2171,6 +2171,18 @@ def inject_login_success_toast(response):
         session.pop("login_toast",None)
     except Exception:
         pass
+    return response
+
+
+@app.after_request
+def production_security_headers(response):
+    """Apply browser hardening without exposing or processing user content."""
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), payment=(), usb=()")
+    if app.config.get("SESSION_COOKIE_SECURE"):
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return response
 
 
@@ -8800,7 +8812,10 @@ def login():
         error=_auth_form_expired_message(lang); error_code="csrf_failed"
     elif request.method=="POST":
         email=(request.form.get("email") or "").strip().lower(); password=request.form.get("password") or ""
-        result=db.authenticate_ss_user_status(email,password)
+        network_origin=request.remote_addr or "unknown"
+        rate_blocked=not platform_v2.login_attempt_allowed(email,network_origin)
+        result=({"ok":False,"error":"rate_limited"} if rate_blocked
+                else db.authenticate_ss_user_status(email,password))
         user_id=result.get("user_id") if result.get("ok") else None
         if result.get("error")=="verification_required" and result.get("user_id"):
             session.clear(); session["pending_verification_user_id"]=int(result["user_id"]); session.permanent=True
@@ -8812,6 +8827,8 @@ def login():
         if user_id:
             db.promote_existing_owner_admin(user_id)
         login_user=db.get_ss_user(user_id) if user_id else None
+        if not rate_blocked:
+            platform_v2.record_login_attempt(email,network_origin,bool(user_id))
         platform_v2.log_login(email,user_id,bool(user_id),bool(login_user and login_user.get("role")=="admin"),request.headers.get("User-Agent",""))
         if user_id:
             session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
@@ -8829,7 +8846,9 @@ def login():
         if db.is_owner_admin_email(email):
             try: platform_v2.audit(None,"login_failed","admin_session","owner",None,{"status":"failed"})
             except Exception: pass
-        error=_auth_login_error(lang,error_code)
+        error=(("محاولات تسجيل دخول كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى."
+                if lang=="ar" else "Too many sign-in attempts. Wait 15 minutes and try again.")
+               if error_code=="rate_limited" else _auth_login_error(lang,error_code))
     create_action=('<div style="margin-top:12px"><a class="auth-btn" style="display:inline-flex;text-decoration:none;justify-content:center;background:#fff!important;color:#287FC1!important;border:1px solid #BFD9EC" href="/register?next=__NEXT__">__CREATE__</a></div>') if error_code=="account_not_found" else ""
     body="""
     <div class="auth-wrap"><div class="auth-card">
@@ -9019,10 +9038,22 @@ def verify_email_pending():
 @app.route("/verify-email/<token>")
 def verify_email_token(token):
     ar=_lang()=="ar"; status=platform_v2.email_verification_status(token)
+    # Auto-login is allowed only when the verification link is opened in the
+    # same browser session that created the account. Possession of a valid
+    # email token alone never creates a session on another browser/device.
+    pending_uid=session.get("pending_verification_user_id")
+    pending_next=session.get("post_verify_next") or "/profile"
     if status=="valid":
         uid,result=platform_v2.consume_email_verification(token)
         if uid:
+            same_registration_session=bool(pending_uid and int(pending_uid)==int(uid))
             session.pop("pending_verification_user_id",None); session.pop("post_verify_next",None)
+            if same_registration_session:
+                session["ss_user_id"]=int(uid); session["login_toast"]="user"; session.permanent=True
+                target=pending_next if isinstance(pending_next,str) and pending_next.startswith("/") and not pending_next.startswith("//") else "/profile"
+                if target.startswith("/admin"):
+                    target="/profile"
+                return redirect(target)
             body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (("تم التحقق من البريد الإلكتروني" if ar else "Email verified"),("يمكنك تسجيل الدخول الآن." if ar else "You can sign in now."),("تسجيل الدخول" if ar else "Back to Login"))
             return _page("تم التحقق" if ar else "Email Verified",body)
         status=result

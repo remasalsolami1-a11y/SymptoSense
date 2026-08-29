@@ -113,9 +113,12 @@ python webapp.py
 | `ANALYTICS_SESSION_SALT` *(موصى به)* | Salt ثابت وعشوائي لمعرّفات جلسات التحليلات التشغيلية المجهولة |
 | `SYMPTOSENSE_ADMIN_EMAIL` *(قديم/غير مستخدم لتغيير المالك)* | يتم تجاهل أي قيمة متعارضة؛ حساب Admin المثبت في هذه النسخة هو `remasalsolami2020@gmail.com` فقط. |
 | `ADMIN_AUTH_DEBUG` *(اختياري)* | `1` أثناء اختبار Admin لإظهار سجلات تشخيصية غير حساسة، ثم `0` بعد التحقق. |
-| `RESEND_API_KEY` و`RESEND_FROM` | إرسال Email Verification وروابط استعادة كلمة المرور؛ يجب أن يستخدم `RESEND_FROM` دومينًا موثقًا في Resend |
+| `BREVO_API_KEY` | مفتاح API v3 صالح من Brevo لإرسال Email Verification وروابط الاستعادة |
+| `BREVO_FROM_EMAIL` | بريد Sender حالته `Verified` داخل Brevo (مثل `remasalsolami1@gmail.com`) |
+| `BREVO_FROM_NAME` | اسم المرسل الظاهر، مثل `SymptoSense` |
 | `SITE_URL` | رابط الموقع العام المستخدم داخل رسائل التحقق والاستعادة؛ في Railway يمكن استنتاجه من `RAILWAY_PUBLIC_DOMAIN` |
 | `SESSION_COOKIE_SECURE=1` *(للإنتاج)* | إرسال ملف جلسة الدخول عبر HTTPS فقط |
+| `ALLOW_SQLITE_FALLBACK` *(تطوير فقط)* | اتركيه غير موجود أو `0` في Railway؛ القيمة `1` تسمح بقاعدة محلية مؤقتة عند فشل PostgreSQL ولا تصلح للإنتاج |
 | `MEDICAL_SOURCE_ALLOWED_DOMAINS` *(اختياري)* | نطاقات موثوقة إضافية، مفصولة بفواصل؛ الافتراضي يسمح بالجهات الطبية الرسمية المضمنة فقط |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_CLAIMS_EMAIL` | مفاتيح Web Push لتذكيرات الأدوية الخلفية |
 | `ANALYTICS_PRIVACY_THRESHOLD` *(اختياري، الافتراضي 5)* | الحد الأدنى لحجم المجموعة قبل إظهار تفاصيل Medication Analytics |
