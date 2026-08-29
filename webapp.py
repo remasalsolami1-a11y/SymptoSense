@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
 
 from functools import wraps
-from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g, abort
+from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g, abort, has_request_context
 
 import db
 import ml_diagnosis
@@ -54,6 +54,10 @@ app.config.update(
     SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
 )
+
+# Do not log keys, recipients, reset tokens, or verification tokens. The detailed
+# provider diagnostics are available to authenticated Admins via the endpoint
+# below after the helper functions are loaded.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -2121,7 +2125,29 @@ def v2_operational_metrics(response):
 
 
 def _site_url():
-    return os.environ.get("SITE_URL", "https://symptosense.up.railway.app").rstrip("/")
+    """Return the canonical public URL used in transactional email links.
+
+    Prefer an explicit SITE_URL, then Railway's own public-domain variable,
+    then the active HTTPS request host.  Never fall back to a stale hard-coded
+    project hostname because that makes verification/reset emails look valid
+    while sending users to the wrong deployment.
+    """
+    explicit = os.environ.get("SITE_URL", "").strip().rstrip("/")
+    if explicit:
+        if not explicit.startswith(("https://", "http://")):
+            explicit = "https://" + explicit.lstrip("/")
+        return explicit
+    railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().strip("/")
+    if railway_domain:
+        return "https://" + railway_domain
+    if has_request_context():
+        try:
+            return request.url_root.rstrip("/")
+        except Exception:
+            pass
+    # Local/offline fallback only. Production on Railway always exposes
+    # RAILWAY_PUBLIC_DOMAIN, and custom domains should be set via SITE_URL.
+    return "http://localhost:8080"
 
 
 def _lang():
@@ -8404,9 +8430,43 @@ def health_history_aliases():
 
 def _auth_email_provider_state():
     missing=[]
-    if not os.environ.get("RESEND_API_KEY", "").strip(): missing.append("RESEND_API_KEY")
-    if not os.environ.get("RESEND_FROM", "").strip(): missing.append("RESEND_FROM")
-    return {"configured": not missing, "missing": missing}
+    api_key=os.environ.get("RESEND_API_KEY", "").strip()
+    sender=os.environ.get("RESEND_FROM", "").strip()
+    if not api_key: missing.append("RESEND_API_KEY")
+    if not sender: missing.append("RESEND_FROM")
+    sender_domain=""
+    m=re.search(r"@([^>\s]+)", sender)
+    if m: sender_domain=m.group(1).strip().lower()
+    return {
+        "configured": not missing,
+        "missing": missing,
+        "sender_domain": sender_domain,
+        "uses_resend_test_domain": sender_domain == "resend.dev",
+        "site_url": _site_url(),
+        "site_url_source": ("SITE_URL" if os.environ.get("SITE_URL", "").strip() else ("RAILWAY_PUBLIC_DOMAIN" if os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip() else ("request_host" if has_request_context() else "local_fallback"))),
+    }
+
+
+def _classify_resend_error(response):
+    """Map Resend failures to safe diagnostic codes without logging PII."""
+    status=int(getattr(response,"status_code",0) or 0)
+    name=""; message=""
+    try:
+        payload=response.json() if response is not None else {}
+        if isinstance(payload,dict):
+            name=str(payload.get("name") or payload.get("code") or "")[:80]
+            message=str(payload.get("message") or "").lower()
+    except Exception:
+        pass
+    if status in {401,403} and (name=="invalid_api_key" or "api key is invalid" in message):
+        return "email_invalid_api_key", name or "invalid_api_key"
+    if status==403 and ("only send testing emails" in message or "testing emails to your own" in message):
+        return "email_test_domain_restricted", name or "validation_error"
+    if status==403 and ("domain" in message and "not verified" in message):
+        return "email_sender_domain_unverified", name or "validation_error"
+    if status==422:
+        return "email_validation_error", name or "validation_error"
+    return "email_provider_error", name or ("http_%s" % status if status else "provider_error")
 
 
 def _send_auth_email(email, subject, html, category="auth"):
@@ -8418,7 +8478,7 @@ def _send_auth_email(email, subject, html, category="auth"):
     try:
         import requests
         response=requests.post(
-            "https://api.resend.com/emails", timeout=10,
+            "https://api.resend.com/emails", timeout=12,
             headers={"Authorization":"Bearer "+os.environ.get("RESEND_API_KEY", "").strip(), "Content-Type":"application/json"},
             json={
                 "from": os.environ.get("RESEND_FROM", "").strip(),
@@ -8429,9 +8489,11 @@ def _send_auth_email(email, subject, html, category="auth"):
             },
         )
         if response.status_code < 300:
+            app.logger.info("Auth email accepted by provider; category=%s status=%s", category, response.status_code)
             return True, None
-        app.logger.warning("Auth email provider rejected request; category=%s status=%s", category, response.status_code)
-        return False, "email_provider_error"
+        safe_error, provider_code=_classify_resend_error(response)
+        app.logger.warning("Auth email provider rejected request; category=%s status=%s provider_code=%s diagnostic=%s", category, response.status_code, provider_code, safe_error)
+        return False, safe_error
     except Exception as exc:
         app.logger.warning("Auth email send failed; category=%s error_type=%s", category, type(exc).__name__)
         return False, "email_provider_error"
@@ -8631,7 +8693,10 @@ def verify_email_pending():
             if sent: notice="أرسلنا رابط تحقق جديدًا إلى بريدك الإلكتروني." if ar else "We sent a new verification link to your email."
             elif reason in {"cooldown","rate_limited"}: error="يرجى الانتظار قبل طلب رسالة تحقق أخرى." if ar else "Please wait before requesting another verification email."
             elif reason=="email_not_configured": error="خدمة البريد غير مضبوطة بعد. يلزم إعداد RESEND_API_KEY وRESEND_FROM في Railway." if ar else "Email delivery is not configured yet. RESEND_API_KEY and RESEND_FROM must be configured in Railway."
-            else: error="تعذر إرسال رسالة التحقق الآن. حاول لاحقًا." if ar else "Unable to send the verification email right now. Please try again later."
+            elif reason=="email_invalid_api_key": error="مفتاح Resend غير صالح. حدّث RESEND_API_KEY في Railway." if ar else "The Resend API key is invalid. Update RESEND_API_KEY in Railway."
+            elif reason=="email_test_domain_restricted": error="إعداد Resend الحالي مخصص للاختبار فقط. لإرسال الرسائل لكل المستخدمين يجب توثيق Domain في Resend واستخدامه في RESEND_FROM." if ar else "The current Resend sender is test-only. Verify a domain in Resend and use it in RESEND_FROM to email all users."
+            elif reason=="email_sender_domain_unverified": error="الدومين المستخدم في RESEND_FROM غير موثق في Resend." if ar else "The domain used by RESEND_FROM is not verified in Resend."
+            else: error="تعذر إرسال رسالة التحقق الآن. تحقق من إعدادات Resend في Railway ثم حاول مرة أخرى." if ar else "Unable to send the verification email. Check the Resend configuration in Railway and try again."
     state=session.pop("verification_send_state",None)
     if state and not notice and not error:
         if state=="sent":
@@ -8640,8 +8705,14 @@ def verify_email_pending():
             notice="تم إرسال رابط تحقق مؤخرًا. استخدم الرسالة الموجودة أو انتظر قليلًا قبل طلب رسالة جديدة." if ar else "A verification link was sent recently. Use the existing message or wait before requesting another one."
         elif state=="email_not_configured":
             error="خدمة البريد غير مضبوطة. أضف RESEND_API_KEY وRESEND_FROM في Railway قبل محاولة الإرسال." if ar else "Email delivery is not configured. Add RESEND_API_KEY and RESEND_FROM in Railway before resending."
+        elif state=="email_invalid_api_key":
+            error="مفتاح Resend غير صالح. حدّث RESEND_API_KEY في Railway." if ar else "The Resend API key is invalid. Update RESEND_API_KEY in Railway."
+        elif state=="email_test_domain_restricted":
+            error="مرسل Resend الحالي للاختبار فقط. وثّق Domain في Resend ثم حدّث RESEND_FROM." if ar else "The current Resend sender is test-only. Verify a domain in Resend and update RESEND_FROM."
+        elif state=="email_sender_domain_unverified":
+            error="الدومين الموجود في RESEND_FROM غير موثق في Resend." if ar else "The domain in RESEND_FROM is not verified in Resend."
         else:
-            error="تعذر إرسال رسالة التحقق حاليًا. حاول مرة أخرى لاحقًا." if ar else "The verification email could not be sent right now. Please try again later."
+            error="تعذر إرسال رسالة التحقق حاليًا. تحقق من إعدادات Resend في Railway ثم حاول مرة أخرى." if ar else "The verification email could not be sent. Check the Resend configuration in Railway and try again."
     masked=""
     if user and user.get("email"):
         e=str(user["email"]); parts=e.split("@",1); masked=(parts[0][:2]+"***@"+parts[1]) if len(parts)==2 else "***"
@@ -8812,6 +8883,46 @@ def settings():
     else:
         body = body.replace("__MSG_CLASS__", "ss-msg").replace("__MSG__", "")
     return _page(t["title_settings"], body)
+
+
+@app.route("/api/admin/auth-email-status", methods=["GET"])
+@admin_api_required
+def api_admin_auth_email_status():
+    """Non-sensitive production diagnostics for verification/reset email delivery."""
+    state=_auth_email_provider_state()
+    return jsonify({
+        "ok": True,
+        "provider": "resend",
+        "configured": bool(state.get("configured")),
+        "missing": state.get("missing") or [],
+        "sender_domain": state.get("sender_domain") or None,
+        "uses_resend_test_domain": bool(state.get("uses_resend_test_domain")),
+        "site_url": state.get("site_url"),
+        "site_url_source": state.get("site_url_source"),
+        "web_secret_configured": bool(os.environ.get("WEB_SECRET", "").strip()),
+        "secure_session_cookie": bool(app.config.get("SESSION_COOKIE_SECURE")),
+    })
+
+
+@app.route("/api/admin/auth-email-test", methods=["POST"])
+@admin_api_required
+def api_admin_auth_email_test():
+    """Send one generic test message to the currently authenticated Admin."""
+    user=_ss_user() or {}
+    email=(user.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"ok":False,"error":"admin_email_unavailable"}),400
+    ar=_lang()=="ar"
+    subject="اختبار بريد SymptoSense" if ar else "SymptoSense email test"
+    html=(
+        '<div dir="rtl" style="font-family:Arial,sans-serif"><h2>نجح اتصال البريد</h2><p>هذه رسالة اختبار لإعداد Email Verification وPassword Reset في SymptoSense.</p></div>'
+        if ar else
+        '<div style="font-family:Arial,sans-serif"><h2>Email delivery is connected</h2><p>This is a test of the SymptoSense Email Verification and Password Reset delivery configuration.</p></div>'
+    )
+    ok,reason=_send_auth_email(email,subject,html,"auth_test")
+    try: platform_v2.audit(int(user.get("id")),"test_auth_email","authentication","delivery",None,{"status":"success" if ok else "failed","reason":reason or "accepted"})
+    except Exception: pass
+    return jsonify({"ok":bool(ok),"error":None if ok else reason}), (200 if ok else 502)
 
 
 @app.route("/api/auth/register", methods=["POST"])
