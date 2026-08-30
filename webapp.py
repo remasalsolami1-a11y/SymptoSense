@@ -133,6 +133,148 @@ body.ss-accessibility{font-size:112%;line-height:1.75}body.ss-accessibility .btn
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 """
 
+PREMIUM_PRODUCT_CSS = r"""
+/* ================================================================
+   SymptoSense Premium Product Polish — final non-functional UI layer
+   Purpose: consistency, calm health-tech visual hierarchy, responsive
+   clarity, and accessibility without changing routes/APIs/business logic.
+   ================================================================ */
+:root{
+  --ss-page:#F8FBFD;--ss-surface:#FFFFFF;--ss-surface-soft:#F3F8FB;
+  --ss-primary:#287FC1;--ss-primary-strong:#1F6FAE;--ss-navy:#163B5C;
+  --ss-text:#23384A;--ss-muted:#65798B;--ss-line:#DCE8F0;
+  --ss-success:#267A52;--ss-success-bg:#EDF8F2;
+  --ss-warning:#8A651E;--ss-warning-bg:#FFF8E7;
+  --ss-danger:#A33A3A;--ss-danger-bg:#FFF2F2;
+  --ss-r-sm:10px;--ss-r-md:14px;--ss-r-lg:20px;--ss-r-xl:26px;
+  --ss-shadow-sm:0 2px 10px rgba(25,76,111,.045);
+  --ss-shadow-md:0 10px 28px rgba(25,76,111,.07);
+  --ss-shadow-lg:0 20px 48px rgba(25,76,111,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--ss-page)}
+body{background:var(--ss-page)!important;color:var(--ss-text)!important;line-height:1.7;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body[dir="rtl"]{font-family:'Cairo','Segoe UI',Tahoma,sans-serif}
+body[dir="ltr"]{font-family:'Cairo','Segoe UI',Tahoma,sans-serif}
+::selection{background:#DCEFFD;color:var(--ss-navy)}
+.container{width:min(1180px,100%);margin-inline:auto;padding-inline:clamp(14px,3vw,28px);padding-top:clamp(18px,3vw,30px);padding-bottom:clamp(28px,5vw,54px)}
+h1,h2,h3,h4{color:var(--ss-navy)!important;letter-spacing:-.018em}
+h1{font-weight:800}h2{font-weight:800}h3{font-weight:750}
+p{margin-top:0}a{transition:color .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid rgba(40,127,193,.28)!important;outline-offset:3px!important}
+
+/* Navigation */
+.nav{position:sticky;top:0;z-index:900;border-bottom:1px solid rgba(220,232,240,.92)!important;box-shadow:0 2px 16px rgba(20,55,80,.035)!important;padding-block:10px!important;backdrop-filter:saturate(140%) blur(10px)}
+.nav .logo{font-size:20px!important;font-weight:900!important;letter-spacing:-.35px;text-decoration:none!important}
+.nav .links{gap:5px!important}.nav .links>a,.nav .dd-btn,.nav .account-profile-link{border-radius:11px!important;padding-inline:12px!important;font-size:13.5px!important}
+.nav .links>a:not(.v2-nav-cta):hover,.nav .dd-btn:hover{background:var(--ss-surface-soft)!important;color:var(--ss-primary)!important}
+.v2-nav-cta{border-radius:11px!important;background:var(--ss-primary)!important;box-shadow:none!important}.v2-nav-cta:hover{background:var(--ss-primary-strong)!important;color:#fff!important}
+.dd-menu{border-radius:15px!important;box-shadow:var(--ss-shadow-lg)!important;padding:7px!important}.dd-menu a{border-radius:9px!important;padding-block:10px!important}
+.ss-mobile-head{box-shadow:0 3px 16px rgba(20,55,80,.045)!important}
+
+/* Core component system */
+.card,.auth-card,.res-card,.res-sec,.rec-card,.res-why,.res-action,.res-assess,.res-questions,.res-transparency,.trans-card,.hp-panel,.hp-stat,.hp-quick-link,.hist-card,.manage-card,.memory-card,.v2-source-card,.v2-services-more{
+  border:1px solid var(--ss-line)!important;border-radius:var(--ss-r-lg)!important;box-shadow:var(--ss-shadow-sm)!important;background:var(--ss-surface)!important
+}
+.card{padding:clamp(18px,2.6vw,26px)!important}
+.muted{color:var(--ss-muted)!important}
+.btn,.ss-btn-primary,.auth-btn,.mini-btn,.opt,button{font-family:inherit}
+.btn,.ss-btn-primary,.auth-btn{min-height:46px;border-radius:12px!important;padding:10px 18px!important;font-weight:800!important;box-shadow:none!important;transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease!important}
+.btn.pri,.ss-btn-primary,.auth-btn{background:var(--ss-primary)!important;color:#fff!important;border-color:var(--ss-primary)!important}
+.btn.pri:hover,.ss-btn-primary:hover,.auth-btn:hover{background:var(--ss-primary-strong)!important;transform:none!important;box-shadow:0 7px 18px rgba(40,127,193,.13)!important}
+.btn.sec{background:#fff!important;color:var(--ss-navy)!important;border:1px solid var(--ss-line)!important}.btn.sec:hover{background:var(--ss-surface-soft)!important;border-color:#B9D4E5!important;transform:none!important}
+button:disabled,.btn:disabled,.auth-btn:disabled{opacity:.58;cursor:not-allowed;box-shadow:none!important}
+input,select,textarea,.inp,.field,.asst-inp{border:1px solid var(--ss-line)!important;border-radius:12px!important;background:#fff!important;color:var(--ss-text)!important;box-shadow:none!important;transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease!important}
+input:focus,select:focus,textarea:focus,.inp:focus,.field:focus,.asst-inp:focus{border-color:#88B9D9!important;box-shadow:0 0 0 4px rgba(40,127,193,.08)!important;background:#fff!important}
+label{color:var(--ss-navy)}
+
+/* Premium home — restrained, product-first, not a dashboard */
+.hh{background:#fff!important;border:1px solid var(--ss-line)!important;border-radius:28px!important;padding:clamp(28px,5vw,56px)!important;gap:clamp(24px,5vw,58px)!important;box-shadow:var(--ss-shadow-md)!important;margin-bottom:clamp(34px,5vw,54px)!important}
+.hh-badge{background:var(--ss-surface-soft)!important;border:1px solid var(--ss-line);color:var(--ss-navy)!important;padding:7px 12px!important;margin-bottom:16px!important;font-size:12px!important;letter-spacing:.01em}
+.hh-l h1{font-size:clamp(34px,5.2vw,58px)!important;line-height:1.18!important;max-width:13ch;margin-bottom:14px!important}
+[dir="rtl"] .hh-l h1{max-width:15ch}.hh-sub{font-size:clamp(16px,2vw,20px)!important;font-weight:700!important;color:var(--ss-navy)!important;margin-bottom:8px!important}.hh-desc{max-width:58ch!important;font-size:15px!important;line-height:1.9!important;color:var(--ss-muted)!important;margin-bottom:26px!important}
+.hh-btns{gap:10px!important}.hh-btns .btn{min-width:160px;justify-content:center;display:inline-flex;align-items:center}
+.hh-r{min-height:360px!important;transform:none!important;margin:0!important}.hh-premium-visual{width:min(420px,100%);aspect-ratio:1/1;border-radius:26px;overflow:hidden;border:1px solid var(--ss-line);background:#F5FAFE;box-shadow:var(--ss-shadow-md);position:relative}.hh-premium-visual:after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);pointer-events:none}.hh-premium-visual img{display:block;width:100%;height:100%;object-fit:cover}
+.v2-section-head{margin:0 0 17px!important;align-items:end!important}.v2-section-head h2{font-size:clamp(22px,3vw,30px)!important;margin-bottom:4px!important}.v2-section-head .muted{max-width:62ch}
+.svc-grid{gap:14px!important;margin-bottom:22px!important}.svc-card{border:1px solid var(--ss-line)!important;border-radius:18px!important;padding:22px!important;box-shadow:var(--ss-shadow-sm)!important;gap:11px!important;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease!important}.svc-card:hover{transform:translateY(-2px)!important;border-color:#B8D6E8!important;box-shadow:var(--ss-shadow-md)!important}.svc-ic{width:52px!important;height:52px!important;border-radius:14px!important;background:var(--ss-surface-soft)!important;font-size:25px!important}.svc-card h3{font-size:16.5px!important;margin-top:2px!important}.svc-card p{color:var(--ss-muted)!important;line-height:1.75!important}.svc-btn{margin-top:auto!important;background:transparent!important;color:var(--ss-primary)!important;padding:3px 0!important;border-radius:0!important;font-size:13.5px!important}.svc-btn:after{content:'  →';direction:ltr;unicode-bidi:isolate}[dir="rtl"] .svc-btn:after{content:'  ←'}
+.v2-services-more{overflow:hidden;margin:20px 0 24px!important}.v2-services-more summary{padding:15px 17px!important;font-size:14px!important}.v2-more-grid{gap:8px!important}.v2-more-link{background:#fff!important;border-color:var(--ss-line)!important;border-radius:12px!important;padding:12px!important;font-size:13px!important}.v2-more-link:hover{background:var(--ss-surface-soft)!important;border-color:#B8D6E8!important}.v2-more-link span{font-size:18px!important}
+.warn2,.warn{border-radius:14px!important;box-shadow:none!important}
+
+/* Authentication — calm and confident */
+.auth-wrap{min-height:calc(100dvh - 180px)!important;padding:34px 16px!important}.auth-card{max-width:470px!important;padding:clamp(26px,4vw,38px)!important;text-align:start!important;animation:none!important;box-shadow:var(--ss-shadow-md)!important}.auth-card .auth-icon{width:48px;height:48px;display:grid;place-items:center;background:var(--ss-surface-soft);border:1px solid var(--ss-line);border-radius:14px;font-size:24px!important;margin:0 0 16px!important}.auth-card h1{text-align:start!important;font-size:clamp(24px,3vw,30px)!important;margin-bottom:6px!important}.auth-card .auth-sub{text-align:start!important;line-height:1.75!important;margin-bottom:22px!important}.auth-card .auth-field{text-align:start!important;margin-bottom:15px!important}.auth-card .auth-field label{margin-bottom:6px!important;font-size:13px!important}.auth-card .auth-field input{min-height:48px!important;background:#fff!important}.auth-card .auth-btn{margin-top:3px}.auth-card .auth-link{text-align:center!important;line-height:1.8}.auth-card .auth-error{border-radius:12px!important;line-height:1.65!important}
+
+/* Results and health information */
+.res-card{background:#fff!important}.res-title{font-size:clamp(20px,3vw,25px)!important}.res-triage,.pill2{box-shadow:none!important}.pill2.low{background:var(--ss-success-bg)!important;color:var(--ss-success)!important}.pill2.med{background:var(--ss-warning-bg)!important;color:var(--ss-warning)!important}.pill2.hi{background:var(--ss-danger-bg)!important;color:var(--ss-danger)!important}.res-sec,.res-why,.res-action,.res-assess,.res-questions,.res-transparency{box-shadow:none!important}.res-disc{line-height:1.75!important}
+
+/* Assistant — less “AI demo”, more health product */
+.asst-fab{background:var(--ss-primary)!important;border:1px solid rgba(255,255,255,.7)!important;box-shadow:0 10px 26px rgba(31,111,174,.22)!important;padding:12px 19px!important;font-size:14px!important}.asst-fab.pulse{animation:none!important}.asst-fab:hover{transform:translateY(-1px)!important;box-shadow:0 12px 30px rgba(31,111,174,.27)!important}.asst-panel{border-radius:20px!important;border:1px solid var(--ss-line)!important;box-shadow:0 24px 64px rgba(22,59,92,.18)!important}.asst-head,.asst-panel.asst-mh .asst-head{background:var(--ss-primary)!important}.asst-body{background:var(--ss-page)!important}.asst-msg{line-height:1.72!important}.asst-bot{box-shadow:var(--ss-shadow-sm)}.asst-opt{box-shadow:none!important;border-color:var(--ss-line)!important;border-radius:14px!important}.asst-opt:hover{transform:none!important;background:var(--ss-surface-soft)!important;border-color:#B8D6E8!important;box-shadow:none!important}.asst-chip{background:#fff!important;border-color:var(--ss-line)!important}.asst-chip:hover{background:var(--ss-surface-soft)!important}.asst-foot{background:#fff!important}.asst-disc{background:var(--ss-surface-soft)!important;border-color:var(--ss-line)!important}
+
+/* About / portfolio */
+.au-polished .au-section{box-shadow:var(--ss-shadow-sm)!important;border-color:var(--ss-line)!important}.au-polished .au-hero{background:#fff!important}.au-polished .au-hero-art,.au-polished .au-story-art{box-shadow:var(--ss-shadow-md)!important}.au-polished .au-purpose,.au-polished .au-message,.au-polished .au-final{background:var(--ss-surface-soft)!important}.au-polished .au-reveal{animation:auPolishIn .35s ease both!important}
+
+/* Footer */
+.footer{background:#163B5C!important;padding-top:clamp(32px,5vw,52px)!important}.f-brand{letter-spacing:-.2px}.f-tag,.f-sec p,.footer a{color:#D4E2EC!important}.footer a:hover{color:#fff!important}.f-links{gap:9px 16px!important}.f-copy{opacity:.72}
+
+/* Mobile navigation and responsive rhythm */
+@media(max-width:980px){.container{padding-top:18px}.hh{flex-direction:column!important}.hh-l{text-align:start!important}.hh-l h1{max-width:18ch!important}.hh-r{width:100%;min-height:auto!important}.hh-premium-visual{width:min(520px,100%);aspect-ratio:16/10}.nav{display:none!important}.ss-mobile-head{display:flex!important}}
+@media(max-width:600px){.container{padding-inline:12px!important;padding-bottom:calc(var(--bnav-h,64px) + 34px)!important}.hh{padding:22px 18px!important;border-radius:22px!important;gap:20px!important}.hh-l h1{font-size:clamp(30px,10vw,42px)!important}.hh-desc{font-size:14px!important}.hh-btns{display:grid!important;grid-template-columns:1fr!important;width:100%!important}.hh-btns .btn{width:100%!important}.hh-r{display:flex!important}.hh-premium-visual{aspect-ratio:16/10;border-radius:18px}.svc-grid[style]{grid-template-columns:1fr!important}.svc-card{padding:18px!important}.auth-wrap{padding:20px 10px!important;align-items:flex-start!important}.auth-card{border-radius:18px!important;padding:22px 18px!important}.asst-panel{border-radius:18px 18px 0 0!important}.v2-more-grid{grid-template-columns:1fr 1fr!important}.footer{padding-bottom:calc(var(--bnav-h,64px) + 24px)!important}}
+@media(max-width:380px){.container{padding-inline:10px!important}.v2-more-grid{grid-template-columns:1fr!important}.hh-r{display:none!important}.ss-mobile-logo b{font-size:14px!important}.ss-mobile-actions{gap:4px!important}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.au-polished .au-reveal,.asst-fab,.svc-card,.v2-more-link,.btn,*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+"""
+
+SIGNATURE_POLISH_CSS = r"""
+/* SymptoSense Signature Polish — final craft layer (visual only) */
+:root{--ss-reading:66ch;--ss-touch:44px;--ss-focus:rgba(40,127,193,.30)}
+html{color-scheme:only light}
+body[dir="ltr"]{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;letter-spacing:0}
+body[dir="rtl"]{font-family:'Cairo','Segoe UI',Tahoma,sans-serif}
+body{font-size:15px}
+main p,.card p,.v2-info-page p{max-width:var(--ss-reading)}
+img{max-width:100%}hr{border:0;border-top:1px solid var(--ss-line);margin:28px 0}
+
+/* Real active states for desktop + mobile navigation */
+.nav a[aria-current="page"],.nav .dd-menu a[aria-current="page"]{background:var(--ss-surface-soft)!important;color:var(--ss-primary)!important;font-weight:800!important}
+.ss-bnav a.on,.ss-bnav a[aria-current="page"]{color:var(--ss-primary)!important}
+.ss-bnav a.on .bn-icon,.ss-bnav a[aria-current="page"] .bn-icon{transform:translateY(-1px)}
+.ss-mobile-head a[aria-current="page"]{color:var(--ss-primary)!important}
+
+/* Bring legacy surfaces into the same visual language */
+.feature,.quick-card,.calc-card,.sea-result,.med-card,.step,.welcome-card{border:1px solid var(--ss-line)!important;border-radius:18px!important;background:#fff!important;box-shadow:var(--ss-shadow-sm)!important}
+.feature:hover,.quick-card:hover,.calc-card:hover{transform:translateY(-2px)!important;border-color:#B8D6E8!important;box-shadow:var(--ss-shadow-md)!important}
+.feature .ic,.q-ic,.calc-card .cc-ic{filter:saturate(.88)}
+.calc-card .cc-btn,.sea-box .sea-btn,.mh-btn{background:var(--ss-primary)!important;border-radius:12px!important;box-shadow:none!important}
+.calc-card.cal-fea,.mh-card,.asst-cta{background:#fff!important;border:1px solid var(--ss-line)!important;box-shadow:var(--ss-shadow-sm)!important}
+.asst-cta{color:var(--ss-text)!important}.asst-cta b{color:var(--ss-navy)!important}.asst-cta p{color:var(--ss-muted)!important;opacity:1!important}.asst-cta button{background:var(--ss-primary)!important;color:#fff!important;box-shadow:none!important;border-radius:12px!important}
+
+/* Search */
+.sea-box{border:1px solid var(--ss-line)!important;border-radius:16px!important;box-shadow:var(--ss-shadow-sm)!important;padding:7px!important}
+.sea-box:focus-within{border-color:#88B9D9!important;box-shadow:0 0 0 4px rgba(40,127,193,.08)!important}
+.sea-box .sea-btn{min-height:44px;padding-inline:20px!important}.sea-result{padding:clamp(18px,3vw,24px)!important}.sea-result .sr-head{border-bottom:1px solid var(--ss-line)!important}.sea-result .sr-cat{background:var(--ss-surface-soft)!important;color:var(--ss-primary)!important;border-color:var(--ss-line)!important}
+
+/* Forms + medicines */
+.med-card{padding:clamp(17px,2.5vw,22px)!important}.med-title h2,.med-title h3{margin-bottom:2px!important}
+input,select,textarea{min-height:44px}textarea{min-height:112px;resize:vertical}::placeholder{color:#8A9BAB!important;opacity:1}
+
+/* Tables/data views */
+table{border-collapse:separate!important;border-spacing:0!important;width:100%}thead th{background:#F3F8FB!important;color:var(--ss-navy)!important;font-size:12px!important;letter-spacing:.015em;border-bottom:1px solid var(--ss-line)!important}th,td{padding:12px 14px!important;border-color:var(--ss-line)!important;vertical-align:middle}tbody tr:hover{background:#FAFCFD}.table-wrap{border:1px solid var(--ss-line);border-radius:16px;overflow:auto;background:#fff;box-shadow:var(--ss-shadow-sm)}
+
+/* Modals + feedback */
+.ss-modal-overlay,.expl-bg,.asst-modal-bg{backdrop-filter:blur(7px)!important;background:rgba(15,35,52,.38)!important}.ss-modal,.expl-modal,.asst-modal{border:1px solid var(--ss-line)!important;box-shadow:0 26px 70px rgba(22,59,92,.18)!important}.warn,.warn2{line-height:1.75!important}.auth-error,.error{line-height:1.7}
+
+/* Assistant */
+.asst-fab{min-height:46px!important}.asst-head{padding:13px 15px!important}.asst-head-tx b{letter-spacing:-.01em}.asst-body{scrollbar-gutter:stable}.asst-msg{max-width:88%!important}.asst-user{background:var(--ss-primary)!important}.asst-bot{border:1px solid var(--ss-line)!important;background:#fff!important}.asst-foot{padding:11px 12px!important}.asst-foot button{min-width:44px;min-height:44px;background:var(--ss-primary)!important}
+
+/* Footer + portfolio */
+.footer{border-top:1px solid rgba(255,255,255,.08)}.f-brand{font-size:21px!important;font-weight:900!important}.f-tag{max-width:42ch}.f-sec h4{color:#fff!important;font-size:13px!important}.f-links a{text-underline-offset:4px}.f-love{opacity:.9}.f-copy{font-size:12px!important}.au-polished .au-kicker{letter-spacing:.03em!important}.au-polished blockquote{max-width:44ch}.au-polished .au-device{filter:none!important}.au-polished .au-screen{background:#F5F8FA!important}
+
+summary{outline-offset:4px}details>summary::-webkit-details-marker{display:none}button,a,.btn{-webkit-tap-highlight-color:transparent}
+@media(hover:none){.svc-card:hover,.feature:hover,.quick-card:hover,.calc-card:hover{transform:none!important;box-shadow:var(--ss-shadow-sm)!important}}
+@media(max-width:700px){body{font-size:14.5px}.container{padding-inline:14px!important}.asst-fab{left:14px!important;bottom:calc(var(--bnav-h,64px) + 14px)!important;width:48px!important;height:48px!important;padding:0!important;justify-content:center!important;border-radius:15px!important}[dir="rtl"] .asst-fab{left:14px!important;right:auto!important}.asst-fab-lb{display:none!important}.asst-fab-ic{font-size:21px!important}.asst-panel{left:10px!important;bottom:calc(var(--bnav-h,64px) + 8px)!important;max-width:calc(100vw - 20px)!important;width:calc(100vw - 20px)!important;height:min(74dvh,620px)!important}[dir="rtl"] .asst-panel{left:10px!important;right:auto!important}.asst-msg{max-width:94%!important}.table-wrap{border-radius:14px}}
+@media(max-width:380px){.container{padding-inline:12px!important}.hh{padding-inline:16px!important}.auth-card{padding-inline:16px!important}}
+@media(prefers-reduced-motion:reduce){.ss-bnav .bn-icon{transform:none!important}}
+"""
+
+
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
@@ -981,22 +1123,32 @@ __GSC_TAG__
 <link rel="canonical" href="__CANONICAL__">
 <meta property="og:title" content="__TITLE__">
 <meta property="og:description" content="__DESC__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SymptoSense — Understand your symptoms. Know your next step.">
+<meta property="og:url" content="__CANONICAL__">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SymptoSense">
-<meta name="theme-color" content="#1976D2">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="__TITLE__">
+<meta name="twitter:description" content="__DESC__">
+<meta name="twitter:image" content="__OG_IMAGE__">
+<meta name="theme-color" content="#287FC1">
+<meta name="color-scheme" content="light">
 <style>__CSS__</style>
 <style>
-.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1976D2, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
+.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: #287FC1; color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
 [dir="rtl"] .asst-fab { left: 22px; right: auto; }
 .asst-fab .asst-fab-ic { font-size: 24px; line-height: 1; }
 .asst-fab .asst-fab-lb { letter-spacing: .2px; }
-.asst-fab.pulse { animation: asstPulse 2.6s infinite; }
+.asst-fab.pulse { animation: none; }
 .asst-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(25,118,210,.42); }
 @keyframes asstPulse { 0%,100% { box-shadow: 0 12px 30px rgba(25,118,210,.35); } 50% { box-shadow: 0 12px 42px rgba(25,118,210,.55); } }
 .asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 400px; max-width: calc(100vw - 24px); height: min(78vh, 600px); display: none; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 22px; box-shadow: 0 24px 70px rgba(25,118,210,.26); overflow: hidden; }
 [dir="rtl"] .asst-panel { left: 22px; right: auto; }
 .asst-panel.open { display: flex; }
-.asst-head { background: linear-gradient(120deg, var(--primary-dark), #1976D2); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.asst-head { background: #287FC1; color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .asst-head .asst-back { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex: 0 0 auto; }
 .asst-head-tx { flex: 1; min-width: 0; }
 .asst-head-tx b { font-size: 15px; display: block; }
@@ -1025,7 +1177,7 @@ __GSC_TAG__
 .asst-mh-btn { background: var(--primary-light) !important; color: var(--primary-dark) !important; font-size: 12px !important; white-space: nowrap; padding: 0 10px !important; }
 .asst-disc { font-size: 11px; color: var(--text-muted); text-align: center; padding: 7px; background: var(--primary-light); border-top: 1px dashed var(--border-card); flex: 0 0 auto; }
 .asst-panel.asst-mh { background: var(--bg-card); border-color: var(--border-card); }
-.asst-panel.asst-mh .asst-head { background: linear-gradient(120deg, var(--primary-dark), var(--primary)); }
+.asst-panel.asst-mh .asst-head { background: #287FC1; }
 .asst-panel.asst-mh .asst-body { background: var(--bg-page); }
 .asst-panel.asst-mh .asst-bot { background: var(--bg-card); border-color: var(--border-card); color: var(--text-body); font-size: 15px; }
 .asst-panel.asst-mh .asst-user { background: var(--primary); }
@@ -1142,15 +1294,13 @@ document.addEventListener('keydown', function(ev) {
   document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
   document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
 });
-(function(){
-  var p = location.pathname;
-  var bnav = document.getElementById('ssBnav');
-  if (!bnav) return;
-  var links = bnav.querySelectorAll('a');
-  links.forEach(function(a){
-    var h = a.getAttribute('href');
-    if (h && p.indexOf(h) === 0 && h !== '#') a.classList.add('on');
-    else if (h === '/home' && p === '/') a.classList.add('on');
+document.addEventListener('DOMContentLoaded', function(){
+  var p = location.pathname || '/';
+  document.querySelectorAll('#ssBnav a, .nav a[href], .ss-mobile-head a[href]').forEach(function(a){
+    var h = (a.getAttribute('href') || '').split('?')[0].split('#')[0];
+    if (!h || h === '#' || h === '/') return;
+    var active = (p === h) || (h !== '/home' && p.indexOf(h + '/') === 0) || (h === '/home' && (p === '/' || p === '/home'));
+    if (active) { a.classList.add('on'); a.setAttribute('aria-current','page'); }
   });
 });
 </script>
@@ -2095,6 +2245,7 @@ def require_first_language_choice():
 @app.before_request
 def v2_request_timer():
     g.v2_started_at = time.perf_counter()
+    g.request_id = secrets.token_hex(8)
 
 
 @app.after_request
@@ -2183,7 +2334,33 @@ def production_security_headers(response):
     response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), payment=(), usb=()")
     if app.config.get("SESSION_COOKIE_SECURE"):
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
     return response
+
+
+@app.errorhandler(404)
+def not_found_page(_error):
+    ar = _lang() == "ar"
+    body = """
+    <main style="max-width:620px;margin:8vh auto;text-align:center;background:#fff;border:1px solid var(--v2-line);border-radius:22px;padding:36px">
+      <div style="font-size:52px">🔎</div><h1>__TITLE__</h1><p class="muted">__TEXT__</p><a class="btn primary" href="/home">__BACK__</a>
+    </main>"""
+    body = body.replace("__TITLE__", "الصفحة غير موجودة" if ar else "Page not found").replace("__TEXT__", "تحقق من الرابط أو عد إلى الصفحة الرئيسية." if ar else "Check the address or return to the home page.").replace("__BACK__", "العودة للرئيسية" if ar else "Back to Home")
+    return _page("404", body), 404
+
+
+@app.errorhandler(500)
+def internal_error_page(_error):
+    ar = _lang() == "ar"; request_id = getattr(g, "request_id", "")
+    app.logger.error("Unhandled request failure; request_id=%s route=%s", request_id, request.path)
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": "تعذر إكمال الطلب حاليًا." if ar else "Unable to complete the request right now.", "request_id": request_id}), 500
+    body = """
+    <main style="max-width:620px;margin:8vh auto;text-align:center;background:#fff;border:1px solid var(--v2-line);border-radius:22px;padding:36px">
+      <div style="font-size:52px">⚠️</div><h1>__TITLE__</h1><p class="muted">__TEXT__</p><p class="muted">Request ID: __RID__</p><a class="btn primary" href="/home">__BACK__</a>
+    </main>"""
+    body = body.replace("__TITLE__", "حدث خطأ" if ar else "Something went wrong").replace("__TEXT__", "تعذر تحميل الصفحة حاليًا. حاول مرة أخرى." if ar else "We couldn't load this page right now. Please try again.").replace("__RID__", request_id).replace("__BACK__", "العودة للرئيسية" if ar else "Back to Home")
+    return _page("500", body), 500
 
 
 def _site_url():
@@ -2450,7 +2627,7 @@ L = {
         "title_login": "SymptoSense — تسجيل الدخول",
         "title_register": "SymptoSense — إنشاء حساب",
         "title_settings": "SymptoSense — إعدادات الخصوصية",
-        "login_h": "مرحبًا بك مجددًا 💙",
+        "login_h": "مرحبًا بعودتك",
         "login_sub": "سجّل دخولك للوصول إلى تجربتك الشخصية",
         "login_email": "البريد الإلكتروني",
         "login_pass": "كلمة المرور",
@@ -2459,7 +2636,7 @@ L = {
         "login_register": "إنشاء حساب",
         "login_error": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
         "login_forgot": "نسيت كلمة المرور؟",
-        "register_h": "أنشئ حسابك 💙",
+        "register_h": "إنشاء حساب جديد",
         "register_sub": "ابدأ رحلتك الصحية مع SymptoSense",
         "register_name": "الاسم",
         "register_email": "البريد الإلكتروني",
@@ -2819,7 +2996,7 @@ L = {
         "title_login": "SymptoSense — Login",
         "title_register": "SymptoSense — Register",
         "title_settings": "SymptoSense — Privacy Settings",
-        "login_h": "Welcome back 💙",
+        "login_h": "Welcome back",
         "login_sub": "Sign in to access your personalized experience",
         "login_email": "Email",
         "login_pass": "Password",
@@ -2828,7 +3005,7 @@ L = {
         "login_register": "Create one",
         "login_error": "Invalid email or password",
         "login_forgot": "Forgot password?",
-        "register_h": "Create your account 💙",
+        "register_h": "Create your account",
         "register_sub": "Start your health journey with SymptoSense",
         "register_name": "Name",
         "register_email": "Email",
@@ -3058,7 +3235,7 @@ def _footer():
     tg = "https://t.me/" + CONTACT_TELEGRAM if CONTACT_TELEGRAM else "#"
     return (
         '<div class="footer" id="contact">'
-        '<div class="f-brand">Sympto<span>Sense</span> 💙</div>'
+        '<div class="f-brand">🩺 Sympto<span>Sense</span></div>'
         '<p class="f-tag">%s</p>'
         '<div class="f-grid">'
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
@@ -3115,8 +3292,9 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__DESC__", desc)
         .replace("__KEYWORDS__", _t("keywords"))
         .replace("__CANONICAL__", base + request.path)
+        .replace("__OG_IMAGE__", base + "/static/images/symptosense-social-preview.png")
         .replace("__GSC_TAG__", gsc_tag)
-        .replace("__CSS__", BASE_CSS + extra_css + V2_CSS)
+        .replace("__CSS__", BASE_CSS + extra_css + V2_CSS + PREMIUM_PRODUCT_CSS + SIGNATURE_POLISH_CSS)
         .replace("__NAV__", "" if bare else _nav())
         .replace("__FOOTER__", "" if bare else _footer())
         .replace("__BNAV_HOME__", _t("bnav_home"))
@@ -3442,13 +3620,13 @@ def home_page():
     body = """
     <section class="hh" aria-labelledby="homeTitle">
       <div class="hh-l">
-        <span class="hh-badge">🩺 SymptoSense V2</span>
+        <span class="hh-badge">🩺 SymptoSense</span>
         <h1 id="homeTitle">__TITLE__</h1>
         <p class="hh-sub">__SUB__</p>
         <p class="hh-desc">__DESC__</p>
         <div class="hh-btns"><a class="btn pri" href="/chat">__START__</a><button class="btn sec" onclick="asstToggle()">__ASK__</button></div>
       </div>
-      <div class="hh-r" aria-hidden="true"><div class="hh-globe"></div><span class="hh-ic i1">🩺</span><span class="hh-ic i2">🛡️</span><span class="hh-ic i3">📚</span><span class="hh-ic i4">🤖</span><span class="hh-ic i5">🧪</span><span class="hh-ic i6">⚕️</span><div class="phone"><div class="phone-screen"><div class="phone-heart">🩺</div><p>SymptoSense</p><p>Understand • Assess • Act</p></div></div></div>
+      <div class="hh-r" aria-hidden="true"><div class="hh-premium-visual"><img src="/static/images/about-hero.webp" width="960" height="960" alt="" decoding="async"></div></div>
     </section>
 
     <div class="v2-section-head" id="services"><div><h2>__CORE_H__</h2><p class="muted">__CORE_P__</p></div></div>
@@ -3520,34 +3698,93 @@ ABOUT_US_CSS = """
 .about-us-page{width:min(1160px,100%);margin:0 auto;display:grid;gap:clamp(18px,3.5vw,34px);padding-bottom:20px}.au-section{position:relative;overflow:hidden;border:1px solid var(--v2-line);border-radius:24px;background:#fff;box-shadow:var(--v2-shadow)}.au-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);gap:clamp(24px,5vw,58px);align-items:center;padding:clamp(24px,5vw,52px)}.au-kicker{display:inline-flex;align-items:center;gap:7px;color:var(--v2-blue);font-size:12px;font-weight:900;margin-bottom:10px}.au-section h1,.au-section h2{color:var(--v2-blue-dark);line-height:1.35}.au-section h1{font-size:clamp(30px,4.5vw,50px);margin:0 0 8px}.au-section h2{font-size:clamp(23px,3vw,34px);margin:0 0 12px}.au-role{color:var(--v2-blue);font-weight:800;font-size:clamp(15px,1.7vw,18px);margin-bottom:18px}.au-copy{font-size:clamp(14.5px,1.35vw,16.5px);line-height:2;color:var(--v2-text);max-width:62ch}.au-copy p+p{margin-top:10px}.au-hero{background:linear-gradient(135deg,#F8FCFF,#EDF7FD 58%,#fff)}.au-hero .au-split{min-height:470px}.au-visual{min-height:320px;display:grid;place-items:center}.au-portrait-abstract{position:relative;width:min(390px,96%);aspect-ratio:1;border-radius:36px;background:#F4FAFE;border:1px solid #CFE3EF;display:grid;place-items:center;isolation:isolate}.au-portrait-abstract:before,.au-portrait-abstract:after{content:'';position:absolute;border-radius:50%;border:1px solid #BFDCEA;inset:11%}.au-portrait-abstract:after{inset:27%;background:#fff;border:0;box-shadow:0 14px 32px rgba(40,127,193,.09);z-index:-1}.au-r{width:92px;height:92px;border-radius:28px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:0 13px 30px rgba(40,127,193,.2)}.au-float{position:absolute;width:64px;height:64px;border-radius:20px;background:#fff;border:1px solid #D4E6F1;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 20px rgba(31,86,127,.08)}.au-f1{top:9%;left:11%}.au-f2{top:10%;right:9%}.au-f3{bottom:8%;left:13%}.au-f4{bottom:9%;right:11%}.au-story{background:#fff}.au-story .au-visual{order:-1}.au-story-flow{width:min(380px,96%);display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.au-story-node{min-height:116px;padding:18px;border:1px solid var(--v2-line);border-radius:20px;background:#F8FCFE;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;color:var(--v2-blue-dark);font-weight:800}.au-story-node span{font-size:30px;margin-bottom:6px}.au-story-node:last-child{background:var(--v2-blue);color:#fff;border-color:var(--v2-blue)}.au-idea-visual{width:min(390px,96%);position:relative}.au-idea-visual img{width:100%;display:block;border-radius:28px;border:1px solid #CEE3EF;box-shadow:0 16px 36px rgba(31,86,127,.10)}.au-chip{position:absolute;padding:8px 11px;border-radius:999px;background:#fff;border:1px solid #D5E6EF;color:var(--v2-blue-dark);font-size:11px;font-weight:900;box-shadow:0 7px 16px rgba(31,86,127,.07)}.au-c1{top:7%;left:-18px}.au-c2{top:45%;right:-20px}.au-c3{bottom:8%;left:-14px}.au-c4{bottom:30%;right:-18px}.au-purpose{padding:clamp(28px,5vw,52px);text-align:center;background:#F9FCFE}.au-purpose .au-copy{max-width:760px;margin:0 auto}.au-purpose-icons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:700px;margin:24px auto 0}.au-purpose-item{padding:18px;border:1px solid var(--v2-line);border-radius:18px;background:#fff;color:var(--v2-blue-dark);font-weight:800}.au-purpose-item span{display:block;font-size:29px;margin-bottom:7px}.au-project{padding:clamp(28px,5vw,54px);text-align:center}.au-project-head{max-width:720px;margin:0 auto 24px}.au-device{display:flex;align-items:flex-end;justify-content:center;gap:20px;direction:ltr}.au-laptop{width:min(800px,88%)}.au-screen{aspect-ratio:16/9;padding:9px;border-radius:20px 20px 10px 10px;background:#163B5C;box-shadow:0 22px 48px rgba(22,59,92,.17)}.au-screen iframe{width:100%;height:100%;border:0;border-radius:12px;background:#fff;pointer-events:none}.au-base{height:14px;width:108%;margin-left:-4%;border-radius:4px 4px 18px 18px;background:#D6E0E8}.au-phone{width:135px;padding:7px;border-radius:25px;background:#163B5C;box-shadow:0 17px 36px rgba(22,59,92,.16)}.au-phone iframe{width:100%;aspect-ratio:9/18.5;border:0;border-radius:19px;background:#fff;pointer-events:none}.au-message{padding:clamp(28px,5vw,52px);background:#F5FAFE}.au-message-card{max-width:900px;margin:auto;display:grid;grid-template-columns:1fr 220px;align-items:center;gap:28px;padding:clamp(22px,4vw,36px);border-radius:23px;background:#fff;border:1px solid var(--v2-line);box-shadow:0 12px 30px rgba(31,86,127,.07)}.au-voice-mark{height:180px;border-radius:26px;background:#EAF5FC;display:grid;place-items:center;position:relative}.au-voice-mark:before{content:'R';width:78px;height:78px;border-radius:24px;background:var(--v2-blue);color:#fff;display:grid;place-items:center;font-size:34px;font-weight:900}.au-voice-icons{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-around;padding:16px;font-size:23px}.au-final{padding:clamp(40px,6vw,66px);text-align:center;background:linear-gradient(135deg,#F2F9FD,#fff)}.au-final p{max-width:650px;margin:0 auto 21px;line-height:1.9;color:var(--v2-text)}.au-final .btn{display:inline-flex;justify-content:center;min-width:190px}.au-reveal{animation:auIn .55s ease both}@keyframes auIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}.au-portrait-abstract,.au-story-flow,.au-idea-visual{animation:auFloat 6s ease-in-out infinite}@keyframes auFloat{50%{transform:translateY(-5px)}}@media(max-width:900px){.au-split{grid-template-columns:1fr}.au-hero .au-visual{order:-1}.au-story .au-visual{order:0}.au-message-card{grid-template-columns:1fr}.au-voice-mark{height:145px}.au-copy{max-width:none}.au-device .au-phone{display:none}.au-laptop{width:100%}}@media(max-width:620px){.about-us-page{gap:14px}.au-section{border-radius:20px}.au-split,.au-purpose,.au-project,.au-message,.au-final{padding:21px}.au-visual{min-height:260px}.au-story-flow{grid-template-columns:1fr 1fr}.au-story-node{min-height:92px;padding:12px;font-size:12px}.au-purpose-icons{grid-template-columns:1fr}.au-chip{position:static;display:inline-flex;margin:5px 3px 0}.au-idea-visual{display:flex;flex-wrap:wrap;justify-content:center}.au-idea-visual img{width:100%}.au-final .btn{width:100%}}@media(prefers-reduced-motion:reduce){.au-reveal,.au-portrait-abstract,.au-story-flow,.au-idea-visual{animation:none!important}}
 """
 
+ABOUT_US_POLISH_CSS = """
+.au-polished{width:min(1160px,100%);margin:0 auto;display:grid;gap:clamp(16px,3vw,30px);padding-bottom:20px}
+.au-polished .au-section{position:relative;overflow:hidden;border:1px solid #dce8f0;border-radius:24px;background:#fff;box-shadow:0 10px 30px rgba(31,86,127,.07)}
+.au-polished .au-split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:clamp(24px,5vw,58px);align-items:center;padding:clamp(26px,5vw,54px)}
+.au-polished .au-kicker{display:inline-flex;align-items:center;gap:7px;color:#287fc1;font-size:12px;font-weight:900;letter-spacing:.02em;margin-bottom:10px}
+.au-polished h1,.au-polished h2{color:#163b5c;line-height:1.35}.au-polished h1{font-size:clamp(30px,4.5vw,50px);margin:0 0 9px}.au-polished h2{font-size:clamp(23px,3vw,34px);margin:0 0 12px}
+.au-polished .au-role{color:#287fc1;font-weight:800;font-size:clamp(15px,1.7vw,18px);margin-bottom:18px;direction:ltr;text-align:start}
+.au-polished .au-copy{font-size:clamp(14.5px,1.35vw,16.5px);line-height:2;color:#23384a;max-width:64ch}.au-polished .au-copy p+p{margin-top:10px}
+.au-polished .au-hero{background:#f8fcff}.au-polished .au-hero .au-split{min-height:470px}.au-polished .au-visual{min-height:300px;display:grid;place-items:center}
+.au-polished .au-hero-art,.au-polished .au-story-art{display:block;width:min(440px,100%);height:auto;object-fit:contain;border-radius:28px;border:1px solid #cfe3ef;box-shadow:0 16px 36px rgba(31,86,127,.10)}
+.au-polished .au-story-art{width:min(520px,100%)}.au-polished .au-story{background:#fff}
+.au-polished .au-what{background:#f9fcfe}.au-polished .au-concept{min-height:290px;width:min(420px,100%);padding:28px;border-radius:30px;border:1px solid #cfe3ef;background:#fff;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;color:#163b5c;font-size:30px;box-shadow:0 14px 34px rgba(31,86,127,.07)}
+.au-polished .au-concept span{width:66px;height:66px;border-radius:20px;background:#eaf5fc;display:grid;place-items:center}.au-polished .au-concept i{flex-basis:100%;height:1px;background:#dce8f0}.au-polished .au-concept b{font-size:22px;color:#287fc1}
+.au-polished .au-purpose{padding:clamp(30px,5vw,54px);text-align:center;background:#f8fcff}.au-polished .au-purpose .au-copy{max-width:780px;margin:0 auto}.au-polished .au-purpose-icons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:710px;margin:24px auto 0}.au-polished .au-purpose-item{padding:18px;border:1px solid #dce8f0;border-radius:18px;background:#fff;color:#163b5c;font-weight:800}.au-polished .au-purpose-item span{display:block;font-size:29px;margin-bottom:7px}
+.au-polished .au-project{padding:clamp(30px,5vw,56px);text-align:center}.au-polished .au-project-head{max-width:750px;margin:0 auto 24px}.au-polished .au-project-head p{color:#607487;line-height:1.8}
+.au-polished .au-device{display:flex;align-items:flex-end;justify-content:center;direction:ltr}.au-polished .au-laptop{width:min(820px,94%)}.au-polished .au-screen{position:relative;aspect-ratio:16/9;padding:9px;border-radius:20px 20px 10px 10px;background:#163b5c;box-shadow:0 22px 48px rgba(22,59,92,.17);overflow:hidden}.au-polished .au-live-frame>img,.au-polished .au-live-frame>iframe{position:absolute;inset:9px;width:calc(100% - 18px);height:calc(100% - 18px);border:0;border-radius:12px;background:#f5f9fc}.au-polished .au-live-frame>img{object-fit:contain}.au-polished .au-live-frame>iframe{opacity:0;pointer-events:none;transition:opacity .2s ease}.au-polished .au-live-frame.is-loaded>iframe{opacity:1}.au-polished .au-base{height:14px;width:108%;margin-left:-4%;border-radius:4px 4px 18px 18px;background:#d6e0e8}
+.au-polished .au-message{padding:clamp(28px,5vw,52px);background:#f5fafe}.au-polished .au-message-card{max-width:900px;margin:auto;display:grid;grid-template-columns:1fr 210px;align-items:center;gap:28px;padding:clamp(22px,4vw,36px);border-radius:23px;background:#fff;border:1px solid #dce8f0}.au-polished blockquote{margin:0;color:#23384a;font-size:clamp(16px,2vw,20px);line-height:2}.au-polished cite{display:block;margin-top:14px;color:#287fc1;font-style:normal;font-weight:800}.au-polished .au-voice-mark{height:170px;border-radius:26px;background:#eaf5fc;display:grid;place-items:center;align-content:center;gap:15px;color:#163b5c}.au-polished .au-voice-mark>span{width:72px;height:72px;border-radius:22px;background:#287fc1;color:#fff;display:grid;place-items:center;font-size:32px;font-weight:900}
+.au-polished .au-final{padding:clamp(42px,6vw,68px);text-align:center;background:#f8fcff}.au-polished .au-final p{max-width:650px;margin:0 auto 21px;line-height:1.9;color:#23384a}.au-polished .au-final .btn{display:inline-flex;justify-content:center;min-width:190px}
+.au-polished .au-reveal{animation:auPolishIn .45s ease both}@keyframes auPolishIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(max-width:900px){.au-polished .au-split{grid-template-columns:1fr}.au-polished .au-hero .au-text{order:1}.au-polished .au-hero .au-visual{order:0}.au-polished .au-message-card{grid-template-columns:1fr}.au-polished .au-voice-mark{height:135px}.au-polished .au-copy{max-width:none}.au-polished .au-laptop{width:100%}}
+@media(max-width:620px){.au-polished{gap:14px}.au-polished .au-section{border-radius:20px}.au-polished .au-split,.au-polished .au-purpose,.au-polished .au-project,.au-polished .au-message,.au-polished .au-final{padding:20px}.au-polished .au-visual{min-height:0}.au-polished .au-hero .au-split{min-height:0}.au-polished .au-purpose-icons{grid-template-columns:1fr}.au-polished .au-concept{min-height:230px;padding:20px}.au-polished .au-concept span{width:56px;height:56px}.au-polished .au-screen{padding:6px}.au-polished .au-live-frame>img,.au-polished .au-live-frame>iframe{inset:6px;width:calc(100% - 12px);height:calc(100% - 12px)}.au-polished .au-final .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.au-polished .au-reveal{animation:none!important}.au-polished .au-live-frame>iframe{transition:none!important}}
+"""
+
 
 def about_us_page():
     from html import escape
     ar = _lang() == "ar"
-    bi = lambda a,e: escape(a if ar else e)
-    portrait_path=os.path.join(BASE_DIR,"static","images","remas.jpg")
-    portrait = '<img class="au-personal-img" src="/static/images/remas.jpg" alt="Remas Hameed Alsolami">' if os.path.isfile(portrait_path) else '<div class="au-photo-placeholder"><span>R</span><small>'+bi('مكان صورة ريماس','Remas photo placeholder')+'</small></div>'
+    bi = lambda arabic, english: escape(arabic if ar else english)
     body = """
-    <main class="about-us-page" aria-labelledby="aboutUsTitle">
+    <main class="about-us-page au-polished" aria-labelledby="aboutUsTitle">
       <section class="au-section au-hero au-reveal"><div class="au-split">
-        <div><span class="au-kicker">01 · 👩🏻‍💻 __ABOUT__</span><h1 id="aboutUsTitle">__NAME__</h1><div class="au-role">__ROLE__</div><div class="au-copy"><p>__HERO__</p></div></div>
-        <div class="au-visual">__PORTRAIT__</div>
+        <div class="au-text"><span class="au-kicker">01 · __ABOUT__</span><h1 id="aboutUsTitle">__HELLO__</h1><p class="au-role">Data Science Student &amp; Creator of SymptoSense</p><div class="au-copy"><p>__INTRO__</p></div></div>
+        <div class="au-visual"><img class="au-hero-art" src="/static/images/about-hero.webp" width="960" height="960" alt="__HERO_ALT__" decoding="async"></div>
       </div></section>
-      <section class="au-section au-story au-reveal"><div class="au-split">
-        <div class="au-visual"><img class="au-project-art" src="/icons/about-us-phone.webp" alt="__ART_ALT__" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><div class="au-photo-placeholder" hidden><span>🩺</span><small>SymptoSense</small></div></div>
-        <div><span class="au-kicker">02 · 💡</span><h2>__IDEA_TITLE__</h2><div class="au-copy"><p>__IDEA__</p></div></div>
+
+      <section class="au-section au-story au-reveal"><div class="au-split au-split-reverse">
+        <div class="au-visual"><img class="au-story-art" src="/static/images/about-story.webp" width="1100" height="880" alt="__STORY_ALT__" loading="lazy" decoding="async"></div>
+        <div class="au-text"><span class="au-kicker">02 · 💡</span><h2>__STORY_TITLE__</h2><div class="au-copy"><p>__STORY_P1__</p><p>__STORY_P2__</p></div></div>
       </div></section>
-      <section class="au-section au-purpose au-reveal"><span class="au-kicker">03 · 👩🏻‍💻</span><h2>__MY_ROLE__</h2><div class="au-role-grid">__ROLE_CARDS__</div></section>
-      <section class="au-section au-purpose au-tech au-reveal"><span class="au-kicker">04 · 🛠️</span><h2>Technologies</h2><div class="au-purpose-icons"><div class="au-purpose-item"><span>🐍</span>Python &amp; Flask</div><div class="au-purpose-item"><span>📊</span>Data Processing</div><div class="au-purpose-item"><span>🗄️</span>PostgreSQL / SQLite</div><div class="au-purpose-item"><span>🌐</span>HTML, CSS &amp; JavaScript</div></div></section>
-      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">05 · 📸</span><h2>__PROJECT_VISUALS__</h2></div><div class="au-device"><div class="au-laptop"><div class="au-screen"><iframe src="/home" title="SymptoSense project preview" loading="lazy" tabindex="-1"></iframe></div><div class="au-base"></div></div></div></section>
-      <section class="au-section au-final au-reveal"><span class="au-kicker">06 · 🌟 SymptoSense</span><p>__FINAL__</p><a class="btn pri" href="/chat">__CTA__</a></section>
+
+      <section class="au-section au-what au-reveal"><div class="au-split">
+        <div class="au-text"><span class="au-kicker">03 · 🩺</span><h2>__WHAT_TITLE__</h2><div class="au-copy"><p>__WHAT__</p></div></div>
+        <div class="au-concept" aria-hidden="true"><span>🩺</span><span>＋</span><span>📊</span><span>＋</span><span>🤖</span><i></i><b>SymptoSense</b></div>
+      </div></section>
+
+      <section class="au-section au-purpose au-reveal"><span class="au-kicker">04 · ❤️</span><h2>__WHY_TITLE__</h2><div class="au-copy"><p>__WHY__</p></div><div class="au-purpose-icons" aria-label="__WHY_TITLE__"><div class="au-purpose-item"><span>💡</span>__IDEA__</div><div class="au-purpose-item"><span>❤️</span>__PURPOSE__</div><div class="au-purpose-item"><span>🩺</span>__HEALTH__</div></div></section>
+
+      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">05 · 💻</span><h2>__REAL_TITLE__</h2><p>__REAL_COPY__</p></div><div class="au-device"><div class="au-laptop"><div class="au-screen au-live-frame"><img src="/icons/about-us-phone.webp" width="621" height="677" alt="__PROJECT_ALT__" loading="lazy"><iframe src="/home" title="__FRAME_TITLE__" loading="lazy" tabindex="-1" onload="try{if(this.contentDocument&amp;&amp;this.contentDocument.body&amp;&amp;this.contentDocument.body.innerText.trim())this.parentElement.classList.add('is-loaded')}catch(e){}"></iframe></div><div class="au-base"></div></div></div></section>
+
+      <section class="au-section au-message au-reveal"><div class="au-message-card"><div><span class="au-kicker">06 · ✍️</span><h2>__MESSAGE_TITLE__</h2><blockquote>__MESSAGE__</blockquote><cite>— __NAME__</cite></div><div class="au-voice-mark" aria-hidden="true"><span>R</span><div>💡 · 📊 · 🩺</div></div></div></section>
+
+      <section class="au-section au-final au-reveal"><span class="au-kicker">07 · SymptoSense</span><h2>__DISCOVER__</h2><p>__FINAL__</p><a class="btn pri" href="/chat">__CTA__</a></section>
     </main>"""
-    roles=[('📊','Data Analysis'),('⚙️','Data Processing'),('🤖','AI / Machine Learning'),('🧠','Medical Knowledge Base'),('✨','User Experience'),('📈','Admin Analytics'),('🧩','System Design')]
-    cards=''.join('<div class="au-role-card"><span>'+icon+'</span><b>'+label+'</b></div>' for icon,label in roles)
-    rep={'__ABOUT__':bi('عني','About me'),'__NAME__':bi('ريماس حميد السلمي','Remas Hameed Alsolami'),'__ROLE__':bi('طالبة علوم بيانات ومطورة مشروع SymptoSense','Data Science student and creator of SymptoSense'),'__HERO__':bi('طورت SymptoSense كفكرة تجمع بين علوم البيانات والذكاء الاصطناعي لمساعدة المستخدم على فهم أعراضه وتنظيم المعلومات الصحية بطريقة أبسط وأكثر وضوحًا.','I developed SymptoSense as an idea combining data science and artificial intelligence to help people understand symptoms and organize health information more simply and clearly.'),'__PORTRAIT__':portrait,'__ART_ALT__':bi('تصميم من مشروع SymptoSense يجمع الصحة والذكاء الاصطناعي','A SymptoSense project visual combining healthcare and AI'),'__IDEA_TITLE__':bi('فكرة SymptoSense','The SymptoSense idea'),'__IDEA__':bi('بدأت الفكرة من ملاحظة صعوبة فهم الأعراض والمعلومات الصحية المتفرقة. صممت تجربة تستخدم معالجة البيانات وقاعدة معرفة طبية وطبقة أمان، ثم تستفيد من الذكاء الاصطناعي لشرح المعلومات بلغة مبسطة ومساعدة المستخدم على معرفة الخطوة التالية دون تقديم تشخيص قطعي.','The idea began with how difficult it can be to understand symptoms and fragmented health information. I designed an experience using data processing, a medical knowledge base, and a safety layer, then AI to explain information simply and help users understand the next step without giving a definitive diagnosis.'),'__MY_ROLE__':bi('دوري في SymptoSense','My role in SymptoSense'),'__ROLE_CARDS__':cards,'__PROJECT_VISUALS__':bi('صور من المشروع','Project visuals'),'__FINAL__':bi('SymptoSense هو مشروعي لتطبيق ما تعلمته في علوم البيانات والذكاء الاصطناعي على فكرة صحية تهدف إلى تقديم تجربة أبسط وأكثر تنظيمًا للمستخدم.','SymptoSense is my project for applying what I have learned in data science and artificial intelligence to a health-focused idea that aims to give users a simpler, more organized experience.'),'__CTA__':bi('ابدأ باستخدام SymptoSense','Start using SymptoSense')}
-    for k,v in rep.items(): body=body.replace(k,v)
-    extra=ABOUT_US_CSS+""".au-photo-placeholder{width:min(360px,94%);aspect-ratio:1;border-radius:34px;background:linear-gradient(145deg,#e7f6ff,#f3efff);border:1px dashed #91bdda;display:grid;place-items:center;align-content:center;gap:12px;color:#174a73}.au-photo-placeholder span{width:100px;height:100px;border-radius:32px;background:#287fc1;color:white;display:grid;place-items:center;font-size:44px;font-weight:900}.au-personal-img,.au-project-art{width:min(390px,96%);max-height:430px;object-fit:contain;border-radius:30px;box-shadow:0 16px 36px rgba(31,86,127,.12)}.au-role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:24px}.au-role-card{min-height:120px;border:1px solid #d5e6ef;border-radius:20px;background:linear-gradient(145deg,#fff,#f4faff);display:grid;place-items:center;align-content:center;gap:8px}.au-role-card span{font-size:30px}.au-tech .au-purpose-icons{grid-template-columns:repeat(4,1fr);max-width:none}@media(max-width:760px){.au-tech .au-purpose-icons{grid-template-columns:1fr 1fr}.au-role-grid{grid-template-columns:1fr 1fr}}"""
-    return _page(bi('من نحن — ريماس حميد السلمي','About — Remas Hameed Alsolami'),body,desc=bi('تعرف على ريماس حميد السلمي وفكرة SymptoSense.','Meet Remas Hameed Alsolami and the idea behind SymptoSense.'),extra_css=extra)
+    replacements = {
+        "__ABOUT__": bi("عن ريماس", "About Remas"),
+        "__HELLO__": bi("مرحبًا، أنا ريماس حميد السلمي 👋", "Hi, I'm Remas Hameed Alsolami 👋"),
+        "__INTRO__": bi("أنا ريماس حميد السلمي، طالبة في تخصص علوم البيانات وتحليلها، وشغوفة ببناء الحلول التقنية التي تحمل أثرًا حقيقيًا في حياة الناس.", "I am Remas Hameed Alsolami, a Data Science and Analytics student who is passionate about building technology solutions that make a genuine difference in people's lives."),
+        "__HERO_ALT__": bi("رسم تجريدي يجمع الرعاية الصحية والبيانات والذكاء الاصطناعي", "An abstract visual combining healthcare, data, and artificial intelligence"),
+        "__STORY_ALT__": bi("رسم يوضح انتقال الفكرة عبر البيانات والذكاء الاصطناعي إلى تجربة صحية رقمية", "An illustration showing an idea becoming a digital health experience through data and AI"),
+        "__STORY_TITLE__": bi("قصتي مع SymptoSense", "My story with SymptoSense"),
+        "__STORY_P1__": bi("بدأ شغفي من سؤال بسيط: كيف يمكن للتقنية أن تكون أقرب للإنسان؟", "My passion began with a simple question: How can technology feel closer to people?"),
+        "__STORY_P2__": bi("ومن هنا جاءت فكرتي؛ أن أوظّف ما أتعلمه في علوم البيانات والتقنية لبناء حل يساعد على فهم الأعراض الصحية بصورة أوضح وأسهل.", "That is where my idea began: to use what I learn in data science and technology to build a solution that makes health symptoms clearer and easier to understand."),
+        "__WHAT_TITLE__": bi("ما هو SymptoSense؟", "What is SymptoSense?"),
+        "__WHAT__": bi("لم يكن هدفي إنشاء موقع فقط، بل صناعة تجربة تمنح المستخدم معرفة أولية تساعده على فهم ما يشعر به واتخاذ الخطوة المناسبة بوعي.", "My goal was not simply to create a website, but to design an experience that gives people initial knowledge, helps them understand what they are feeling, and supports them in choosing the right next step with greater awareness."),
+        "__WHY_TITLE__": bi("لماذا هذا المشروع مهم بالنسبة لي؟", "Why this project matters to me"),
+        "__WHY__": bi("أؤمن أن أعظم أثر للتقنية هو أن تجعل حياة الإنسان أبسط، ووعيه أكبر، وقراراته أذكى.", "I believe technology has its greatest impact when it makes people's lives simpler, their awareness greater, and their decisions smarter."),
+        "__IDEA__": bi("فكرة", "Idea"), "__PURPOSE__": bi("هدف", "Purpose"), "__HEALTH__": bi("صحة", "Healthcare"),
+        "__REAL_TITLE__": bi("من فكرة إلى مشروع حقيقي", "From an idea to a real project"),
+        "__REAL_COPY__": bi("واجهة من النسخة الحالية للمشروع، مع عرض بصري بديل إذا تعذر تحميل المعاينة الحية.", "A view of the current project, with a visual fallback when the live preview cannot load."),
+        "__PROJECT_ALT__": bi("تصميم أصلي من SymptoSense يعرض تجربة صحية على الهاتف", "An original SymptoSense visual showing the mobile health experience"),
+        "__FRAME_TITLE__": bi("معاينة مباشرة لموقع SymptoSense", "Live preview of the SymptoSense website"),
+        "__MESSAGE_TITLE__": bi("رسالة ريماس", "A message from Remas"),
+        "__MESSAGE__": bi("SymptoSense هو مشروعي لتطبيق ما تعلمته في علوم البيانات والذكاء الاصطناعي على فكرة صحية تهدف إلى تقديم تجربة أبسط وأكثر تنظيمًا للمستخدم.", "SymptoSense is my project for applying what I have learned in data science and artificial intelligence to a health-focused idea that aims to give users a simpler, more organized experience."),
+        "__NAME__": bi("ريماس حميد السلمي", "Remas Hameed Alsolami"),
+        "__DISCOVER__": bi("تعرّف على SymptoSense 🩺", "Discover SymptoSense 🩺"),
+        "__FINAL__": bi("افهم أعراضك. اعرف خطوتك التالية.", "Understand your symptoms. Know your next step."),
+        "__CTA__": bi("جرّب SymptoSense", "Try SymptoSense"),
+    }
+    for key, value in replacements.items():
+        body = body.replace(key, value)
+    return _page(
+        bi("من نحن — ريماس حميد السلمي", "About — Remas Hameed Alsolami"),
+        body,
+        desc=bi("تعرف على ريماس حميد السلمي وقصة تطوير SymptoSense.", "Meet Remas Hameed Alsolami and the story behind SymptoSense."),
+        extra_css=ABOUT_US_POLISH_CSS,
+    )
 
 
 def about_page():
@@ -8743,6 +8980,76 @@ def _send_auth_email(email, subject, html, category="auth"):
         return False, "email_provider_error"
 
 
+def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_url,
+                       link_fallback, footer_tagline=None, post_button_paragraphs=None):
+    """Render a compact, email-client-safe transactional message."""
+    from html import escape
+
+    ar = lang == "ar"
+    direction = "rtl" if ar else "ltr"
+    align = "right" if ar else "left"
+    safe_url = escape(str(action_url), quote=True)
+    safe_title = escape(str(title))
+    safe_greeting = escape(str(greeting))
+    safe_button = escape(str(button_label))
+    safe_fallback = escape(str(link_fallback))
+    paragraph_html = "".join(
+        '<p style="margin:0 0 16px;color:#243b53;font-size:16px;line-height:1.75;">%s</p>'
+        % escape(str(paragraph))
+        for paragraph in paragraphs
+    )
+    post_button_html = "".join(
+        '<p style="margin:0 0 16px;color:#243b53;font-size:16px;line-height:1.75;">%s</p>'
+        % escape(str(paragraph))
+        for paragraph in (post_button_paragraphs or [])
+    )
+    tagline_html = (
+        '<div style="margin-top:4px;color:#486581;font-size:13px;line-height:1.6;">%s</div>'
+        % escape(str(footer_tagline))
+        if footer_tagline else ""
+    )
+    return '''<!doctype html>
+<html lang="{lang}" dir="{direction}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#f3f8fc;font-family:Arial,'Helvetica Neue',sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#f3f8fc;">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #d9e8f3;border-radius:14px;">
+        <tr><td style="padding:30px 28px 12px;text-align:{align};">
+          <div style="color:#1769aa;font-size:20px;font-weight:700;line-height:1.4;">SymptoSense 🩺</div>
+        </td></tr>
+        <tr><td style="padding:8px 28px 30px;text-align:{align};">
+          <h1 style="margin:0 0 20px;color:#12355b;font-size:26px;line-height:1.35;font-weight:700;">{title}</h1>
+          <p style="margin:0 0 16px;color:#243b53;font-size:16px;line-height:1.75;">{greeting}</p>
+          {paragraphs}
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
+            <tr><td bgcolor="#1976b9" style="border-radius:8px;text-align:center;">
+              <a href="{url}" style="display:inline-block;padding:13px 24px;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.4;">{button}</a>
+            </td></tr>
+          </table>
+          {post_button}
+          <p style="margin:24px 0 8px;color:#486581;font-size:14px;line-height:1.7;">{fallback}</p>
+          <p style="margin:0;direction:ltr;text-align:left;word-break:break-all;font-size:13px;line-height:1.6;">
+            <a href="{url}" style="color:#1769aa;text-decoration:underline;word-break:break-all;">{url}</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:20px 28px;background-color:#eef6fb;border-top:1px solid #d9e8f3;text-align:{align};border-radius:0 0 14px 14px;">
+          <div style="color:#12355b;font-size:14px;font-weight:700;line-height:1.6;">SymptoSense 🩺</div>
+          {tagline}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>'''.format(
+        lang="ar" if ar else "en", direction=direction, align=align,
+        title=safe_title, greeting=safe_greeting, paragraphs=paragraph_html,
+        post_button=post_button_html,
+        url=safe_url, button=safe_button, fallback=safe_fallback,
+        tagline=tagline_html,
+    )
+
+
 def _issue_verification_email(user_id, lang=None):
     lang = lang or _lang()
     token, email, reason = platform_v2.create_email_verification(int(user_id))
@@ -8750,17 +9057,31 @@ def _issue_verification_email(user_id, lang=None):
         return False, reason or "verification_unavailable"
     verify_url=_site_url().rstrip("/")+"/verify-email/"+token
     ar=lang=="ar"
-    subject="تحقق من بريدك الإلكتروني — SymptoSense" if ar else "Verify your email — SymptoSense"
-    html=(
-        '<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><h2>تحقق من بريدك الإلكتروني</h2>'
-        '<p>اضغط الرابط التالي لإكمال إنشاء حسابك في SymptoSense. الرابط صالح لمدة 24 ساعة.</p>'
-        '<p><a href="%s">تحقق من البريد الإلكتروني</a></p>'
-        '<p>إذا لم تنشئ هذا الحساب، فتجاهل الرسالة.</p></div>' % verify_url
-        if ar else
-        '<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>Verify your email</h2>'
-        '<p>Use the link below to complete your SymptoSense account. The link is valid for 24 hours.</p>'
-        '<p><a href="%s">Verify email</a></p>'
-        '<p>If you did not create this account, you can ignore this message.</p></div>' % verify_url
+    subject="تأكيد بريدك الإلكتروني — SymptoSense" if ar else "Confirm your email — SymptoSense"
+    html=_render_auth_email(
+        lang,
+        "تأكيد بريدك الإلكتروني" if ar else "Confirm your email",
+        "مرحبًا 👋" if ar else "Hi 👋",
+        ([
+            "شكرًا لإنشاء حسابك في SymptoSense 🩺",
+            "لتأكيد بريدك الإلكتروني وإكمال إعداد حسابك، اضغط على الزر أدناه:",
+        ] if ar else [
+            "Thanks for creating your SymptoSense 🩺 account.",
+            "Please confirm your email address to finish setting up your account:",
+        ]),
+        "تأكيد البريد الإلكتروني" if ar else "Confirm Email",
+        verify_url,
+        "إذا لم يعمل الزر، يمكنك فتح الرابط التالي:" if ar else
+        "If the button doesn't work, open the following link:",
+        "افهم أعراضك. اعرف خطوتك التالية." if ar else
+        "Understand your symptoms. Know your next step.",
+        ([
+            "هذا الرابط صالح لفترة محدودة ويمكن استخدامه مرة واحدة فقط.",
+            "إذا لم تقم بإنشاء حساب في SymptoSense، يمكنك تجاهل هذه الرسالة بأمان.",
+        ] if ar else [
+            "This link is valid for a limited time and can only be used once.",
+            "If you didn't create a SymptoSense account, you can safely ignore this email.",
+        ]),
     )
     sent, send_error=_send_auth_email(email, subject, html, "verify_email")
     if not sent:
@@ -8772,15 +9093,30 @@ def _issue_verification_email(user_id, lang=None):
 
 def _send_password_reset_email(email, reset_url, lang=None):
     lang=lang or _lang(); ar=lang=="ar"
-    subject="استعادة كلمة مرور SymptoSense" if ar else "Reset your SymptoSense password"
-    html=(
-        '<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><h2>استعادة كلمة المرور</h2>'
-        '<p>استخدم الرابط التالي خلال 30 دقيقة لتعيين كلمة مرور جديدة:</p><p><a href="%s">تعيين كلمة مرور جديدة</a></p>'
-        '<p>إذا لم تطلب هذا، فتجاهل الرسالة.</p></div>' % reset_url
-        if ar else
-        '<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>Password reset</h2>'
-        '<p>Use this link within 30 minutes to set a new password:</p><p><a href="%s">Set a new password</a></p>'
-        '<p>If you did not request this, ignore this email.</p></div>' % reset_url
+    subject="إعادة تعيين كلمة المرور — SymptoSense" if ar else "Reset your password — SymptoSense"
+    html=_render_auth_email(
+        lang,
+        "إعادة تعيين كلمة المرور" if ar else "Reset your password",
+        "مرحبًا،" if ar else "Hi,",
+        ([
+            "تلقينا طلبًا لإعادة تعيين كلمة مرور حسابك في SymptoSense.",
+            "اضغط على الزر التالي لإنشاء كلمة مرور جديدة:",
+        ] if ar else [
+            "We received a request to reset the password for your SymptoSense account.",
+            "Use the button below to create a new password:",
+        ]),
+        "إعادة تعيين كلمة المرور" if ar else "Reset Password",
+        reset_url,
+        "إذا لم يعمل الزر، يمكنك فتح الرابط التالي:" if ar else
+        "If the button doesn't work, open the following link:",
+        None,
+        ([
+            "هذا الرابط مؤقت ويمكن استخدامه مرة واحدة فقط.",
+            "إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذه الرسالة ولن يتم تغيير حسابك.",
+        ] if ar else [
+            "This link is temporary and can only be used once.",
+            "If you didn't request a password reset, you can safely ignore this email. Your account will remain unchanged.",
+        ]),
     )
     return _send_auth_email(email, subject, html, "password_reset")
 
@@ -9270,12 +9606,16 @@ def api_login():
     db.init_db(); platform_v2.init_schema()
     try:
         data=request.get_json(force=True); email=(data.get("email") or "").strip().lower(); password=data.get("password") or ""
+        network_origin=request.remote_addr or "unknown"
+        if not platform_v2.login_attempt_allowed(email,network_origin):
+            return jsonify({"ok":False,"error":"rate_limited"}),429
         result=db.authenticate_ss_user_status(email,password); user_id=result.get("user_id") if result.get("ok") else None
         if result.get("error")=="verification_required" and result.get("user_id"):
             session.clear(); session["pending_verification_user_id"]=int(result["user_id"]); session.permanent=True
             return jsonify({"ok":False,"error":"verification_required","redirect_url":"/verify-email"}),403
         if user_id: db.promote_existing_owner_admin(user_id)
         login_user=db.get_ss_user(user_id) if user_id else None
+        platform_v2.record_login_attempt(email,network_origin,bool(user_id))
         platform_v2.log_login(email,user_id,bool(user_id),bool(login_user and login_user.get("role")=="admin"),request.headers.get("User-Agent",""))
         if user_id:
             session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
@@ -9703,7 +10043,9 @@ def api_stats():
 # ---------------------------------------------------------------- Medical Knowledge Base APIs
 
 def _mk_error(exc, status=400):
-    return jsonify({"ok": False, "error": str(exc)[:180]}), status
+    request_id=getattr(g,"request_id","")
+    app.logger.warning("API request failed; request_id=%s route=%s error_type=%s",request_id,request.path,type(exc).__name__)
+    return jsonify({"ok":False,"error":"تعذر إكمال الطلب حاليًا." if _lang()=="ar" else "Unable to complete the request right now.","request_id":request_id}),status
 
 
 @app.route("/api/diseases", methods=["GET"])
@@ -10406,7 +10748,9 @@ def api_blood_history():
             })
         return jsonify({"ok": True, "tests": out})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        request_id=getattr(g,"request_id","")
+        app.logger.error("Analysis failed; request_id=%s error_type=%s",request_id,type(e).__name__)
+        return jsonify({"ok":False,"error":"تعذر تشغيل التحليل حاليًا. حاول مرة أخرى." if _lang()=="ar" else "Unable to run the assessment right now. Please try again.","request_id":request_id}),500
 
 
 @app.route("/api/family", methods=["GET", "POST"])
@@ -11203,7 +11547,7 @@ def api_search():
             "suggestions": health_search.suggestion_terms(lang),
         })
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e,500)
 
 
 @app.route("/api/explain")
@@ -11320,7 +11664,7 @@ def api_meds():
         warnings = medication_warnings.check_medications(data.get("text", "")) or []
         return jsonify({"ok": True, "warnings": warnings})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)})
+        return _mk_error(e,500)
 
 
 @app.route("/api/drug")

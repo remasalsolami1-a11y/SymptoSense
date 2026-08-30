@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "SymptoSense V2 — مساعدك الصحي الذكي",
-  "short_name": "SymptoSense V2",
+  "name": "SymptoSense — مساعدك الصحي الذكي",
+  "short_name": "SymptoSense",
   "description": "منصة صحية تثقيفية لفهم الأعراض وتقييم الخطورة والوصول إلى مصادر موثوقة.",
   "lang": "ar",
   "dir": "rtl",

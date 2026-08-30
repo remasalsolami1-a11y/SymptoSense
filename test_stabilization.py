@@ -4,6 +4,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +20,7 @@ import medical_knowledge
 import medication_push
 import medication_warnings
 import platform_v2
+import analysis_core
 import webapp
 
 
@@ -44,11 +46,21 @@ class StabilizationTest(unittest.TestCase):
 
     def test_public_route_smoke_has_no_404_or_500(self):
         c=self.client("en")
-        routes=["/","/home","/about-us","/privacy","/terms","/sources","/chat","/blood","/meds","/firstaid","/tips","/relax","/emergency","/checkin","/search","/calculators","/login","/register","/forgot-password","/manifest.webmanifest","/service-worker.js","/icons/icon-192.png","/icons/about-us-phone.webp"]
+        routes=["/","/home","/about-us","/privacy","/terms","/sources","/chat","/blood","/meds","/firstaid","/tips","/relax","/emergency","/checkin","/search","/calculators","/login","/register","/forgot-password","/manifest.webmanifest","/service-worker.js","/icons/icon-192.png","/icons/about-us-phone.webp","/static/images/about-hero.webp","/static/images/about-story.webp","/static/images/symptosense-social-preview.png"]
         for route in routes:
             with self.subTest(route=route):
                 response=c.get(route,follow_redirects=False)
                 self.assertNotIn(response.status_code,{404,500,502,503})
+                response.close()
+
+    def test_all_static_get_routes_avoid_server_errors(self):
+        c=self.client("en")
+        routes=sorted({rule.rule for rule in webapp.app.url_map.iter_rules() if "GET" in rule.methods and "<" not in rule.rule and rule.rule!="/static/<path:filename>"})
+        self.assertGreaterEqual(len(routes),70)
+        for route in routes:
+            with self.subTest(route=route):
+                response=c.get(route,follow_redirects=False)
+                self.assertNotIn(response.status_code,{500,502,503})
                 response.close()
 
     def test_private_routes_and_admin_authorization(self):
@@ -117,11 +129,97 @@ class StabilizationTest(unittest.TestCase):
                 checked=subprocess.run(["node","--check"],input=script,text=True,capture_output=True)
                 self.assertEqual(checked.returncode,0,f"{route} script {index}: {checked.stderr}")
 
+    def test_about_visual_assets_social_metadata_and_readme_links(self):
+        project_root=Path(__file__).resolve().parents[1]
+        for lang,direction,name in (("ar","rtl","ريماس حميد السلمي"),("en","ltr","Remas Hameed Alsolami")):
+            c=self.client(lang); response=c.get("/about-us"); html=response.get_data(as_text=True)
+            self.assertEqual(response.status_code,200)
+            self.assertIn(f'<html lang="{lang}" dir="{direction}">',html)
+            self.assertIn(name,html)
+            self.assertIn('/static/images/about-hero.webp',html)
+            self.assertIn('/static/images/about-story.webp',html)
+            self.assertIn('/icons/about-us-phone.webp',html)
+            self.assertNotIn('remas.jpg',html)
+            self.assertNotIn('photo placeholder',html.lower())
+            self.assertNotIn('Technologies',html)
+            self.assertNotIn('PostgreSQL / SQLite',html)
+            self.assertIn('prefers-reduced-motion:reduce',html)
+        legacy=self.client("en").get("/about",follow_redirects=False)
+        self.assertEqual(legacy.status_code,302)
+        self.assertTrue(legacy.headers["Location"].endswith("/about-us"))
+        home=self.client("en").get("/home").get_data(as_text=True)
+        expected="http://localhost/static/images/symptosense-social-preview.png"
+        self.assertIn(f'<meta property="og:image" content="{expected}">',home)
+        self.assertIn('<meta property="og:url" content="http://localhost/home">',home)
+        self.assertIn('<meta name="twitter:card" content="summary_large_image">',home)
+        readme=(project_root/"README.md").read_text(encoding="utf-8")
+        relative_links=re.findall(r'!?(?:\[[^\]]*\])\((?!https?://|mailto:|#)([^)]+)\)',readme)
+        missing=[]
+        for link in relative_links:
+            clean=link.split("#",1)[0].strip().strip("<>")
+            if clean and not (project_root/clean).resolve().exists(): missing.append(clean)
+        self.assertEqual(missing,[],f"Broken README asset links: {missing}")
+
     def test_analysis_validation_does_not_return_server_error(self):
         c=self.client("en")
         response=c.post("/api/analyze",json={"lang":"en","symptoms":[]})
         self.assertIn(response.status_code,{400,403})
         self.assertLess(response.status_code,500)
+
+    def test_red_flags_override_condition_output(self):
+        result=analysis_core.run_analysis({"user_id":"red-flag-test","age":30,"gender":"female","symptoms":["severe chest pain","difficulty breathing"],"duration":"now","severity":5,"conditions":"","medications":"","notes":""},lang="en")
+        self.assertEqual(result.get("urgency"),"high")
+        self.assertTrue(result.get("emergency"))
+        self.assertIn("withheld",result.get("possible_conditions","").lower())
+
+    def test_analysis_and_reminder_idor_is_denied(self):
+        owner_id=self.verified_user("idor-owner@example.test"); attacker_id=self.verified_user("idor-attacker@example.test")
+        owner_key=f"account:{owner_id}"; record_id=db.save_record(owner_key,"en",30,"female",["headache"],"1 day",2,"low")
+        db.save_result(owner_key,record_id,{"symptoms":["headache"],"risk_level":"low"})
+        attacker=self.client(); self.login_session(attacker,attacker_id)
+        self.assertEqual(attacker.get(f"/api/analysis/{record_id}").status_code,404)
+        self.assertEqual(attacker.delete(f"/api/analysis/{record_id}").status_code,404)
+        owner=self.client(); self.login_session(owner,owner_id)
+        owner.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        created=owner.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]}).get_json()["id"]
+        attacker.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        self.assertEqual(attacker.put(f"/api/meds/plan/{created}",json={"med_name":"Changed","times":["09:00"]}).status_code,403)
+        self.assertEqual(attacker.delete(f"/api/meds/plan/{created}").status_code,404)
+
+    def test_sensitive_double_actions_are_safe(self):
+        uid=self.verified_user("double-action@example.test"); c=self.client(); self.login_session(c,uid)
+        c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        pid=c.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]}).get_json()["id"]
+        self.assertEqual(c.delete(f"/api/meds/plan/{pid}").status_code,200)
+        self.assertEqual(c.delete(f"/api/meds/plan/{pid}").status_code,200)
+        self.assertTrue(db.claim_push_delivery("https://push.invalid/one",pid,"2026-08-30","08:00"))
+        self.assertFalse(db.claim_push_delivery("https://push.invalid/one",pid,"2026-08-30","08:00"))
+
+    def test_privacy_consent_withdrawal_and_health_delete(self):
+        uid=self.verified_user("privacy-test@example.test"); c=self.client(); self.login_session(c,uid)
+        enabled=c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":True}).get_json()
+        self.assertTrue(enabled["consent"]["analytics_research"])
+        withdrawn=c.post("/api/privacy/withdraw-analytics").get_json()
+        self.assertFalse(withdrawn["consent"]["analytics_research"])
+        c.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]})
+        deleted=c.post("/api/privacy/delete-health-data")
+        self.assertEqual(deleted.status_code,200)
+        self.assertEqual(c.get("/api/meds/plan").get_json()["plans"],[])
+        self.assertIsNotNone(db.get_ss_user(uid))
+
+    def test_error_pages_and_security_request_id(self):
+        c=self.client("en"); missing=c.get("/definitely-not-a-route")
+        self.assertEqual(missing.status_code,404); self.assertIn("Page not found",missing.get_data(as_text=True))
+        self.assertTrue(missing.headers.get("X-Request-ID")); self.assertEqual(missing.headers.get("X-Frame-Options"),"DENY")
+
+    def test_search_failure_is_generic_and_has_request_id(self):
+        c=self.client("en")
+        with mock.patch.object(webapp.health_search,"search_health",side_effect=RuntimeError("database password must never leak")):
+            failed=c.get("/api/search",query_string={"q":"headache","lang":"en"})
+        self.assertEqual(failed.status_code,500)
+        payload=failed.get_json(); self.assertFalse(payload["ok"])
+        self.assertNotIn("database password",payload["error"])
+        self.assertEqual(payload["request_id"],failed.headers["X-Request-ID"])
 
 
 if __name__=="__main__": unittest.main(verbosity=2)

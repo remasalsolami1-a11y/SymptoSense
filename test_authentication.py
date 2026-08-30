@@ -121,6 +121,48 @@ class AuthenticationIntegrationTest(unittest.TestCase):
             conn.close()
         return int(user_id)
 
+    def test_auth_email_templates_are_bilingual_responsive_and_safe(self):
+        production_origin = "https://symptosense-production-b2e5.up.railway.app"
+
+        with mock.patch.object(webapp, "_site_url", return_value=production_origin), \
+                mock.patch.object(
+                    platform_v2,
+                    "create_email_verification",
+                    return_value=("opaque-verification-value", "arabic@example.test", None),
+                ):
+            ok, error = webapp._issue_verification_email(42, "ar")
+        self.assertTrue(ok)
+        self.assertIsNone(error)
+        verification = self.sent[-1]
+        verification_url = production_origin + "/verify-email/opaque-verification-value"
+        self.assertEqual(verification["subject"], "تأكيد بريدك الإلكتروني — SymptoSense")
+        self.assertIn('<html lang="ar" dir="rtl">', verification["html"])
+        self.assertIn("تأكيد البريد الإلكتروني", verification["html"])
+        self.assertEqual(verification["html"].count(verification_url), 3)
+        self.assertNotIn("localhost", verification["html"])
+        self.assertNotIn("<script", verification["html"].lower())
+
+        reset_url = production_origin + "/reset-password/opaque-reset-value"
+        ok, error = webapp._send_password_reset_email(
+            "english@example.test", reset_url, "en"
+        )
+        self.assertTrue(ok)
+        self.assertIsNone(error)
+        reset = self.sent[-1]
+        self.assertEqual(reset["subject"], "Reset your password — SymptoSense")
+        self.assertIn('<html lang="en" dir="ltr">', reset["html"])
+        self.assertIn("Reset Password", reset["html"])
+        self.assertEqual(reset["html"].count(reset_url), 3)
+        self.assertNotIn("localhost", reset["html"])
+        self.assertNotIn("<script", reset["html"].lower())
+
+        combined = (verification["html"] + reset["html"]).lower()
+        for forbidden in (
+            "password_hash", "api_key", "session_token", "user_id",
+            "medical_history", "database id", "authorization:",
+        ):
+            self.assertNotIn(forbidden, combined)
+
     def test_complete_user_lifecycle_and_rbac(self):
         client = self.client("en")
         email = "new-auth-user@example.test"
