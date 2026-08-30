@@ -91,7 +91,7 @@ input,select,textarea{border-color:var(--v2-line)!important;border-radius:12px!i
 .account-avatar,.account-menu-head{background:var(--v2-bg)!important;border-color:var(--v2-line)!important}.account-name,.account-menu-head strong{color:var(--v2-blue-dark)!important}.account-label,.account-menu-head small{color:var(--v2-muted)!important}
 .v2-nav-cta{background:var(--v2-blue)!important;color:#fff!important;padding-inline:17px!important}
 .v2-services-menu{min-width:260px}.v2-services-menu a{border-radius:8px!important}
-.footer{background:#163B5C!important}.f-links{flex-wrap:wrap}
+.f-links{flex-wrap:wrap}
 .v2-section-head{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin:34px 0 16px}
 .v2-section-head h2{font-size:clamp(21px,3vw,29px)}
 .v2-services-more{border:1px solid var(--v2-line);border-radius:18px;background:#fff;overflow:hidden;margin:20px 0}
