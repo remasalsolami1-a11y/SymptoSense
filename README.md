@@ -1,178 +1,151 @@
-# 🏥 SymptoSense
+# SymptoSense 🩺
 
-> 📱 **يدعم PWA:** يمكن تثبيت الموقع على شاشة iPhone وAndroid كتطبيق من الرابط نفسه. راجعي [دليل النشر والتثبيت](./DEPLOY_GUIDE_AR.md).
+**Understand your symptoms. Know your next step.**
 
-> 🔐 **حسابات آمنة:** فحص الأعراض والبحث عن الأدوية متاحان دون حساب، بينما تتطلب تذكيرات الأدوية وملفات العائلة تسجيل الدخول حتى تبقى البيانات مرتبطة بصاحبها ومتاحة على أجهزته. بعد تسجيل الدخول يفتح الملف الصحي الخاص مباشرة ويعرض الأعراض السابقة والأدوية والحساسية والحالات الصحية وفحوصات الدم والعائلة. الضغط على اسم المستخدم يفتح الملف الشخصي، والسهم المجاور له يعرض خيارات الحساب فقط.
+SymptoSense is a bilingual health-awareness web application created by **Remas Hameed Alsolami**, a Data Science and Analytics student. It brings symptom review, safety checks, explainable results, medication information, and trusted medical references into one calm, accessible experience.
 
-> 🌐 **اختيار لغة واضح:** رابط الموقع الأساسي وفتح التطبيق يعرضان شاشة عربية/إنجليزية محايدة أولًا. يُحفظ الاختيار على الجهاز، ويمكن تغييره لاحقًا من داخل الموقع.
+> SymptoSense provides educational information and an initial assessment only. It is not a medical diagnosis and does not replace a qualified healthcare professional.
 
-> 📐 **متجاوب مع جميع المقاسات:** شريط كامل للكمبيوتر، ورأس مختصر مع تنقل سفلي للآيباد والجوال، وبطاقات ونماذج ومحادثة تتكيف تلقائيًا من الشاشات الصغيرة حتى الشاشات الكبيرة.
+![SymptoSense social preview](./static/images/symptosense-social-preview.png)
 
-**بوت تيليجرام ذكي لتحليل الأعراض الصحية وتوعية المستخدمين — مبني بلغة Python، يجمع بين نموذج لغوي كبير (LLM)، نموذج تعلم آلة مدرّب محلياً، وبيانات مجتمعية حية.**
+## About
 
-> ⚠️ هذا المشروع لأغراض التوعية والتعليم فقط، ولا يُغني عن استشارة طبيب مختص.
+The project explores how data science, artificial intelligence, and thoughtful product design can make health information easier to understand without presenting uncertain results as confirmed diagnoses.
 
----
+The web application supports Arabic RTL and English LTR, works as a Progressive Web App, and separates public educational tools from private account features.
 
-## 📐 مخطط النظام (Architecture)
+## Why I built it
 
-![SymptoSense Architecture](architecture_diagram.svg)
+SymptoSense began with a simple question: **How can technology feel closer to people?**
 
----
+The goal is to provide a structured, calm starting point for people who want to understand symptoms, recognize warning signs, and identify an appropriate next step while keeping medical limitations visible.
 
-## ✨ الميزات
+## Core capabilities
 
-| الميزة | الوصف |
-|---|---|
-| 🧠 **تحليل مدعوم بقاعدة معرفة** | يطبّع الأعراض، يسترجع العلاقات والمصادر الموثقة، يطبق قواعد الأمان، ثم يستخدم Groq لشرح النتيجة فقط |
-| 💬 **شخصية تفاعلية** | كل رد يتضمن ملاحظة شخصية متعاطفة مبنية على حالة المريض تحديداً، مو نصوص جاهزة |
-| 🕐 **ذاكرة عبر الوقت** | يقارن كل تحليل جديد بآخر زيارة لنفس المستخدم (تغير الشدة، تكرار الأعراض) |
-| 📊 **رادار الأعراض المجتمعي** | إحصائيات حية (نص + رسم بياني) لأكثر الأعراض المُبلّغ عنها خلال آخر 7 أيام، من كل المستخدمين (بيانات مجهولة الهوية) |
-| 🤖 **نموذج تعلم آلة مساعد** | مصنّف Bernoulli Naive Bayes مدرّب على بيانات أعراض اصطناعية منسّقة، ويُستخدم كمكوّن مساعد لا كتشخيص (دقة الاختبار الداخلي: 65.28% — التفاصيل والحدود في [MODEL_CARD.md](./MODEL_CARD.md)) |
-| 🏥 **إيجاد أقرب مستشفى** | بالحالات عالية الخطورة، يطلب موقع المستخدم (اختيارياً) ويبحث عن أقرب المستشفيات عبر OpenStreetMap |
-| 🌙 **وعي بالوقت والعمر** | يراعي وقت الليل (نصائح راحة بدل الحث الفوري على الخروج) والفئة العمرية (طفل / مراهق / بالغ / كبير سن) بصياغة الرد |
-| 💬 **أسئلة متابعة** | بعد كل نتيجة، يقدر المستخدم يسأل أسئلة حرة مبنية على حالته بالضبط |
-| 📦 **تصدير بيانات** | أمر إداري `/export` يرسل كل البيانات المجهولة كملف Excel جاهز لـ Power BI |
-| 📈 **إحصائيات استخدام** | أمر إداري `/stats` يعرض عدد الزوار والتحليلات المكتملة |
-| 🌐 **ثنائي اللغة** | يدعم العربية والإنجليزية بالكامل |
-| 🎨 **هوية بصرية موحّدة** | جميع الصفحات تستخدم الأزرق الطبي والكحلي والخلفيات الفاتحة والنصوص الواضحة، مع تخصيص ألوان الخطر والتنبيه والنجاح للحالات الطبية فقط |
-| 💙 **صفحة من نحن** | صفحة شخصية مستقلة على `/about-us` تحكي قصة ريماس حميد السلمي وفكرة SymptoSense بمرئيات أصلية خفيفة وتصميم متجاوب بالعربية والإنجليزية |
-| 👤 **ملف صحي خاص** | ملخص متجاوب للحساب يعرض آخر الأعراض، التحليلات، الأدوية، الحساسية، الحالات الصحية، فحوصات الدم وملفات العائلة من دون خلط سجلات الأشخاص |
-| 📊 **لوحة إدارة محمية** | إحصائيات الاستخدام وقاعدة المعرفة والأمراض والأعراض والعلاقات والمصادر وعلامات الخطر وسجل التعديلات وصحة النظام |
+- Symptom review with rule-based red-flag checks.
+- Medical knowledge retrieval and explainable condition matching.
+- Arabic and English health search.
+- Medication information and private medication reminders.
+- Educational blood-test explanations.
+- Private health profile and analysis history.
+- Trusted medical sources with official links.
+- Role-protected administration and anonymized operational analytics.
+- Installable PWA experience for supported mobile and desktop browsers.
 
----
+Basic health search and symptom review are available to guests. Saving personal information, history, reminders, and account preferences requires authentication.
 
-## 🧠 Medical Knowledge Base
+## How it works
 
-التقييم في نسخة الويب يعمل بهذا الترتيب:
-
-`User Input → Symptom Normalization → Knowledge Retrieval → Disease/Symptom Matching → Rule-based Safety → AI Explanation → Risk Level → Sources & Next Steps`
-
-- قاعدة بيانات منظمة للأمراض والأعراض والعلاقات والمصادر وقواعد الخطر.
-- تطبيع عربي/إنجليزي للمرادفات مثل «راسي يعورني» و`head pain` إلى `Headache`.
-- مطابقة قابلة للتفسير تعرض: توافق مرتفع / متوسط / منخفض من دون نسب إصابة.
-- طبقة أمان مستقلة عن الذكاء الاصطناعي توقف عرض الاحتمالات عند علامة خطر عاجلة.
-- لا يظهر المحتوى `Draft` أو `Disabled` للمستخدم، ولا تدخل المطابقة إلا الأمراض النشطة ذات المصادر النشطة والموثقة.
-- التحقق من روابط المصادر يفرض HTTPS ونطاقات الجهات الطبية المسموح بها.
-- كل تعديل إداري يُسجّل في Audit Log، مع Version History للأمراض والأعراض والمصادر وقواعد الخطر.
-- البيانات الابتدائية (5 أمراض، 29 عرضًا، 6 جهات مصدر) مجموعة بداية قابلة للتوسعة من `/admin`، وليست موسوعة طبية كاملة.
-- قاعدة المعرفة تخزن محتوى طبيًا عامًا فقط ولا تحتوي أسماء مرضى أو هواتف أو بريدًا أو محادثات شخصية.
-
-الـAI لا يحدد مستوى الخطورة ولا ينشئ قائمة الأمراض أو الروابط؛ هذه الحقول تأتي من قاعدة المعرفة وقواعد الأمان، ويقتصر دوره على الشرح المبسط ضمن السياق المسترجع.
-
----
-
-## 🗂️ هيكل الملفات
-
-```
-SymptoSense/
-├── bot.py                  # نقطة الدخول الرئيسية — منطق المحادثة وكل الميزات
-├── db.py                   # طبقة قاعدة البيانات (SQLite) — سجلات، زيارات، اتجاهات
-├── medical_knowledge.py    # مخطط قاعدة المعرفة، التطبيع، المطابقة، الأمان، التدقيق والإصدارات
-├── platform_v2.py          # التحليلات المجهولة وإدارة المحتوى والأمان وسجل نشاط الإدارة
-├── admin_operational.py    # Drop-off وLive Activity وتقرير Medication Analytics المجهول
-├── medication_push.py      # Medication Reminders وWeb Push الآمن
-├── push_worker.py          # Worker مستمر لإرسال Push من الخلفية
-├── analysis_core.py         # تسلسل التحليل ودمج قاعدة المعرفة مع الشرح بالذكاء الاصطناعي
-├── dashboard.py             # لوحة الإدارة الموحدة ثنائية اللغة
-├── webapp.py                # الواجهة والمسارات وواجهات API العامة والإدارية
-├── ml_diagnosis.py          # استدلال نموذج تعلم الآلة (بايثون خالص، بدون scikit-learn وقت التشغيل)
-├── ml_model.json            # معاملات النموذج المدرّب (مُصدَّرة من train_model.py)
-├── train_model.py           # سكربت تدريب النموذج (scikit-learn) — يُشغَّل مرة واحدة أوفلاين
-├── geo_hospitals.py         # البحث عن أقرب مستشفى عبر OpenStreetMap Overpass API
-├── requirements.txt         # مكتبات Python المطلوبة
-├── MODEL_CARD.md             # توثيق رسمي لنموذج تعلم الآلة (البيانات، التقييم، الحدود)
-└── README.md                 # هذا الملف
+```text
+User input
+  → Symptom normalization
+  → Medical knowledge retrieval
+  → Disease–symptom matching
+  → Red-flag safety rules
+  → AI-assisted explanation
+  → Risk guidance, next steps, and sources
 ```
 
----
+AI does not independently determine urgency, create official source links, or override safety rules. It is used to help explain structured results in clearer language.
 
-## ⚙️ الإعداد والتشغيل
+## Medical safety
 
-### تشغيل موقع الويب
+- Results use “possible conditions” language rather than confirmed diagnosis.
+- Emergency red flags take priority over model confidence.
+- Model outputs are not presented as confirmed disease probabilities.
+- Medication content is educational and does not prescribe or personalize dosage.
+- Trusted sources and a medical disclaimer remain visible in result flows.
+- When information is insufficient, the interface asks for clarification or displays a limited-information state.
+
+## Architecture
+
+![SymptoSense architecture](./architecture_diagram.svg)
+
+The current application is a Flask web service containing the public UI, account routes, protected Admin APIs, symptom-analysis orchestration, search, medication tools, and database access. Medical knowledge and safety rules remain separate from the AI explanation layer.
+
+## Privacy and security
+
+- Passwords are stored using secure password hashing.
+- Sessions use `HttpOnly`, `SameSite`, and optional production-only secure cookies.
+- Verification and password-reset links are temporary and single-use.
+- Admin pages and APIs enforce authorization on the server.
+- User-owned analyses and reminders are scoped to their authenticated owner.
+- Secrets belong in environment variables and are not rendered in the frontend.
+- Health information is excluded from operational logs and public analytics.
+
+## Technology
+
+- Python and Flask
+- PostgreSQL in production, with SQLite support for local development
+- HTML, CSS, and vanilla JavaScript
+- Groq API for constrained explanation assistance
+- Bernoulli Naive Bayes auxiliary model
+- Web Push and PWA technologies
+- Railway deployment configuration
+
+The auxiliary model is documented honestly in [MODEL_CARD.md](./MODEL_CARD.md). It uses 18 condition classes and 15 binary symptom features. Its synthetic evaluation is not evidence of clinical performance.
+
+## Local setup
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 python webapp.py
 ```
 
-بعد التشغيل افتحي `http://localhost:5000`. ملفات PWA (`manifest.webmanifest` و`service-worker.js` والأيقونات) تُخدّم من المسار الرئيسي تلقائيًا.
+Then open `http://localhost:5000` or the port shown by Flask.
 
-### المتغيرات البيئية المطلوبة
+### Required production variables
 
-| المتغير | الوصف |
+| Variable | Purpose |
 |---|---|
-| `TELEGRAM_BOT_TOKEN` | توكن البوت من [@BotFather](https://t.me/BotFather) |
-| `GROQ_API_KEY` | مفتاح API من [console.groq.com](https://console.groq.com) |
-| `ADMIN_TELEGRAM_ID` | معرّف تيليجرام الرقمي للمشرف (لأوامر `/stats` و `/export`) |
-| `DB_PATH` | مسار قاعدة البيانات (استخدمي مساراً على Volume دائم بالإنتاج، مثل `/data/symptosense.db`) |
-| `HASH_SALT` *(اختياري)* | نص عشوائي لتقوية تجهيل هوية السجلات الصحية في قاعدة البيانات |
-| `WEB_SECRET` | قيمة عشوائية طويلة وآمنة لجلسات تسجيل الدخول وCSRF |
-| `ADMIN_EXPORT_PSEUDONYM_SECRET` *(موصى به)* | مفتاح HMAC ثابت وعشوائي لتوليد المعرّفات المستعارة في ملفات Admin Excel بدون كشف User ID الحقيقي |
-| `CONSENT_HASH_SECRET` *(موصى به)* | مفتاح ثابت وعشوائي لمعرّفات سجلات الموافقة المجهولة |
-| `ANALYTICS_SESSION_SALT` *(موصى به)* | Salt ثابت وعشوائي لمعرّفات جلسات التحليلات التشغيلية المجهولة |
-| `SYMPTOSENSE_ADMIN_EMAIL` *(قديم/غير مستخدم لتغيير المالك)* | يتم تجاهل أي قيمة متعارضة؛ حساب Admin المثبت في هذه النسخة هو `remasalsolami2020@gmail.com` فقط. |
-| `ADMIN_AUTH_DEBUG` *(اختياري)* | `1` أثناء اختبار Admin لإظهار سجلات تشخيصية غير حساسة، ثم `0` بعد التحقق. |
-| `BREVO_API_KEY` | مفتاح API v3 صالح من Brevo لإرسال Email Verification وروابط الاستعادة |
-| `BREVO_FROM_EMAIL` | بريد Sender حالته `Verified` داخل Brevo (مثل `remasalsolami1@gmail.com`) |
-| `BREVO_FROM_NAME` | اسم المرسل الظاهر، مثل `SymptoSense` |
-| `SITE_URL` | رابط الموقع العام المستخدم داخل رسائل التحقق والاستعادة؛ في Railway يمكن استنتاجه من `RAILWAY_PUBLIC_DOMAIN` |
-| `SESSION_COOKIE_SECURE=1` *(للإنتاج)* | إرسال ملف جلسة الدخول عبر HTTPS فقط |
-| `ALLOW_SQLITE_FALLBACK` *(تطوير فقط)* | اتركيه غير موجود أو `0` في Railway؛ القيمة `1` تسمح بقاعدة محلية مؤقتة عند فشل PostgreSQL ولا تصلح للإنتاج |
-| `MEDICAL_SOURCE_ALLOWED_DOMAINS` *(اختياري)* | نطاقات موثوقة إضافية، مفصولة بفواصل؛ الافتراضي يسمح بالجهات الطبية الرسمية المضمنة فقط |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_CLAIMS_EMAIL` | مفاتيح Web Push لتذكيرات الأدوية الخلفية |
-| `ANALYTICS_PRIVACY_THRESHOLD` *(اختياري، الافتراضي 5)* | الحد الأدنى لحجم المجموعة قبل إظهار تفاصيل Medication Analytics |
-| `PUSH_WORKER_MODE` *(اختياري، الافتراضي `embedded`)* | `embedded` لتشغيل الجدولة داخل خدمة الويب نفسها، أو `external` عند استخدام Worker مستقل مع قاعدة مشتركة |
-| `PUSH_WORKER_INTERVAL_SECONDS` *(اختياري، الافتراضي 20)* | معدل فحص Worker للتذكيرات (15–60 ثانية) |
+| `DATABASE_URL` | Production PostgreSQL connection |
+| `WEB_SECRET` | Stable secret for signed sessions and CSRF |
+| `SESSION_COOKIE_SECURE=1` | HTTPS-only session cookie in production |
+| `SITE_URL` | Public base URL used in email and metadata links |
+| `GROQ_API_KEY` | AI explanation service |
+| `BREVO_API_KEY` | Authentication email delivery |
+| `BREVO_FROM_EMAIL` | Verified Brevo sender address |
+| `BREVO_FROM_NAME` | Displayed sender name |
 
-استخدمي حساب المالكة الموجود بالفعل وسجّلي الدخول به، ثم افتحي `/admin`. الخادم يتحقق من صف الحساب الحالي في قاعدة البيانات ويصلح دوره إلى `admin` عند تطابق حساب المالكة الموجود؛ لا ينشئ مستخدمًا بديلًا ولا يخزن كلمة مرور في الكود. لا توجد واجهة للمستخدم العادي لتغيير الأدوار، وكل حساب جديد يبقى `role = user`. راجعي `ADMIN_SETUP.md`.
+Optional capabilities such as Telegram, Web Push, and enhanced anonymization use additional variables documented in the included setup guides.
 
-### واجهات قاعدة المعرفة
+## Production
 
-واجهات القراءة العامة: `/api/diseases` و`/api/symptoms` و`/api/sources`، مع صفحات التفاصيل والمصادر المرتبطة. واجهات `/api/admin/*` محمية بالجلسة والدور وCSRF، وتشمل CRUD والعلاقات وعلامات الخطر والتدقيق والإصدارات وصحة النظام.
+The current Railway URL is:
 
-### التشغيل محلياً
+[https://symptosense-production-b2e5.up.railway.app](https://symptosense-production-b2e5.up.railway.app)
+
+For persistent production data, use the configured PostgreSQL database or a Railway Volume when intentionally operating with SQLite. Keep `WEB_SECRET` stable between deployments so active sessions behave consistently.
+
+## Testing
 
 ```bash
-pip install -r requirements.txt
-python bot.py
+python -m unittest discover -s tests -v
 ```
 
-### النشر (مثال: Railway)
+The included suite covers authentication, authorization, route smoke tests, search, medication reminders, ownership boundaries, red-flag priority, database integrity, privacy behavior, email templates, social metadata, and visual-asset references.
 
-1. اربطي المستودع بمشروع Railway
-2. أضيفي المتغيرات البيئية أعلاه من تبويب Variables
-3. أرفقي **Volume** بمسار `/data` لضمان بقاء البيانات بين عمليات النشر
-4. Railway ينشر تلقائياً عند أي `git push`
+## Limitations
 
----
+- SymptoSense is not clinically validated and must not be used as a diagnostic device.
+- The included medical knowledge base is a curated starting collection, not a complete medical encyclopedia.
+- The auxiliary model was evaluated on synthetic data and has known generalization limits.
+- Email delivery, third-party APIs, and Web Push depend on correct production credentials and provider availability.
+- Production screenshots and social-platform cache validation should be refreshed after each visual deployment.
 
-## 🤖 عن نموذج تعلم الآلة
+## Future considerations
 
-مصنّف **Bernoulli Naive Bayes** مدرّب على بيانات اصطناعية مبنية على خريطة أعراض منسّقة (18 حالة، 15 سمة عرضية). النموذج مكوّن مساعد ولا يحدد مستوى الخطورة أو يستبدل قاعدة المعرفة وقواعد الأمان. منهجية البيانات والتقييم الداخلي والحدود موثّقة في [MODEL_CARD.md](./MODEL_CARD.md).
+Future work should focus on validation, source governance, accessibility testing, and carefully evaluated data quality—not on making stronger medical claims.
 
-لإعادة تدريب النموذج:
-```bash
-python train_model.py
-```
+## Author
 
----
+**Remas Hameed Alsolami**  
+Data Science and Analytics Student · Creator of SymptoSense
 
-## 🔐 الخصوصية
-
-- لا يتم تخزين أي هوية حقيقية — معرّف كل مستخدم يُحوَّل إلى **hash أحادي الاتجاه** قبل التخزين
-- بيانات "رادار الأعراض المجتمعي" مجمّعة وغير قابلة لربطها بشخص معين
-- مشاركة الموقع (لإيجاد أقرب مستشفى) اختيارية بالكامل ومستخدمة فقط لحظياً، غير مخزّنة
+[About the project](https://symptosense-production-b2e5.up.railway.app/about-us) · [Telegram](https://t.me/rms_2o)
 
 ---
 
-## 👤 عن المشروع
-
-بُني بواسطة **ريماس السلمي** كمشروع يجمع بين تطوير البرمجيات وعلوم البيانات — من جمع البيانات وتدريب النموذج إلى النشر الإنتاجي الكامل.
-
-للتواصل: [https://t.me/rms_2o](https://t.me/rms_2o)
-
-
-### True Medication Web Push
-
-راجع `RAILWAY_PUSH_SETUP.md`. الوضع الافتراضي `embedded` يعمل داخل خدمة الويب نفسها ومناسب للنشر الحالي ذي SQLite؛ ويمكن استخدام `push_worker.py` كخدمة مستقلة عند الانتقال إلى قاعدة مشتركة مثل PostgreSQL.
+© 2026 SymptoSense. Health awareness only.
