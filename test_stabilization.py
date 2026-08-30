@@ -46,7 +46,7 @@ class StabilizationTest(unittest.TestCase):
 
     def test_public_route_smoke_has_no_404_or_500(self):
         c=self.client("en")
-        routes=["/","/home","/about-us","/privacy","/terms","/sources","/chat","/blood","/meds","/firstaid","/tips","/relax","/emergency","/checkin","/search","/calculators","/login","/register","/forgot-password","/manifest.webmanifest","/service-worker.js","/icons/icon-192.png","/icons/about-us-phone.webp","/static/images/about-hero.webp","/static/images/about-story.webp","/static/images/symptosense-social-preview.png"]
+        routes=["/","/home","/about-us","/privacy","/terms","/sources","/chat","/blood","/meds","/firstaid","/tips","/relax","/emergency","/checkin","/search","/calculators","/login","/register","/forgot-password","/manifest.webmanifest","/service-worker.js","/icons/icon-192.png","/icons/about-us-phone.webp","/icons/about-hero.webp","/icons/about-story.webp","/icons/symptosense-social-preview.png"]
         for route in routes:
             with self.subTest(route=route):
                 response=c.get(route,follow_redirects=False)
@@ -136,8 +136,8 @@ class StabilizationTest(unittest.TestCase):
             self.assertEqual(response.status_code,200)
             self.assertIn(f'<html lang="{lang}" dir="{direction}">',html)
             self.assertIn(name,html)
-            self.assertIn('/static/images/about-hero.webp',html)
-            self.assertIn('/static/images/about-story.webp',html)
+            self.assertIn('/icons/about-hero.webp',html)
+            self.assertIn('/icons/about-story.webp',html)
             self.assertIn('/icons/about-us-phone.webp',html)
             self.assertNotIn('remas.jpg',html)
             self.assertNotIn('photo placeholder',html.lower())
@@ -148,7 +148,7 @@ class StabilizationTest(unittest.TestCase):
         self.assertEqual(legacy.status_code,302)
         self.assertTrue(legacy.headers["Location"].endswith("/about-us"))
         home=self.client("en").get("/home").get_data(as_text=True)
-        expected="http://localhost/static/images/symptosense-social-preview.png"
+        expected="http://localhost/icons/symptosense-social-preview.png"
         self.assertIn(f'<meta property="og:image" content="{expected}">',home)
         self.assertIn('<meta property="og:url" content="http://localhost/home">',home)
         self.assertIn('<meta name="twitter:card" content="summary_large_image">',home)
