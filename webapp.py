@@ -169,6 +169,7 @@ table th{color:#163B5C;background:#F4F9FC;font-weight:800}table td,table th{padd
 .hh{min-height:520px;padding:clamp(34px,5vw,58px)!important;gap:clamp(28px,5vw,62px)!important;background:#FFFFFF!important;border-radius:var(--ss-radius-xl)!important;box-shadow:var(--ss-shadow-md)!important}
 .hh-l{flex:1.08}.hh-l h1{max-width:13ch;font-size:clamp(36px,5.2vw,58px)!important;line-height:1.24!important;margin-bottom:14px!important}.hh-sub{font-size:clamp(16px,2vw,20px)!important;margin-bottom:10px!important}.hh-desc{font-size:15px!important;line-height:1.9!important;margin-bottom:26px!important}.hh-badge{padding:0!important;background:transparent!important;border-radius:0!important;color:#287FC1!important;font-size:13px!important;letter-spacing:.03em;margin-bottom:14px!important}.hh-btns{gap:10px!important}.hh-btns .btn{margin:0!important}
 .hh-r{min-height:340px!important}.hh-product-art{display:block;width:min(440px,100%);height:auto;object-fit:contain;filter:saturate(.88)}
+.hh-product-visual{position:relative;width:min(440px,100%);aspect-ratio:1;border-radius:32px;border:1px solid #cfe3ef;background:#f4fafe;display:grid;place-items:center;overflow:hidden;box-shadow:0 16px 36px rgba(31,86,127,.10)}.hh-product-visual:before,.hh-product-visual:after{content:'';position:absolute;border:1px solid #c7e0ed;border-radius:50%}.hh-product-visual:before{width:76%;height:76%}.hh-product-visual:after{width:49%;height:49%;background:#fff;box-shadow:0 12px 30px rgba(31,86,127,.08)}.hh-product-core{position:relative;z-index:2;width:96px;height:96px;border-radius:28px;background:#287fc1;color:#fff;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:0 13px 28px rgba(40,127,193,.22)}.hh-product-node{position:absolute;z-index:3;width:66px;height:66px;border-radius:20px;background:#fff;border:1px solid #d6e7f0;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 20px rgba(31,86,127,.08)}.hh-p1{top:10%;left:11%}.hh-p2{top:11%;right:10%}.hh-p3{bottom:10%;left:12%}.hh-p4{bottom:10%;right:11%}
 .home-trust{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:-10px auto 36px;color:#607487;font-size:13px}.home-trust a{color:#287FC1;font-weight:800}.home-trust-dot{width:6px;height:6px;border-radius:50%;background:#267A52}
 .v2-section-head{margin-top:42px!important}.svc-grid{gap:14px!important}.svc-card{padding:22px!important}.svc-ic{width:48px!important;height:48px!important;border-radius:14px!important;font-size:24px!important}.svc-btn{background:transparent!important;color:#287FC1!important;padding:5px 0!important;min-height:auto!important}.svc-card:hover .svc-btn{background:transparent!important;color:#163B5C!important}
 @media(max-width:1180px){.nav{display:none}.ss-mobile-head{display:flex}.ss-bnav{display:flex;justify-content:space-evenly;align-items:center}.ss-bnav a{flex:0 1 170px}.container{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 28px)}.asst-fab{bottom:calc(var(--bnav-h) + var(--safe-bottom) + 12px);left:12px;width:54px;height:54px;padding:0;justify-content:center}.asst-fab .asst-fab-lb{display:none}.asst-panel{left:12px;right:12px;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 76px);width:auto;height:min(72dvh,600px)}[dir="rtl"] .asst-panel{left:12px;right:12px}}
@@ -1010,8 +1011,7 @@ PAGE_FRAME = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/brand-icon.svg">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -3531,7 +3531,7 @@ def home_page():
         <p class="hh-desc">__DESC__</p>
         <div class="hh-btns"><a class="btn pri" href="/chat">__START__</a><button class="btn sec" onclick="asstToggle()">__ASK__</button></div>
       </div>
-      <div class="hh-r" aria-hidden="true"><img class="hh-product-art" src="/static/images/about-hero.webp" width="960" height="960" alt="" decoding="async"></div>
+      <div class="hh-r" aria-hidden="true"><div class="hh-product-visual"><span class="hh-product-core">S</span><span class="hh-product-node hh-p1">📊</span><span class="hh-product-node hh-p2">🧠</span><span class="hh-product-node hh-p3">🩺</span><span class="hh-product-node hh-p4">✦</span></div></div>
     </section>
 
     <div class="home-trust"><span class="home-trust-dot" aria-hidden="true"></span><span>__TRUST_COPY__</span><a href="/sources">__VIEW_SOURCES__</a></div>
@@ -6936,6 +6936,17 @@ def service_worker_file():
 @app.route("/manifest.webmanifest")
 def manifest_file():
     return send_from_directory(BASE_DIR,"manifest.webmanifest",mimetype="application/manifest+json")
+
+
+@app.route("/brand-icon.svg")
+def brand_icon():
+    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="SymptoSense">
+    <rect width="192" height="192" rx="46" fill="#287FC1"/>
+    <path d="M39 99h28l12-27 18 52 14-31 10 18h32" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>'''
+    response = Response(svg, mimetype="image/svg+xml")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 @app.route("/icons/<path:filename>")
