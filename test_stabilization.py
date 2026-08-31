@@ -25,6 +25,17 @@ import webapp
 
 
 class StabilizationTest(unittest.TestCase):
+    @staticmethod
+    def _contrast_ratio(foreground, background):
+        """Return the WCAG relative-luminance contrast ratio for two hex colors."""
+        def luminance(color):
+            channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+            linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+        first, second = luminance(foreground), luminance(background)
+        return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+
     @classmethod
     def setUpClass(cls):
         webapp.app.config.update(TESTING=True)
@@ -52,6 +63,46 @@ class StabilizationTest(unittest.TestCase):
                 response=c.get(route,follow_redirects=False)
                 self.assertNotIn(response.status_code,{404,500,502,503})
                 response.close()
+
+    def test_active_bottom_navigation_meets_wcag_aa_contrast(self):
+        self.assertIn('.ss-bnav a.on { color: #0F5FB0; background: var(--primary-light); }', webapp.BASE_CSS)
+        self.assertGreaterEqual(self._contrast_ratio("#0F5FB0", "#EAF4FF"), 4.5)
+
+    def test_active_bottom_navigation_meets_wcag_aa_contrast_dark_mode(self):
+        self.assertIn('.ss-bnav a.on { background: #1E3A5F; color: #60A5FA; }', webapp.BASE_CSS)
+        self.assertGreaterEqual(self._contrast_ratio("#60A5FA", "#1E3A5F"), 4.5)
+
+    def test_pwa_install_offer_is_not_shown_on_first_visit(self):
+        html = self.client("en").get("/home").get_data(as_text=True)
+        self.assertIn("return visits > 1", html)
+        self.assertIn("window.setTimeout(function () { show(mode); }, 8000)", html)
+        self.assertNotIn("deferredPrompt = event;\n    show('native');", html)
+
+    def test_pwa_icon_has_week_cache_control(self):
+        response = self.client("en").get("/icons/icon-192.png")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("Cache-Control"), "public, max-age=604800")
+        response.close()
+
+    def test_csp_starts_in_report_only_mode(self):
+        response = self.client("en").get("/home")
+        policy = response.headers.get("Content-Security-Policy-Report-Only", "")
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("object-src 'none'", policy)
+        self.assertNotIn("Content-Security-Policy", response.headers)
+
+    def test_sentry_scrubber_removes_sensitive_context(self):
+        event = {
+            "message": "RuntimeError",
+            "request": {"data": {"symptoms": "private"}, "headers": {"Authorization": "secret"}},
+            "user": {"email": "private@example.test"},
+            "breadcrumbs": [{"message": "private"}],
+            "extra": {"token": "secret"},
+            "contexts": {"health": {"history": "private"}},
+        }
+        cleaned = webapp._scrub_sentry_event(event)
+        self.assertEqual(cleaned, {"message": "RuntimeError"})
+        self.assertIn("request", event)
 
     def test_all_static_get_routes_avoid_server_errors(self):
         c=self.client("en")

@@ -14,3 +14,4 @@ edge-tts>=6.1.0
 gTTS>=2.5.0
 pywebpush>=2.0,<3
 qrcode[pil]>=7.4.2
+sentry-sdk[flask]>=2.0.0,<3

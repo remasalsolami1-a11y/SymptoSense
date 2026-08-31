@@ -43,7 +43,41 @@ import privacy_features
 
 from dashboard import DASHBOARD_HTML
 
+
+def _scrub_sentry_event(event, _hint=None):
+    """Keep error telemetry content-free: no request, user, health, or breadcrumb data."""
+    cleaned = dict(event or {})
+    for field in ("request", "user", "breadcrumbs", "extra", "contexts"):
+        cleaned.pop(field, None)
+    return cleaned
+
+
+def _configure_error_monitoring():
+    """Enable privacy-first Sentry only when Production explicitly provides a DSN."""
+    dsn = os.environ.get("SENTRY_DSN", "").strip()
+    if not dsn:
+        return False
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.flask import FlaskIntegration
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[FlaskIntegration()],
+            send_default_pii=False,
+            include_local_variables=False,
+            max_breadcrumbs=0,
+            traces_sample_rate=0.0,
+            before_send=_scrub_sentry_event,
+        )
+        return True
+    except Exception:
+        return False
+
+
+_sentry_enabled = _configure_error_monitoring()
 app = Flask(__name__)
+if os.environ.get("SENTRY_DSN", "").strip() and not _sentry_enabled:
+    app.logger.warning("Sentry was requested but could not be initialized")
 _configured_web_secret = os.environ.get("WEB_SECRET", "").strip()
 # Never ship a publicly known session-signing key.  A generated development
 # key is safer than a hard-coded fallback (but restarts invalidate sessions),
@@ -257,7 +291,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* Mobile Bottom Navigation */
 .ss-bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-top: 1px solid #DCEBFA; box-shadow: 0 -4px 18px rgba(25,118,210,.08); padding: 6px 0 var(--safe-bottom); padding-bottom: calc(6px + var(--safe-bottom)); }
 .ss-bnav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; text-decoration: none; color: #5F7185; font-size: 10px; font-weight: 700; min-width: 56px; min-height: 48px; justify-content: center; transition: color .2s; border-radius: 12px; }
-.ss-bnav a.on { color: var(--primary); background: var(--primary-light); }
+.ss-bnav a.on { color: #0F5FB0; background: var(--primary-light); }
 .ss-bnav a .bn-icon { font-size: 22px; line-height: 1; }
 /* Completion bar */
 .ss-completion { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 18px; padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
@@ -347,7 +381,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .container { background: transparent; }
   .ss-bnav { background: #1E293B; border-color: #334155; }
   .ss-bnav a { color: #64748B; }
-  .ss-bnav a.on { color: #60A5FA; }
+  .ss-bnav a.on { background: #1E3A5F; color: #60A5FA; }
   .welcome-card { background: #1E293B; border-color: #334155; }
   .ss-msg.success { background: #052E16; color: #4ADE80; border-color: #166534; }
   .ss-msg.error { background: #450A0A; color: #FCA5A5; border-color: #7F1D1D; }
@@ -1832,6 +1866,18 @@ function smartCtxAction(action) {
       return value && (Date.now() - value < 7 * 24 * 60 * 60 * 1000);
     } catch (e) { return false; }
   }
+  function hasReturnedBefore() {
+    try {
+      var visits = Number(localStorage.getItem('ss_pwa_visits') || 0) + 1;
+      localStorage.setItem('ss_pwa_visits', String(visits));
+      return visits > 1;
+    } catch (e) { return false; }
+  }
+  var canOfferInstall = hasReturnedBefore();
+  function offerAfterDelay(mode) {
+    if (!canOfferInstall) return;
+    window.setTimeout(function () { show(mode); }, 8000);
+  }
   function show(mode) {
     if (!box || isStandalone() || recentlyDismissed()) return;
     box.dataset.mode = mode;
@@ -1874,14 +1920,14 @@ function smartCtxAction(action) {
   window.addEventListener('beforeinstallprompt', function (event) {
     event.preventDefault();
     deferredPrompt = event;
-    show('native');
+    offerAfterDelay('native');
   });
   window.addEventListener('appinstalled', function () {
     if (box) box.classList.remove('show');
   });
   window.addEventListener('load', function () {
     var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (isiOS && !isStandalone()) window.setTimeout(function () { show('ios'); }, 1200);
+    if (isiOS && !isStandalone()) offerAfterDelay('ios');
   });
 })();
 </script>
@@ -2239,6 +2285,14 @@ def production_security_headers(response):
     response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), payment=(), usb=()")
     if app.config.get("SESSION_COOKIE_SECURE"):
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.setdefault(
+        "Content-Security-Policy-Report-Only",
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; "
+        "connect-src 'self'; frame-src 'self'; worker-src 'self'; object-src 'none'; "
+        "base-uri 'self'; form-action 'self'",
+    )
     response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
     return response
 
@@ -6951,7 +7005,9 @@ def brand_icon():
 
 @app.route("/icons/<path:filename>")
 def pwa_icon_file(filename):
-    return send_from_directory(os.path.join(BASE_DIR,"icons"),filename)
+    response = send_from_directory(os.path.join(BASE_DIR,"icons"),filename)
+    response.headers["Cache-Control"] = "public, max-age=604800"
+    return response
 
 
 @app.route("/favicon.ico")
