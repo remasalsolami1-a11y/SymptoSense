@@ -8907,7 +8907,8 @@ def _send_auth_email(email, subject, html, category="auth"):
 
 
 def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_url,
-                       link_fallback, footer_tagline=None, post_button_paragraphs=None):
+                       link_fallback, footer_tagline=None, post_button_paragraphs=None,
+                       verification_code=None):
     """Render a compact, email-client-safe transactional message."""
     from html import escape
 
@@ -8934,6 +8935,14 @@ def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_u
         % escape(str(footer_tagline))
         if footer_tagline else ""
     )
+    code_html = (
+        '<div style="margin:22px 0;padding:16px;border:1px solid #b9d9ee;background:#eef7fc;'
+        'border-radius:10px;text-align:center;direction:ltr;">'
+        '<div style="color:#486581;font-size:13px;margin-bottom:7px;">%s</div>'
+        '<div style="color:#12355b;font-size:32px;line-height:1.2;font-weight:800;letter-spacing:8px;">%s</div></div>'
+        % (("رمز التحقق" if ar else "Verification code"), escape(str(verification_code)))
+        if verification_code else ""
+    )
     return '''<!doctype html>
 <html lang="{lang}" dir="{direction}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -8948,6 +8957,7 @@ def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_u
           <h1 style="margin:0 0 20px;color:#12355b;font-size:26px;line-height:1.35;font-weight:700;">{title}</h1>
           <p style="margin:0 0 16px;color:#243b53;font-size:16px;line-height:1.75;">{greeting}</p>
           {paragraphs}
+          {code}
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;">
             <tr><td bgcolor="#1976b9" style="border-radius:8px;text-align:center;">
               <a href="{url}" style="display:inline-block;padding:13px 24px;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.4;">{button}</a>
@@ -8971,6 +8981,7 @@ def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_u
         lang="ar" if ar else "en", direction=direction, align=align,
         title=safe_title, greeting=safe_greeting, paragraphs=paragraph_html,
         post_button=post_button_html,
+        code=code_html,
         url=safe_url, button=safe_button, fallback=safe_fallback,
         tagline=tagline_html,
     )
@@ -8978,7 +8989,7 @@ def _render_auth_email(lang, title, greeting, paragraphs, button_label, action_u
 
 def _issue_verification_email(user_id, lang=None):
     lang = lang or _lang()
-    token, email, reason = platform_v2.create_email_verification(int(user_id))
+    token, code, email, reason = platform_v2.create_email_verification_code(int(user_id))
     if not token:
         return False, reason or "verification_unavailable"
     verify_url=_site_url().rstrip("/")+"/verify-email/"+token
@@ -8990,10 +9001,10 @@ def _issue_verification_email(user_id, lang=None):
         "مرحبًا 👋" if ar else "Hi 👋",
         ([
             "شكرًا لإنشاء حسابك في SymptoSense 🩺",
-            "لتأكيد بريدك الإلكتروني وإكمال إعداد حسابك، اضغط على الزر أدناه:",
+            "استخدم رمز التحقق أدناه، أو اضغط على الزر، لإكمال إعداد حسابك:",
         ] if ar else [
             "Thanks for creating your SymptoSense 🩺 account.",
-            "Please confirm your email address to finish setting up your account:",
+            "Use the verification code below, or select the button, to finish setting up your account:",
         ]),
         "تأكيد البريد الإلكتروني" if ar else "Confirm Email",
         verify_url,
@@ -9008,6 +9019,7 @@ def _issue_verification_email(user_id, lang=None):
             "This link is valid for a limited time and can only be used once.",
             "If you didn't create a SymptoSense account, you can safely ignore this email.",
         ]),
+        verification_code=code,
     )
     sent, send_error=_send_auth_email(email, subject, html, "verify_email")
     if not sent:
@@ -9081,10 +9093,8 @@ def login():
         user_id=result.get("user_id") if result.get("ok") else None
         if result.get("error")=="verification_required" and result.get("user_id"):
             session.clear(); session["pending_verification_user_id"]=int(result["user_id"]); session.permanent=True
-            # Do not send on every login attempt. Registration sends the first
-            # message; the pending page provides an explicitly rate-limited
-            # Resend action.
-            session["verification_send_state"]="verification_required"
+            sent, send_error = _issue_verification_email(int(result["user_id"]), lang)
+            session["verification_send_state"]="sent" if sent else (send_error or "verification_required")
             return redirect(url_for("verify_email_pending"))
         if user_id:
             db.promote_existing_owner_admin(user_id)
@@ -9196,6 +9206,22 @@ def verify_email_pending():
         action=request.form.get("action") or "resend"
         if not user:
             error="ابدأ من تسجيل الدخول أو إنشاء حساب." if ar else "Start from sign in or create an account."
+        elif action=="verify_code":
+            verified_uid, code_status = platform_v2.consume_email_verification_code(int(uid), request.form.get("verification_code") or "")
+            if verified_uid:
+                pending_next=session.pop("post_verify_next",None) or "/profile"
+                session.pop("pending_verification_user_id",None)
+                session["ss_user_id"]=int(verified_uid); session.permanent=True
+                verified_user=db.get_ss_user(int(verified_uid))
+                is_admin=bool(verified_user and verified_user.get("role")=="admin")
+                session["login_toast"]="admin" if is_admin else "user"
+                return redirect("/admin" if is_admin else (pending_next if isinstance(pending_next,str) and pending_next.startswith("/") and not pending_next.startswith("//") and not pending_next.startswith("/admin") else "/profile"))
+            messages={
+                "expired": "انتهت صلاحية الرمز. اطلب رمزًا جديدًا." if ar else "The code expired. Request a new code.",
+                "used": "تم استخدام هذا الرمز. اطلب رمزًا جديدًا." if ar else "This code was already used. Request a new code.",
+                "too_many_attempts": "محاولات كثيرة. اطلب رمزًا جديدًا." if ar else "Too many attempts. Request a new code.",
+            }
+            error=messages.get(code_status,"رمز التحقق غير صحيح." if ar else "The verification code is incorrect.")
         elif action=="change_email":
             new_email=(request.form.get("new_email") or "").strip().lower()
             current_password=request.form.get("current_password") or ""
@@ -9215,7 +9241,7 @@ def verify_email_pending():
                     error="تعذر تغيير البريد." if ar else "Unable to change the email."
         else:
             sent,reason=_issue_verification_email(int(uid),_lang())
-            if sent: notice="أرسلنا رابط تحقق جديدًا إلى بريدك الإلكتروني." if ar else "We sent a new verification link to your email."
+            if sent: notice="أرسلنا رمز تحقق جديدًا إلى بريدك الإلكتروني." if ar else "We sent a new verification code to your email."
             elif reason in {"cooldown","rate_limited"}: error="يرجى الانتظار قبل طلب رسالة تحقق أخرى." if ar else "Please wait before requesting another verification email."
             elif reason=="email_not_configured": error="خدمة البريد غير مضبوطة بعد. أضف إعدادات SMTP أو Resend في Railway." if ar else "Email delivery is not configured. Add SMTP or Resend settings in Railway."
             elif reason=="email_invalid_api_key": error="مفتاح Resend غير صالح. حدّث RESEND_API_KEY في Railway." if ar else "The Resend API key is invalid. Update RESEND_API_KEY in Railway."
@@ -9238,9 +9264,9 @@ def verify_email_pending():
     state=session.pop("verification_send_state",None)
     if state and not notice and not error:
         if state=="sent":
-            notice="أرسلنا رابط التحقق إلى بريدك الإلكتروني." if ar else "We sent a verification link to your email."
+            notice="أرسلنا رمز التحقق إلى بريدك الإلكتروني." if ar else "We sent the verification code to your email."
         elif state in {"cooldown","rate_limited"}:
-            notice="تم إرسال رابط تحقق مؤخرًا. استخدم الرسالة الموجودة أو انتظر قليلًا قبل طلب رسالة جديدة." if ar else "A verification link was sent recently. Use the existing message or wait before requesting another one."
+            notice="يرجى التحقق من بريدك أولًا. أُرسل رمز مؤخرًا؛ استخدمه أو انتظر قليلًا قبل طلب رمز جديد." if ar else "Please verify your email first. A code was sent recently; use it or wait before requesting a new one."
         elif state=="email_not_configured":
             error="خدمة البريد غير مضبوطة. أضف إعدادات SMTP أو Resend في Railway قبل محاولة الإرسال." if ar else "Email delivery is not configured. Add SMTP or Resend settings in Railway before resending."
         elif state=="email_invalid_api_key":
@@ -9285,6 +9311,7 @@ def verify_email_pending():
     body="""
     <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">📧</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><p class="muted" style="direction:ltr">__MASKED__</p>
       __NOTICE____ERROR__
+      <form method="post" style="margin-bottom:12px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="verify_code"><div class="auth-field"><label>__CODELABEL__</label><input type="text" name="verification_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" style="direction:ltr;text-align:center;font-size:25px;letter-spacing:7px" placeholder="000000"></div><button class="auth-btn" type="submit">__VERIFYBTN__</button></form>
       <form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="resend"><button class="auth-btn" type="submit">__RESEND__</button></form>
       <details style="margin-top:14px;text-align:start"><summary style="cursor:pointer;font-weight:700">__CHANGE__</summary><form method="post" style="margin-top:10px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="change_email"><div class="auth-field"><label>__NEWEMAIL__</label><input type="email" name="new_email" required autocomplete="email"></div><div class="auth-field"><label>__PASSWORD__</label><input type="password" name="current_password" required autocomplete="current-password"></div><button class="btn ghost" type="submit">__SAVEEMAIL__</button></form></details>
       <p class="auth-link"><a href="/login">__BACK__</a></p>
@@ -9292,7 +9319,7 @@ def verify_email_pending():
     """
     notice_html='<div class="ss-msg success" style="display:block">'+notice+'</div>' if notice else ""
     error_html='<div class="auth-error show">'+error+'</div>' if error else ""
-    vals={"__TITLE__":"📧 تحقق من بريدك الإلكتروني" if ar else "📧 Verify Your Email","__SUB__":"تحقق من بريدك الإلكتروني لإكمال إنشاء الحساب. إذا لم تصلك الرسالة، يمكنك طلب إعادة الإرسال." if ar else "Verify your email to complete your account. If you did not receive the message, you can request another one.","__MASKED__":masked,"__NOTICE__":notice_html,"__ERROR__":error_html,"__RESEND__":"إعادة إرسال رسالة التحقق" if ar else "Resend Verification Email","__CHANGE__":"تغيير البريد الإلكتروني" if ar else "Change Email","__NEWEMAIL__":"البريد الإلكتروني الجديد" if ar else "New email","__PASSWORD__":"كلمة المرور الحالية" if ar else "Current password","__SAVEEMAIL__":"حفظ وإرسال رابط جديد" if ar else "Save & send new link","__BACK__":"العودة إلى تسجيل الدخول" if ar else "Back to Login","__CSRF__":_auth_csrf_token()}
+    vals={"__TITLE__":"📧 تحقق من بريدك الإلكتروني" if ar else "📧 Verify Your Email","__SUB__":"أدخل رمز التحقق المكوّن من 6 أرقام الذي أرسلناه إلى بريدك." if ar else "Enter the six-digit verification code sent to your email.","__MASKED__":masked,"__NOTICE__":notice_html,"__ERROR__":error_html,"__CODELABEL__":"رمز التحقق" if ar else "Verification code","__VERIFYBTN__":"تأكيد الرمز" if ar else "Verify Code","__RESEND__":"إرسال رمز جديد" if ar else "Send New Code","__CHANGE__":"تغيير البريد الإلكتروني" if ar else "Change Email","__NEWEMAIL__":"البريد الإلكتروني الجديد" if ar else "New email","__PASSWORD__":"كلمة المرور الحالية" if ar else "Current password","__SAVEEMAIL__":"حفظ وإرسال رمز جديد" if ar else "Save & send new code","__BACK__":"العودة إلى تسجيل الدخول" if ar else "Back to Login","__CSRF__":_auth_csrf_token()}
     for k,v in vals.items(): body=body.replace(k,v)
     return _page("تحقق من البريد" if ar else "Verify Email",body)
 

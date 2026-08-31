@@ -116,6 +116,16 @@ def init_schema() -> None:
         c.execute("CREATE INDEX IF NOT EXISTS idx_ss_email_verification_user ON ss_email_verifications(user_id, created_at)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_ss_email_verification_exp ON ss_email_verifications(expires_at)")
         if db.USE_POSTGRES:
+            c.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s", ("ss_email_verifications",))
+            verification_cols = {row[0] for row in c.fetchall()}
+        else:
+            c.execute("PRAGMA table_info(ss_email_verifications)")
+            verification_cols = {row[1] for row in c.fetchall()}
+        if "code_hash" not in verification_cols:
+            c.execute("ALTER TABLE ss_email_verifications ADD COLUMN code_hash TEXT")
+        if "attempts" not in verification_cols:
+            c.execute("ALTER TABLE ss_email_verifications ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0")
+        if db.USE_POSTGRES:
             c.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s", ("ss_users",))
             cols = {row[0] for row in c.fetchall()}
         else:
@@ -711,6 +721,90 @@ def create_email_verification(user_id: int, minutes: int = 24 * 60, cooldown_sec
         )
         conn.commit()
         return token, user.get("email"), None
+    finally:
+        conn.close()
+
+
+def _verification_code_hash(user_id: int, code: str) -> str:
+    """Hash an OTP with the server secret; the plain code is never stored."""
+    secret = os.environ.get("WEB_SECRET", "").encode()
+    return hashlib.sha256(secret + b":" + str(int(user_id)).encode() + b":" + str(code).encode()).hexdigest()
+
+
+def create_email_verification_code(user_id: int, minutes: int = 15,
+                                   cooldown_seconds: int = 60, max_per_hour: int = 5):
+    """Create a six-digit OTP plus a backward-compatible one-time link token."""
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    try:
+        c.execute(
+            f"SELECT id,email,status,COALESCE(email_verified,1) AS email_verified FROM ss_users WHERE id={PH}",
+            (int(user_id),),
+        )
+        user = _row(c)
+        if not user or user.get("status") != "active":
+            return None, None, None, "account_unavailable"
+        if bool(user.get("email_verified")):
+            return None, None, user.get("email"), "already_verified"
+        allowed, reason = _recent_request_guard(c, "ss_email_verifications", int(user_id), cooldown_seconds, max_per_hour)
+        if not allowed:
+            return None, None, user.get("email"), reason
+        token = secrets.token_urlsafe(36)
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        now = datetime.now(timezone.utc)
+        c.execute(
+            "INSERT INTO ss_email_verifications (user_id,token_hash,code_hash,attempts,expires_at,created_at) "
+            f"VALUES ({','.join([PH] * 6)})",
+            (int(user_id), hashlib.sha256(token.encode()).hexdigest(),
+             _verification_code_hash(int(user_id), code), 0,
+             (now + timedelta(minutes=minutes)).isoformat(), now.isoformat()),
+        )
+        conn.commit()
+        return token, code, user.get("email"), None
+    finally:
+        conn.close()
+
+
+def consume_email_verification_code(user_id: int, code: str, max_attempts: int = 6):
+    """Consume the latest OTP. It expires, is single-use, and limits guesses."""
+    value = (code or "").strip()
+    if not re.fullmatch(r"\d{6}", value):
+        return None, "invalid"
+    init_schema()
+    conn = db._conn(); c = conn.cursor()
+    try:
+        c.execute(
+            f"SELECT id,expires_at,used_at,attempts,code_hash FROM ss_email_verifications "
+            f"WHERE user_id={PH} AND code_hash IS NOT NULL ORDER BY id DESC",
+            (int(user_id),),
+        )
+        row = _row(c)
+        if not row:
+            return None, "invalid"
+        if row.get("used_at"):
+            return None, "used"
+        if _parse_iso(row.get("expires_at")) < datetime.now(timezone.utc):
+            return None, "expired"
+        attempts = int(row.get("attempts") or 0)
+        if attempts >= max_attempts:
+            return None, "too_many_attempts"
+        expected = _verification_code_hash(int(user_id), value)
+        if not secrets.compare_digest(str(row.get("code_hash") or ""), expected):
+            attempts += 1
+            c.execute(f"UPDATE ss_email_verifications SET attempts={PH} WHERE id={PH}", (attempts, row["id"]))
+            conn.commit()
+            return None, "too_many_attempts" if attempts >= max_attempts else "invalid"
+        now = _now()
+        c.execute(
+            f"UPDATE ss_email_verifications SET used_at={PH} WHERE id={PH} AND used_at IS NULL",
+            (now, row["id"]),
+        )
+        if getattr(c, "rowcount", 1) == 0:
+            conn.rollback(); return None, "used"
+        c.execute(f"UPDATE ss_users SET email_verified=1,email_verified_at={PH} WHERE id={PH}", (now, int(user_id)))
+        c.execute(f"UPDATE ss_email_verifications SET used_at={PH} WHERE user_id={PH} AND used_at IS NULL", (now, int(user_id)))
+        conn.commit()
+        return int(user_id), "verified"
     finally:
         conn.close()
 

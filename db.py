@@ -659,6 +659,16 @@ def _migrate_ss_columns(conn, c):
     # merely hiding an unsafe legacy role in the UI.
     try:
         c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        # One-time, non-destructive security migration requested for this release:
+        # every existing account must confirm a fresh email OTP once. Roles,
+        # passwords and user data remain unchanged.
+        c.execute("SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'")
+        if not c.fetchone():
+            c.execute("UPDATE ss_users SET email_verified=0,email_verified_at=NULL")
+            c.execute(
+                "INSERT INTO ss_schema_meta (key,value) VALUES (%s,%s)" % (PH, PH),
+                ("email_otp_all_accounts_v1", datetime.now(timezone.utc).isoformat()),
+            )
         c.execute(
             "UPDATE ss_users SET role='user' WHERE lower(email)<>%s "
             "AND lower(COALESCE(role,'user'))<>'user'" % PH,

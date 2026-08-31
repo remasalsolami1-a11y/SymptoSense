@@ -127,8 +127,8 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         with mock.patch.object(webapp, "_site_url", return_value=production_origin), \
                 mock.patch.object(
                     platform_v2,
-                    "create_email_verification",
-                    return_value=("opaque-verification-value", "arabic@example.test", None),
+                    "create_email_verification_code",
+                    return_value=("opaque-verification-value", "123456", "arabic@example.test", None),
                 ):
             ok, error = webapp._issue_verification_email(42, "ar")
         self.assertTrue(ok)
@@ -138,6 +138,7 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         self.assertEqual(verification["subject"], "تأكيد بريدك الإلكتروني — SymptoSense")
         self.assertIn('<html lang="ar" dir="rtl">', verification["html"])
         self.assertIn("تأكيد البريد الإلكتروني", verification["html"])
+        self.assertIn("123456", verification["html"])
         self.assertEqual(verification["html"].count(verification_url), 3)
         self.assertNotIn("localhost", verification["html"])
         self.assertNotIn("<script", verification["html"].lower())
@@ -162,6 +163,28 @@ class AuthenticationIntegrationTest(unittest.TestCase):
             "medical_history", "database id", "authorization:",
         ):
             self.assertNotIn(forbidden, combined)
+
+    def test_six_digit_verification_code_is_hashed_single_use_and_expires(self):
+        user_id, error = db.create_ss_user("otp@example.test", "OTP User", "StrongPass123!")
+        self.assertIsNone(error)
+        token, code, email, reason = platform_v2.create_email_verification_code(user_id)
+        self.assertIsNone(reason)
+        self.assertEqual(email, "otp@example.test")
+        self.assertRegex(code, r"^\d{6}$")
+        conn = db._conn()
+        try:
+            stored = conn.execute(
+                "SELECT code_hash FROM ss_email_verifications WHERE user_id=? ORDER BY id DESC LIMIT 1",
+                (user_id,),
+            ).fetchone()[0]
+        finally:
+            conn.close()
+        self.assertNotEqual(stored, code)
+        self.assertEqual(platform_v2.consume_email_verification_code(user_id, "00000")[1], "invalid")
+        verified_uid, status = platform_v2.consume_email_verification_code(user_id, code)
+        self.assertEqual((verified_uid, status), (user_id, "verified"))
+        self.assertEqual(platform_v2.consume_email_verification_code(user_id, code)[1], "used")
+        self.assertTrue(db.get_ss_user(user_id)["email_verified"])
 
     def test_complete_user_lifecycle_and_rbac(self):
         client = self.client("en")
@@ -458,8 +481,8 @@ class AuthenticationIntegrationTest(unittest.TestCase):
             db.DB_PATH = legacy_path
             db.init_db()
             migrated = db.get_ss_user_by_email("legacy@example.test")
-            self.assertTrue(migrated["email_verified"])
-            self.assertTrue(db.authenticate_ss_user_status("legacy@example.test", password)["ok"])
+            self.assertFalse(migrated["email_verified"])
+            self.assertEqual(db.authenticate_ss_user_status("legacy@example.test", password)["error"], "verification_required")
             check = sqlite3.connect(legacy_path)
             try:
                 saved = check.execute("SELECT password_hash FROM ss_users WHERE email=?", ("legacy@example.test",)).fetchone()[0]
