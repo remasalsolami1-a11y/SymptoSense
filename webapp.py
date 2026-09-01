@@ -3489,14 +3489,23 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', sans-serif; }
 .first-lang-start{min-height:50px;margin:21px auto 20px;border:0;border-radius:13px;padding:11px 30px;background:#287FC1;color:#fff;font:800 16px inherit;cursor:pointer;box-shadow:0 8px 20px rgba(40,127,193,.16)}
 .first-lang-select-title{font-size:14px;color:#607487;font-weight:700;margin-bottom:10px}
 @media (max-width: 600px) {
-  .first-lang-head { min-height: 68px; }
-  .first-lang-main { align-items: flex-start; padding: 24px 14px; }
-  .first-lang-card { border-radius: 22px; padding: 28px 18px; }
-  .first-lang-icon { width: 72px; height: 72px; border-radius: 22px; font-size: 35px; }
-  .first-lang-options { grid-template-columns: 1fr; gap: 12px; }
-  .first-lang-option { min-height: 78px; justify-content: flex-start; padding-inline: 26px; }
+  .first-lang-head { min-height: 46px; padding: 10px; }
+  .first-lang-logo { font-size: 17px; gap: 6px; }
+  .first-lang-main { align-items: center; padding: 10px 12px; }
+  .first-lang-card { border-radius: 18px; padding: 16px 14px; }
+  .first-lang-icon { width: 46px; height: 46px; margin-bottom: 8px; border-radius: 16px; font-size: 22px; }
+  .first-lang-brand { font-size: 22px !important; margin-bottom: 6px !important; }
+  .first-lang-tag-ar { font-size: 15px; line-height: 1.3; }
+  .first-lang-tag-en { font-size: 13px; margin: 2px 0 6px; }
+  .first-lang-desc-ar, .first-lang-desc-en { display: none; }
+  .first-lang-start { min-height: 38px; margin: 10px auto; padding: 8px 20px; font-size: 13.5px; }
+  .first-lang-select-title { font-size: 13px; margin-bottom: 6px; }
+  .first-lang-options { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .first-lang-option { min-height: 56px; justify-content: center; padding-inline: 8px; gap: 8px; font-size: 15px; }
+  .first-lang-flag { width: 34px; height: 34px; flex: 0 0 34px; font-size: 13px; }
+  .first-lang-note { margin-top: 10px; font-size: 12px; line-height: 1.6; }
 }
-@media (max-width: 360px) { .first-lang-card { padding-inline: 14px; } .first-lang-option { padding-inline: 18px; } }
+@media (max-width: 360px) { .first-lang-card { padding-inline: 12px; } .first-lang-option { padding-inline: 6px; font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { .first-lang-option { transition: none; } }
 """
 
