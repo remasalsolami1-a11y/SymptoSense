@@ -247,6 +247,7 @@ def smart_extract_symptoms(text: str, lang="ar") -> dict:
         "بطني يعورني":"abdominal-pain","ألم في البطن":"abdominal-pain","أشعر بألم بطني":"abdominal-pain",
         "راسي يعورني":"headache","رأسي يعورني":"headache","ألم في الرأس":"headache","صداع":"headache",
         "غثيان":"nausea","ابي استفرغ":"vomiting","أبي أستفرغ":"vomiting","استفراغ":"vomiting",
+        "تنميل":"numbness","تنمل":"numbness","خدر":"numbness","وخز":"numbness","نمنمة":"numbness",
         "ضيق نفس":"shortness-of-breath","صعوبة تنفس":"shortness-of-breath","ألم صدر":"chest-pain",
         "head pain":"headache","stomach pain":"abdominal-pain","belly pain":"abdominal-pain","feel sick":"nausea",
     }

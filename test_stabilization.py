@@ -21,6 +21,7 @@ import medication_push
 import medication_warnings
 import platform_v2
 import analysis_core
+import advanced_features
 import webapp
 
 
@@ -240,6 +241,40 @@ class StabilizationTest(unittest.TestCase):
         self.assertIn(response.status_code,{400,403})
         self.assertLess(response.status_code,500)
 
+    def test_arabic_numbness_is_extracted_from_knowledge_base(self):
+        result=advanced_features.smart_extract_symptoms("أشعر بتنميل في المفاصل", "ar")
+        slugs={item.get("slug") for item in result.get("found",[])}
+        self.assertIn("numbness",slugs)
+        self.assertEqual(result.get("confidence"),"high")
+
+    def test_numbness_location_clarification_and_broader_disease_base(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True)
+        self.assertIn("أين تشعر بالتنميل أو الخدر؟",html)
+        self.assertIn("هل بدأ التنميل فجأة في جهة واحدة",html)
+        self.assertIn("تنميل اليدين أو الأصابع",html)
+        normalized=medical_knowledge.normalize_symptoms(["تنميل اليدين"],"ar")
+        matches=medical_knowledge.match_diseases(normalized.get("canonical",[]),"ar",limit=10)
+        disease_slugs={item.get("slug") for item in matches}
+        self.assertIn("carpal-tunnel-syndrome",disease_slugs)
+        self.assertIn("peripheral-neuropathy",disease_slugs)
+        diseases={item.get("slug") for item in medical_knowledge.list_entities("diseases",False)}
+        self.assertTrue({"sciatica","acute-sinusitis","acute-bronchitis","food-poisoning"}.issubset(diseases))
+
+    def test_every_selectable_symptom_has_specific_or_generic_followup(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True)
+        for question in (
+            "هل بدأ ألم الصدر فجأة", "هل يوجد قيء متكرر", "هل التعب شديد ومفاجئ",
+            "هل المفصل متورم", "هل توجد حمى مقاسة", "هل توجد صعوبة تنفس أو تورم",
+            "هل تشعر بألم في العين", "هل بدأ الصداع", "هل لديك تيبس في الرقبة",
+            "هل يوجد دم مع السعال", "هل فقدت الوعي", "هل يزداد ضيق التنفس",
+            "هل هناك تورم أو حرارة في الساق", "هل الألم شديد جداً", "هل تجد صعوبة في البلع",
+        ):
+            self.assertIn(question,html)
+        self.assertIn("if(!matched) clarQueue.push(GENERIC_CLAR)",html)
+        self.assertIn("أين تشعر بهذا العرض أو في أي جزء من الجسم يظهر؟",html)
+
     def test_symptom_selection_exposes_clear_next_step(self):
         c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
         html=c.get("/chat").get_data(as_text=True)
@@ -251,6 +286,9 @@ class StabilizationTest(unittest.TestCase):
         self.assertIn("[۰-۹]",html)
         self.assertIn("document.body.classList.add('ss-chat-page')",html)
         self.assertIn("state.step === 'age' ? 'numeric'",html)
+        self.assertIn("body.ss-chat-page .asst-fab",webapp.BASE_CSS)
+        self.assertIn("تم اعتماد وصفك كما كتبته",html)
+        self.assertIn("concat([raw])",html)
 
     def test_install_prompt_does_not_auto_cover_analysis(self):
         self.assertIn("window.location.pathname !== '/home'",webapp.PAGE_FRAME)

@@ -986,6 +986,7 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   body.ss-chat-page .container { height: calc(100dvh - 62px - var(--safe-top) - var(--bnav-h) - var(--safe-bottom)); padding: 6px 8px; overflow: hidden; }
   body.ss-chat-page .chat-wrap { height: 100%; min-height: 0; max-height: none; margin: 0; border-radius: 16px; }
   body.ss-chat-page .container > .muted, body.ss-chat-page .blood-banner { display: none !important; }
+  body.ss-chat-page .asst-fab, body.ss-chat-page .asst-panel { display: none !important; }
   .chat-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 42%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 10px; }
   .chat-options .opt { width: 100%; min-height: 48px; padding: 9px 10px; border-radius: 14px; line-height: 1.45; }
   .chat-options .start-btn, .chat-options #relBlock { grid-column: 1/-1; }
@@ -4382,7 +4383,7 @@ def chat_page():
         syms = [
             "🤕 صداع", "🤒 حمى", "😷 سعال", "🫀 ألم في الصدر", "🤢 غثيان", "😴 تعب وإرهاق",
             "🫁 ضيق التنفس", "💫 دوار", "🦴 ألم المفاصل", "😖 ألم في البطن", "🥶 قشعريرة", "👁️ احمرار العيون",
-            "🦵 ألم في الرجل", "😣 ألم الحلق", "🖐️ حكة",
+            "🦵 ألم في الرجل", "😣 ألم الحلق", "🖐️ حكة", "🖐️ تنميل أو خدر",
         ]
         durs = ["⏰ أقل من 24 ساعة", "📅 1-3 أيام", "📅 4-7 أيام", "🗓️ 1-2 أسبوع", "🗓️ أكثر من أسبوعين", "📆 أكثر من شهر"]
         sevs = [("1", "1️⃣ خفيف جداً"), ("2", "2️⃣ معتدل"), ("3", "3️⃣ متوسط"), ("4", "4️⃣ شديد"), ("5", "5️⃣ حرج جداً")]
@@ -4391,7 +4392,7 @@ def chat_page():
         syms = [
             "🤕 Headache", "🤒 Fever", "😷 Cough", "🫀 Chest pain", "🤢 Nausea", "😴 Fatigue",
             "🫁 Shortness of breath", "💫 Dizziness", "🦴 Joint pain", "😖 Stomach pain", "🥶 Chills", "👁️ Eye redness",
-            "🦵 Leg pain", "😣 Sore throat", "🖐️ Itching",
+            "🦵 Leg pain", "😣 Sore throat", "🖐️ Itching", "🖐️ Numbness or tingling",
         ]
         durs = ["⏰ Less than 24 hours", "📅 1-3 days", "📅 4-7 days", "🗓️ 1-2 weeks", "🗓️ More than 2 weeks", "📆 More than a month"]
         sevs = [("1", "1️⃣ Very mild"), ("2", "2️⃣ Mild"), ("3", "3️⃣ Moderate"), ("4", "4️⃣ Severe"), ("5", "5️⃣ Critical")]
@@ -4447,13 +4448,50 @@ def chat_page():
     const CONDS = __CONDS__;
     const REL = __REL__;
     const CLAR = [
-      {syms:['👁️ احمرار العيون','👁️ Eye redness'],
+      {syms:['🖐️ تنميل أو خدر','🖐️ Numbness or tingling','تنميل أو خدر','Numbness or tingling','تنميل','خدر','Numbness'],
+       node:{q:['هل بدأ التنميل فجأة في جهة واحدة من الوجه أو الذراع أو الساق؟','Did the numbness start suddenly on one side of the face, arm, or leg?'],
+         yes:{safety:['تنميل مفاجئ في جهة واحدة — يحتاج تقييماً طارئاً','Sudden one-sided numbness — needs emergency assessment']},
+         no:{options:[
+           {label:['في اليدين أو الأصابع','Hands or fingers'],add:['تنميل اليدين أو الأصابع','Hand or finger numbness']},
+           {label:['في القدمين أو أصابع القدم','Feet or toes'],add:['تنميل القدمين أو أصابع القدم','Foot or toe numbness']},
+           {label:['في الوجه، وليس بشكل مفاجئ','Face, not sudden'],add:['تنميل الوجه','Facial numbness']},
+           {label:['في أكثر من مكان أو في الجهتين','Several areas or both sides'],add:['تنميل في أكثر من مكان','Numbness in multiple areas']},
+           {label:['في مكان آخر — سأكتبه','Another area — I will type it'],custom:true}
+         ]}}},
+      {syms:['🫀 ألم في الصدر','🫀 Chest pain','ألم الصدر','Chest pain'],
+       node:{q:['هل بدأ ألم الصدر فجأة أو هو شديد الآن؟','Did the chest pain start suddenly, or is it severe now?'],
+         yes:{safety:['ألم صدر مفاجئ أو شديد — يحتاج تقييماً عاجلاً','Sudden or severe chest pain — needs urgent assessment']},
+         no:{q:['هل يصاحب الألم ضيق تنفس أو تعرّق بارد أو دوخة شديدة؟','Does it come with breathlessness, cold sweating, or severe dizziness?'],yes:{safety:['ألم الصدر مع أعراض مصاحبة مقلقة','Chest pain with concerning associated symptoms']},no:{end:true}}}},
+      {syms:['🤢 غثيان','🤢 Nausea','غثيان','Nausea'],
+       node:{q:['هل يوجد قيء متكرر أو لا تستطيع الاحتفاظ بالسوائل؟','Are you vomiting repeatedly or unable to keep fluids down?'],
+         yes:{q:['هل يوجد دم في القيء أو ألم شديد جدًا في البطن؟','Is there blood in the vomit or very severe abdominal pain?'],yes:{safety:['قيء مع دم أو ألم بطن شديد جدًا','Vomiting blood or very severe abdominal pain']},no:{end:true}},
+         no:{q:['هل بدأ الغثيان بعد طعام معين أو دواء جديد؟','Did the nausea begin after a particular food or a new medicine?'],yes:{end:true},no:{end:true}}}},
+      {syms:['😴 تعب وإرهاق','😴 Fatigue','تعب وإرهاق','Fatigue'],
+       node:{q:['هل التعب شديد ومفاجئ أو يصاحبه إغماء أو ضيق تنفس؟','Is the fatigue sudden and severe, or accompanied by fainting or breathlessness?'],
+         yes:{safety:['تعب شديد مفاجئ مع علامة مقلقة','Sudden severe fatigue with a concerning sign']},
+         no:{q:['هل يستمر التعب رغم النوم والراحة؟','Does the fatigue continue despite sleep and rest?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🦴 ألم المفاصل','🦴 Joint pain','ألم المفاصل','Joint pain'],
+       node:{q:['هل المفصل متورم أو أحمر أو ساخن؟','Is the joint swollen, red, or hot?'],
+         yes:{q:['هل يصاحب ذلك حمى أو عدم القدرة على تحريك المفصل؟','Is there fever or inability to move the joint?'],yes:{safety:['مفصل ساخن أو متورم مع حمى أو صعوبة حركة','Hot or swollen joint with fever or inability to move it']},no:{end:true}},
+         no:{q:['هل بدأ الألم بعد إصابة أو مجهود واضح؟','Did the pain start after an injury or clear physical strain?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🥶 قشعريرة','🥶 Chills','قشعريرة','Chills'],
+       node:{q:['هل توجد حمى مقاسة أو شعور واضح بارتفاع الحرارة؟','Do you have a measured fever or clearly feel feverish?'],
+         yes:{q:['هل يصاحبها ضيق تنفس أو تشوش أو تيبس في الرقبة؟','Is there breathlessness, confusion, or neck stiffness?'],yes:{safety:['قشعريرة وحمى مع علامة خطر','Chills and fever with a red flag']},no:{end:true}},
+         no:{q:['هل القشعريرة مستمرة أو تتكرر؟','Are the chills persistent or recurring?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🖐️ حكة','🖐️ Itching','حكة','Itching'],
+       node:{q:['هل توجد صعوبة تنفس أو تورم في الشفاه أو اللسان أو الحلق؟','Is there trouble breathing or swelling of the lips, tongue, or throat?'],
+         yes:{safety:['حكة مع صعوبة تنفس أو تورم بالفم أو الحلق','Itching with breathing difficulty or mouth/throat swelling']},
+         no:{prompt:['أين تظهر الحكة؟','Where is the itching?'],options:[
+           {label:['في مكان محدد','One specific area']},{label:['في أكثر من مكان','Several areas']},
+           {label:['منتشرة في معظم الجسم','Across most of the body']},{label:['مكان آخر — سأكتبه','Another area — I will type it'],custom:true}
+         ]}}},
+      {syms:['👁️ احمرار العيون','👁️ Eye redness','احمرار العين','Eye redness'],
        node:{q:['هل تشعر بألم في العين؟','Do you feel pain in the eye?'],
          yes:{q:['هل الألم شديد؟','Is the pain severe?'],
            yes:{safety:['ألم شديد في العين مع احمرار','Severe eye pain with redness']},
            no:{q:['هل لديك إفرازات من العين؟','Do you have eye discharge?'],yes:{end:true},no:{end:true}}},
          no:{q:['هل لديك حكة في العين؟','Do you have itching in the eye?'],yes:{end:true},no:{end:true}}}},
-      {syms:['🤕 صداع','🤕 Headache'],
+      {syms:['🤕 صداع','🤕 Headache','صداع','Headache'],
        node:{q:['هل بدأ الصداع بشكل مفاجئ وشديد جداً؟','Did the headache start suddenly and very severely?'],
          yes:{safety:['صداع مفاجئ وشديد — يحتاج تقييماً عاجلاً','Sudden severe headache — needs urgent evaluation']},
          no:{q:['هل لديك حرارة؟','Do you have a fever?'],
@@ -4461,37 +4499,37 @@ def chat_page():
              yes:{safety:['حرارة مع تيبس الرقبة — يحتاج تقييماً عاجلاً','Fever with neck stiffness — needs urgent evaluation']},
              no:{end:true}},
            no:{end:true}}}},
-      {syms:['🤒 حمى','🤒 Fever'],
+      {syms:['🤒 حمى','🤒 Fever','حمى','Fever'],
        node:{q:['هل لديك تيبس في الرقبة؟','Do you have neck stiffness?'],
          yes:{safety:['حرارة مع تيبس الرقبة','Fever with neck stiffness']},
          no:{q:['هل تشعر بصعوبة في التنفس؟','Do you have difficulty breathing?'],
            yes:{safety:['حرارة مع صعوبة تنفس','Fever with difficulty breathing']},
            no:{end:true}}}},
-      {syms:['😷 سعال','😷 Cough'],
+      {syms:['😷 سعال','😷 Cough','سعال','Cough'],
        node:{q:['هل يوجد دم مع السعال؟','Is there blood with the cough?'],
          yes:{safety:['سعال مصحوب بدم','Cough with blood']},
          no:{q:['هل تعاني من ضيق تنفس مع السعال؟','Do you have shortness of breath with the cough?'],
            yes:{safety:['سعال مع ضيق تنفس','Cough with shortness of breath']},
            no:{end:true}}}},
-      {syms:['💫 دوار','💫 Dizziness'],
+      {syms:['💫 دوار','💫 Dizziness','دوخة','Dizziness'],
        node:{q:['هل فقدت الوعي أو شعرت بالإغماء؟','Did you lose consciousness or feel like fainting?'],
          yes:{safety:['دوار مع إغماء','Dizziness with fainting']},
          no:{end:true}}},
-      {syms:['🫁 ضيق التنفس','🫁 Shortness of breath'],
+      {syms:['🫁 ضيق التنفس','🫁 Shortness of breath','ضيق التنفس','Shortness of breath'],
        node:{q:['هل يزداد ضيق التنفس عند الاستلقاء؟','Does the breathlessness worsen when lying down?'],
          yes:{safety:['ضيق تنفس يزداد عند الاستلقاء','Breathlessness that worsens when lying down']},
          no:{end:true}}},
-      {syms:['🦵 ألم في الرجل','🦵 Leg pain'],
+      {syms:['🦵 ألم في الرجل','🦵 Leg pain','ألم الرجل أو الساق','Leg pain'],
        node:{q:['هل هناك تورم أو حرارة في الساق؟','Is there swelling or warmth in the leg?'],
          yes:{safety:['تورم أو حرارة في الساق مع ألم','Swelling or warmth in the leg with pain']},
          no:{end:true}}},
-      {syms:['😖 ألم في البطن','😖 Stomach pain'],
+      {syms:['😖 ألم في البطن','😖 Stomach pain','ألم البطن','Abdominal pain'],
        node:{q:['هل الألم شديد جداً؟','Is the pain very severe?'],
          yes:{q:['هل يمنعك الألم من الوقوف أو الحركة؟','Does the pain stop you from standing or moving?'],
            yes:{safety:['ألم بطن شديد يمنع الحركة','Severe stomach pain preventing movement']},
            no:{end:true}},
          no:{end:true}}},
-      {syms:['😣 ألم الحلق','😣 Sore throat'],
+      {syms:['😣 ألم الحلق','😣 Sore throat','ألم الحلق','Sore throat'],
        node:{q:['هل تجد صعوبة في البلع أو التنفس؟','Do you have trouble swallowing or breathing?'],
          yes:{safety:['صعوبة بلع أو تنفس مع ألم حلق','Difficulty swallowing or breathing with sore throat']},
          no:{end:true}}},
@@ -4856,16 +4894,23 @@ def chat_page():
       }
     };
 
+    const GENERIC_CLAR={prompt:['أين تشعر بهذا العرض أو في أي جزء من الجسم يظهر؟','Where do you feel this symptom, or which part of the body does it affect?'],options:[
+      {label:['الرأس أو الوجه','Head or face']},{label:['الصدر أو التنفس','Chest or breathing']},
+      {label:['البطن أو الجهاز الهضمي','Abdomen or digestion']},{label:['الذراعان أو الساقان','Arms or legs']},
+      {label:['أكثر من مكان','More than one area']},{label:['سأكتب المكان بالتفصيل','I will type the location'],custom:true}
+    ]};
     // ---------------- Missing-symptom clarification ----------------
-    let clarQueue = [], clarIndex = 0;
+    let clarQueue = [], clarIndex = 0, clarCustomNext = null;
     function startClarify() {
       clarQueue = [];
       clarIndex = 0;
       adaptiveQuestionNo = 0;
       (state.symptoms || []).forEach(function(s){
+        var matched=false;
         for (var i = 0; i < CLAR.length; i++) {
-          if (CLAR[i].syms.indexOf(s) !== -1) { clarQueue.push(CLAR[i].node); break; }
+          if (CLAR[i].syms.indexOf(s) !== -1) { clarQueue.push(CLAR[i].node); matched=true; break; }
         }
+        if(!matched) clarQueue.push(GENERIC_CLAR);
       });
       nextClarNode();
     }
@@ -4879,6 +4924,21 @@ def chat_page():
         const label = LANG === 'en' ? node.safety[1] : node.safety[0];
         addHtml('<div class="warn">🚨 ' + esc(label) + '</div>', 'bot');
         showEmergency({emergency:true, emergency_flags:[label], _clar:true});
+        return;
+      }
+      if (node.options) {
+        const prompt=node.prompt?(LANG==='en'?node.prompt[1]:node.prompt[0]):(LANG==='ar'?'أين تشعر بالتنميل أو الخدر؟ اختر الوصف الأقرب.':'Where do you feel the numbness or tingling? Choose the closest description.');
+        addQ('📍 ' + prompt);
+        showOpts(node.options.map(function(opt){
+          const label=LANG==='en'?opt.label[1]:opt.label[0];
+          return {label:label,fn:function(){
+            add(label,'user');
+            if(opt.add){const symptom=LANG==='en'?opt.add[1]:opt.add[0];if(state.symptoms.indexOf(symptom)===-1)state.symptoms.push(symptom);}
+            state.location=label;
+            if(opt.custom){state.step='clarification';clarCustomNext=opt.next||null;showText(LANG==='ar'?'اكتب مكان التنميل، مثال: حول الفم أو أعلى الفخذ':'Type the location, e.g. around the mouth or upper thigh');return;}
+            walkClarNode(opt.next||null);
+          }};
+        }));
         return;
       }
       if (node.q) {
@@ -4932,15 +4992,20 @@ def chat_page():
         const d = await r.json();
         const found = (d.found || []).map(function(x){ return LANG==='ar' ? (x.name_ar || x.name_en || x.slug) : (x.name_en || x.name_ar || x.slug); }).filter(Boolean);
         if (!found.length) {
-          add(LANG==='ar'?'لم أستطع تحديد الأعراض بثقة. اختاريها من القائمة أو اكتبيها يدويًا.':'I could not confidently identify the symptoms. Please select them from the list or enter them manually.','bot');
-          askSymptoms(); return;
+          state.symptoms=Array.from(new Set((state.symptoms||[]).concat([raw])));
+          add(LANG==='ar'?'تم اعتماد وصفك كما كتبته، وسنكمل الأسئلة الآن.':'Your description was saved as written. We will continue with the questions now.','bot');
+          askDuration(); return;
         }
         addHtml('<div class="smart-found"><b>🧠 '+esc(LANG==='ar'?'وجدنا:':'We found:')+'</b><div style="margin-top:8px">'+found.map(x=>'✓ '+esc(x)).join('<br>')+'</div><p class="muted" style="margin:8px 0 0">'+esc(LANG==='ar'?'هل هذا صحيح؟':'Is this correct?')+'</p></div>','bot');
         showOpts([
           {label:LANG==='ar'?'✅ نعم، متابعة':'✅ Yes, continue',fn:function(){ state.symptoms=Array.from(new Set(found)); add(LANG==='ar'?'تم تأكيد الأعراض':'Symptoms confirmed','user'); askDuration(); }},
           {label:LANG==='ar'?'✏️ تعديل الأعراض':'✏️ Edit symptoms',fn:function(){ state.symptoms=Array.from(new Set(found)); askSymptoms(); }}
         ]);
-      } catch(e) { add(LANG==='ar'?'تعذر فهم الوصف الآن. يمكنك اختيار الأعراض يدويًا.':'Unable to process the description right now. You can select symptoms manually.','bot'); askSymptoms(); }
+      } catch(e) {
+        state.symptoms=Array.from(new Set((state.symptoms||[]).concat([raw])));
+        add(LANG==='ar'?'تم حفظ وصفك كما كتبته، وسنكمل الأسئلة الآن.':'Your description was saved as written. We will continue with the questions now.','bot');
+        askDuration();
+      }
     }
     function showSmartSymptomInput() {
       if (state.smart_prompt_shown) return;
@@ -5072,6 +5137,10 @@ def chat_page():
         state.allergies = v; startClarify();
       } else if (state.step === 'notes') {
         state.notes = v; askConditions();
+      } else if (state.step === 'clarification') {
+        state.location=v;
+        state.notes += (state.notes?' ':'') + (LANG==='ar'?'مكان التنميل: ':'Numbness location: ') + v;
+        const next=clarCustomNext; clarCustomNext=null; walkClarNode(next);
       } else if (state.step === 'followup') {
         submitFollowup(v);
       }
