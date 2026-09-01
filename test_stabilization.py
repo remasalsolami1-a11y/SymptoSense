@@ -247,6 +247,13 @@ class StabilizationTest(unittest.TestCase):
         self.assertIn("if (state.symptoms.length) appendStartBtn(true)",html)
         self.assertIn("s.disabled = !state.symptoms.length",html)
         self.assertIn("askDuration();",html)
+        self.assertIn("[٠-٩]",html)
+        self.assertIn("[۰-۹]",html)
+        self.assertIn("document.body.classList.add('ss-chat-page')",html)
+        self.assertIn("state.step === 'age' ? 'numeric'",html)
+
+    def test_install_prompt_does_not_auto_cover_analysis(self):
+        self.assertIn("window.location.pathname !== '/home'",webapp.PAGE_FRAME)
 
     def test_red_flags_override_condition_output(self):
         result=analysis_core.run_analysis({"user_id":"red-flag-test","age":30,"gender":"female","symptoms":["severe chest pain","difficulty breathing"],"duration":"now","severity":5,"conditions":"","medications":"","notes":""},lang="en")

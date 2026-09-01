@@ -982,7 +982,13 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .ss-btn-row > .btn, .ss-btn-row > .ss-btn-primary, .ss-btn-row > .ss-btn-danger { flex: 1 1 100%; justify-content: center; text-align: center; }
   .drop { padding: 26px 14px; }
   table.tbl { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
-  .chat-wrap { height: calc(100dvh - var(--bnav-h) - var(--safe-bottom) - 94px); min-height: 500px; max-height: 760px; border-radius: 16px; }
+  body.ss-chat-page { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+  body.ss-chat-page .container { height: calc(100dvh - 62px - var(--safe-top) - var(--bnav-h) - var(--safe-bottom)); padding: 6px 8px; overflow: hidden; }
+  body.ss-chat-page .chat-wrap { height: 100%; min-height: 0; max-height: none; margin: 0; border-radius: 16px; }
+  body.ss-chat-page .container > .muted, body.ss-chat-page .blood-banner { display: none !important; }
+  .chat-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 42%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 10px; }
+  .chat-options .opt { width: 100%; min-height: 48px; padding: 9px 10px; border-radius: 14px; line-height: 1.45; }
+  .chat-options .start-btn, .chat-options #relBlock { grid-column: 1/-1; }
   .chat-head { flex-wrap: wrap; padding: 12px; gap: 8px; }
   .chat-head .spk-btn { margin: 0; padding: 8px; font-size: 11px; }
   #profileSwitcher { order: 10; flex: 1 1 100%; width: 100%; margin: 0 !important; }
@@ -1029,6 +1035,8 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .ss-bnav a { min-width: 48px; font-size: 9px; }
   .ss-mobile-account span:last-child { display: none; }
   .ss-mobile-account { width: 42px; padding: 7px; }
+  .chat-options { grid-template-columns: 1fr; }
+  .chat-options .start-btn, .chat-options #relBlock { grid-column: 1; }
 }
 @media (orientation: landscape) and (max-height: 560px) {
   .chat-wrap { height: calc(100dvh - var(--bnav-h) - var(--safe-bottom) - 16px); min-height: 440px; }
@@ -1877,7 +1885,7 @@ function smartCtxAction(action) {
   }
   var canOfferInstall = hasReturnedBefore();
   function offerAfterDelay(mode) {
-    if (!canOfferInstall) return;
+    if (!canOfferInstall || (window.location.pathname !== '/' && window.location.pathname !== '/home')) return;
     window.setTimeout(function () { show(mode); }, 8000);
   }
   function show(mode, force) {
@@ -4428,6 +4436,8 @@ def chat_page():
     </div>
 
     <script>
+    document.body.classList.add('ss-chat-page');
+    window.addEventListener('pageshow', function(){ window.scrollTo(0,0); }, {once:true});
     const T = __T__;
     const LANG = "__LANG__";
     function TT(k) { return T[k] || k; }
@@ -4595,7 +4605,9 @@ def chat_page():
       inpEl.style.display = 'flex';
       textInp.placeholder = placeholder;
       textInp.value = '';
-      textInp.focus();
+      textInp.inputMode = state.step === 'age' ? 'numeric' : 'text';
+      textInp.setAttribute('dir', state.step === 'age' ? 'ltr' : (LANG === 'ar' ? 'rtl' : 'ltr'));
+      if (window.matchMedia('(hover:hover) and (pointer:fine)').matches) textInp.focus();
     }
     function hideText() { inpEl.style.display = 'none'; }
     function send() {
@@ -5045,7 +5057,8 @@ def chat_page():
       const v = send();
       if (!v) return;
       if (state.step === 'age') {
-        const n = parseInt(v);
+        const normalizedAge = String(v).replace(/[٠-٩]/g,function(d){return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d));}).replace(/[۰-۹]/g,function(d){return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));});
+        const n = parseInt(normalizedAge,10);
         if (!n || n < 1 || n > 120) { add(TT('age_invalid'), 'bot'); showText(TT('age_ph')); return; }
         state.age = n; if(qualityReturnKey==='age'){qualityReturnKey=null;showDataQualityGate();}else askGender();
       } else if (state.step === 'symptoms') {
