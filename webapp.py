@@ -491,6 +491,7 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .chat-head h3 { font-size: 16px; }
 .chat-head p { font-size: 12px; opacity: .85; }
 .chat-head .spk-btn { margin: 0; background: rgba(255,255,255,.15); border: none; border-radius: 10px; padding: 8px 10px; font-size: 13px; cursor: pointer; color: #fff; white-space: nowrap; }
+.chat-head-toggles { display: flex; align-items: center; gap: 8px; }
 .chat-body { flex: 1; overflow-y: auto; padding: 18px; background: #F5F9FF; }
 .bubble { max-width: 85%; margin-bottom: 10px; padding: 11px 15px; border-radius: 14px; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
 .bubble.bot { background: var(--bg-card); border: 1px solid var(--border-card); border-bottom-right-radius: 4px; }
@@ -990,8 +991,9 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .chat-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 42%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 10px; }
   .chat-options .opt { width: 100%; min-height: 48px; padding: 9px 10px; border-radius: 14px; line-height: 1.45; }
   .chat-options .start-btn, .chat-options #relBlock { grid-column: 1/-1; }
-  .chat-head { flex-wrap: wrap; padding: 12px; gap: 8px; }
-  .chat-head .spk-btn { margin: 0; padding: 8px; font-size: 11px; }
+  .chat-head { flex-wrap: wrap; padding: 10px 12px; gap: 6px; }
+  .chat-head-toggles { display: flex; flex-wrap: nowrap; gap: 6px; margin-inline-start: auto; }
+  .chat-head .spk-btn { margin: 0; padding: 6px 8px; font-size: 10.5px; }
   #profileSwitcher { order: 10; flex: 1 1 100%; width: 100%; margin: 0 !important; }
   #famSelect { width: 100%; max-width: none !important; min-height: 42px; }
   .chat-body { padding: 12px; }
@@ -4489,8 +4491,8 @@ def chat_page():
             <option value="0">👤 __ME__</option>
           </select>
         </div>
-        <button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button>
-        <button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_ON__</button>
+        <div class="chat-head-toggles"><button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button>
+        <button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_ON__</button></div>
       </div>
       <div class="ss-flow" aria-live="polite"><div class="ss-flow-copy"><span id="flowStepLabel">__FLOW_STEP__</span><span id="flowStepName">__FLOW_DEMO__</span></div><div class="ss-flow-track" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="flowProgress"><div class="ss-flow-fill" id="flowFill"></div></div></div>
       <div class="chat-body" id="chatBody"></div>
