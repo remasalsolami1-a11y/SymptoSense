@@ -4537,6 +4537,11 @@ def chat_page():
     document.getElementById('headP').textContent = TT('head_p');
     try { if (localStorage.getItem('symptosense_blood_id')) { const bb = document.getElementById('bloodBanner'); bb.textContent = TT('blood_banner'); bb.style.display = 'block'; } } catch (e) {}
     const state = { age:null, gender:null, symptoms:[], duration:null, severity:null, location:null, conditions:null, medications:null, allergies:null, notes:null, history_answered:false, step:'age', member_id:0, member_name:'__ME__', smart_prompt_shown:false, previous_record_id:null };
+    // Result rendering also uses this profile context. Keep it in the shared
+    // chat-script scope instead of declaring it only inside runAnalysis().
+    let useSaved = false;
+    let profileMissing = [];
+    let userInfo = null;
     let compareBase = null;
     let adaptiveQuestionNo = 0;
     const bodyEl = document.getElementById('chatBody');
@@ -5310,9 +5315,9 @@ def chat_page():
         payload.member_id = state.member_id || 0;
         if (state.previous_record_id) payload.previous_record_id = state.previous_record_id;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
-        var useSaved = false;
-        var userInfo = null;
-        var profileMissing = [];
+        useSaved = false;
+        userInfo = null;
+        profileMissing = [];
         try {
           const uir = await fetch('/api/user-info');
           userInfo = await uir.json();
