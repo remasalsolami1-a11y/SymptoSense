@@ -240,6 +240,14 @@ class StabilizationTest(unittest.TestCase):
         self.assertIn(response.status_code,{400,403})
         self.assertLess(response.status_code,500)
 
+    def test_symptom_selection_exposes_clear_next_step(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True)
+        self.assertIn("التالي: مدة الأعراض",html)
+        self.assertIn("if (state.symptoms.length) appendStartBtn(true)",html)
+        self.assertIn("s.disabled = !state.symptoms.length",html)
+        self.assertIn("askDuration();",html)
+
     def test_red_flags_override_condition_output(self):
         result=analysis_core.run_analysis({"user_id":"red-flag-test","age":30,"gender":"female","symptoms":["severe chest pain","difficulty breathing"],"duration":"now","severity":5,"conditions":"","medications":"","notes":""},lang="en")
         self.assertEqual(result.get("urgency"),"high")
@@ -294,6 +302,15 @@ class StabilizationTest(unittest.TestCase):
         payload=failed.get_json(); self.assertFalse(payload["ok"])
         self.assertNotIn("database password",payload["error"])
         self.assertEqual(payload["request_id"],failed.headers["X-Request-ID"])
+
+    def test_medications_has_iphone_home_screen_install_guidance(self):
+        uid=self.verified_user("iphone-install@example.test"); c=self.client("ar"); self.login_session(c,uid)
+        html=c.get("/meds").get_data(as_text=True)
+        self.assertIn('id="iosInstallCard"',html)
+        self.assertIn('onclick="pwaRequestInstall()"',html)
+        self.assertIn('آيفونك يحتاج خطوة صغيرة',html)
+        self.assertIn("display-mode: standalone",html)
+        self.assertIn("window.pwaRequestInstall",html)
 
 
 if __name__=="__main__": unittest.main(verbosity=2)

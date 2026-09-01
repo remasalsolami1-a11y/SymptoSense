@@ -849,6 +849,8 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
 .chat-start .cs-desc { font-size: 13.5px; color: var(--text-body); line-height: 1.9; }
 .start-btn { display: block; width: 100%; margin-top: 10px; background: linear-gradient(135deg, var(--primary), #1565C0); color: #FFFFFF; border: none; border-radius: 999px; padding: 14px 20px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; box-shadow: 0 10px 24px rgba(25,118,210,.30); }
 .start-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(25,118,210,.38); }
+.start-btn.is-next { order: -1; margin: 0 0 6px; position: sticky; top: 6px; z-index: 3; }
+.start-btn:disabled { cursor: not-allowed; opacity: .55; box-shadow: none; transform: none; }
 .res-card { background: linear-gradient(180deg, var(--primary-light) 0%, #FFFFFF 70%); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 22px 20px; }
 .res-title { text-align: center; font-size: 20px; font-weight: 800; color: var(--primary-dark); margin-bottom: 12px; }
 .res-person { text-align: center; background: var(--primary-light); border: 1px solid var(--border-card); color: var(--primary); font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 14px; display: inline-block; margin-bottom: 10px; }
@@ -1878,19 +1880,24 @@ function smartCtxAction(action) {
     if (!canOfferInstall) return;
     window.setTimeout(function () { show(mode); }, 8000);
   }
-  function show(mode) {
-    if (!box || isStandalone() || recentlyDismissed()) return;
+  function show(mode, force) {
+    if (!box || isStandalone() || (!force && recentlyDismissed())) return;
     box.dataset.mode = mode;
     if (mode === 'ios') {
       text.textContent = isArabic
         ? 'لتثبيت SymptoSense: اضغطي مشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».'
         : 'To install SymptoSense, tap Share ⬆️ then “Add to Home Screen”.';
       installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
-    } else {
+    } else if (mode === 'native') {
       text.textContent = isArabic
         ? 'ثبّتي SymptoSense كتطبيق على جهازك للوصول إليه بسرعة.'
         : 'Install SymptoSense on your device for quick access.';
       installBtn.textContent = isArabic ? 'تثبيت' : 'Install';
+    } else {
+      text.textContent = isArabic
+        ? 'من قائمة المتصفح اختاري «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».'
+        : 'From your browser menu, choose “Add to Home Screen” or “Install app”.';
+      installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
     }
     laterBtn.textContent = isArabic ? 'لاحقًا' : 'Later';
     box.classList.add('show');
@@ -1901,7 +1908,7 @@ function smartCtxAction(action) {
     try { localStorage.setItem('ss_pwa_dismissed', String(Date.now())); } catch (e) {}
   };
   window.pwaInstallNow = async function () {
-    if (box && box.dataset.mode === 'ios') {
+    if (box && (box.dataset.mode === 'ios' || box.dataset.mode === 'manual')) {
       box.classList.remove('show');
       return;
     }
@@ -1910,6 +1917,13 @@ function smartCtxAction(action) {
     try { await deferredPrompt.userChoice; } catch (e) {}
     deferredPrompt = null;
     if (box) box.classList.remove('show');
+  };
+  window.pwaRequestInstall = async function () {
+    if (isStandalone()) return;
+    var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isiOS) { show('ios', true); return; }
+    if (deferredPrompt) { await window.pwaInstallNow(); return; }
+    show('manual', true);
   };
 
   if ('serviceWorker' in navigator) {
@@ -4642,12 +4656,17 @@ def chat_page():
         showOpts(items);
       }).catch(() => { state.member = null; askAge(); });
     }
-    function appendStartBtn() {
+    function appendStartBtn(first) {
       const s = document.createElement('button');
-      s.className = 'start-btn';
-      s.textContent = TT('start_btn');
+      s.className = 'start-btn' + (first ? ' is-next' : '');
+      s.textContent = state.symptoms.length
+        ? (LANG === 'ar' ? 'التالي: مدة الأعراض ←' : 'Next: symptom duration →')
+        : TT('start_btn');
+      s.disabled = !state.symptoms.length;
+      s.setAttribute('aria-disabled', state.symptoms.length ? 'false' : 'true');
       s.onclick = beginAssessment;
-      optsEl.appendChild(s);
+      if (first && optsEl.firstChild) optsEl.insertBefore(s, optsEl.firstChild);
+      else optsEl.appendChild(s);
     }
     function beginAssessment() {
       if (!state.symptoms.length) { add(TT('atleast'), 'bot'); return; }
@@ -4947,8 +4966,9 @@ def chat_page():
       }});
       items.push({label:TT('voice_chip'), cls:'voice-opt', fn:()=>{ startVoice(); }});
       showOpts(items);
+      if (state.symptoms.length) appendStartBtn(true);
       renderRelated();
-      appendStartBtn();
+      if (!state.symptoms.length) appendStartBtn(false);
     }
     function renderRelated() {
       const rel = [];
@@ -6890,6 +6910,7 @@ def meds_page():
     body=r'''
     <style>
     .med-shell{max-width:1050px;margin:0 auto}.med-hero{padding:27px;border:1px solid var(--v2-line);border-radius:24px;background:linear-gradient(135deg,#fff,#f1f9fe);margin-bottom:16px}.med-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}.med-card{background:#fff;border:1px solid var(--v2-line);border-radius:18px;padding:19px;box-shadow:var(--v2-shadow);margin-bottom:14px}.med-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.med-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.med-form-grid .wide{grid-column:1/-1}.weekdays{display:flex;gap:6px;flex-wrap:wrap}.weekday{border:1px solid var(--v2-line);border-radius:999px;background:#fff;padding:7px 10px;cursor:pointer}.weekday.on{background:var(--v2-sky);border-color:var(--v2-blue);color:var(--v2-blue-dark);font-weight:800}.plan{border:1px solid var(--v2-line);border-radius:16px;padding:15px;margin:10px 0}.plan-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.times{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.time-pill{border-radius:999px;background:var(--v2-sky);padding:6px 10px;font-size:12px;font-weight:800;color:var(--v2-blue-dark)}.time-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.mini-action{border:1px solid var(--v2-line);background:#fff;border-radius:10px;padding:7px 9px;cursor:pointer;font-weight:700}.push-state{display:flex;gap:9px;align-items:center;padding:12px;border-radius:14px;background:var(--v2-bg);border:1px solid var(--v2-line)}.dot{width:9px;height:9px;border-radius:50%;background:#a33a3a}.dot.on{background:#267a52}.setting-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--v2-line)}.setting-row:last-child{border-bottom:0}.cal-row{display:grid;grid-template-columns:95px 75px 1fr auto;gap:8px;padding:9px 0;border-bottom:1px solid var(--v2-line);align-items:center}.status-taken{color:#267a52}.status-skipped{color:#a33a3a}.status-snoozed{color:#8a651e}.status-scheduled{color:var(--v2-muted)}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.summary-box{padding:12px;border:1px solid var(--v2-line);border-radius:14px;background:var(--v2-bg);text-align:center}.summary-box b{display:block;font-size:20px;color:var(--v2-blue-dark)}.privacy-note{padding:13px;border-radius:14px;background:var(--v2-sky);color:var(--v2-blue-dark);font-size:13px;line-height:1.7}.ios-note{padding:11px;border-radius:12px;background:#fff8e7;color:#6f531b;font-size:12px;margin-top:9px}.drug-card{border:1px solid var(--v2-line);border-radius:16px;padding:16px;background:#fff}.drug-sec{margin-top:11px}.drug-name{font-weight:900;color:var(--v2-blue-dark);font-size:18px}.hide{display:none!important}@media(max-width:760px){.med-grid,.med-form-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(2,1fr)}.cal-row{grid-template-columns:80px 65px 1fr}.cal-row .cal-med{grid-column:1/-1}.plan-head{flex-direction:column}.med-card{padding:15px}}@media(max-width:430px){.summary-grid{grid-template-columns:1fr 1fr}.cal-row{grid-template-columns:1fr 1fr}.cal-row .cal-med{grid-column:1/-1}}
+    .ios-install-card{margin-top:10px;padding:14px;border-radius:16px;border:1px solid #cfe3ef;background:#f2f9fd;text-align:center;color:#163b5c}.ios-install-card .ios-mascot{font-size:34px;display:block;margin-bottom:5px}.ios-install-card b{display:block;margin-bottom:5px}.ios-install-card p{font-size:12px;line-height:1.7;margin:0 0 10px}
     </style>
     <main class="med-shell">
       <section class="med-hero"><h1>💊 __MY_MEDS__</h1><p class="muted">__HERO_SUB__</p></section>
@@ -6929,6 +6950,7 @@ def meds_page():
               <button id="enablePushBtn" class="ss-btn-primary" style="width:100%;margin-top:10px" onclick="enablePush()">__ENABLE__</button>
               <button id="disablePushBtn" class="btn ghost hide" style="width:100%;margin-top:8px" onclick="disablePush()">__DISABLE__</button>
               <div id="iosHelp" class="ios-note hide">__IOS_HELP__</div>
+              <div id="iosInstallCard" class="ios-install-card hide"><span class="ios-mascot" aria-hidden="true">🐣📱</span><b>__IOS_INSTALL_TITLE__</b><p>__IOS_INSTALL_TEXT__</p><button type="button" class="btn ghost" style="width:100%" onclick="pwaRequestInstall()">__IOS_INSTALL_BUTTON__</button></div>
               <div class="setting-row"><span>__NOTIF_ON__</span><input type="checkbox" id="notifEnabled" checked onchange="saveNotifSettings()"></div>
               <div class="setting-row"><span>__SOUND__</span><input type="checkbox" id="notifSound" checked onchange="saveNotifSettings()"></div>
               <div class="setting-row"><span>__SNOOZE__</span><select id="snoozeMinutes" class="inp" style="max-width:115px" onchange="saveNotifSettings()"><option>5</option><option selected>10</option><option>15</option><option>30</option></select></div>
@@ -6958,7 +6980,7 @@ def meds_page():
     async function loadCalendar(){if(!LOGGED_IN)return;const d=await fetch('/api/meds/calendar?days='+document.getElementById('calDays').value).then(r=>r.json());const sm=d.summary||{},g=document.getElementById('summaryGrid');g.innerHTML=[[sm.scheduled||0,AR?'مجدول':'Scheduled'],[sm.taken||0,AR?'تم أخذه':'Taken'],[sm.skipped||0,AR?'تم تخطيه':'Skipped'],[(sm.adherence||0)+'%',AR?'استجابة للتذكيرات':'Reminder response']].map(x=>'<div class="summary-box"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('');const e=(d.entries||[]).slice().reverse(),box=document.getElementById('calendarList');if(!e.length){box.innerHTML='<p class="muted">'+(AR?'لا يوجد سجل تذكيرات بعد.':'No reminder history yet.')+'</p>';return}const st={taken:AR?'✓ تم أخذه':'✓ Taken',skipped:AR?'— تم تخطيه':'— Skipped',snoozed:AR?'😴 غفوة':'😴 Snoozed',deferred:AR?'😴 غفوة':'😴 Snoozed',scheduled:AR?'○ مجدول':'○ Scheduled'};box.innerHTML=e.slice(0,120).map(x=>'<div class="cal-row"><span>'+esc(x.date)+'</span><b>'+esc(x.time)+'</b><span class="cal-med">'+esc(x.med_name)+'</span><span class="status-'+esc(x.status)+'">'+esc(st[x.status]||x.status)+'</span></div>').join('')}
     function urlB64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
     function pushSupported(){return location.protocol==='https:'&&'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}
-    async function refreshPush(){if(!LOGGED_IN)return;const dot=document.getElementById('pushDot'),label=document.getElementById('pushLabel'),support=document.getElementById('pushSupport'),on=document.getElementById('enablePushBtn'),off=document.getElementById('disablePushBtn');if(!pushSupported()){label.textContent=AR?'الإشعارات غير مدعومة على هذا الجهاز/المتصفح.':"Push notifications aren't supported on this device/browser.";support.textContent=AR?'يتطلب Web Push اتصال HTTPS ومتصفحًا يدعمه.':'Web Push requires HTTPS and browser support.';on.classList.add('hide');return}const d=await fetch('/api/push/status').then(r=>r.json());const perm=Notification.permission;dot.classList.toggle('on',d.subscribed&&perm==='granted');label.textContent=d.subscribed&&perm==='granted'?(AR?'الإشعارات مفعلة':'Notifications ON'):(AR?'الإشعارات متوقفة':'Notifications OFF');support.textContent=!d.configured?(AR?'خدمة Push لم يتم إعداد مفاتيحها على الخادم بعد.':'Push keys are not configured on the server yet.'):(perm==='denied'?(AR?'الإذن مرفوض. فعّليه من إعدادات المتصفح.':'Permission is blocked. Enable it in browser settings.'):'');on.classList.toggle('hide',d.subscribed&&perm==='granted');off.classList.toggle('hide',!(d.subscribed&&perm==='granted'));const s=d.settings||{};document.getElementById('notifEnabled').checked=s.enabled!==false;document.getElementById('notifSound').checked=s.sound!==false;document.getElementById('snoozeMinutes').value=String(s.snooze_minutes||10);const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);document.getElementById('iosHelp').classList.toggle('hide',!isiOS)}
+    async function refreshPush(){if(!LOGGED_IN)return;const dot=document.getElementById('pushDot'),label=document.getElementById('pushLabel'),support=document.getElementById('pushSupport'),on=document.getElementById('enablePushBtn'),off=document.getElementById('disablePushBtn'),isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent),standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;document.getElementById('iosInstallCard').classList.toggle('hide',!(isiOS&&!standalone));document.getElementById('iosHelp').classList.toggle('hide',!isiOS);if(!pushSupported()){label.textContent=AR?'الإشعارات غير مدعومة على هذا الجهاز/المتصفح.':"Push notifications aren't supported on this device/browser.";support.textContent=AR?'يتطلب Web Push اتصال HTTPS ومتصفحًا يدعمه.':'Web Push requires HTTPS and browser support.';on.classList.add('hide');return}const d=await fetch('/api/push/status').then(r=>r.json());const perm=Notification.permission;dot.classList.toggle('on',d.subscribed&&perm==='granted');label.textContent=d.subscribed&&perm==='granted'?(AR?'الإشعارات مفعلة':'Notifications ON'):(AR?'الإشعارات متوقفة':'Notifications OFF');support.textContent=!d.configured?(AR?'خدمة Push لم يتم إعداد مفاتيحها على الخادم بعد.':'Push keys are not configured on the server yet.'):(perm==='denied'?(AR?'الإذن مرفوض. فعّليه من إعدادات المتصفح.':'Permission is blocked. Enable it in browser settings.'):'');on.classList.toggle('hide',d.subscribed&&perm==='granted');off.classList.toggle('hide',!(d.subscribed&&perm==='granted'));const s=d.settings||{};document.getElementById('notifEnabled').checked=s.enabled!==false;document.getElementById('notifSound').checked=s.sound!==false;document.getElementById('snoozeMinutes').value=String(s.snooze_minutes||10)}
     async function enablePush(){if(!pushSupported())return;const cfg=await fetch('/api/push/vapid-public').then(r=>r.json());if(!cfg.configured||!cfg.public_key){alert(AR?'خدمة Push غير مهيأة على الخادم.':'Push is not configured on the server.');return}const perm=await Notification.requestPermission();if(perm!=='granted'){refreshPush();return}const reg=await navigator.serviceWorker.register('/service-worker.js');const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(cfg.public_key)});const r=await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),timezone,lang:AR?'ar':'en'})});if(!r.ok){alert(AR?'تعذر تفعيل الإشعارات.':'Unable to enable notifications.');return}await saveNotifSettings();refreshPush()}
     async function disablePush(){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await fetch('/api/push/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe()}}catch(e){}document.getElementById('notifEnabled').checked=false;await saveNotifSettings();refreshPush()}
     async function saveNotifSettings(){if(!LOGGED_IN)return;await fetch('/api/meds/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:document.getElementById('notifEnabled').checked,sound:document.getElementById('notifSound').checked,snooze_minutes:Number(document.getElementById('snoozeMinutes').value||10),timezone})})}
@@ -6971,7 +6993,7 @@ def meds_page():
       '__INFO_TITLE__':tx('معلومات الدواء','Medication Information'),'__INFO_SUB__':tx('اعرض المعلومات المتاحة من المصادر الموجودة في النظام فقط.','View only the verified information currently available in the system.'),'__SEARCH_PH__':tx('اكتب اسم الدواء','Enter medication name'),'__SEARCH__':tx('بحث','Search'),
       '__LOGIN_TITLE__':tx('سجّل الدخول لاستخدام التذكيرات','Sign in to use reminders'),'__LOGIN_TEXT__':tx('البحث متاح للجميع، أما التذكيرات والسجل فخاصة بحسابك.','Search is public; reminders and history are private to your account.'),'__SIGN_IN__':tx('تسجيل الدخول','Sign in'),
       '__REMINDERS__':tx('تذكيرات الأدوية','Medication Reminders'),'__REM_SUB__':tx('أنت من تحدد الاسم والوقت والجرعة الاختيارية.','You choose the name, time, and optional dose.'),'__ADD__':tx('إضافة','Add'),'__ADD_MED__':tx('إضافة دواء','Add Medication'),'__MED_NAME__':tx('اسم الدواء','Medication Name'),'__DOSE__':tx('الجرعة (اختيارية)','Dose (Optional)'),'__OPTIONAL__':tx('اختياري','Optional'),'__TIMES__':tx('أوقات التذكير','Reminder Times'),'__MULTI_TIME__':tx('يمكن إضافة أكثر من وقت، مثال: 08:00, 20:00','Multiple times are supported, e.g. 08:00, 20:00'),'__FREQ__':tx('التكرار','Frequency'),'__DAILY__':tx('يوميًا','Daily'),'__SPECIFIC__':tx('أيام محددة','Specific Days'),'__TZ__':tx('المنطقة الزمنية','Timezone'),'__DAYS__':tx('الأيام','Days'),'__START__':tx('تاريخ البداية','Start Date'),'__END__':tx('تاريخ النهاية (اختياري)','End Date (Optional)'),'__NOTES__':tx('ملاحظات (اختيارية)','Notes (Optional)'),'__SAVE__':tx('حفظ التذكير','Save Reminder'),'__CANCEL__':tx('إلغاء','Cancel'),'__SAFETY__':tx('هذه الميزة للتذكير فقط. لا تستخدمها لاتخاذ قرار ببدء دواء أو إيقافه أو تغيير الجرعة.','This feature is for reminders only. Do not use it to decide to start, stop, or change a medication or dose.'),
-      '__NOTIF__':tx('إشعارات الدواء','Medication Notifications'),'__CHECKING__':tx('جاري التحقق…','Checking…'),'__ENABLE__':tx('تفعيل الإشعارات','Enable Notifications'),'__DISABLE__':tx('إيقاف الإشعارات','Disable Notifications'),'__IOS_HELP__':tx('على iPhone/iPad، Web Push متاح لتطبيقات الويب المضافة إلى الشاشة الرئيسية على الإصدارات المدعومة. أضف SymptoSense إلى Home Screen ثم فعّل الإشعارات من داخل التطبيق.','On supported iPhone/iPad versions, Web Push is available for web apps added to the Home Screen. Add SymptoSense to Home Screen, then enable notifications from the app.'),'__NOTIF_ON__':tx('Medication Notifications','Medication Notifications'),'__SOUND__':tx('صوت التذكير','Reminder Sound'),'__SNOOZE__':tx('مدة الغفوة (دقيقة)','Snooze (minutes)'),
+      '__NOTIF__':tx('إشعارات الدواء','Medication Notifications'),'__CHECKING__':tx('جاري التحقق…','Checking…'),'__ENABLE__':tx('تفعيل الإشعارات','Enable Notifications'),'__DISABLE__':tx('إيقاف الإشعارات','Disable Notifications'),'__IOS_HELP__':tx('على iPhone/iPad، Web Push متاح لتطبيقات الويب المضافة إلى الشاشة الرئيسية على الإصدارات المدعومة. أضف SymptoSense إلى Home Screen ثم فعّل الإشعارات من داخل التطبيق.','On supported iPhone/iPad versions, Web Push is available for web apps added to the Home Screen. Add SymptoSense to Home Screen, then enable notifications from the app.'),'__IOS_INSTALL_TITLE__':tx('آيفونك يحتاج خطوة صغيرة 🐣','Your iPhone needs one small step 🐣'),'__IOS_INSTALL_TEXT__':tx('أضيفي SymptoSense إلى الشاشة الرئيسية، ثم افتحيه من الأيقونة وفعّلي الإشعارات حتى تصلك تذكيرات الدواء بعد إغلاق الصفحة.','Add SymptoSense to your Home Screen, open it from the icon, then enable notifications to receive medication reminders after closing the page.'),'__IOS_INSTALL_BUTTON__':tx('طريقة الإضافة للشاشة الرئيسية','How to add to Home Screen'),'__NOTIF_ON__':tx('Medication Notifications','Medication Notifications'),'__SOUND__':tx('صوت التذكير','Reminder Sound'),'__SNOOZE__':tx('مدة الغفوة (دقيقة)','Snooze (minutes)'),
       '__SUMMARY__':tx('ملخص التذكيرات','Reminder Summary'),'__ADH_NOTE__':tx('النسبة تعكس استجابتك للتذكيرات فقط، وليست تقييمًا طبيًا للالتزام بالعلاج.','This percentage reflects reminder responses only; it is not a medical assessment of treatment adherence.'),'__CALENDAR__':tx('سجل التذكيرات','Reminder Calendar'),'__CAL_SUB__':tx('✓ تم أخذه · ○ مجدول · — تم تخطيه','✓ Taken · ○ Scheduled · — Skipped'),'__DAYS_WORD__':tx('أيام','days'),
       '__AR__':'true' if ar else 'false','__LOGGED_IN__':'true' if logged_in else 'false','__GATE_HIDE__':'hide' if logged_in else '','__PRIVATE_HIDE__':'' if logged_in else 'hide'
     }
