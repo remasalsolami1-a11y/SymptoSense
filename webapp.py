@@ -206,7 +206,7 @@ table th{color:#163B5C;background:#F4F9FC;font-weight:800}table td,table th{padd
 .hh-product-visual{position:relative;width:min(440px,100%);aspect-ratio:1;border-radius:32px;border:1px solid #cfe3ef;background:#f4fafe;display:grid;place-items:center;overflow:hidden;box-shadow:0 16px 36px rgba(31,86,127,.10)}.hh-product-visual:before,.hh-product-visual:after{content:'';position:absolute;border:1px solid #c7e0ed;border-radius:50%}.hh-product-visual:before{width:76%;height:76%}.hh-product-visual:after{width:49%;height:49%;background:#fff;box-shadow:0 12px 30px rgba(31,86,127,.08)}.hh-product-core{position:relative;z-index:2;width:96px;height:96px;border-radius:28px;background:#287fc1;color:#fff;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:0 13px 28px rgba(40,127,193,.22)}.hh-product-node{position:absolute;z-index:3;width:66px;height:66px;border-radius:20px;background:#fff;border:1px solid #d6e7f0;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 20px rgba(31,86,127,.08)}.hh-p1{top:10%;left:11%}.hh-p2{top:11%;right:10%}.hh-p3{bottom:10%;left:12%}.hh-p4{bottom:10%;right:11%}
 .home-trust{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:-10px auto 36px;color:#607487;font-size:13px}.home-trust a{color:#287FC1;font-weight:800}.home-trust-dot{width:6px;height:6px;border-radius:50%;background:#267A52}
 .v2-section-head{margin-top:42px!important}.svc-grid{gap:14px!important}.svc-card{padding:22px!important}.svc-ic{width:48px!important;height:48px!important;border-radius:14px!important;font-size:24px!important}.svc-btn{background:transparent!important;color:#287FC1!important;padding:5px 0!important;min-height:auto!important}.svc-card:hover .svc-btn{background:transparent!important;color:#163B5C!important}
-@media(max-width:1180px){.nav{display:none}.ss-mobile-head{display:flex}.ss-bnav{display:flex;justify-content:space-evenly;align-items:center}.ss-bnav a{flex:0 1 170px}.container{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 28px)}.asst-fab{bottom:calc(var(--bnav-h) + var(--safe-bottom) + 12px);left:12px;width:54px;height:54px;padding:0;justify-content:center}.asst-fab .asst-fab-lb{display:none}.asst-panel{left:12px;right:12px;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 76px);width:auto;height:min(72dvh,600px)}[dir="rtl"] .asst-panel{left:12px;right:12px}}
+@media(max-width:1180px){.nav{display:none}.ss-mobile-head{display:flex}.ss-bnav{display:flex;justify-content:space-evenly;align-items:center}.ss-bnav a{flex:0 1 170px}.container{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 80px)}.asst-fab{bottom:calc(var(--bnav-h) + var(--safe-bottom) + 12px);left:12px;width:54px;height:54px;padding:0;justify-content:center}.asst-fab .asst-fab-lb{display:none}.asst-panel{left:12px;right:12px;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 76px);width:auto;height:min(72dvh,600px)}[dir="rtl"] .asst-panel{left:12px;right:12px}}
 @media(min-width:1181px){.nav{display:flex!important}.ss-mobile-head,.ss-bnav{display:none!important}.container{padding-bottom:clamp(42px,6vw,72px)!important}.asst-fab{bottom:22px!important}}
 @media(max-width:900px){.hh{min-height:0;flex-direction:column;padding:30px 24px!important}.hh-l{width:100%}.hh-l h1{max-width:16ch}.hh-r{min-height:230px!important;width:100%}.hh-product-art{width:min(360px,88%)}.home-trust{margin-top:-12px}.svc-grid[style]{grid-template-columns:1fr!important}}
 @media(max-width:600px){body{font-size:14px}.container{padding-inline:12px!important}.hh{padding:25px 19px!important;border-radius:22px!important}.hh-l h1{font-size:clamp(32px,10vw,42px)!important}.hh-r{min-height:190px!important}.hh-btns{display:grid!important;grid-template-columns:1fr}.hh-btns .btn{width:100%}.home-trust{text-align:center;margin-bottom:26px}.v2-section-head{margin-top:28px!important}.svc-card{padding:19px!important}.auth-card{padding:26px 18px!important}.footer{padding-inline:16px!important}.asst-msg{max-width:94%}}
@@ -956,7 +956,7 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
   .ss-mobile-head { display: flex; }
   .ss-bnav { display: flex; justify-content: space-evenly; align-items: center; }
   .ss-bnav a { flex: 0 1 170px; }
-  .container { padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 28px); }
+  .container { padding-bottom: calc(var(--bnav-h) + var(--safe-bottom) + 80px); }
   .asst-fab { bottom: calc(var(--bnav-h) + var(--safe-bottom) + 12px); left: 12px; width: 54px; height: 54px; padding: 0; justify-content: center; }
   [dir="rtl"] .asst-fab { left: 12px; right: auto; }
   .asst-fab .asst-fab-lb { display: none; }
@@ -3894,7 +3894,13 @@ def consent_page():
     title = "خصوصيتك تهمنا" if ar else "Your privacy matters"
     body = """
     <main class="v2-info-page consent-page">
-      <section class="consent-hero"><span class="consent-icon">🔐</span><h1>__TITLE__</h1><p>__P1__</p><p>__P2__</p><p class="muted">__P3__</p></section>
+      <section class="consent-hero"><span class="consent-icon">🔐</span><h1>__TITLE__</h1>
+        <ul class="consent-hero-list">
+          <li>__P1__</li>
+          <li>__P2__</li>
+          <li class="muted">__P3__</li>
+        </ul>
+      </section>
       <section>
         <form id="consentForm">
           <article class="consent-option"><label><input type="checkbox" id="serviceConsent"> <span><b>__SERVICE_H__</b><small>__SERVICE_P__</small></span></label><span class="consent-badge required">__REQUIRED__</span></article>
@@ -3907,7 +3913,7 @@ def consent_page():
       <section><p class="v2-disclaimer">__DISC__</p></section>
     </main>
     <style>
-    .consent-page{max-width:760px}.consent-hero{text-align:center}.consent-icon{font-size:44px}.consent-option{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px;border:1px solid var(--v2-line);border-radius:15px;margin:10px 0;background:#fff}.consent-option label{display:flex;gap:11px;align-items:flex-start;cursor:pointer;flex:1}.consent-option input{width:20px;height:20px;margin-top:2px;accent-color:var(--v2-blue)}.consent-option small{display:block;color:var(--v2-muted);line-height:1.7;margin-top:4px}.consent-badge{font-size:11px;font-weight:800;border-radius:999px;padding:4px 9px;white-space:nowrap}.consent-badge.required{background:var(--v2-sky);color:var(--v2-blue-dark)}.consent-badge.optional{background:#F3F6F8;color:var(--v2-muted)}.privacy-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:16px 0}.privacy-links a{color:var(--v2-blue);font-weight:700}@media(max-width:560px){.consent-option{flex-direction:column}.consent-badge{align-self:flex-start}}
+    .consent-page{max-width:760px}.consent-hero{text-align:center}.consent-icon{font-size:44px}.consent-hero-list{list-style:none;margin:14px auto 0;padding:0;max-width:520px;text-align:start;display:grid;gap:10px}.consent-hero-list li{background:#F7FBFF;border:1px solid var(--v2-line);border-radius:12px;padding:10px 14px;font-size:14.5px;line-height:1.7;color:var(--v2-text)}.consent-hero-list li.muted{color:var(--v2-muted)}.consent-option{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px;border:1px solid var(--v2-line);border-radius:15px;margin:10px 0;background:#fff}.consent-option label{display:flex;gap:11px;align-items:flex-start;cursor:pointer;flex:1}.consent-option input{width:20px;height:20px;margin-top:2px;accent-color:var(--v2-blue)}.consent-option small{display:block;color:var(--v2-muted);line-height:1.7;margin-top:4px}.consent-badge{font-size:11px;font-weight:800;border-radius:999px;padding:4px 9px;white-space:nowrap}.consent-badge.required{background:var(--v2-sky);color:var(--v2-blue-dark)}.consent-badge.optional{background:#F3F6F8;color:var(--v2-muted)}.privacy-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:16px 0}.privacy-links a{color:var(--v2-blue);font-weight:700}@media(max-width:560px){.consent-option{flex-direction:column}.consent-badge{align-self:flex-start}}
     </style>
     <script>
     document.getElementById('consentForm').addEventListener('submit', async function(e){
@@ -3920,13 +3926,13 @@ def consent_page():
     """
     vals = {
         "__TITLE__": title,
-        "__P1__": ("قد تجمع SymptoSense بعض المعلومات التي تختار إدخالها، مثل الأعراض والعمر ومدة الأعراض وشدة الألم، بهدف تقديم الخدمات التي تختار استخدامها." if ar else "SymptoSense may process information you choose to enter, such as symptoms, age, symptom duration, and severity, to provide the services you choose to use."),
-        "__P2__": ("وبموافقتك، قد نستخدم بعض هذه البيانات بشكل مجمع ومجهول الهوية قدر الإمكان لأغراض التحليل الإحصائي، ودراسة الأنماط والعلاقات بين الأعراض والعوامل المدخلة، وتحسين وتطوير النظام." if ar else "With your permission, some of this data may be used in aggregated and anonymized form where possible for statistical analysis, studying patterns and associations in submitted factors, and improving SymptoSense."),
-        "__P3__": ("لن نستخدم هذه التحليلات لتقديم تشخيص نهائي أو توصية علاجية، ولا ينبغي اعتبار النتائج بديلًا عن الطبيب أو المختص." if ar else "These analyses are not used to provide a definitive diagnosis or treatment recommendation and do not replace a healthcare professional."),
+        "__P1__": ("📝 نجمع بس المعلومات اللي تدخلينها بنفسك (الأعراض، العمر، المدة، الشدة) عشان نقدّم لك الخدمة." if ar else "📝 We only collect what you enter yourself (symptoms, age, duration, severity) to provide the service."),
+        "__P2__": ("📊 بموافقتك، نقدر نستخدم بيانات مجمّعة ومجهولة الهوية لتحسين النظام." if ar else "📊 With your consent, aggregated anonymized data may help us improve the system."),
+        "__P3__": ("⚠️ النتائج توعوية فقط، وما تغني عن رأي الطبيب." if ar else "⚠️ Results are educational only and don't replace a doctor's opinion."),
         "__SERVICE_H__": ("موافقة استخدام الخدمة" if ar else "Service usage consent"),
-        "__SERVICE_P__": ("أوافق على معالجة المعلومات التي أقدمها لاستخدام خدمات SymptoSense المطلوبة. هذه الموافقة ضرورية عند استخدام ميزة تحتاج معالجة معلومات صحية." if ar else "I agree to processing the information I provide to use the requested SymptoSense services. This is required when a feature needs to process health information."),
+        "__SERVICE_P__": ("أوافق على معالجة معلوماتي لاستخدام خدمات SymptoSense — ضرورية لأي ميزة تحتاج بيانات صحية." if ar else "I agree to processing my information to use SymptoSense's services — required for any feature that needs health data."),
         "__AN_H__": ("التحليلات والبحث الإحصائي" if ar else "Analytics & statistical research"),
-        "__AN_P__": ("أوافق على استخدام بياناتي المصرح بها بشكل مجمع ومجهول الهوية قدر الإمكان للتحليل الإحصائي ودراسة الأنماط وتحسين النظام. يمكنك رفض هذا الخيار والاستمرار في الخدمة الأساسية." if ar else "I agree to use of my authorized data in aggregated and anonymized form where possible for statistical analysis, pattern research, and system improvement. You can decline and continue using the core service."),
+        "__AN_P__": ("أوافق على استخدام بياناتي بشكل مجمع ومجهول لتحسين النظام — اختياري ويمكنك رفضه." if ar else "I agree to use of my data in aggregated, anonymized form to improve the system — optional, you can decline."),
         "__REQUIRED__": ("مطلوب للخدمة" if ar else "Required for service"), "__OPTIONAL__": ("اختياري" if ar else "Optional"),
         "__READ__": ("اقرأ سياسة الخصوصية" if ar else "Read Privacy Policy"), "__HOW__": ("كيف نستخدم بياناتك؟" if ar else "How do we use your data?"),
         "__CONTINUE__": ("حفظ الاختيارات والمتابعة" if ar else "Save choices & continue"),
@@ -5412,7 +5418,7 @@ def chat_page():
                 var msg = LANG === 'ar'
                   ? '💡 ملاحظة: لم تتم إضافة ' + missingLabels + ' بعد. يمكنك إضافتها من <a href="/profile" style="color:#1976D2;font-weight:700;">ملفي الصحي</a> لجعل النتائج أكثر دقة.'
                   : '💡 Note: ' + missingLabels + ' were not included. Add them in your <a href="/profile" style="color:#1976D2;font-weight:700;">health profile</a> for more accurate results.';
-                add(msg, 'bot');
+                addHtml(msg, 'bot');
               }
             }
           }
@@ -5446,7 +5452,7 @@ def chat_page():
       const needed=(d.needed_information||[]).filter(Boolean);
       add(title, 'bot');
       let msg='<div class="v2-low-confidence-card"><p>'+esc(intro)+'</p>'+(needed.length?'<b>'+(LANG==='ar'?'معلومات إضافية مطلوبة:':'Additional information needed:')+'</b><ul>'+needed.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
-      add(msg,'bot');
+      addHtml(msg,'bot');
       showOpts([
         {label:'✏️ '+(LANG==='ar'?'إضافة معلومات':'Add information'), fn:function(){clearOpts();improveDataQuality(d.data_quality||lastDataQuality||{missing:[]});}},
         {label:'📚 '+(LANG==='ar'?'عرض المصادر الموثوقة':'View trusted sources'), fn:function(){clearOpts();renderResult(d);}},
