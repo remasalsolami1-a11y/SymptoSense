@@ -159,6 +159,16 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         self.assertIn("db.save_web_daily_checkin", route_source)
         self.assertIn("db.get_web_daily_checkin_history", source)
 
+    def test_consent_json_helper_exists_for_checkin_and_other_apis(self):
+        source = (PROJECT_ROOT / "webapp.py").read_text(encoding="utf-8")
+        self.assertIn("def _consent_required_json(", source)
+        self.assertIn('"consent_required": True', source)
+        self.assertIn('url_for("consent", next=target)', source)
+        start = source.index('@app.route("/api/checkin", methods=["GET", "POST"])')
+        end = source.index('@app.route("/api/feedback"', start)
+        route_source = source[start:end]
+        self.assertIn('_consent_required_json("/checkin")', route_source)
+
     def test_handoff_refuses_an_empty_selected_field(self):
         db.init_db()
         privacy_features.init_schema()

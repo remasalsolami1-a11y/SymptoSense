@@ -2161,6 +2161,28 @@ def _service_consent_ok():
     return bool(state.get("service_usage")) and not bool(state.get("needs_review"))
 
 
+def _consent_required_json(next_path="/chat"):
+    """Return the standard JSON response used when service consent is required.
+
+    Several API routes rely on this helper.  Keep the destination local to the
+    application so a crafted ``next`` value cannot become an external redirect.
+    """
+    target = str(next_path or "/chat").strip() or "/chat"
+    if not target.startswith("/") or target.startswith("//"):
+        target = "/chat"
+    ar = _lang() == "ar"
+    return jsonify({
+        "ok": False,
+        "error": (
+            "يلزم اختيار تفضيلات الخصوصية والموافقة على استخدام الخدمة أولًا."
+            if ar else
+            "Please choose your privacy preferences and consent to service usage first."
+        ),
+        "consent_required": True,
+        "consent_url": url_for("consent", next=target),
+    }), 403
+
+
 def _analytics_consent_ok():
     """Analytics consent is valid only for the current consent/policy versions."""
     state = _consent_state()
