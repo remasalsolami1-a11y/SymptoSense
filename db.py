@@ -1537,18 +1537,16 @@ def _valid_checkin_date(value):
 
 
 # ---- Stable web daily tracking on the existing user_data table ----------------
-# Railway installations from older releases can have incompatible daily_checkins
-# schemas.  The website tracker therefore stores its small per-account day map in
-# the long-standing user_data table using a reserved negative integer key.  This
-# keeps the data persistent in PostgreSQL without requiring any new DDL/migration.
+# Railway installations from older releases can have different user_data layouts.
+# In particular, some databases predate the updated_at column.  Daily tracking
+# therefore detects the existing layout at runtime and never assumes that optional
+# legacy columns exist.  This avoids requiring a migration just to use check-ins.
 _WEB_CHECKIN_USERDATA_OFFSET = 1_000_000_000
 
 def _web_checkin_storage_id(account_id):
     uid = int(account_id)
     if uid <= 0:
         raise ValueError("invalid account id")
-    # ss_users uses small positive SERIAL/INTEGER ids. Telegram/user_data ids are
-    # positive, so a reserved negative key cleanly namespaces website tracking.
     return -(_WEB_CHECKIN_USERDATA_OFFSET + uid)
 
 def _clean_web_checkin_map(value):
@@ -1564,11 +1562,60 @@ def _clean_web_checkin_map(value):
             out[day] = rating
     return out
 
+def _user_data_layout(cursor):
+    """Return compatibility details for the existing user_data table.
+
+    Older Railway databases may have only (user_id, data), while newer ones also
+    include updated_at. PostgreSQL installations may also use JSON/JSONB for data
+    or text-like user ids.  Detect rather than migrate so this feature remains
+    safe on an already-populated production database.
+    """
+    if USE_POSTGRES:
+        cursor.execute(
+            "SELECT column_name, data_type FROM information_schema.columns "
+            "WHERE table_schema=current_schema() AND table_name='user_data'"
+        )
+        cols = {str(r[0]).lower(): str(r[1]).lower() for r in cursor.fetchall()}
+    else:
+        cursor.execute("PRAGMA table_info(user_data)")
+        cols = {str(r[1]).lower(): str(r[2] or '').lower() for r in cursor.fetchall()}
+    if 'user_id' not in cols or 'data' not in cols:
+        raise RuntimeError('user_data schema is missing required columns')
+    user_id_type = cols.get('user_id', '')
+    data_type = cols.get('data', '')
+    return {
+        'has_updated_at': 'updated_at' in cols,
+        'user_id_text': any(k in user_id_type for k in ('char', 'text', 'clob')),
+        'data_json': 'json' in data_type,
+    }
+
+def _user_data_key(storage_id, layout):
+    return str(storage_id) if layout.get('user_id_text') else storage_id
+
+def _user_data_blob_param(payload, layout):
+    if USE_POSTGRES and layout.get('data_json'):
+        try:
+            from psycopg2.extras import Json
+            return Json(payload, dumps=lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
+        except Exception:
+            pass
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+def _decode_user_data_blob(raw):
+    if isinstance(raw, dict):
+        return raw
+    if raw is None:
+        return {}
+    try:
+        return json.loads(raw) or {}
+    except Exception:
+        return {}
+
 def save_web_daily_checkin(account_id, severity, checkin_date=None):
     """Persist exactly one website check-in per account/day in existing user_data.
 
-    The reserved row is created first and then locked on PostgreSQL so two tabs
-    cannot overwrite each other's day map. No schema creation is needed here.
+    Works with both legacy user_data(user_id,data) and the newer layout that also
+    has updated_at. No daily-tracking schema migration is required.
     """
     rating = int(severity)
     if rating < 1 or rating > 5:
@@ -1578,37 +1625,42 @@ def save_web_daily_checkin(account_id, severity, checkin_date=None):
     conn = _conn()
     try:
         c = conn.cursor()
+        layout = _user_data_layout(c)
+        storage_key = _user_data_key(storage_id, layout)
         now = datetime.now(timezone.utc).isoformat()
-        empty_blob = json.dumps(
-            {"kind": "symptosense_web_daily_tracking_v1", "checkins": {}},
-            ensure_ascii=False, separators=(",", ":")
-        )
-        c.execute(
-            f"INSERT INTO user_data (user_id,data,updated_at) VALUES ({PH},{PH},{PH}) "
-            "ON CONFLICT (user_id) DO NOTHING",
-            (storage_id, empty_blob, now),
-        )
+        empty_payload = {"kind": "symptosense_web_daily_tracking_v1", "checkins": {}}
+        empty_blob = _user_data_blob_param(empty_payload, layout)
+        if layout['has_updated_at']:
+            c.execute(
+                f"INSERT INTO user_data (user_id,data,updated_at) VALUES ({PH},{PH},{PH}) "
+                "ON CONFLICT (user_id) DO NOTHING",
+                (storage_key, empty_blob, now),
+            )
+        else:
+            c.execute(
+                f"INSERT INTO user_data (user_id,data) VALUES ({PH},{PH}) "
+                "ON CONFLICT (user_id) DO NOTHING",
+                (storage_key, empty_blob),
+            )
         lock_suffix = " FOR UPDATE" if USE_POSTGRES else ""
-        c.execute(f"SELECT data FROM user_data WHERE user_id={PH}" + lock_suffix, (storage_id,))
+        c.execute(f"SELECT data FROM user_data WHERE user_id={PH}" + lock_suffix, (storage_key,))
         row = c.fetchone()
-        payload = {}
-        if row and row[0]:
-            try:
-                payload = json.loads(row[0]) or {}
-            except Exception:
-                payload = {}
+        payload = _decode_user_data_blob(row[0] if row else None)
         checkins = _clean_web_checkin_map(payload.get("checkins"))
         created = day not in checkins
         checkins[day] = rating
-        payload = {
-            "kind": "symptosense_web_daily_tracking_v1",
-            "checkins": checkins,
-        }
-        blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-        c.execute(
-            f"UPDATE user_data SET data={PH}, updated_at={PH} WHERE user_id={PH}",
-            (blob, now, storage_id),
-        )
+        payload = {"kind": "symptosense_web_daily_tracking_v1", "checkins": checkins}
+        blob = _user_data_blob_param(payload, layout)
+        if layout['has_updated_at']:
+            c.execute(
+                f"UPDATE user_data SET data={PH}, updated_at={PH} WHERE user_id={PH}",
+                (blob, now, storage_key),
+            )
+        else:
+            c.execute(
+                f"UPDATE user_data SET data={PH} WHERE user_id={PH}",
+                (blob, storage_key),
+            )
         conn.commit()
         return {"created": created, "date": day}
     except Exception:
@@ -1629,19 +1681,20 @@ def get_web_daily_checkin_history(account_id, limit=180):
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute(f"SELECT data,updated_at FROM user_data WHERE user_id={PH}", (storage_id,))
+        layout = _user_data_layout(c)
+        storage_key = _user_data_key(storage_id, layout)
+        # Only data is required. Do not SELECT updated_at because legacy Railway
+        # databases may legitimately predate that optional column.
+        c.execute(f"SELECT data FROM user_data WHERE user_id={PH}", (storage_key,))
         row = c.fetchone()
     finally:
         conn.close()
-    if not row or not row[0]:
+    if not row or row[0] is None:
         return []
-    try:
-        payload = json.loads(row[0]) or {}
-    except Exception:
-        return []
+    payload = _decode_user_data_blob(row[0])
     checkins = _clean_web_checkin_map(payload.get("checkins"))
     return [
-        {"date": day, "value": checkins[day], "timestamp": row[1]}
+        {"date": day, "value": checkins[day], "timestamp": None}
         for day in sorted(checkins, reverse=True)[:limit]
     ]
 

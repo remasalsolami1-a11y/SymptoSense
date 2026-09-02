@@ -112,6 +112,30 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         row = db.get_daily_checkin_for_date("account-legacy-broken", "2026-09-03")
         self.assertEqual(row["value"], 4)
 
+    def test_web_tracking_works_with_legacy_user_data_without_updated_at(self):
+        conn = sqlite3.connect(self.path)
+        conn.execute("CREATE TABLE user_data (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL)")
+        conn.commit()
+        conn.close()
+
+        first = db.save_web_daily_checkin(7, 4, "2026-09-03")
+        second = db.save_web_daily_checkin(7, 2, "2026-09-03")
+        self.assertTrue(first["created"])
+        self.assertFalse(second["created"])
+        rows = db.get_web_daily_checkin_history(7, 30)
+        self.assertEqual([(r["date"], r["value"]) for r in rows], [("2026-09-03", 2)])
+
+    def test_web_tracking_works_with_legacy_text_user_id(self):
+        conn = sqlite3.connect(self.path)
+        conn.execute("CREATE TABLE user_data (user_id TEXT PRIMARY KEY, data TEXT NOT NULL)")
+        conn.commit()
+        conn.close()
+
+        db.save_web_daily_checkin(8, 5, "2026-09-03")
+        row = db.get_web_daily_checkin_for_date(8, "2026-09-03")
+        self.assertIsNotNone(row)
+        self.assertEqual(row["value"], 5)
+
     def test_handoff_refuses_an_empty_selected_field(self):
         db.init_db()
         privacy_features.init_schema()
