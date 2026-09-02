@@ -35,6 +35,8 @@ _logger = logging.getLogger("SymptoSense")
 # and retried safely in the same process.
 _DB_READY_KEY = None
 _DB_INIT_LOCK = threading.Lock()
+_CHECKIN_SCHEMA_READY_KEY = None
+_CHECKIN_SCHEMA_LOCK = threading.Lock()
 
 
 def _database_identity():
@@ -789,7 +791,7 @@ def _migrate_daily_checkins(conn, c):
         c.execute("ALTER TABLE daily_checkins ADD COLUMN checkin_date TEXT")
     # SUBSTR(text, start, length) works in both SQLite and PostgreSQL.
     c.execute(
-        "UPDATE daily_checkins SET checkin_date=SUBSTR(timestamp,1,10) "
+        "UPDATE daily_checkins SET checkin_date=SUBSTR(CAST(timestamp AS TEXT),1,10) "
         "WHERE checkin_date IS NULL OR checkin_date=''"
     )
     # Legacy builds allowed multiple rows on the same day. Keep the newest row
@@ -810,6 +812,72 @@ def _migrate_daily_checkins(conn, c):
         c.execute(f"DELETE FROM daily_checkins WHERE id={PH}", (row_id,))
     c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user_date ON daily_checkins(user_hash, checkin_date)")
     c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ci_user_date_unique ON daily_checkins(user_hash, checkin_date)")
+
+
+def ensure_daily_checkins_schema():
+    """Ensure the daily-tracking table is usable for the active database.
+
+    This targeted guard is intentionally separate from the process-wide database
+    initialization cache. It lets an older Railway database repair the check-in
+    schema on first use even if the rest of the application schema was already
+    considered ready. A failed repair is never cached, so the next request can
+    retry automatically.
+    """
+    global _CHECKIN_SCHEMA_READY_KEY
+    key = _database_identity()
+    if _CHECKIN_SCHEMA_READY_KEY == key:
+        return
+    with _CHECKIN_SCHEMA_LOCK:
+        key = _database_identity()
+        if _CHECKIN_SCHEMA_READY_KEY == key:
+            return
+        _init_backend()
+        conn = _conn()
+        try:
+            c = conn.cursor()
+            if USE_POSTGRES:
+                c.execute("""
+                    CREATE TABLE IF NOT EXISTS daily_checkins (
+                        id SERIAL PRIMARY KEY,
+                        user_hash TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        severity INTEGER,
+                        checkin_date TEXT
+                    )
+                """)
+            else:
+                c.execute("""
+                    CREATE TABLE IF NOT EXISTS daily_checkins (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_hash TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        severity INTEGER,
+                        checkin_date TEXT
+                    )
+                """)
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
+            _migrate_daily_checkins(conn, c)
+            if USE_POSTGRES:
+                c.execute(
+                    "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                    ("daily_checkins",),
+                )
+                cols = {row[0] for row in c.fetchall()}
+            else:
+                c.execute("PRAGMA table_info(daily_checkins)")
+                cols = {row[1] for row in c.fetchall()}
+            if "checkin_date" not in cols:
+                raise RuntimeError("Daily check-in schema migration incomplete: checkin_date missing")
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            conn.close()
+        _CHECKIN_SCHEMA_READY_KEY = _database_identity()
 
 
 def _migrate_feedback(conn, c):

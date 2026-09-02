@@ -293,11 +293,38 @@ class StabilizationTest(unittest.TestCase):
     def test_install_prompt_does_not_auto_cover_analysis(self):
         self.assertIn("window.location.pathname !== '/home'",webapp.PAGE_FRAME)
 
-    def test_red_flags_override_condition_output(self):
+    def test_red_flags_keep_urgent_priority_without_forced_withholding_copy(self):
         result=analysis_core.run_analysis({"user_id":"red-flag-test","age":30,"gender":"female","symptoms":["severe chest pain","difficulty breathing"],"duration":"now","severity":5,"conditions":"","medications":"","notes":""},lang="en")
         self.assertEqual(result.get("urgency"),"high")
         self.assertTrue(result.get("emergency"))
-        self.assertIn("withheld",result.get("possible_conditions","").lower())
+        self.assertNotIn("withheld",result.get("possible_conditions","").lower())
+        self.assertIn("urgent",result.get("simple_explanation","").lower())
+
+    def test_red_flag_preserves_grounded_matches_when_available(self):
+        bundle = {
+            "normalization": {"canonical": [], "unmatched": []},
+            "matches": [{
+                "name_ar": "حالة قلبية محتملة", "name_en": "Possible cardiac condition",
+                "match_level": "moderate",
+                "matched_symptoms": [{"name_ar": "ألم الصدر", "name_en": "Chest pain"}],
+                "recommended_next_step": "اطلب تقييمًا طبيًا.", "sources": [],
+            }],
+            "sources": [],
+            "risk": {"level": "low", "label": "Low", "reasons": [], "emergency": False},
+            "last_updated": None,
+        }
+        with mock.patch.object(analysis_core.medical_knowledge, "knowledge_bundle", return_value=bundle):
+            result = analysis_core.run_analysis({
+                "user_id": "red-flag-grounded", "age": 30, "gender": "female",
+                "symptoms": ["severe chest pain", "difficulty breathing"],
+                "duration": "now", "severity": 5, "conditions": "",
+                "medications": "", "notes": "",
+            }, lang="en")
+        self.assertEqual(result.get("urgency"), "high")
+        self.assertTrue(result.get("emergency"))
+        self.assertEqual(result.get("knowledge_matches", [])[0].get("name_en"), "Possible cardiac condition")
+        self.assertIn("Possible cardiac condition", result.get("possible_conditions", ""))
+        self.assertEqual(result.get("recommendations"), [])
 
     def test_analysis_and_reminder_idor_is_denied(self):
         owner_id=self.verified_user("idor-owner@example.test"); attacker_id=self.verified_user("idor-attacker@example.test")

@@ -5904,6 +5904,9 @@ def chat_page():
 
       // 3) Possible conditions — preserve backend order; do not recalculate or re-score.
       h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🩺 '+esc(LANG==='ar'?'الاحتمالات المحتملة':'Possible conditions')+'</h3></div><div class="ss-condition-list">';
+      if (u === 'high') {
+        h += '<div class="ss-empty-note" style="border-color:#F2CACA;background:#FFF7F7;color:#7A3535">🚨 '+esc(LANG==='ar'?'هذه احتمالات ممكنة مبنية على مطابقة الأعراض، وليست تفسيرًا مؤكدًا لعلامة الخطر ولا تشخيصًا. لا تؤخر طلب الرعاية العاجلة بسبب هذه الاحتمالات.':'These are possible matches based on the reported symptoms, not a confirmed explanation of the red flag or a diagnosis. Do not delay urgent care because of these possibilities.')+'</div>';
+      }
       if (matches.length) {
         matches.forEach(function(m){
           const name = NAME(m,'name_ar','name_en') || '';
@@ -12380,7 +12383,7 @@ def api_checkin():
                 datetime.strptime(day, "%Y-%m-%d")
             except Exception:
                 return jsonify({"ok": False, "error": "invalid_date"}), 400
-            db.init_db()
+            db.ensure_daily_checkins_schema()
             saved = db.save_daily_checkin(uid, rating, day)
             payload = _checkin_api_payload(uid, day)
             payload.update({"created": bool(saved.get("created")), "updated": not bool(saved.get("created"))})
@@ -12394,7 +12397,7 @@ def api_checkin():
             datetime.strptime(day, "%Y-%m-%d")
         except Exception:
             day = datetime.now(timezone.utc).date().isoformat()
-        db.init_db()
+        db.ensure_daily_checkins_schema()
         return jsonify(_checkin_api_payload(uid, day))
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500

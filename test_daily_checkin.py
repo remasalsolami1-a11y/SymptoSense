@@ -22,6 +22,7 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         db.PH = "?"
         db.DB_PATH = self.path
         db._DB_READY_KEY = None
+        db._CHECKIN_SCHEMA_READY_KEY = None
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -69,6 +70,25 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         self.assertIn("checkin_date", cols)
         self.assertEqual(rows, [("2026-09-01", 4)])
         self.assertTrue(any(row[1] == "idx_ci_user_date_unique" and row[2] == 1 for row in indexes))
+
+
+    def test_targeted_checkin_schema_repair_works_even_if_main_db_cache_is_warm(self):
+        conn = sqlite3.connect(self.path)
+        conn.execute(
+            "CREATE TABLE daily_checkins (id INTEGER PRIMARY KEY AUTOINCREMENT, user_hash TEXT NOT NULL, timestamp DATETIME NOT NULL, severity INTEGER)"
+        )
+        conn.execute(
+            "INSERT INTO daily_checkins(user_hash,timestamp,severity) VALUES (?,?,?)",
+            (db._hash_user("legacy"), "2026-09-03 00:15:00", 5),
+        )
+        conn.commit()
+        conn.close()
+
+        # Simulate a process whose broader DB initialization cache is already warm.
+        db._DB_READY_KEY = db._database_identity()
+        db.ensure_daily_checkins_schema()
+        row = db.get_daily_checkin_history("legacy", 7)
+        self.assertEqual([(r["date"], r["value"]) for r in row], [("2026-09-03", 5)])
 
     def test_handoff_refuses_an_empty_selected_field(self):
         db.init_db()

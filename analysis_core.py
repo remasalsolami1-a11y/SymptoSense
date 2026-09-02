@@ -636,7 +636,7 @@ def _urgent_result(bundle, lang):
         default_action = "اطلب الرعاية الطبية العاجلة أو تواصل مع خدمات الطوارئ المناسبة."
         return {
             "personal_note": "الأعراض التي أدخلتها قد تشير إلى حالة تستدعي تقييمًا طبيًا عاجلًا. لا تعتمد على هذا التحليل وحده، واطلب المساعدة الطبية المناسبة.",
-            "possible_conditions": "تم إيقاف عرض الاحتمالات مؤقتًا لأن طبقة الأمان اكتشفت علامة خطر محتملة. الأولوية الآن للتقييم الطبي المناسب، وليس لتسمية حالة عبر الإنترنت.",
+            "possible_conditions": _render_possible_conditions(bundle.get("matches") or [], "ar"),
             "recommendations": [], "danger_signs": reason_text,
             "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
             "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
@@ -646,7 +646,7 @@ def _urgent_result(bundle, lang):
     default_action = "Seek urgent medical care or contact the appropriate emergency service."
     return {
         "personal_note": "The symptoms you entered may indicate a situation that needs urgent medical assessment. Do not rely on this assessment alone; seek appropriate medical help.",
-        "possible_conditions": "Possible conditions are temporarily withheld because the safety layer detected a potential red flag. The priority is appropriate medical assessment, not naming a condition online.",
+        "possible_conditions": _render_possible_conditions(bundle.get("matches") or [], "en"),
         "recommendations": [], "danger_signs": reason_text,
         "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
         "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
@@ -1060,8 +1060,10 @@ def run_analysis(patient, lang="ar"):
     data_quality = assess_data_quality(d, lang, bundle=bundle)
 
     # Preserve the app's existing broad red-flag detector as a second,
-    # independent rule layer.  If either ruleset says emergency, stop before
-    # asking the AI and withhold condition matching/reassuring recommendations.
+    # independent rule layer. If either ruleset says emergency, safety/urgency
+    # overrides the action advice, but grounded knowledge-base matches are kept
+    # visible as non-diagnostic possibilities so the user still understands what
+    # may fit the reported symptoms. They must never delay urgent care.
     pre_triage = _triage(d, lang)
     if pre_triage.get("level") == "emergency" and bundle.get("risk", {}).get("level") != "urgent":
         safety_reason = pre_triage.get("reason") or (
@@ -1080,8 +1082,6 @@ def run_analysis(patient, lang="ar"):
             }],
             "emergency": True,
         }
-        bundle["matches"] = []
-        bundle["sources"] = []
     elif pre_triage.get("level") in {"today", "soon"} and bundle.get("risk", {}).get("level") == "low":
         bundle["risk"] = {
             "level": "review",
@@ -1139,12 +1139,17 @@ def run_analysis(patient, lang="ar"):
 
     # These fields are always deterministic and grounded in active, verified KB rows.
     if bundle.get("risk", {}).get("level") == "urgent":
-        result["possible_conditions"] = (
-            "تم تعليق عرض الاحتمالات لأن طبقة الأمان اكتشفت علامة خطر محتملة."
-            if lang == "ar" else
-            "Possible conditions are withheld because the independent safety layer detected a potential red flag."
-        )
+        # Keep source-grounded possibilities visible even in urgent cases. Risk
+        # remains urgent and treatment/home-care recommendations stay withheld so
+        # the possibilities cannot be mistaken for permission to wait.
+        result["possible_conditions"] = _render_possible_conditions(bundle.get("matches") or [], lang)
         result["recommendations"] = []
+        if bundle.get("matches"):
+            result["simple_explanation"] = (
+                "توجد احتمالات متوافقة مع بعض الأعراض، لكنها لا تفسر علامة الخطر بشكل مؤكد ولا تُعد تشخيصًا. الأولوية الآن للتقييم الطبي العاجل."
+                if lang == "ar" else
+                "Some possibilities match parts of the symptom pattern, but they do not confirm the cause of the red flag or establish a diagnosis. Urgent medical assessment remains the priority."
+            )
     else:
         result["possible_conditions"] = _render_possible_conditions(bundle.get("matches") or [], lang)
         result["recommendations"] = _knowledge_recommendations(bundle, lang)
