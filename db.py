@@ -5,6 +5,7 @@ import logging
 import sqlite3
 import hashlib
 import hmac
+import threading
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 
@@ -26,6 +27,34 @@ if _legacy_admin_email_override and _legacy_admin_email_override != OWNER_ADMIN_
 PH = "%s" if USE_POSTGRES else "?"
 
 _logger = logging.getLogger("SymptoSense")
+
+# Database/schema initialization is expensive on a remote PostgreSQL service.
+# Cache readiness per actual database identity rather than as one process-wide
+# boolean. This preserves the request-time speed-up while still allowing a
+# different/replaced SQLite database, or a failed migration, to be initialized
+# and retried safely in the same process.
+_DB_READY_KEY = None
+_DB_INIT_LOCK = threading.Lock()
+
+
+def _database_identity():
+    """Return a non-secret identity for the database currently in use.
+
+    PostgreSQL is keyed by a one-way digest of the DSN (the DSN itself is never
+    logged or stored in the cache). SQLite is keyed by its canonical path and,
+    when the file exists, its device/inode so replacing a DB at the same path is
+    detected without invalidating the cache on ordinary writes.
+    """
+    if USE_POSTGRES:
+        digest = hashlib.sha256(DATABASE_URL.encode("utf-8")).hexdigest()
+        return ("postgres", digest)
+    path = os.path.realpath(os.path.abspath(DB_PATH))
+    try:
+        st = os.stat(path)
+        file_identity = (getattr(st, "st_dev", None), getattr(st, "st_ino", None))
+    except OSError:
+        file_identity = None
+    return ("sqlite", path, file_identity)
 
 
 def _init_backend():
@@ -62,6 +91,27 @@ def _conn():
 
 
 def init_db():
+    """Initialize/migrate the active database once per database identity.
+
+    A failed initialization never marks the database ready, so the next call
+    retries automatically. The lock avoids two request threads racing through
+    migrations in the same process.
+    """
+    global _DB_READY_KEY
+    current_key = _database_identity()
+    if _DB_READY_KEY == current_key:
+        return
+    with _DB_INIT_LOCK:
+        current_key = _database_identity()
+        if _DB_READY_KEY == current_key:
+            return
+        _init_db_uncached()
+        # Recompute after initialization: a new SQLite file now has an inode,
+        # and explicit development fallback may have changed the backend.
+        _DB_READY_KEY = _database_identity()
+
+
+def _init_db_uncached():
     _init_backend()
     conn = _conn()
     try:
@@ -431,6 +481,7 @@ def init_db():
         _migrate_feedback(conn, c)
         _migrate_members(conn, c)
         _migrate_ss_columns(conn, c)
+        _verify_critical_account_schema(c)
         conn.commit()
     finally:
         conn.close()
@@ -647,45 +698,38 @@ def _migrate_ss_columns(conn, c):
     if "status" not in user_cols:
         c.execute("ALTER TABLE ss_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
     if "email_verified" not in user_cols:
-        # Existing accounts pre-date email verification. Keep them working by
-        # treating them as verified; all newly-created accounts explicitly use 0.
+        # DEFAULT 1 makes the ALTER safe for legacy rows; the one-time security
+        # migration below then explicitly moves existing accounts to the fresh
+        # verification-required state without touching passwords or user data.
         c.execute("ALTER TABLE ss_users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1")
     if "email_verified_at" not in user_cols:
         c.execute("ALTER TABLE ss_users ADD COLUMN email_verified_at TEXT")
 
-    # Canonical single-owner RBAC.  No account is deleted or recreated, but any
-    # stale Admin-like role on a non-owner account is demoted to ``user``.  This
-    # makes the database match the server-side effective-role check instead of
-    # merely hiding an unsafe legacy role in the UI.
-    try:
-        c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-        # One-time, non-destructive security migration requested for this release:
-        # every existing account must confirm a fresh email OTP once. Roles,
-        # passwords and user data remain unchanged.
-        c.execute("SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'")
-        if not c.fetchone():
-            c.execute("UPDATE ss_users SET email_verified=0,email_verified_at=NULL")
-            c.execute(
-                "INSERT INTO ss_schema_meta (key,value) VALUES (%s,%s)" % (PH, PH),
-                ("email_otp_all_accounts_v1", datetime.now(timezone.utc).isoformat()),
-            )
+    # Canonical single-owner RBAC and the one-time email-verification migration
+    # are security-critical. Failures here must propagate so init_db() does not
+    # cache a partially migrated database as ready.
+    c.execute("CREATE TABLE IF NOT EXISTS ss_schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    c.execute("SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'")
+    if not c.fetchone():
+        c.execute("UPDATE ss_users SET email_verified=0,email_verified_at=NULL")
         c.execute(
-            "UPDATE ss_users SET role='user' WHERE lower(email)<>%s "
-            "AND lower(COALESCE(role,'user'))<>'user'" % PH,
-            (OWNER_ADMIN_EMAIL,),
+            "INSERT INTO ss_schema_meta (key,value) VALUES (%s,%s)" % (PH, PH),
+            ("email_otp_all_accounts_v1", datetime.now(timezone.utc).isoformat()),
         )
-        c.execute(
-            "UPDATE ss_users SET role='user' WHERE lower(email)<>%s AND role<>'user'" % PH,
-            (OWNER_ADMIN_EMAIL,),
-        )
-        # The partial unique index provides a database-level second line of
-        # defence: at most one canonical ``admin`` role can exist.
-        c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
-        c.execute("DROP INDEX IF EXISTS idx_ss_single_admin")
-        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_single_admin ON ss_users(role) WHERE role='admin'")
-    except Exception:
-        # These legacy cleanup statements are not required for authentication.
-        pass
+
+    c.execute(
+        "UPDATE ss_users SET role='user' WHERE lower(email)<>%s "
+        "AND lower(COALESCE(role,'user'))<>'user'" % PH,
+        (OWNER_ADMIN_EMAIL,),
+    )
+    c.execute(
+        "UPDATE ss_users SET role='user' WHERE lower(email)<>%s AND role<>'user'" % PH,
+        (OWNER_ADMIN_EMAIL,),
+    )
+    # Database-level second line of defence: at most one canonical admin role.
+    c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
+    c.execute("DROP INDEX IF EXISTS idx_ss_single_admin")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_single_admin ON ss_users(role) WHERE role='admin'")
 
     try:
         hp_cols = columns("ss_health_profiles")
@@ -696,6 +740,30 @@ def _migrate_ss_columns(conn, c):
         # Optional profile columns must not prevent existing accounts from login.
         pass
 
+
+
+def _verify_critical_account_schema(c):
+    """Verify security-critical account migrations before readiness is cached."""
+    if USE_POSTGRES:
+        c.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+            ("ss_users",),
+        )
+        user_cols = {row[0] for row in c.fetchall()}
+    else:
+        c.execute("PRAGMA table_info(ss_users)")
+        user_cols = {row[1] for row in c.fetchall()}
+
+    required = {"role", "status", "email_verified", "email_verified_at"}
+    missing = sorted(required - user_cols)
+    if missing:
+        raise RuntimeError("Critical account schema migration incomplete: " + ", ".join(missing))
+
+    # The marker is written in the same transaction as the one-time migration.
+    # If it is absent, initialization must not be cached as successful.
+    c.execute("SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'")
+    if not c.fetchone():
+        raise RuntimeError("Critical email verification migration marker is missing")
 
 def _migrate_feedback(conn, c):
     """Add the comment column to feedback tables created before this feature."""

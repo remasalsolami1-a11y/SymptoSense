@@ -1105,20 +1105,37 @@ def run_analysis(patient, lang="ar"):
     elif not bundle.get("matches"):
         result = _fallback_result(d, lang)
     else:
-        prompt = _build_prompt(d, lang)
-        try:
-            client = _groq_client()
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
-                response_format={"type": "json_object"},
-                temperature=0.2,
-                timeout=45,
-            )
-            result = _extract_json(response.choices[0].message.content)
-        except Exception:
-            result = _fallback_result(d, lang)
+        # PERFORMANCE + RELIABILITY: the symptom-result screen must not wait for
+        # an external LLM call. The medical possibilities, risk, sources and
+        # follow-up guidance are already produced by the verified knowledge base
+        # and deterministic safety rules below. Waiting up to 45 seconds for Groq
+        # only delayed the UI and did not determine the displayed condition.
+        # Keep generative AI for the separate assistant/follow-up chat instead.
+        top = (bundle.get("matches") or [{}])[0]
+        top_name = top.get("name_ar") if lang == "ar" else top.get("name_en")
+        matched_names = [
+            (x.get("name_ar") if lang == "ar" else x.get("name_en"))
+            for x in (top.get("matched_symptoms") or [])
+            if (x.get("name_ar") or x.get("name_en"))
+        ]
+        if lang == "ar":
+            result = {
+                "personal_note": ("الحالة الأقرب حسب المعلومات الحالية: " + str(top_name or "—") + "."),
+                "simple_explanation": (("ظهر هذا الاحتمال بسبب توافق: " + "، ".join(matched_names[:4]) + ".") if matched_names else "ظهر هذا الاحتمال من مطابقة الأعراض مع قاعدة المعرفة الطبية."),
+                "urgency": "low", "urgency_ar": "بسيط", "confidence": "medium",
+                "possible_conditions": "", "recommendations": [],
+                "danger_signs": "", "when_to_seek_care": "", "home_care": "",
+                "medication_guidance": "", "questions_for_doctor": "",
+            }
+        else:
+            result = {
+                "personal_note": ("Closest current match: " + str(top_name or "—") + "."),
+                "simple_explanation": (("This match was supported by: " + ", ".join(matched_names[:4]) + ".") if matched_names else "This possibility comes from matching the reported symptoms with the medical knowledge base."),
+                "urgency": "low", "urgency_text": "Simple", "confidence": "medium",
+                "possible_conditions": "", "recommendations": [],
+                "danger_signs": "", "when_to_seek_care": "", "home_care": "",
+                "medication_guidance": "", "questions_for_doctor": "",
+            }
 
     # These fields are always deterministic and grounded in active, verified KB rows.
     if bundle.get("risk", {}).get("level") == "urgent":

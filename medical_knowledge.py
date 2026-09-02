@@ -590,11 +590,13 @@ def match_diseases(canonical, lang="ar", limit=5):
             if not matched:
                 continue
             coverage=sum(float(r[1] or 0) for r in matched)/total
-            user_coverage=len(matched)/max(len(ids),1)
-            score=.78*coverage+.22*user_coverage
+            max_weight=max((float(r[1] or 0) for r in rels), default=0) or 1
+            avg_matched_weight=sum(float(r[1] or 0) for r in matched)/max(len(matched),1)
+            specificity=min(avg_matched_weight/max_weight,1.0)
+            score=.75*coverage+.25*specificity
             if score>=.63 and len(matched)>=2:
                 level="strong"
-            elif score>=.34 or len(matched)>=3:
+            elif score>=.34:
                 level="moderate"
             else:
                 level="weak"
@@ -612,6 +614,99 @@ def match_diseases(canonical, lang="ar", limit=5):
         return out[:max(1,min(int(limit),10))]
     finally:
         conn.close()
+
+
+def differential_question(raw_symptoms, asked=None, negatives=None, lang="ar"):
+    """Return one high-value follow-up question and a re-ranked differential.
+
+    Positive answers add evidence; negative answers reduce the relevance of
+    diseases that normally include that symptom. The result remains qualitative
+    and is never presented as a confirmed diagnosis.
+    """
+    asked = {str(x) for x in (asked or []) if x}
+    negatives = {str(x) for x in (negatives or []) if x}
+    canonical_info = normalize_symptoms(raw_symptoms or [], lang)
+    canonical = canonical_info.get("canonical") or []
+    current_slugs = {x.get("slug") for x in canonical if x.get("slug")}
+
+    ranked_candidates = []
+    for disease in DISEASES:
+        rel = disease.get("symptoms") or {}
+        positive_weights = [float(rel.get(slug, 0.0)) for slug in current_slugs if rel.get(slug, 0.0) > 0]
+        if not positive_weights:
+            continue
+        total = sum(max(float(v), 0.0) for v in rel.values()) or 1.0
+        pos = sum(positive_weights) / total
+        max_weight = max((float(v) for v in rel.values()), default=0.0) or 1.0
+        avg_matched_weight = sum(positive_weights) / max(len(positive_weights), 1)
+        specificity = min(avg_matched_weight / max_weight, 1.0)
+        neg_penalty = sum(float(rel.get(slug, 0.0)) for slug in negatives if rel.get(slug, 0.0) > 0) / total
+        score = max(0.0, (0.75 * pos) + (0.25 * specificity) - (0.62 * neg_penalty))
+        matched_count = len(positive_weights)
+        if score >= .63 and matched_count >= 2:
+            level = "strong"
+        elif score >= .34:
+            level = "moderate"
+        else:
+            level = "weak"
+        ranked_candidates.append({
+            "slug": disease["slug"],
+            "name": disease["name_ar"] if lang == "ar" else disease["name_en"],
+            "match_level": level,
+            "matched_count": matched_count,
+            "_score": score,
+        })
+    ranked_candidates.sort(key=lambda x: (x["_score"], x["matched_count"]), reverse=True)
+    public_candidates = [{k:v for k,v in x.items() if k != "_score"} for x in ranked_candidates[:3]]
+    if not ranked_candidates:
+        return {"done": True, "candidates": public_candidates, "reason": "no_match"}
+
+    top_score = ranked_candidates[0]["_score"]
+    second_score = ranked_candidates[1]["_score"] if len(ranked_candidates) > 1 else 0.0
+    top_count = ranked_candidates[0]["matched_count"]
+    if top_count >= 3 and top_score >= .48 and (top_score - second_score) >= .12:
+        return {"done": True, "candidates": public_candidates, "reason": "clear_lead"}
+
+    disease_map = {d["slug"]: d for d in DISEASES}
+    candidate_defs = [disease_map.get(m.get("slug")) for m in ranked_candidates[:4]]
+    candidate_defs = [d for d in candidate_defs if d]
+    symptom_meta = {row[0]: {"name_ar": row[1], "name_en": row[2]} for row in SYMPTOMS}
+    pool = set()
+    for d in candidate_defs:
+        pool.update((d.get("symptoms") or {}).keys())
+    pool -= current_slugs
+    pool -= asked
+    pool -= negatives
+    unsafe_slugs = {
+        "one-sided-weakness", "speech-difficulty", "face-drooping",
+        "sudden-vision-loss", "loss-of-consciousness", "severe-bleeding",
+        "suicidal-thoughts", "severe-headache",
+    }
+    pool -= unsafe_slugs
+    if not pool:
+        return {"done": True, "candidates": public_candidates, "reason": "questions_exhausted"}
+
+    ranked_questions = []
+    for slug in pool:
+        weights = [float((d.get("symptoms") or {}).get(slug, 0.0)) for d in candidate_defs]
+        top_weight = weights[0] if weights else 0.0
+        spread = (max(weights) - min(weights)) if weights else 0.0
+        represented = sum(1 for w in weights if w > 0)
+        rarity_bonus = 0.20 if represented <= max(1, len(weights)//2) else 0.0
+        score = top_weight * 1.20 + spread + rarity_bonus + max(weights or [0]) * 0.20
+        ranked_questions.append((score, slug))
+    ranked_questions.sort(reverse=True)
+    slug = ranked_questions[0][1]
+    meta = symptom_meta.get(slug) or {"name_ar": slug, "name_en": slug}
+    name = meta["name_ar"] if lang == "ar" else meta["name_en"]
+    question = (f"هل لديك أيضًا {name}؟" if lang == "ar" else f"Do you also have {name}?")
+    return {
+        "done": False,
+        "question": question,
+        "symptom_slug": slug,
+        "symptom_name": name,
+        "candidates": public_candidates,
+    }
 
 
 def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, lang="ar"):

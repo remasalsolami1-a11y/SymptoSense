@@ -27,6 +27,7 @@ except (TypeError, ValueError):
 _EPHEMERAL_CONSENT_SECRET = secrets.token_bytes(32)
 # This project does not currently train/fine-tune an AI model from user health records.
 AI_IMPROVEMENT_ACTIVE = False
+_SCHEMA_READY = False
 
 
 def _now():
@@ -52,6 +53,15 @@ def _rows(c):
 
 
 def init_schema():
+    """Ensure privacy tables exist once per application process.
+
+    The app initializes schemas at startup. Re-running the full database DDL on
+    every consent/status request adds unnecessary production latency,
+    especially when PostgreSQL is hosted remotely.
+    """
+    global _SCHEMA_READY
+    if _SCHEMA_READY:
+        return
     db.init_db()
     conn = db._conn(); c = conn.cursor()
     serial = "SERIAL PRIMARY KEY" if db.USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
@@ -101,6 +111,7 @@ def init_schema():
         if "analytics_eligible" not in cols:
             c.execute("ALTER TABLE records ADD COLUMN analytics_eligible INTEGER NOT NULL DEFAULT 0")
         conn.commit()
+        _SCHEMA_READY = True
     finally:
         conn.close()
 
@@ -146,29 +157,91 @@ def log_privacy_event(subject_key: str, action: str, metadata=None):
 
 
 def save_consent(subject_key: str, user_id, service_usage: bool, analytics_research: bool) -> dict:
-    init_schema(); sh = _subject_hash(subject_key)
-    previous = get_consent(subject_key, user_id)
-    now = _now(); conn = db._conn(); c = conn.cursor()
+    """Persist consent and its audit events in one database transaction.
+
+    Previously this path opened several database connections (read previous
+    state, write state/logs, multiple privacy-event writes, then read again).
+    On hosted PostgreSQL that made the Continue button noticeably slow.
+    """
+    init_schema()
+    sh = _subject_hash(subject_key)
+    uid = int(user_id) if user_id else None
+    service = bool(service_usage)
+    analytics = bool(analytics_research)
+    now = _now()
+    conn = db._conn(); c = conn.cursor()
     try:
-        vals = (sh, int(user_id) if user_id else None, int(bool(service_usage)), int(bool(analytics_research)), CONSENT_VERSION, PRIVACY_POLICY_VERSION, now)
+        c.execute(
+            "SELECT service_usage,analytics_research,consent_version,privacy_policy_version,updated_at "
+            "FROM ss_consent_state WHERE subject_hash=%s" % PH,
+            (sh,),
+        )
+        row = c.fetchone()
+        previous_service = bool(row[0]) if row else False
+        previous_analytics = bool(row[1]) if row else False
+        previous_updated_at = row[4] if row else None
+
+        vals = (sh, uid, int(service), int(analytics), CONSENT_VERSION, PRIVACY_POLICY_VERSION, now)
         if db.USE_POSTGRES:
-            c.execute("INSERT INTO ss_consent_state(subject_hash,user_id,service_usage,analytics_research,consent_version,privacy_policy_version,updated_at) VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(subject_hash) DO UPDATE SET user_id=EXCLUDED.user_id,service_usage=EXCLUDED.service_usage,analytics_research=EXCLUDED.analytics_research,consent_version=EXCLUDED.consent_version,privacy_policy_version=EXCLUDED.privacy_policy_version,updated_at=EXCLUDED.updated_at", vals)
+            c.execute(
+                "INSERT INTO ss_consent_state(subject_hash,user_id,service_usage,analytics_research,consent_version,privacy_policy_version,updated_at) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(subject_hash) DO UPDATE SET "
+                "user_id=EXCLUDED.user_id,service_usage=EXCLUDED.service_usage,analytics_research=EXCLUDED.analytics_research,"
+                "consent_version=EXCLUDED.consent_version,privacy_policy_version=EXCLUDED.privacy_policy_version,updated_at=EXCLUDED.updated_at",
+                vals,
+            )
         else:
-            c.execute("INSERT INTO ss_consent_state(subject_hash,user_id,service_usage,analytics_research,consent_version,privacy_policy_version,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(subject_hash) DO UPDATE SET user_id=excluded.user_id,service_usage=excluded.service_usage,analytics_research=excluded.analytics_research,consent_version=excluded.consent_version,privacy_policy_version=excluded.privacy_policy_version,updated_at=excluded.updated_at", vals)
-        # Each explicit choice is logged; false after true is a withdrawal, otherwise a decline.
-        _log_consent(c, sh, user_id, "service_usage", "granted" if service_usage else ("withdrawn" if previous.get("service_usage") else "declined"))
-        _log_consent(c, sh, user_id, "analytics_research", "granted" if analytics_research else ("withdrawn" if previous.get("analytics_research") else "declined"))
+            c.execute(
+                "INSERT INTO ss_consent_state(subject_hash,user_id,service_usage,analytics_research,consent_version,privacy_policy_version,updated_at) "
+                "VALUES(?,?,?,?,?,?,?) ON CONFLICT(subject_hash) DO UPDATE SET "
+                "user_id=excluded.user_id,service_usage=excluded.service_usage,analytics_research=excluded.analytics_research,"
+                "consent_version=excluded.consent_version,privacy_policy_version=excluded.privacy_policy_version,updated_at=excluded.updated_at",
+                vals,
+            )
+
+        _log_consent(c, sh, uid, "service_usage", "granted" if service else ("withdrawn" if previous_service else "declined"))
+        _log_consent(c, sh, uid, "analytics_research", "granted" if analytics else ("withdrawn" if previous_analytics else "declined"))
+
+        def add_event(action, metadata):
+            safe = {}
+            for k, v in (metadata or {}).items():
+                if k in {"status", "consent_type", "format", "scope", "period", "count"}:
+                    safe[k] = v
+            c.execute(
+                "INSERT INTO ss_privacy_events(subject_hash,action,metadata,timestamp) VALUES(%s,%s,%s,%s)".replace("%s", PH),
+                (sh, str(action)[:80], json.dumps(safe, ensure_ascii=False), _now()),
+            )
+
+        add_event("privacy_settings_changed", {"status": "saved"})
+        if previous_analytics != analytics:
+            add_event(
+                "analytics_consent_granted" if analytics else "analytics_consent_withdrawn",
+                {"status": "granted" if analytics else "withdrawn"},
+            )
+        elif not analytics and not previous_updated_at:
+            add_event("analytics_consent_declined", {"status": "declined"})
+        if previous_service != service:
+            add_event(
+                "service_consent_granted" if service else "service_consent_withdrawn",
+                {"status": "granted" if service else "withdrawn"},
+            )
+
         conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
-    log_privacy_event(subject_key, "privacy_settings_changed", {"status": "saved"})
-    if bool(previous.get("analytics_research")) != bool(analytics_research):
-        log_privacy_event(subject_key, "analytics_consent_granted" if analytics_research else "analytics_consent_withdrawn", {"status": "granted" if analytics_research else "withdrawn"})
-    elif not analytics_research and not previous.get("updated_at"):
-        log_privacy_event(subject_key, "analytics_consent_declined", {"status": "declined"})
-    if bool(previous.get("service_usage")) != bool(service_usage):
-        log_privacy_event(subject_key, "service_consent_granted" if service_usage else "service_consent_withdrawn", {"status": "granted" if service_usage else "withdrawn"})
-    return get_consent(subject_key, user_id)
+
+    return {
+        "service_usage": service,
+        "analytics_research": analytics,
+        "ai_improvement": False,
+        "consent_version": CONSENT_VERSION,
+        "privacy_policy_version": PRIVACY_POLICY_VERSION,
+        "updated_at": now,
+        "needs_review": False,
+    }
 
 
 def withdraw_analytics(subject_key: str, user_id=None) -> dict:

@@ -211,6 +211,119 @@ table th{color:#163B5C;background:#F4F9FC;font-weight:800}table td,table th{padd
 @media(max-width:900px){.hh{min-height:0;flex-direction:column;padding:30px 24px!important}.hh-l{width:100%}.hh-l h1{max-width:16ch}.hh-r{min-height:230px!important;width:100%}.hh-product-art{width:min(360px,88%)}.home-trust{margin-top:-12px}.svc-grid[style]{grid-template-columns:1fr!important}}
 @media(max-width:600px){body{font-size:14px}.container{padding-inline:12px!important}.hh{padding:25px 19px!important;border-radius:22px!important}.hh-l h1{font-size:clamp(32px,10vw,42px)!important}.hh-r{min-height:190px!important}.hh-btns{display:grid!important;grid-template-columns:1fr}.hh-btns .btn{width:100%}.home-trust{text-align:center;margin-bottom:26px}.v2-section-head{margin-top:28px!important}.svc-card{padding:19px!important}.auth-card{padding:26px 18px!important}.footer{padding-inline:16px!important}.asst-msg{max-width:94%}}
 @media(max-width:360px){.container{padding-inline:10px!important}.hh{padding:22px 16px!important}.hh-l h1{font-size:31px!important}.hh-r{min-height:168px!important}.btn,.ss-btn-primary,.auth-btn{width:100%}}
+
+
+/* Symptom result report — UI/UX only. The API response remains the medical source of truth. */
+body.ss-chat-page .chat-body.result-mode{padding:14px!important;background:#F7FAFC!important;overflow-y:auto!important;scroll-behavior:auto!important}
+body.ss-chat-page .chat-wrap.report-mode .chat-options{display:none!important}
+.ss-report{width:min(780px,100%);margin:0 auto;padding:0 0 8px;animation:none!important;color:var(--v2-text)}
+.ss-report *{animation:none!important;min-width:0}
+.ss-report-card,.ss-report-details{background:#fff;border:1px solid #DCE8F0;border-radius:17px;padding:17px;margin:0 0 12px;box-shadow:0 4px 14px rgba(31,86,127,.045)}
+.ss-report-summary{border-top:4px solid #287FC1;padding-top:15px}
+.ss-report-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:13px}
+.ss-report-heading h2,.ss-report-heading h3{font-size:17px;line-height:1.45;margin:0;color:#163B5C}
+.ss-report-heading .ss-count{font-size:11px;font-weight:800;color:#526B7E;background:#F1F7FA;border:1px solid #DCE8F0;padding:5px 9px;border-radius:999px}
+.ss-risk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px;border-radius:14px;margin-bottom:11px}
+.ss-risk-row.low{background:#EDF8F2;border:1px solid #CFE9DA;color:#1E6846}.ss-risk-row.med{background:#FFF8E7;border:1px solid #F0DEAF;color:#7B5A18}.ss-risk-row.hi{background:#FFF1F1;border:1px solid #F1CCCC;color:#8E3333}
+.ss-risk-label{font-size:12px;font-weight:800;opacity:.86}.ss-risk-value{font-size:20px;font-weight:900;line-height:1.35}
+.ss-quality{padding:12px 14px;border-radius:14px;background:#F8FCFF;border:1px solid #D7E8F2;margin-bottom:11px}
+.ss-quality-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}.ss-quality-top strong{color:#163B5C}.ss-quality-score{font-weight:900;color:#287FC1;white-space:nowrap}
+.ss-quality-track{height:7px;background:#E4EEF4;border-radius:999px;overflow:hidden;margin-top:8px}.ss-quality-fill{height:100%;background:#287FC1;border-radius:inherit}
+.ss-summary-recommendation{padding:12px 14px;border-radius:14px;background:#F7FAFC;border:1px solid #E1EBF1;font-size:13px;line-height:1.75}.ss-summary-recommendation b{display:block;color:#163B5C;margin-bottom:3px}
+.ss-input-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ss-input-item{padding:11px 12px;border:1px solid #E1EBF1;border-radius:13px;background:#FBFDFE}.ss-input-label{display:block;color:#607487;font-size:11px;font-weight:800;margin-bottom:3px}.ss-input-value{display:block;color:#23384A;font-size:13px;font-weight:700;line-height:1.65;overflow-wrap:anywhere}
+.ss-condition-list{display:grid;grid-template-columns:1fr;gap:9px}.ss-condition{padding:14px;border:1px solid #DDE9F0;border-radius:14px;background:#FBFDFE}.ss-condition-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.ss-condition-name{font-size:15px;font-weight:900;color:#163B5C}.ss-match{display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:900;padding:5px 8px;border-radius:999px;background:#EAF5FC;color:#225C86;white-space:nowrap}.ss-condition-why{margin-top:8px;font-size:12px;line-height:1.75;color:#526B7E}.ss-condition-why b{color:#29485F}
+.ss-step-list{display:grid;gap:9px}.ss-step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:12px;border:1px solid #E1EBF1;border-radius:14px;background:#FBFDFE}.ss-step-no{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#EAF5FC;color:#1D6D9F;font-weight:900;font-size:12px}.ss-step-body b{display:block;color:#163B5C;font-size:13px;margin-bottom:4px}.ss-step-body p{margin:0;color:#40566F;font-size:12.5px;line-height:1.75}.ss-step-source{display:inline-flex;margin-top:7px;color:#287FC1;font-size:11.5px;font-weight:800}
+.ss-flag-list,.ss-care-list{display:grid;gap:7px}.ss-flag,.ss-care{display:flex;align-items:flex-start;gap:8px;padding:10px 11px;border-radius:12px;line-height:1.7;font-size:12.5px}.ss-flag{background:#FFF7F7;border:1px solid #F2DADA;color:#713E3E}.ss-care{background:#F7FBF9;border:1px solid #D8E9DF;color:#315C48}.ss-empty-note{padding:11px 12px;border-radius:12px;background:#F7FAFC;border:1px solid #E1EBF1;color:#607487;font-size:12.5px}
+.ss-question-chips{display:flex;flex-wrap:wrap;gap:7px}.ss-question-chip{border:1px solid #CFE1EC;background:#F8FCFF;color:#225C86;border-radius:999px;padding:8px 12px;min-height:40px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}.ss-question-chip:hover{background:#EAF5FC}.ss-question-answer{margin-top:10px;padding:12px;border:1px solid #DCE8F0;border-radius:13px;background:#F7FAFC;font-size:12.5px;line-height:1.8;white-space:pre-wrap}.ss-question-answer[hidden]{display:none}
+.ss-report-details{padding:0;overflow:hidden}.ss-report-details summary{cursor:pointer;list-style:none;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:#163B5C;font-weight:900;font-size:14px;background:#fff}.ss-report-details summary::-webkit-details-marker{display:none}.ss-report-details summary::after{content:'＋';color:#287FC1;font-size:18px;line-height:1}.ss-report-details[open] summary::after{content:'−'}.ss-details-body{padding:0 17px 16px;border-top:1px solid #EDF2F5}.ss-details-block{padding-top:12px;font-size:12.5px;line-height:1.8;color:#526B7E}.ss-details-block b{color:#29485F}.ss-factor{padding:9px 0;border-bottom:1px solid #EDF2F5}.ss-factor:last-child{border-bottom:0}.ss-factor strong{color:#29485F}.ss-factor small{display:block;color:#607487;line-height:1.7;margin-top:3px}
+.ss-source-list{display:grid;gap:9px;padding-top:12px}.ss-source-card{padding:12px;border:1px solid #E1EBF1;border-radius:13px;background:#FBFDFE}.ss-source-name{font-weight:900;color:#163B5C;font-size:13px}.ss-source-meta{display:flex;gap:6px 10px;flex-wrap:wrap;margin-top:5px;color:#607487;font-size:10.5px}.ss-source-title{margin-top:6px;color:#40566F;font-size:12px;line-height:1.65}.ss-source-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin-top:8px;padding:7px 11px;border-radius:10px;background:#EAF5FC;color:#1F6E9F;font-size:11.5px;font-weight:900}
+.ss-report-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ss-report-action{min-height:46px;border-radius:12px;border:1px solid #CFE1EC;background:#fff;color:#225C86;font-family:inherit;font-weight:850;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 11px;cursor:pointer;text-decoration:none}.ss-report-action.primary{background:#287FC1;color:#fff;border-color:#287FC1}.ss-report-action:hover{filter:brightness(.98)}
+.ss-feedback{text-align:center}.ss-feedback p{margin:0 0 10px;font-weight:800;color:#29485F}.ss-feedback-btns{display:flex;justify-content:center;gap:8px}.ss-feedback-btn{min-width:96px;min-height:42px;border-radius:12px;border:1px solid #D5E4ED;background:#fff;color:#29485F;font-family:inherit;font-weight:800;cursor:pointer}.ss-feedback-msg{margin-top:8px;color:#287FC1;font-size:12px;font-weight:800}
+.ss-report-disclaimer{padding:12px 14px;border-radius:14px;background:#F7FAFC;border:1px solid #DCE8F0;color:#607487;font-size:11.5px;line-height:1.75;text-align:center}
+@media(min-width:760px){.ss-condition-list{grid-template-columns:repeat(2,minmax(0,1fr))}.ss-condition-list .ss-condition:only-child{grid-column:1/-1}}
+@media(max-width:640px){body.ss-chat-page .chat-body.result-mode{padding:9px!important}.ss-report-card{padding:14px;border-radius:15px;margin-bottom:9px}.ss-report-heading{margin-bottom:10px}.ss-report-heading h2,.ss-report-heading h3{font-size:15px}.ss-risk-row{padding:11px 12px}.ss-risk-value{font-size:18px}.ss-input-grid{grid-template-columns:1fr}.ss-condition-head{flex-direction:column;gap:7px}.ss-match{align-self:flex-start}.ss-step{grid-template-columns:30px minmax(0,1fr);padding:10px}.ss-step-no{width:29px;height:29px}.ss-question-chips{display:grid;grid-template-columns:1fr}.ss-question-chip{width:100%;border-radius:12px;text-align:start}.ss-report-actions{grid-template-columns:1fr}.ss-report-action{width:100%;min-height:48px}.ss-report-details summary{padding:13px 14px}.ss-details-body{padding:0 14px 14px}.ss-feedback-btn{flex:1;max-width:150px}.ss-report-disclaimer{font-size:11px}}
+
+/* Symptom analysis — mobile-first layout refinement. */
+.adaptive-step{display:inline-flex;align-items:center;max-width:100%;padding:4px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;line-height:1.4;white-space:normal}
+body.ss-chat-page .chat-wrap{isolation:isolate}
+body.ss-chat-page .chat-head{flex:0 0 auto}
+body.ss-chat-page .ss-flow{flex:0 0 auto}
+body.ss-chat-page .chat-body{min-height:0}
+body.ss-chat-page .chat-options{flex:0 0 auto}
+body.ss-chat-page .chat-input{flex:0 0 auto}
+body.ss-chat-page .likely-condition{border-inline-start:4px solid #287FC1!important;background:#F8FCFF!important}
+body.ss-chat-page .smart-next{background:#FBFDFE!important}
+
+@media(max-width:640px){
+  body.ss-chat-page{height:100dvh;overflow:hidden;background:#F7FAFC!important}
+  body.ss-chat-page .ss-mobile-head{display:none!important}
+  body.ss-chat-page .footer{display:none!important}
+  body.ss-chat-page .container{height:calc(100dvh - var(--bnav-h) - var(--safe-bottom));padding:8px 8px 6px!important;overflow:hidden}
+  body.ss-chat-page .chat-wrap{height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;border-radius:18px!important;border:1px solid #DCE8F0!important;box-shadow:0 8px 24px rgba(22,59,92,.08)!important}
+  body.ss-chat-page .chat-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:10px 11px!important;background:#287FC1!important}
+  body.ss-chat-page .chat-head .avatar{grid-column:1;grid-row:1;width:36px;height:36px;font-size:18px}
+  body.ss-chat-page .chat-head>div:nth-child(2){grid-column:2;grid-row:1;min-width:0}
+  body.ss-chat-page .chat-head h3{font-size:15px!important;line-height:1.25;margin:0}
+  body.ss-chat-page .chat-head p{font-size:10.5px!important;line-height:1.35;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.ss-chat-page .chat-head-toggles{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:flex-end;gap:6px;margin:0!important}
+  body.ss-chat-page .chat-head .spk-btn{width:38px;height:38px;min-width:38px;padding:0!important;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22)!important;border-radius:11px!important;font-size:0!important;background:rgba(255,255,255,.14)!important}
+  body.ss-chat-page #voiceModeBtn::before{content:'🎙️';font-size:17px;line-height:1}
+  body.ss-chat-page #spkBtn::before{content:'🔊';font-size:17px;line-height:1}
+  body.ss-chat-page #profileSwitcher{grid-column:1/-1;grid-row:2;width:100%;margin:0!important;display:block!important}
+  body.ss-chat-page #famSelect{width:100%!important;max-width:none!important;min-height:38px!important;height:38px;padding:5px 10px!important;border-radius:10px!important;font-size:12px!important;background:rgba(255,255,255,.14)!important;color:#fff!important;border-color:rgba(255,255,255,.28)!important;box-shadow:none!important}
+  body.ss-chat-page #famSelect option{color:#1F3345;background:#fff}
+  body.ss-chat-page .ss-flow{padding:8px 11px!important;background:#fff!important}
+  body.ss-chat-page .ss-flow-copy{font-size:10.5px!important;margin-bottom:5px!important;gap:8px}
+  body.ss-chat-page .ss-flow-copy span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:end}
+  body.ss-chat-page .ss-flow-track{height:5px!important}
+  body.ss-chat-page .chat-body{padding:10px 10px 6px!important;background:#F7FAFC!important;scroll-padding-block:12px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  body.ss-chat-page .bubble{max-width:92%!important;margin-bottom:8px!important;padding:10px 12px!important;border-radius:13px!important;font-size:13.5px!important;line-height:1.65!important;overflow-wrap:anywhere;word-break:normal}
+  body.ss-chat-page .bubble.q{max-width:100%!important;font-size:14px!important;font-weight:750!important;background:#F4F9FC!important;box-shadow:none!important}
+  body.ss-chat-page .bubble.q.start{padding:12px!important}
+  body.ss-chat-page .bubble.user{max-width:88%!important}
+  body.ss-chat-page .bubble.result{max-width:100%!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+  body.ss-chat-page .chat-start{padding:3px 2px 1px!important}
+  body.ss-chat-page .chat-start .cs-logo{font-size:34px!important;margin-bottom:3px!important}
+  body.ss-chat-page .chat-start .cs-title{font-size:17px!important;margin-bottom:2px!important}
+  body.ss-chat-page .chat-start .cs-sub{font-size:13px!important;margin-bottom:5px!important}
+  body.ss-chat-page .chat-start .cs-desc{font-size:12px!important;line-height:1.65!important}
+  body.ss-chat-page .cs-voice{display:inline-flex!important;align-items:center;justify-content:center;min-height:38px;margin-top:9px!important;padding:7px 12px!important;font-size:12px!important}
+  body.ss-chat-page .chat-options{display:grid!important;grid-template-columns:1fr!important;gap:7px!important;max-height:min(36dvh,310px)!important;padding:9px!important;background:#fff!important;border-top:1px solid #E3EDF3!important;overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:min(42dvh,360px)!important}
+  body.ss-chat-page .chat-options .opt{width:100%!important;min-height:46px!important;padding:9px 11px!important;border-radius:12px!important;font-size:13px!important;line-height:1.4!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere}
+  body.ss-chat-page .chat-options.symptom-picker .opt{min-height:50px!important;padding:8px 7px!important;font-size:12.5px!important}
+  body.ss-chat-page .chat-options .start-btn{grid-column:1/-1!important;position:sticky!important;top:0!important;z-index:4!important;min-height:48px!important;margin:0 0 2px!important;border-radius:13px!important;padding:11px 14px!important;font-size:14px!important;box-shadow:0 5px 16px rgba(40,127,193,.16)!important}
+  body.ss-chat-page .chat-options #relBlock{grid-column:1/-1!important}
+  body.ss-chat-page .rel-title{margin-top:7px!important;font-size:11.5px!important}
+  body.ss-chat-page .rel-chips{gap:6px!important;margin-top:6px!important}
+  body.ss-chat-page .rel-chip{min-height:38px;padding:7px 10px!important;border-radius:11px!important;font-size:11.5px!important;line-height:1.35!important}
+  body.ss-chat-page .chat-input{padding:8px!important;gap:6px!important;background:#fff!important;border-top:1px solid #E3EDF3!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
+  body.ss-chat-page .chat-input input{min-width:0!important;min-height:46px!important;height:46px;padding:10px 11px!important;font-size:16px!important;border-radius:12px!important}
+  body.ss-chat-page .chat-input button{min-width:46px!important;min-height:46px!important;height:46px;padding:0 11px!important;border-radius:12px!important;font-size:13px!important}
+  body.ss-chat-page #micBtn{width:46px!important;padding:0!important;font-size:18px!important}
+  body.ss-chat-page .res-card{padding:13px!important;border-radius:16px!important;box-shadow:none!important}
+  body.ss-chat-page .res-title{font-size:17px!important;margin-bottom:9px!important}
+  body.ss-chat-page .pill2{font-size:15px!important;padding:8px 16px!important;max-width:100%}
+  body.ss-chat-page .urg-lbl{font-size:11.5px!important}
+  body.ss-chat-page .urg-val{font-size:18px!important}
+  body.ss-chat-page .res-assess{padding:12px!important;margin:8px 0!important;border-radius:13px!important}
+  body.ss-chat-page .res-assess-h{font-size:14px!important;margin-bottom:6px!important}
+  body.ss-chat-page .likely-condition div[style*='1.28rem']{font-size:1.12rem!important;line-height:1.45!important}
+  body.ss-chat-page .warn{font-size:12px!important;line-height:1.65!important;padding:10px 11px!important}
+  body.ss-chat-page .xai-card summary{padding:11px 12px!important;font-size:12.5px!important}
+  body.ss-chat-page .xai-body{padding:12px!important}
+}
+@media(max-width:390px){
+  body.ss-chat-page .chat-head{grid-template-columns:minmax(0,1fr) auto}
+  body.ss-chat-page .chat-head .avatar{display:none!important}
+  body.ss-chat-page .chat-head>div:nth-child(2){grid-column:1;grid-row:1}
+  body.ss-chat-page .chat-head-toggles{grid-column:2;grid-row:1}
+  body.ss-chat-page #profileSwitcher{grid-column:1/-1}
+  body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:1fr!important}
+  body.ss-chat-page .chat-options.symptom-picker .opt{min-height:44px!important;font-size:13px!important}
+  body.ss-chat-page .bubble{max-width:96%!important}
+  body.ss-chat-page .bubble.user{max-width:92%!important}
+}
 @media(prefers-reduced-motion:reduce){.svc-card,.quick-card,.hp-quick-link,.btn,.auth-btn,input,select,textarea{transition:none!important}.svc-card:hover,.quick-card:hover,.hp-quick-link:hover{transform:none!important}}
 """
 
@@ -3928,10 +4041,23 @@ def consent_page():
     </style>
     <script>
     document.getElementById('consentForm').addEventListener('submit', async function(e){
-      e.preventDefault(); const service=document.getElementById('serviceConsent').checked, analytics=document.getElementById('analyticsConsent').checked, err=document.getElementById('consentErr');
+      e.preventDefault();
+      const service=document.getElementById('serviceConsent').checked, analytics=document.getElementById('analyticsConsent').checked, err=document.getElementById('consentErr'), btn=this.querySelector('button[type=submit]');
       if(!service){err.style.display='block';err.textContent=__SERVICE_ERR__;return;}
+      if(btn.disabled)return;
       err.style.display='none';
-      try{const r=await fetch('/api/consent/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:service,analytics_research:analytics})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'consent_failed');location.href=__NEXT__;}catch(ex){err.style.display='block';err.textContent=__GEN_ERR__;}
+      const oldText=btn.textContent; btn.disabled=true; btn.setAttribute('aria-busy','true'); btn.textContent=__SAVING__;
+      try{
+        const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),12000);
+        const r=await fetch('/api/consent/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:service,analytics_research:analytics}),signal:controller.signal});
+        clearTimeout(timer);
+        const d=await r.json();
+        if(!r.ok||!d.ok)throw new Error(d.error||'consent_failed');
+        window.location.replace(__NEXT__);
+      }catch(ex){
+        err.style.display='block';err.textContent=__GEN_ERR__;
+        btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=oldText;
+      }
     });
     </script>
     """
@@ -3947,6 +4073,7 @@ def consent_page():
         "__REQUIRED__": ("مطلوب للخدمة" if ar else "Required for service"), "__OPTIONAL__": ("اختياري" if ar else "Optional"),
         "__READ__": ("اقرأ سياسة الخصوصية" if ar else "Read Privacy Policy"), "__HOW__": ("كيف نستخدم بياناتك؟" if ar else "How do we use your data?"),
         "__CONTINUE__": ("حفظ الاختيارات والمتابعة" if ar else "Save choices & continue"),
+        "__SAVING__": json.dumps("جاري المتابعة…" if ar else "Continuing…"),
         "__DISC__": ("SymptoSense أداة معلوماتية وتحليلية ولا تحل محل الاستشارة الطبية أو التشخيص أو العلاج من قبل المختصين." if ar else "SymptoSense is an informational and analytical tool and does not replace professional medical advice, diagnosis, or treatment."),
         "__SERVICE_ERR__": json.dumps("يجب الموافقة على معالجة البيانات اللازمة لاستخدام خدمة التحليل." if ar else "Service usage consent is required to use the assessment service."),
         "__GEN_ERR__": json.dumps("تعذر حفظ الاختيارات الآن. حاول مرة أخرى." if ar else "Unable to save your choices right now. Please try again."),
@@ -4503,7 +4630,7 @@ def chat_page():
         <button onclick="submitText()" aria-label="Send message">__SEND__</button>
       </div>
     </div>
-    <div class="muted" style="text-align:center;margin-top:10px;">__MUTED__</div>
+    <div class="muted" id="chatSafetyNote" style="text-align:center;margin-top:10px;">__MUTED__</div>
     <div class="blood-banner" id="bloodBanner" style="display:none;"></div>
     <div class="em-overlay" id="emOverlay"></div>
     <div class="voice-overlay" id="voiceOverlay">
@@ -4521,7 +4648,6 @@ def chat_page():
 
     <script>
     document.body.classList.add('ss-chat-page');
-    window.addEventListener('pageshow', function(){ window.scrollTo(0,0); }, {once:true});
     const T = __T__;
     const LANG = "__LANG__";
     function TT(k) { return T[k] || k; }
@@ -4626,6 +4752,7 @@ def chat_page():
     let profileMissing = [];
     let userInfo = null;
     let compareBase = null;
+    let lastAnalysisInput = null;
     let adaptiveQuestionNo = 0;
     const bodyEl = document.getElementById('chatBody');
     const optsEl = document.getElementById('chatOptions');
@@ -4715,7 +4842,7 @@ def chat_page():
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
     }
-    function clearOpts() { optsEl.innerHTML = ''; }
+    function clearOpts() { optsEl.innerHTML = ''; optsEl.classList.remove('symptom-picker'); }
     function showOpts(items) {
       clearOpts();
       items.forEach(it => {
@@ -4760,6 +4887,10 @@ def chat_page():
       }
       try {
         fetch('/api/user-info').then(function(r){ return r.json(); }).then(function(ui){
+          // Reuse this already-loaded account/profile context at result time so
+          // clicking Analyze does not incur another sequential network request.
+          userInfo = ui || null;
+          window.__USER_INFO__ = ui || null;
           if (ui.ok && ui.logged_in && ui.has_profile && ui.privacy && ui.privacy.use_in_analysis && ui.profile) {
             smartCtxShow(ui.profile, function(action){
               if (action === 'use') {
@@ -4989,10 +5120,12 @@ def chat_page():
     ]};
     // ---------------- Missing-symptom clarification ----------------
     let clarQueue = [], clarIndex = 0, clarCustomNext = null;
+    let differentialAsked = [], differentialNegatives = [], differentialCount = 0, differentialCandidates = [];
     function startClarify() {
       clarQueue = [];
       clarIndex = 0;
       adaptiveQuestionNo = 0;
+      differentialAsked = []; differentialNegatives = []; differentialCount = 0; differentialCandidates = [];
       (state.symptoms || []).forEach(function(s){
         var matched=false;
         for (var i = 0; i < CLAR.length; i++) {
@@ -5004,7 +5137,41 @@ def chat_page():
     }
     function nextClarNode() {
       if (clarIndex < clarQueue.length) walkClarNode(clarQueue[clarIndex++]);
-      else showDataQualityGate();
+      else startDifferentialQuestions();
+    }
+    async function startDifferentialQuestions() {
+      if (differentialCount >= 5) { showDataQualityGate(); return; }
+      state.step = 'clarification';
+      updateFlow('notes');
+      clearOpts();
+      try {
+        const r = await fetch('/api/analyze/differential-question', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({symptoms:state.symptoms, asked:differentialAsked, negatives:differentialNegatives, lang:LANG})
+        });
+        const d = await r.json();
+        if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
+        if (d.candidates && d.candidates.length) differentialCandidates = d.candidates;
+        if (!d.ok || d.done || !d.question || !d.symptom_slug) { showDataQualityGate(); return; }
+        differentialCount += 1;
+        differentialAsked.push(d.symptom_slug);
+        addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'سؤال تمييزي ':'Differential question ')+differentialCount)+'</div>','bot');
+        addQ('🩺 ' + d.question);
+        showOpts([
+          {label:TT('clar_yes'), fn:function(){
+            add(TT('clar_yes'),'user');
+            if (d.symptom_name && state.symptoms.indexOf(d.symptom_name) === -1) state.symptoms.push(d.symptom_name);
+            state.notes += (state.notes?' ':'') + d.question + ' -> ' + (LANG==='ar'?'نعم':'Yes');
+            startDifferentialQuestions();
+          }},
+          {label:TT('clar_no'), fn:function(){
+            add(TT('clar_no'),'user');
+            differentialNegatives.push(d.symptom_slug);
+            state.notes += (state.notes?' ':'') + d.question + ' -> ' + (LANG==='ar'?'لا':'No');
+            startDifferentialQuestions();
+          }}
+        ]);
+      } catch(e) { showDataQualityGate(); }
     }
     function walkClarNode(node) {
       if (!node) { nextClarNode(); return; }
@@ -5131,6 +5298,7 @@ def chat_page():
       }});
       items.push({label:TT('voice_chip'), cls:'voice-opt', fn:()=>{ startVoice(); }});
       showOpts(items);
+      optsEl.classList.add('symptom-picker');
       if (state.symptoms.length) appendStartBtn(true);
       renderRelated();
       if (!state.symptoms.length) appendStartBtn(false);
@@ -5396,24 +5564,30 @@ def chat_page():
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
+        lastAnalysisInput = JSON.parse(JSON.stringify(payload));
         if (state.previous_record_id) payload.previous_record_id = state.previous_record_id;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
         useSaved = false;
-        userInfo = null;
         profileMissing = [];
+        // /api/user-info was already loaded when the chat started. Reusing it
+        // removes one full request/DB round-trip from the Analyze button path.
+        userInfo = userInfo || window.__USER_INFO__ || null;
+        if (userInfo && userInfo.ok && userInfo.logged_in && userInfo.has_profile && userInfo.privacy && userInfo.privacy.use_in_analysis) {
+          useSaved = true;
+          payload.use_saved = true;
+          profileMissing = userInfo.missing_fields || [];
+        }
+        const analysisController = new AbortController();
+        const analysisTimer = setTimeout(function(){ analysisController.abort(); }, 15000);
+        let r;
         try {
-          const uir = await fetch('/api/user-info');
-          userInfo = await uir.json();
-          if (userInfo.ok && userInfo.logged_in && userInfo.has_profile && userInfo.privacy && userInfo.privacy.use_in_analysis) {
-            useSaved = true;
-            payload.use_saved = true;
-            profileMissing = userInfo.missing_fields || [];
-          }
-        } catch(e) {}
-        const r = await fetch('/api/analyze', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
+          r = await fetch('/api/analyze', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload), signal: analysisController.signal
+          });
+        } finally {
+          clearTimeout(analysisTimer);
+        }
         const d = await r.json();
         if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
         if (d.ok) {
@@ -5578,222 +5752,218 @@ def chat_page():
       if(x.auxiliary_model_note) body+='<div class="xai-note">🤖 '+esc(x.auxiliary_model_note)+'</div>';
       body+='</div></details>'; return body;
     }
+    function reportLines(value) {
+      const raw = String(value || '').replace(/\\r/g, '').trim();
+      if (!raw) return [];
+      return raw.split(/\\n+/).map(function(x){ return x.replace(/^\\s*[•–—-]\\s*/, '').trim(); }).filter(Boolean);
+    }
+    function displayGender(value) {
+      const v = String(value || '').toLowerCase();
+      if (v === 'f' || v === 'female' || v === 'أنثى') return LANG === 'ar' ? 'أنثى' : 'Female';
+      if (v === 'm' || v === 'male' || v === 'ذكر') return LANG === 'ar' ? 'ذكر' : 'Male';
+      return value || '—';
+    }
+    function matchLevelLabel(level) {
+      const map = LANG === 'ar'
+        ? {strong:'توافق مرتفع', moderate:'توافق متوسط', weak:'توافق منخفض'}
+        : {strong:'Strong match', moderate:'Moderate match', weak:'Weak match'};
+      return map[level] || level || (LANG === 'ar' ? 'غير محدد' : 'Not specified');
+    }
+    function resultQuestionList(d) {
+      const u = (d || {}).urgency || 'low';
+      if (u === 'high') return [TT('q_urgent_1'), TT('q_urgent_2'), TT('q通用_1'), TT('q通用_2')];
+      if (u === 'medium') return [TT('q_med_1'), TT('q_med_2'), TT('q通用_1'), TT('q通用_2')];
+      return [TT('q_low_1'), TT('q_low_2'), TT('q通用_1'), TT('q通用_2')];
+    }
+    async function askResultQuestion(question) {
+      const box = document.getElementById('reportQuestionAnswer');
+      if (!box || !question) return;
+      box.hidden = false;
+      box.textContent = TT('answering');
+      try {
+        const ctx = Object.assign({}, lastResult || {}, {lang: LANG});
+        const r = await fetch('/api/followup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:question, context:ctx})});
+        const d = await r.json();
+        box.textContent = d.ok ? (d.answer || '') : (TT('err') + (d.error || '?'));
+      } catch(e) {
+        box.textContent = TT('conn_err');
+      }
+    }
     function renderResult(d) {
       lastResult = d;
-      state.step = 'review'; updateFlow(state.step);
-      const u = d.urgency;
-      const pcls = u==='high' ? 'hi' : (u==='medium' ? 'med' : 'low');
-      const uEmoji = u==='high' ? '🔴' : (u==='medium' ? '🟡' : '🟢');
-      const uVal = pillLabel(u);
-      let h = '<div class="res-card">';
-      h += '<div class="res-title">' + TT('result_card_title') + '</div>';
-      if (state.member && state.member.name) h += '<div class="res-person">' + esc(TT('person_badge')) + esc(state.member.name) + '</div>';
-      h += '<div class="res-urg"><span class="pill2 ' + pcls + '"><span class="urg-lbl">' + uEmoji + ' ' + esc(TT('urg_label')) + '</span><span class="urg-val">' + esc(uVal) + '</span></span></div>';
-      if (d.data_quality) h += dataQualityHtml(d.data_quality,true);
-      h += '<div class="res-assess" style="margin-top:10px"><div class="res-assess-h">' + (LANG==='ar'?'ملخص ما ذكرته':'What you told us') + '</div>'
-        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'الأعراض':'Symptoms') + '</span><span>' + esc((state.symptoms||[]).join(LANG==='ar'?'، ':', ')) + '</span></div>'
-        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'المدة':'Duration') + '</span><span>' + esc(state.duration||'—') + '</span></div>'
-        + '<div class="res-assess-row"><span class="res-assess-label">' + (LANG==='ar'?'الشدة':'Severity') + '</span><span>' + esc(String(state.severity||'—')) + '/5</span></div></div>';
-      if (d.triage_label) h += '<div class="res-triage">' + esc(d.triage_label) + '</div>';
-      if (d.triage_reason) h += '<div class="triage-why"><b>' + esc(TT('triage_why')) + '</b><div style="margin-top:6px;text-align:right;">' + esc(d.triage_reason).replace(/\\n/g, '<br>') + '</div></div>';
-      if (d.rule_forced_high) h += '<div class="warn" style="margin:8px 0;">' + TT('forced_high') + '</div>';
-      if (d.assessment_status==='insufficient'||d.assessment_status==='low_confidence') { const need=(d.needed_information||[]); h += '<div class="v2-low-confidence-card"><h3>'+esc(LANG==='ar'?'🧠 معلومات غير كافية':'🧠 Not Enough Information')+'</h3><p>'+esc(LANG==='ar'?'لا توجد معلومات كافية لعرض تقييم موثوق أو احتمالات طبية.':'There is not enough grounded information to show a reliable assessment or medical possibilities.')+'</p>'+(need.length?'<b>'+esc(LANG==='ar'?'معلومات إضافية مطلوبة':'Additional information needed')+'</b><ul>'+need.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>'; }
-      if (d.emergency) {
-        h += '<div class="v2-emergency-card"><h3>🚨 ' + esc(LANG==='ar'?'تنبيه صحي مهم':'Important health alert') + '</h3>'
-          + '<p>' + esc(LANG==='ar'?'الأعراض التي أدخلتها قد تستدعي تقييمًا طبيًا عاجلًا. لا تعتمد على هذا التحليل وحده.':'The symptoms you entered may need urgent medical assessment. Do not rely on this assessment alone.') + '</p>'
-          + '<strong>' + esc(LANG==='ar'?'ما يجب فعله الآن':'What to do now') + '</strong><p>' + esc(d.when_to_seek_care || (LANG==='ar'?'اطلب الرعاية الطبية العاجلة أو تواصل مع خدمات الطوارئ المناسبة.':'Seek urgent medical care or contact the appropriate emergency service.')) + '</p></div>';
-      }
-      h += '<div class="res-note"><b>' + esc(TT('assessment_label')) + '</b> ' + esc(d.personal_note) + '</div>';
-      h += '<div class="v2-symptom-chips">' + (state.symptoms||[]).map(function(sym){return '<span class="v2-symptom-chip">🩺 '+esc(sym)+'</span>';}).join('') + '</div>';
-      h += '<div class="res-sim-toggle"><button id="simBtn" class="opt" onclick="setSim(1)">👤 ' + esc(TT('sim_btn')) + '</button><button id="detBtn" class="opt" style="display:none;" onclick="setSim(0)">🔬 ' + esc(TT('det_btn')) + '</button></div>';
-      h += '<div id="resSimple" style="display:none;" class="res-sec sim-box">' + esc(d.simple_explanation || TT('sim_fallback')) + '</div>';
-      h += '<div id="resDetail">';
+      state.step = 'review';
+      updateFlow(state.step);
+      hideText();
+      clearOpts();
 
-      if (d.possible_conditions && !d.emergency && (!d.knowledge_matches || !d.knowledge_matches.length)) h += '<div class="rc-title v2-result-section-title">' + TT('possible') + '</div><div class="res-sec">' + esc(d.possible_conditions) + '</div>';
-      if (d.knowledge_matches && d.knowledge_matches.length) {
-        h += '<div class="rc-title v2-result-section-title">🩺 ' + esc(LANG==='ar'?'الاحتمالات المحتملة':'Possible conditions') + '</div>';
-        d.knowledge_matches.forEach(function(m) {
-          var level = m.match_level === 'strong' ? TT('match_strong') : (m.match_level === 'moderate' ? TT('match_moderate') : TT('match_weak'));
-          var name = NAME(m, 'name_ar', 'name_en');
-          var reasons = (m.matched_symptoms || []).map(function(s){ return '✓ ' + esc(NAME(s, 'name_ar', 'name_en')); }).join('<br>');
-          h += '<div class="rec-card v2-condition-card">'
-            + '<div class="rec-head"><b>' + esc(name) + '</b><span class="v2-match-badge">' + esc(level) + '</span></div>'
-            + (reasons ? '<div class="rec-body"><b>' + esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?') + '</b><div class="v2-match-list">' + reasons.split('<br>').map(function(r){return '<div class="v2-match-item">'+r+'</div>';}).join('') + '</div></div>' : '')
-            + '</div>';
-        });
+      // Result mode replaces the questionnaire inside the SAME chat container.
+      // The page viewport is left untouched while the report replaces the questionnaire.
+      const wrap = bodyEl.closest('.chat-wrap');
+      if (wrap) wrap.classList.add('report-mode');
+      bodyEl.classList.add('result-mode');
+      optsEl.hidden = true;
+      const safetyNote = document.getElementById('chatSafetyNote');
+      if (safetyNote) safetyNote.style.visibility = 'hidden'; // preserve page height / viewport position
+
+      const u = d.urgency || 'low';
+      const riskClass = u === 'high' ? 'hi' : (u === 'medium' ? 'med' : 'low');
+      const riskEmoji = u === 'high' ? '🔴' : (u === 'medium' ? '🟡' : '🟢');
+      const riskValue = d.urgency_text || pillLabel(u);
+      const input = lastAnalysisInput || state || {};
+      const q = d.data_quality || {};
+      const qScoreRaw = Number(q.score);
+      const hasQScore = Number.isFinite(qScoreRaw);
+      const qScore = hasQScore ? Math.max(0, Math.min(100, Math.round(qScoreRaw))) : null;
+      const qLabel = (qScore === 100 || Number(q.required_completion) === 100)
+        ? (LANG === 'ar' ? 'مكتملة' : 'Complete')
+        : (q.level_label || '');
+      const recs = (d.recommendations || []).filter(function(r){ return r && (r.tip || r.title); });
+      const summaryRec = recs.length ? (recs[0].title || recs[0].tip) : (d.triage_label || d.risk_label || riskValue);
+      const matches = Array.isArray(d.knowledge_matches) ? d.knowledge_matches : [];
+      const sources = Array.isArray(d.medical_sources) ? d.medical_sources : [];
+      const dangerLines = reportLines(d.danger_signs);
+      const homeLines = reportLines(d.home_care);
+      const questions = resultQuestionList(d);
+
+      let h = '<div class="ss-report" id="symptomResultReport">';
+
+      // 1) Summary
+      h += '<section class="ss-report-card ss-report-summary">'
+        + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>'
+        + '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
+      if (hasQScore) {
+        h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'جودة المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
       }
-      if (d.med_warnings && d.med_warnings.length) {
-        h += '<div class="rc-title">' + TT('medwarn') + '</div>';
-        d.med_warnings.forEach(m => h += '<div class="rec-item"><b>' + esc(NAME(m, 'name_ar', 'name_en')) + '</b>: ' + esc(NAME(m, 'warning_ar', 'warning_en')) + '</div>');
-        h += '<div class="muted">' + TT('medwarn_note') + '</div>';
-      }
-      // Legacy ML remains available in the response for compatibility, but it
-      // is shown only when a future server version explicitly marks it as
-      // knowledge-grounded.  Unsourced condition names must not reach users.
-      if (!d.emergency && d.ml_grounded === true && (!d.knowledge_matches || !d.knowledge_matches.length) && d.ml_predictions && d.ml_predictions.length) {
-        h += '<div class="rc-title">' + TT('ml_title') + '</div>';
-        d.ml_predictions.forEach(p => {
-          const nm = NAME(p, 'name_ar', 'name_en');
-          const level = p.probability >= .65 ? TT('match_strong') : (p.probability >= .35 ? TT('match_moderate') : TT('match_weak'));
-          h += '<div class="ml-row"><span>' + esc(nm) + ' <button class="bl-explain" onclick="openExplain(\\'' + esc(nm).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(TT('ml_explain')) + '</button></span><b>' + esc(level) + '</b></div>';
+      if (summaryRec) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
+      h += '</section>';
+
+      // 2) Entered information (request payload only, not a recalculation)
+      const inputRows = [
+        [LANG==='ar'?'الأعراض':'Symptoms', Array.isArray(input.symptoms) ? input.symptoms.join(LANG==='ar'?'، ':', ') : input.symptoms],
+        [LANG==='ar'?'المدة':'Duration', input.duration],
+        [LANG==='ar'?'شدة الأعراض':'Symptom severity', input.severity ? String(input.severity)+'/5' : ''],
+        [LANG==='ar'?'العمر':'Age', input.age ? String(input.age) : ''],
+        [LANG==='ar'?'الجنس':'Sex', displayGender(input.gender)]
+      ].filter(function(x){ return x[1] !== null && x[1] !== undefined && String(x[1]).trim() !== ''; });
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>👤 '+esc(LANG==='ar'?'المعلومات المدخلة':'Entered information')+'</h3></div><div class="ss-input-grid">';
+      inputRows.forEach(function(row){ h += '<div class="ss-input-item"><span class="ss-input-label">'+esc(row[0])+'</span><span class="ss-input-value">'+esc(String(row[1]))+'</span></div>'; });
+      h += '</div></section>';
+
+      // 3) Possible conditions — preserve backend order; do not recalculate or re-score.
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🩺 '+esc(LANG==='ar'?'الاحتمالات المحتملة':'Possible conditions')+'</h3></div><div class="ss-condition-list">';
+      if (matches.length) {
+        matches.forEach(function(m){
+          const name = NAME(m,'name_ar','name_en') || '';
+          const matched = (m.matched_symptoms || []).map(function(x){ return NAME(x,'name_ar','name_en'); }).filter(Boolean);
+          h += '<article class="ss-condition"><div class="ss-condition-head"><div class="ss-condition-name">'+esc(name)+'</div><span class="ss-match">'+esc(matchLevelLabel(m.match_level))+'</span></div>';
+          if (matched.length) h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(LANG==='ar'?'الأعراض المتوافقة: ':'Matching symptoms: ')+esc(matched.join(LANG==='ar'?'، ':', '))+'</div>';
+          else if (m.description) h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(m.description)+'</div>';
+          h += '</article>';
         });
-        h += '<div class="ml-note">' + esc(TT('result_disclaimer')) + '</div>';
-      }
-      if (d.recommendations && d.recommendations.length) {
-        h += '<div class="rc-title v2-result-section-title">🧭 ' + esc(LANG==='ar'?'ماذا أفعل الآن؟':'What should I do now?') + '</div>';
-        d.recommendations.forEach((r, i) => {
-          h += '<div class="rec-card"><div class="rec-head"><span class="rec-num">' + (i+1) + '</span><b>' + esc(r.title || r.tip) + '</b></div>';
-          if (r.title && r.tip) h += '<div class="rec-body">' + esc(r.tip) + '</div>';
-          if (r.source) h += '<div class="src">' + esc(TT('rec_src')) + ': ' + (r.url ? '<a href="' + esc(r.url) + '" target="_blank">' + esc(r.source) + '</a>' : esc(r.source)) + '</div>';
-          h += '</div>';
-        });
-      }
-      h += '<div class="rc-title v2-result-section-title">🚨 ' + esc(LANG==='ar'?'علامات تستدعي الانتباه':'Red flags') + '</div>';
-      if (d.risk_reasons && d.risk_reasons.length) {
-        d.risk_reasons.forEach(function(rf){
-          var rfName=rf.name || (LANG==='ar'?'علامة خطر':'Red flag');
-          var rfMsg=rf.description || rf.message || '';
-          var rfAction=rf.recommended_action || '';
-          h += '<div class="rec-card v2-redflag-card"><div class="rec-head"><b>🚨 '+esc(rfName)+'</b></div>'
-            + (rfMsg?'<div class="rec-body">'+esc(rfMsg)+'</div>':'')
-            + (rfAction?'<div class="rec-body"><b>'+esc(LANG==='ar'?'الإجراء الموصى به: ':'Recommended action: ')+'</b>'+esc(rfAction)+'</div>':'') + '</div>';
-        });
+      } else if (d.possible_conditions) {
+        reportLines(d.possible_conditions).forEach(function(line){ h += '<article class="ss-condition"><div class="ss-condition-why" style="margin-top:0">'+esc(line)+'</div></article>'; });
       } else {
-        h += '<div class="v2-safe-note">🟢 ' + esc(LANG==='ar'?'لم يتم تحديد علامات خطر من المعلومات المدخلة.':'No red flags were identified from the information entered.') + '</div>';
+        h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لا توجد احتمالات موثوقة إضافية في النتيجة الحالية.':'No additional trusted possibilities are available in the current result.')+'</div>';
       }
-      if (d.danger_signs && (!d.risk_reasons || !d.risk_reasons.length)) h += '<div class="rc-title">' + esc(LANG==='ar'?'راقب هذه العلامات إذا ظهرت':'Watch for these signs if they appear') + '</div><div class="res-sec bullets">' + esc(d.danger_signs) + '</div>';
-      if (d.when_to_seek_care) h += '<div class="rc-title">' + TT('when') + '</div><div class="res-sec">' + esc(d.when_to_seek_care) + '</div>';
-      if (d.home_care) h += '<div class="rc-title">' + TT('home_care') + '</div><div class="res-sec bullets">' + esc(d.home_care) + '</div>';
-      if (d.medication_guidance) h += '<div class="rc-title">' + TT('med_guid') + '</div><div class="res-sec">' + esc(d.medication_guidance) + '</div>';
-      if (d.questions_for_doctor) h += '<div class="rc-title">' + TT('q_doc') + '</div><div class="res-sec">' + esc(d.questions_for_doctor) + '</div>';
-      if (d.medical_sources && d.medical_sources.length) {
-        h += '<div class="rc-title">' + TT('sources_title') + '</div>';
-        d.medical_sources.forEach(function(s) {
-          var sourceTitle = LANG === 'ar' ? (s.reference_title_ar || s.source_name) : (s.reference_title_en || s.source_name);
-          var sourceType=s.source_type || (LANG==='ar'?'جهة صحية رسمية':'Official health source');
-          var sourceVerified=s.last_verified || s.source_last_verified || '—';
-          h += '<div class="rec-card"><div class="rec-head"><b>' + esc(s.source_name) + '</b><span style="margin-inline-start:auto;color:#166534;background:#ECFDF5;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;">✓ ' + esc(TT('verified_source')) + '</span></div>'
-            + '<div class="rec-body">' + esc(sourceTitle) + '<div class="muted" style="margin-top:6px">'+esc(sourceType)+' · '+esc(LANG==='ar'?'آخر تحقق: ':'Last verified: ')+esc(sourceVerified)+'</div></div>'
-            + '<a class="btn ghost small v2-source-link" href="' + esc(s.reference_url || s.official_url || '#') + '" target="_blank" rel="noopener noreferrer">' + esc(TT('view_source')) + '</a></div>';
+      h += '</div></section>';
+
+      // 4) What to do now — existing API recommendations only.
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'ماذا أفعل الآن؟':'What should I do now?')+'</h3></div><div class="ss-step-list">';
+      let stepNo = 1;
+      recs.forEach(function(r){
+        const title = r.title || (LANG==='ar'?'الآن':'Now');
+        const tip = r.tip || '';
+        h += '<div class="ss-step"><span class="ss-step-no">'+stepNo+'</span><div class="ss-step-body"><b>'+esc(title)+'</b>'+(tip?'<p>'+esc(tip)+'</p>':'')+(r.url?'<a class="ss-step-source" href="'+esc(r.url)+'" target="_blank" rel="noopener noreferrer">'+esc(LANG==='ar'?'عرض المصدر':'View source')+'</a>':'')+'</div></div>';
+        stepNo += 1;
+      });
+      if (d.medication_guidance) {
+        h += '<div class="ss-step"><span class="ss-step-no">'+stepNo+'</span><div class="ss-step-body"><b>💊 '+esc(LANG==='ar'?'إرشاد الدواء':'Medication guidance')+'</b><p>'+esc(d.medication_guidance)+'</p></div></div>'; stepNo += 1;
+      }
+      if (d.when_to_seek_care) {
+        h += '<div class="ss-step"><span class="ss-step-no">'+stepNo+'</span><div class="ss-step-body"><b>'+esc(LANG==='ar'?'متى أراجع الطبيب؟':'When should I see a doctor?')+'</b><p>'+esc(d.when_to_seek_care)+'</p></div></div>'; stepNo += 1;
+      }
+      if (stepNo === 1) h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لا توجد توصيات إضافية في النتيجة الحالية.':'No additional recommendations are available in the current result.')+'</div>';
+      h += '</div></section>';
+
+      // 5) Danger signs
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🚨 '+esc(LANG==='ar'?'علامات تستدعي الانتباه':'Warning signs')+'</h3></div>';
+      if (dangerLines.length) { h += '<div class="ss-flag-list">'; dangerLines.forEach(function(line){ h += '<div class="ss-flag"><span>•</span><span>'+esc(line)+'</span></div>'; }); h += '</div>'; }
+      else h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لم يتم تحديد علامات خطر من المعلومات المدخلة.':'No warning signs were identified from the information entered.')+'</div>';
+      h += '</section>';
+
+      // 6) Home care — only if the API already provides it.
+      if (homeLines.length) {
+        h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🏠 '+esc(LANG==='ar'?'الرعاية المنزلية':'Home care')+'</h3></div><div class="ss-care-list">';
+        homeLines.forEach(function(line){ h += '<div class="ss-care"><span>•</span><span>'+esc(line)+'</span></div>'; });
+        h += '</div></section>';
+      }
+
+      // 7) Existing follow-up assistant prompts
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>💡 '+esc(TT('questions_title'))+'</h3></div><div class="ss-question-chips">';
+      questions.filter(Boolean).forEach(function(question){ h += '<button type="button" class="ss-question-chip" data-question="'+esc(question)+'">'+esc(question)+'</button>'; });
+      h += '</div><div class="ss-question-answer" id="reportQuestionAnswer" aria-live="polite" hidden></div></section>';
+
+      // 8) Why this assessment — collapsible, API data only.
+      h += '<details class="ss-report-details"><summary>🧠 '+esc(LANG==='ar'?'لماذا ظهر هذا التقييم؟':'Why did this assessment appear?')+'</summary><div class="ss-details-body">';
+      if (d.why_result) h += '<div class="ss-details-block">'+esc(d.why_result)+'</div>';
+      const xai = d.explainability || {};
+      if (xai.basis_label) h += '<div class="ss-details-block"><b>'+esc(xai.basis_label)+'</b></div>';
+      (xai.factors || []).forEach(function(f){ h += '<div class="ss-factor"><strong>'+esc(f.label || '')+'</strong>'+(f.detail?'<small>'+esc(f.detail)+'</small>':'')+'</div>'; });
+      if (xai.meaning) h += '<div class="ss-details-block"><b>'+esc(LANG==='ar'?'ماذا يعني ذلك؟':'What does this mean?')+'</b><br>'+esc(xai.meaning)+'</div>';
+      if (d.risk_reasons && d.risk_reasons.length) {
+        h += '<div class="ss-details-block"><b>'+esc(LANG==='ar'?'عوامل أثرت على مستوى الخطورة':'Factors affecting the risk level')+'</b>';
+        d.risk_reasons.forEach(function(r){ const txt=r.message||r.description||r.name||''; if(txt) h += '<div class="ss-factor">'+esc(txt)+'</div>'; });
+        h += '</div>';
+      }
+      h += '</div></details>';
+
+      // 9) Medical sources — collapsible, URLs hidden behind explicit buttons.
+      h += '<details class="ss-report-details"><summary><span>📚 '+esc(LANG==='ar'?'المصادر الطبية':'Medical sources')+' — '+sources.length+' '+esc(LANG==='ar'?'مصادر':'sources')+'</span></summary><div class="ss-details-body"><div class="ss-source-list">';
+      if (sources.length) {
+        sources.forEach(function(src){
+          const url = src.reference_url || src.official_url || '';
+          const title = LANG==='ar' ? (src.reference_title_ar || src.reference_title_en || '') : (src.reference_title_en || src.reference_title_ar || '');
+          h += '<article class="ss-source-card"><div class="ss-source-name">'+esc(src.source_name || src.organization || 'Source')+'</div>';
+          const meta=[]; if(src.organization && src.organization !== src.source_name) meta.push(src.organization); if(src.source_type) meta.push(String(src.source_type).replace(/_/g,' ')); if(src.last_verified || src.source_last_verified) meta.push((LANG==='ar'?'آخر تحقق: ':'Last verified: ')+(src.last_verified||src.source_last_verified));
+          if(meta.length) h += '<div class="ss-source-meta">'+meta.map(function(x){return '<span>'+esc(x)+'</span>';}).join('')+'</div>';
+          if(title) h += '<div class="ss-source-title">'+esc(title)+'</div>';
+          if(url) h += '<a class="ss-source-link" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(LANG==='ar'?'عرض المصدر':'View source')+'</a>';
+          h += '</article>';
         });
+      } else h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لا توجد مصادر إضافية مرفقة بهذه النتيجة.':'No additional sources are attached to this result.')+'</div>';
+      h += '</div></div></details>';
+
+      // 10) Existing actions only.
+      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>'+esc(LANG==='ar'?'الإجراءات':'Actions')+'</h3></div><div class="ss-report-actions">';
+      h += '<button type="button" class="ss-report-action primary" onclick="restart()">🔄 '+esc(LANG==='ar'?'إعادة التحليل':'New analysis')+'</button>';
+      if (d.record_id) {
+        h += '<a class="ss-report-action" href="/api/analyze/export/'+encodeURIComponent(String(d.record_id))+'">📄 '+esc(LANG==='ar'?'تحميل التقرير':'Download report')+'</a>';
+        h += '<button type="button" class="ss-report-action" onclick="openDoctorHandoff('+Number(d.record_id)+')">🩺 '+esc(LANG==='ar'?'ملخص الطبيب':'Doctor summary')+'</button>';
       }
-      if (d.knowledge_last_updated) {
-        var kbDate = String(d.knowledge_last_updated);
-        try { kbDate = new Date(kbDate).toLocaleDateString(LANG === 'ar' ? 'ar-SA-u-ca-gregory' : 'en-GB', {month:'long', year:'numeric'}); } catch (_) {}
-        h += '<div class="muted" style="text-align:center;margin:14px 0 4px;">' + esc(TT('last_updated_info')) + ': ' + esc(kbDate) + '</div>';
-      }
+      if ('speechSynthesis' in window) h += '<button type="button" class="ss-report-action" onclick="speakResult()">🔊 '+esc(LANG==='ar'?'الاستماع للتحليل':'Listen to analysis')+'</button>';
+      h += '</div></section>';
+
+      // 11) Feedback — reuse current endpoint/rating semantics.
+      h += '<section class="ss-report-card ss-feedback"><p>'+esc(LANG==='ar'?'هل كانت نتيجة التحليل مفيدة؟':'Was this analysis result useful?')+'</p><div class="ss-feedback-btns"><button type="button" class="ss-feedback-btn" onclick="fb(1)">👍 '+esc(LANG==='ar'?'نعم':'Yes')+'</button><button type="button" class="ss-feedback-btn" onclick="fb(4)">👎 '+esc(LANG==='ar'?'لا':'No')+'</button></div><div id="fbMsg" class="ss-feedback-msg" aria-live="polite"></div></section>';
+
+      // 12) One disclaimer only.
+      h += '<div class="ss-report-disclaimer">⚠️ '+esc(LANG==='ar'?'هذه النتيجة توعوية ولا تُعد تشخيصًا طبيًا نهائيًا ولا تغني عن استشارة الطبيب عند الحاجة.':'This result is educational, is not a final medical diagnosis, and does not replace professional medical advice when needed.')+'</div>';
       h += '</div>';
 
-      // ENHANCED: Why this result (fallback when no grounded condition match exists)
-      if (!d.knowledge_matches || !d.knowledge_matches.length) {
-        h += '<div class="res-why"><div class="res-why-h">🧠 ' + TT('why_title') + '</div>';
-        var whyText = d.why_result || '';
-        if (!whyText) {
-          var syms = (state.symptoms || []).join(', ');
-          var uLabel = u === 'high' ? TT('urg_high') : (u === 'medium' ? TT('urg_medium') : TT('urg_low'));
-          whyText = LANG === 'ar'
-            ? 'بناءً على الأعراض الموحّدة (' + syms + ') وتقييم ' + uLabel + '، تمت مراجعة قواعد الأمان والعلاقات النشطة في قاعدة المعرفة الطبية.'
-            : 'Based on normalized symptoms (' + syms + ') and the ' + uLabel + ' assessment, the safety rules and active medical-knowledge relationships were reviewed.';
-        }
-        h += '<div class="res-why-body">' + esc(whyText) + '</div></div>';
-      }
+      const host = document.createElement('div');
+      host.className = 'bubble result';
+      host.innerHTML = h;
+      bodyEl.replaceChildren(host);
+      // Reset only the INTERNAL report pane so the summary is visible; the page viewport is untouched.
+      bodyEl.scrollTop = 0;
 
-      h += explainabilityHtml(d);
-
-      // ENHANCED: Assessment card
-      h += '<div class="res-assess"><div class="res-assess-h">📋 ' + TT('assess_title') + '</div>';
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_safety') + '</span><span class="pill2 ' + pcls + '">' + uEmoji + ' ' + esc(uVal) + '</span></div>';
-      var completionLabel = d.data_quality ? ((d.data_quality.score||0)+'% · '+(d.data_quality.level_label||'')) : ((profileMissing && profileMissing.length > 0) ? (LANG==='ar'?'معلومات جزئية':'Partial information') : (LANG==='ar'?'المعلومات الأساسية مكتملة':'Core information complete'));
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_completion') + '</span><span style="font-weight:700;color:var(--v2-green);">' + esc(completionLabel) + '</span></div>';
-      h += '<div class="res-assess-row"><span class="res-assess-label">' + TT('assess_followup') + '</span><span style="font-weight:600;">' + esc(d.when_to_seek_care || TT('assess_followup_default')) + '</span></div>';
-      if (useSaved && profileMissing.length > 0) {
-        h += '<div style="margin-top:10px;padding:10px;background:#FFF7ED;border-radius:8px;border:1px solid #FDE68A;"><span style="font-weight:600;color:#92400E;">⚠️ ' + TT('assess_missing') + ':</span> <span style="color:#78350F;">' + esc(profileMissing.map(function(m){return m.label}).join(', ')) + '</span></div>';
-      }
-      h += '</div>';
-
-      // ENHANCED: Questions you might ask
-      h += '<div class="res-questions"><div class="res-questions-h">💡 ' + TT('questions_title') + '</div>';
-      h += '<div class="res-questions-body">' + TT('questions_sub') + '</div>';
-      h += '<div id="suggestedQuestions"></div></div>';
-
-      // ENHANCED: What I Know / Don't Know
-      h += '<div class="res-transparency">';
-      h += '<div class="res-trans-h">🧠 ' + TT('transparency_title') + '</div>';
-      h += '<div class="res-trans-body">' + TT('transparency_sub') + '</div>';
-      // Known (green)
-      h += '<div class="trans-card trans-known"><div class="trans-card-h"><span class="trans-dot trans-dot-green"></span> ' + TT('trans_known') + '</div>';
-      var knownItems = [];
-      if (state.symptoms && state.symptoms.length) state.symptoms.forEach(function(s){ knownItems.push('✓ ' + s); });
-      if (state.age) knownItems.push('✓ ' + (LANG==='ar'?'العمر: ':'Age: ') + state.age);
-      if (state.gender) knownItems.push('✓ ' + (LANG==='ar'?'الجنس: ':'Gender: ') + state.gender);
-      if (state.duration) knownItems.push('✓ ' + (LANG==='ar'?'المدة: ':'Duration: ') + state.duration);
-      if (window.__USER_INFO__ && window.__USER_INFO__.profile) {
-        var p = window.__USER_INFO__.profile;
-        if (p.height) knownItems.push('🔵 ' + (LANG==='ar'?'الطول: ':'Height: ') + p.height + ' cm');
-        if (p.weight) knownItems.push('🔵 ' + (LANG==='ar'?'الوزن: ':'Weight: ') + p.weight + ' kg');
-        if (p.medications) knownItems.push('🔵 ' + (LANG==='ar'?'الأدوية: ':'Meds: ') + p.medications);
-      }
-      if (!knownItems.length) knownItems.push(TT('trans_known_none') || 'No confirmed information');
-      h += '<div class="trans-items">' + knownItems.map(function(i){ return '<div class="trans-item">' + esc(i) + '</div>'; }).join('') + '</div></div>';
-      // Unclear (yellow)
-      h += '<div class="trans-card trans-unclear"><div class="trans-card-h"><span class="trans-dot trans-dot-yellow"></span> ' + TT('trans_unclear') + '</div>';
-      var unclearItems = [];
-      if (d.low_confidence) unclearItems.push(TT('trans_unclear_confidence') || 'Low confidence in analysis');
-      if (!state.duration) unclearItems.push(TT('trans_unclear_duration') || 'Duration not specified');
-      if (state.notes && state.notes.length < 5) unclearItems.push(TT('trans_unclear_notes') || 'Notes are too brief');
-      if (!unclearItems.length) unclearItems.push(TT('trans_unclear_none') || 'No unclear information');
-      h += '<div class="trans-items">' + unclearItems.map(function(i){ return '<div class="trans-item">' + esc(i) + '</div>'; }).join('') + '</div>';
-      h += '<button class="trans-add-btn" onclick="addMissingInfo()">➕ ' + (TT('trans_add_info') || 'Add more info') + '</button></div>';
-      // Not asked (gray)
-      h += '<div class="trans-card trans-notasked"><div class="trans-card-h"><span class="trans-dot trans-dot-gray"></span> ' + TT('trans_notasked') + '</div>';
-      var notaskedItems = [TT('trans_notasked_sleep') || 'Sleep pattern', TT('trans_notasked_appetite') || 'Appetite changes', TT('trans_notasked_stress') || 'Recent stress', TT('trans_notasked_family') || 'Family history'];
-      h += '<div class="trans-items">' + notaskedItems.map(function(i){ return '<div class="trans-item trans-item-gray">○ ' + esc(i) + '</div>'; }).join('') + '</div>';
-      h += '<div class="trans-note">' + TT('trans_notasked_note') + '</div></div>';
-      h += '</div>';
-      var nextTitle = LANG==='ar'?'ما الخطوة التالية؟':'What should I do next?';
-      var nextText = u==='high' ? (LANG==='ar'?'اطلب تقييمًا طبيًا عاجلًا، خصوصًا إذا ظهرت علامة خطر.':'Seek urgent medical evaluation, especially when a red flag is present.') : (u==='medium' ? (LANG==='ar'?'فكّر في التواصل مع مختص صحي إذا استمرت الأعراض أو ساءت.':'Consider contacting a healthcare professional if symptoms persist or worsen.') : (LANG==='ar'?'راقب الأعراض واطلب المساعدة إذا ساءت أو ظهرت علامات خطر.':'Monitor your symptoms and seek help if they worsen or red flags appear.'));
-      h += '<div class="res-assess smart-next"><div class="res-assess-h">🧭 '+esc(nextTitle)+'</div><div class="res-assess-row"><strong>'+esc(nextText)+'</strong></div><div class="muted" style="margin-top:7px">'+esc(LANG==='ar'?'هذا التوجيه مبني على مستوى الخطورة في هذا التقييم ولا يُعد علاجًا أو تشخيصًا.':'This guidance is based on the risk level in this assessment and is not a diagnosis or treatment plan.')+'</div></div>';
-      if (compareBase) {
-        var changes=[];
-        if (String(compareBase.severity||'') !== String(state.severity||'')) changes.push((LANG==='ar'?'الشدة: ':'Severity: ')+(compareBase.severity||'—')+' → '+(state.severity||'—'));
-        if (String(compareBase.duration||'') !== String(state.duration||'')) changes.push((LANG==='ar'?'المدة: ':'Duration: ')+(compareBase.duration||'—')+' → '+(state.duration||'—'));
-        if (String(compareBase.urgency||'') !== String(u||'')) changes.push((LANG==='ar'?'مستوى الخطورة تغيّر':'Risk level changed')+': '+pillLabel(compareBase.urgency||'low')+' → '+pillLabel(u));
-        var oldS=(compareBase.symptoms||[]).slice().sort().join('|'), newS=(state.symptoms||[]).slice().sort().join('|');
-        if (oldS!==newS) changes.push(LANG==='ar'?'تم تعديل قائمة الأعراض.':'The symptom list changed.');
-        h += '<div class="res-why"><div class="res-why-h">📊 '+esc(LANG==='ar'?'ما الذي تغيّر؟':'What Changed?')+'</div><div class="res-why-body">'+(changes.length?changes.map(x=>'• '+esc(x)).join('<br>'):esc(LANG==='ar'?'لم تتغير البيانات الأساسية مقارنة بالتحليل السابق.':'Core inputs did not change from the previous analysis.'))+'<div class="muted" style="margin-top:8px">'+esc(LANG==='ar'?'تغيّر التقييم بعد تغيّر إجاباتك؛ هذا لا يثبت سببًا طبيًا.':'The assessment changed after your responses changed; this does not establish a medical cause.')+'</div></div></div>';
-      }
-      if (d.record_id) h += '<div class="detail-actions" style="margin:14px 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="beginReanalysis('+d.record_id+')">🔄 '+esc(LANG==='ar'?'إعادة التحليل':'Re-analyze')+'</button><a class="btn ghost" href="/api/analyze/export/'+d.record_id+'">📄 '+esc(LANG==='ar'?'تحميل التقرير':'Download Report')+'</a><button class="btn ghost" onclick="openDoctorHandoff('+d.record_id+')">🗣️ '+esc(LANG==='ar'?'تجهيز ملخص لزيارة الطبيب':'Prepare for a Doctor Visit')+'</button></div>';
-      h += '<div class="v2-disclaimer">⚠️ ' + esc(LANG==='ar'?'هذه المعلومات للتوعية ولا تُعد تشخيصًا طبيًا أو بديلًا عن استشارة الطبيب.':'This information is for awareness and is not a medical diagnosis or a substitute for professional medical advice.') + '</div>';
-
-      h += '</div>';
-      addHtml(h, 'result');
-      // Populate suggested questions
-      setTimeout(function(){
-        var sq = document.getElementById('suggestedQuestions');
-        if (!sq) return;
-        var qList = [];
-        if (u === 'high') { qList.push(TT('q_urgent_1') || 'What should I do right now?'); qList.push(TT('q_urgent_2') || 'Do I need to go to the hospital?'); }
-        else if (u === 'medium') { qList.push(TT('q_med_1') || 'When should I see a doctor?'); qList.push(TT('q_med_2') || 'What can I do at home?'); }
-        else { qList.push(TT('q_low_1') || 'How long will recovery take?'); qList.push(TT('q_low_2') || 'When should I worry?'); }
-        qList.push(TT('q通用_1') || 'Can you explain more about this result?');
-        qList.push(TT('q通用_2') || 'What questions should I ask my doctor?');
-        sq.innerHTML = qList.map(function(q){ return '<button class="opt" data-q="' + esc(q) + '" onclick="askQuestionFromResult(this.dataset.q)" style="margin:4px;">💬 ' + esc(q) + '</button>'; }).join('');
-      }, 100);
-      addHtml('<div style="margin-top:10px;text-align:center;"><button class="opt" onclick="speakResult()">' + TT('listen_all') + '</button></div>', 'result');
-      addHtml('<div class="sec-title">' + TT('fb_title') + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">' +
-        '<button class="opt" data-v="1" onclick="fb(this.dataset.v)">' + TT('fb_excellent') + '</button>' +
-        '<button class="opt" data-v="2" onclick="fb(this.dataset.v)">' + TT('fb_good') + '</button>' +
-        '<button class="opt" data-v="3" onclick="fb(this.dataset.v)">' + TT('fb_ok') + '</button>' +
-        '<button class="opt" data-v="4" onclick="fb(this.dataset.v)">' + TT('fb_no') + '</button></div>' +
-        '<div id="fbMsg" style="margin-top:8px;text-align:center;font-weight:600;color:#1976D2;"></div>', 'result');
-      showOpts([
-        {label:TT('ask_more'), fn:askFollowup},
-        {label:TT('hospitals'), fn:findHospitals},
-        {label:TT('new'), fn:restart},
-        {label:TT('share'), fn:()=>{
-          try { navigator.share({title:'SymptoSense', text:TT('share_txt') + pill}) } catch(e) {} }
-        }
-      ]);
+      host.querySelectorAll('.ss-question-chip').forEach(function(btn){ btn.addEventListener('click', function(){ askResultQuestion(btn.dataset.question || ''); }); });
+      host.querySelectorAll('details.ss-report-details').forEach(function(detail){
+        detail.addEventListener('toggle', function(){
+          const keep = bodyEl.scrollTop;
+          requestAnimationFrame(function(){ bodyEl.scrollTop = keep; });
+        });
+      });
     }
     async function openDoctorHandoff(recordId){
       let candidates=[];try{const d=await fetch('/api/handoff/candidates').then(r=>r.json());candidates=(d.analyses||[]).filter(x=>x.id!==recordId);}catch(e){}
@@ -5915,8 +6085,13 @@ def chat_page():
       }, () => { add(G(TT('loc_err_f'), TT('loc_err_m')), 'bot'); });
     }
     function restart() {
-      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null;
+      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null;
       bodyEl.innerHTML = '';
+      bodyEl.classList.remove('result-mode');
+      bodyEl.scrollTop = 0;
+      optsEl.hidden = false;
+      const wrap = bodyEl.closest('.chat-wrap'); if (wrap) wrap.classList.remove('report-mode');
+      const safetyNote = document.getElementById('chatSafetyNote'); if (safetyNote) safetyNote.style.visibility = 'visible';
       startChat();
     }
     startChat();
@@ -11187,6 +11362,30 @@ def api_timeline():
         return jsonify({"ok": True, "events": events})
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+
+
+@app.route("/api/analyze/differential-question", methods=["POST"])
+def api_analyze_differential_question():
+    try:
+        if not _service_consent_ok():
+            return _consent_required_json("/chat")
+        data = request.get_json(silent=True) or {}
+        lang = "en" if data.get("lang") == "en" else "ar"
+        symptoms = data.get("symptoms") or []
+        if isinstance(symptoms, str):
+            symptoms = [symptoms]
+        asked = data.get("asked") or []
+        negatives = data.get("negatives") or []
+        result = medical_knowledge.differential_question(
+            [str(x).strip() for x in symptoms if str(x).strip()][:30],
+            asked=[str(x) for x in asked][:20],
+            negatives=[str(x) for x in negatives][:20],
+            lang=lang,
+        )
+        result["ok"] = True
+        return jsonify(result)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}"}), 400
 
 
 @app.route("/api/analyze/data-quality", methods=["POST"])

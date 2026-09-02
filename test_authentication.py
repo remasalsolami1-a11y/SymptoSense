@@ -492,6 +492,44 @@ class AuthenticationIntegrationTest(unittest.TestCase):
         finally:
             db.DB_PATH = original_path
 
+    def test_failed_critical_migration_is_not_cached_and_retries(self):
+        retry_path = str(Path(_TEMP.name) / "retry-critical-migration.sqlite3")
+        original_path = db.DB_PATH
+        original_migrate = db._migrate_ss_columns
+        calls = {"count": 0}
+
+        def fail_once(conn, cursor):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise RuntimeError("simulated critical migration failure")
+            return original_migrate(conn, cursor)
+
+        try:
+            db.DB_PATH = retry_path
+            with mock.patch.object(db, "_migrate_ss_columns", side_effect=fail_once):
+                with self.assertRaisesRegex(RuntimeError, "simulated critical migration failure"):
+                    db.init_db()
+                # Because the failed attempt was not cached as ready, the same
+                # process must retry the migration on the next init_db() call.
+                db.init_db()
+
+            self.assertEqual(calls["count"], 2)
+            check = sqlite3.connect(retry_path)
+            try:
+                cols = {row[1] for row in check.execute("PRAGMA table_info(ss_users)")}
+                marker = check.execute(
+                    "SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'"
+                ).fetchone()
+            finally:
+                check.close()
+            self.assertTrue({"role", "status", "email_verified", "email_verified_at"}.issubset(cols))
+            self.assertIsNotNone(marker)
+        finally:
+            db.DB_PATH = original_path
+            # Restore the readiness key to the primary test database so later
+            # callers see the same state as before this isolated retry test.
+            db.init_db()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
