@@ -136,6 +136,29 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         self.assertIsNotNone(row)
         self.assertEqual(row["value"], 5)
 
+    def test_web_tracking_does_not_depend_on_broken_legacy_daily_checkins(self):
+        conn = sqlite3.connect(self.path)
+        # A deliberately incompatible legacy table that would make the broader
+        # daily_checkins migration fail if the route still called init_db().
+        conn.execute("CREATE TABLE daily_checkins (legacy_only TEXT)")
+        conn.execute("CREATE TABLE user_data (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL)")
+        conn.commit()
+        conn.close()
+
+        saved = db.save_web_daily_checkin(9, 3, "2026-09-03")
+        self.assertTrue(saved["created"])
+        row = db.get_web_daily_checkin_for_date(9, "2026-09-03")
+        self.assertEqual(row["value"], 3)
+
+    def test_checkin_route_does_not_run_full_database_migrations(self):
+        source = (PROJECT_ROOT / "webapp.py").read_text(encoding="utf-8")
+        start = source.index('@app.route("/api/checkin", methods=["GET", "POST"])')
+        end = source.index('@app.route("/api/feedback"', start)
+        route_source = source[start:end]
+        self.assertNotIn("db.init_db()", route_source)
+        self.assertIn("db.save_web_daily_checkin", route_source)
+        self.assertIn("db.get_web_daily_checkin_history", source)
+
     def test_handoff_refuses_an_empty_selected_field(self):
         db.init_db()
         privacy_features.init_schema()

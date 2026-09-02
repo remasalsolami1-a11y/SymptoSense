@@ -8826,8 +8826,8 @@ def checkin_page():
         if(!rows.length){empty.hidden=false;table.hidden=true;return;}empty.hidden=true;table.hidden=false;
         rows.forEach(r=>{const v=Number(r.value);const tr=document.createElement('tr');tr.innerHTML='<td>'+formatDate(r.date)+'</td><td><span style="font-size:20px">'+emoji[v]+'</span></td><td>'+labels[v]+'</td>';tbody.appendChild(tr);const card=document.createElement('div');card.className='ss-history-row-card';card.innerHTML='<div class="ss-history-date">'+formatDate(r.date)+'</div><div class="ss-history-state"><span class="emoji">'+emoji[v]+'</span><strong>'+labels[v]+'</strong></div>';mobile.appendChild(card);});
       }
-      async function load(){try{const r=await fetch('/api/checkin?date='+encodeURIComponent(today),{headers:{'Accept':'application/json'}});const d=await r.json();if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok)throw new Error(d.error||'load_failed');render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error;}}
-      save.addEventListener('click',async function(){if(!selected)return;save.disabled=true;msg.textContent='';try{const r=await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({rating:selected,date:today})});const d=await r.json();if(d.consent_required&&d.consent_url){location.href=d.consent_url;return;}if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok)throw new Error(d.error||'save_failed');msg.className='ss-checkin-msg ok';msg.textContent=d.created?text.saved:text.updated;render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error;}finally{save.disabled=!selected;}});
+      async function load(){try{const r=await fetch('/api/checkin?date='+encodeURIComponent(today),{headers:{'Accept':'application/json'}});const d=await r.json();if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok){const err=new Error(d.error||'load_failed');err.requestId=d.request_id||'';throw err;}render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error+(e.requestId?(' · '+e.requestId):'');}}
+      save.addEventListener('click',async function(){if(!selected)return;save.disabled=true;msg.textContent='';try{const r=await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({rating:selected,date:today})});const d=await r.json();if(d.consent_required&&d.consent_url){location.href=d.consent_url;return;}if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok){const err=new Error(d.error||'save_failed');err.requestId=d.request_id||'';throw err;}msg.className='ss-checkin-msg ok';msg.textContent=d.created?text.saved:text.updated;render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error+(e.requestId?(' · '+e.requestId):'');}finally{save.disabled=!selected;}});
       load();
     })();
     </script>
@@ -12370,10 +12370,11 @@ def api_checkin():
             "error": "سجّل الدخول لحفظ ومتابعة حالتك اليومية." if _lang() == "ar" else "Sign in to save and track your daily health status.",
         }), 401
 
-    # Guarantee the long-standing core tables (including user_data) exist.
-    # init_db() is cached per database identity, so this is effectively free
-    # after the first successful request in a Railway process.
-    db.init_db()
+    # Daily tracking intentionally avoids the full database migration pass.
+    # Production Railway databases may contain legacy tables whose unrelated
+    # migrations can fail even though daily tracking only needs user_data.
+    # The db.save/get_web_daily_checkin helpers ensure the minimal user_data
+    # storage they need without touching legacy daily_checkins migrations.
     account_id = _ss_user_id()
     if request.method == "POST":
         if not _service_consent_ok():
@@ -12393,7 +12394,14 @@ def api_checkin():
             payload.update({"created": bool(saved.get("created")), "updated": not bool(saved.get("created"))})
             return jsonify(payload)
         except Exception as e:
-            return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500
+            request_id = getattr(g, "request_id", "")
+            app.logger.exception("Daily check-in save failed; request_id=%s error_type=%s", request_id, type(e).__name__)
+            return jsonify({
+                "ok": False,
+                "error": "تعذر حفظ تسجيل الحالة الآن." if _lang() == "ar" else "Unable to save the daily check-in right now.",
+                "error_code": "checkin_save_failed",
+                "request_id": request_id,
+            }), 500
 
     try:
         day = str(request.args.get("date") or datetime.now(timezone.utc).date().isoformat()).strip()
@@ -12403,7 +12411,14 @@ def api_checkin():
             day = datetime.now(timezone.utc).date().isoformat()
         return jsonify(_checkin_api_payload(account_id, day))
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500
+        request_id = getattr(g, "request_id", "")
+        app.logger.exception("Daily check-in load failed; request_id=%s error_type=%s", request_id, type(e).__name__)
+        return jsonify({
+            "ok": False,
+            "error": "تعذر تحميل تسجيلات الحالة الآن." if _lang() == "ar" else "Unable to load daily check-ins right now.",
+            "error_code": "checkin_load_failed",
+            "request_id": request_id,
+        }), 500
 
 
 @app.route("/api/feedback", methods=["POST"])

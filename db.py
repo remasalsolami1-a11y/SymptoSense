@@ -1562,20 +1562,52 @@ def _clean_web_checkin_map(value):
             out[day] = rating
     return out
 
-def _user_data_layout(cursor):
-    """Return compatibility details for the existing user_data table.
+def _ensure_user_data_core(cursor):
+    """Ensure only the tiny storage table required by daily tracking.
 
-    Older Railway databases may have only (user_id, data), while newer ones also
-    include updated_at. PostgreSQL installations may also use JSON/JSONB for data
-    or text-like user ids.  Detect rather than migrate so this feature remains
-    safe on an already-populated production database.
+    This deliberately does not call init_db() or any unrelated migration. Older
+    Railway databases can therefore use daily tracking even if a legacy table
+    elsewhere in the project needs manual maintenance.
     """
     if USE_POSTGRES:
         cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_data (
+                user_id BIGINT PRIMARY KEY,
+                data TEXT NOT NULL,
+                updated_at TEXT
+            )
+            """
+        )
+    else:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_data (
+                user_id INTEGER PRIMARY KEY,
+                data TEXT NOT NULL,
+                updated_at TEXT
+            )
+            """
+        )
+
+def _user_data_layout(cursor):
+    """Return compatibility details for the existing user_data table.
+
+    Detection follows PostgreSQL's active search_path instead of relying on
+    current_schema(), because Railway databases can use a search path where the
+    visible table is not reported by current_schema().
+    """
+    _ensure_user_data_core(cursor)
+    if USE_POSTGRES:
+        cursor.execute(
             "SELECT column_name, data_type FROM information_schema.columns "
-            "WHERE table_schema=current_schema() AND table_name='user_data'"
+            "WHERE table_name='user_data' AND table_schema = ANY(current_schemas(true))"
         )
         cols = {str(r[0]).lower(): str(r[1]).lower() for r in cursor.fetchall()}
+        if not cols:
+            # Last-resort introspection against the actually-resolved table.
+            cursor.execute("SELECT * FROM user_data LIMIT 0")
+            cols = {str(d[0]).lower(): '' for d in (cursor.description or [])}
     else:
         cursor.execute("PRAGMA table_info(user_data)")
         cols = {str(r[1]).lower(): str(r[2] or '').lower() for r in cursor.fetchall()}
