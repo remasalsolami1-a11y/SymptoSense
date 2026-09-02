@@ -451,6 +451,12 @@ def create_handoff(owner_key: str, record_id: int, selected: dict, previous_ids=
             if old:
                 previous.append({"symptoms":old.get("symptoms") or [],"duration":old.get("duration") or "","severity":old.get("severity"),"risk_level":old.get("risk_level") or old.get("urgency") or ""})
         sec["previous_assessments"] = previous
+    # Do not create a valid-looking QR that opens an empty summary.  This can
+    # happen when the user selects a field (for example medications) that was
+    # not present in the saved analysis.  Keep privacy selection explicit and
+    # ask the caller to choose an item that actually contains data.
+    if not any(value not in (None, "", []) for value in sec.values()):
+        raise ValueError("selected_information_empty")
     token = secrets.token_urlsafe(32); th = _token_hash(token); owner_hash = db._hash_user(owner_key)
     exp = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
     conn = db._conn(); c=conn.cursor()

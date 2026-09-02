@@ -167,7 +167,8 @@ def _init_db_uncached():
                     id SERIAL PRIMARY KEY,
                     user_hash TEXT NOT NULL,
                     timestamp TEXT NOT NULL,
-                    severity INTEGER
+                    severity INTEGER,
+                    checkin_date TEXT
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
@@ -345,7 +346,8 @@ def _init_db_uncached():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_hash TEXT NOT NULL,
                     timestamp TEXT NOT NULL,
-                    severity INTEGER
+                    severity INTEGER,
+                    checkin_date TEXT
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
@@ -480,6 +482,7 @@ def _init_db_uncached():
         _migrate_records(conn, c)
         _migrate_feedback(conn, c)
         _migrate_members(conn, c)
+        _migrate_daily_checkins(conn, c)
         _migrate_ss_columns(conn, c)
         _verify_critical_account_schema(c)
         conn.commit()
@@ -764,6 +767,50 @@ def _verify_critical_account_schema(c):
     c.execute("SELECT value FROM ss_schema_meta WHERE key='email_otp_all_accounts_v1'")
     if not c.fetchone():
         raise RuntimeError("Critical email verification migration marker is missing")
+
+
+def _migrate_daily_checkins(conn, c):
+    """Add a stable local-date key used by account daily tracking.
+
+    Older installs stored only an ISO timestamp and allowed more than one row
+    per day.  Keep those rows intact, backfill the date, and let the write path
+    update the latest row for that user/date instead of creating duplicates.
+    """
+    if USE_POSTGRES:
+        c.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+            ("daily_checkins",),
+        )
+        existing = {row[0] for row in c.fetchall()}
+    else:
+        c.execute("PRAGMA table_info(daily_checkins)")
+        existing = {row[1] for row in c.fetchall()}
+    if "checkin_date" not in existing:
+        c.execute("ALTER TABLE daily_checkins ADD COLUMN checkin_date TEXT")
+    # SUBSTR(text, start, length) works in both SQLite and PostgreSQL.
+    c.execute(
+        "UPDATE daily_checkins SET checkin_date=SUBSTR(timestamp,1,10) "
+        "WHERE checkin_date IS NULL OR checkin_date=''"
+    )
+    # Legacy builds allowed multiple rows on the same day. Keep the newest row
+    # for each user/date before enforcing the one-check-in-per-day invariant.
+    c.execute(
+        "SELECT id,user_hash,checkin_date,timestamp FROM daily_checkins "
+        "WHERE checkin_date IS NOT NULL ORDER BY user_hash,checkin_date,timestamp DESC,id DESC"
+    )
+    seen = set()
+    duplicate_ids = []
+    for row in c.fetchall():
+        key = (row[1], row[2])
+        if key in seen:
+            duplicate_ids.append(row[0])
+        else:
+            seen.add(key)
+    for row_id in duplicate_ids:
+        c.execute(f"DELETE FROM daily_checkins WHERE id={PH}", (row_id,))
+    c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user_date ON daily_checkins(user_hash, checkin_date)")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ci_user_date_unique ON daily_checkins(user_hash, checkin_date)")
+
 
 def _migrate_feedback(conn, c):
     """Add the comment column to feedback tables created before this feature."""
@@ -1357,42 +1404,114 @@ def _all_followups():
         conn.close()
 
 
-def save_daily_checkin(user_id, severity):
+def _valid_checkin_date(value):
+    text = str(value or "").strip()
+    try:
+        datetime.strptime(text, "%Y-%m-%d")
+    except Exception:
+        return None
+    return text
+
+
+def save_daily_checkin(user_id, severity, checkin_date=None):
+    """Create or update one daily check-in for a user/date.
+
+    Returns ``{"created": bool, "date": YYYY-MM-DD}``.  The caller supplies
+    the browser-local date so a Saudi user around midnight is not accidentally
+    grouped under the previous UTC day.
+    """
+    rating = int(severity)
+    if rating < 1 or rating > 5:
+        raise ValueError("severity must be between 1 and 5")
+    day = _valid_checkin_date(checkin_date) or datetime.now(timezone.utc).date().isoformat()
+    user_hash = _hash_user(user_id)
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            f"INSERT INTO daily_checkins (user_hash, timestamp, severity) VALUES ({PH},{PH},{PH})",
-            (_hash_user(user_id), datetime.now(timezone.utc).isoformat(), int(severity)),
+            f"SELECT id FROM daily_checkins WHERE user_hash={PH} AND checkin_date={PH} "
+            "ORDER BY timestamp DESC, id DESC LIMIT 1",
+            (user_hash, day),
+        )
+        row = c.fetchone()
+        created = not bool(row)
+        c.execute(
+            f"INSERT INTO daily_checkins (user_hash, timestamp, severity, checkin_date) "
+            f"VALUES ({PH},{PH},{PH},{PH}) "
+            "ON CONFLICT(user_hash,checkin_date) DO UPDATE SET "
+            "timestamp=excluded.timestamp,severity=excluded.severity",
+            (user_hash, now, rating, day),
         )
         conn.commit()
+        return {"created": created, "date": day}
     finally:
         conn.close()
 
 
-def get_daily_checkins(user_id, days=7):
-    """Returns [(date_str, avg_severity), ...] for the last N days, newest last."""
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+def get_daily_checkin_for_date(user_id, checkin_date):
+    day = _valid_checkin_date(checkin_date)
+    if not day:
+        return None
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            f"SELECT timestamp, severity FROM daily_checkins "
-            f"WHERE user_hash={PH} AND timestamp >= {PH} ORDER BY timestamp",
-            (_hash_user(user_id), since),
+            f"SELECT checkin_date, severity, timestamp FROM daily_checkins "
+            f"WHERE user_hash={PH} AND checkin_date={PH} ORDER BY timestamp DESC, id DESC LIMIT 1",
+            (_hash_user(user_id), day),
+        )
+        row = c.fetchone()
+        if not row:
+            return None
+        return {"date": row[0], "value": int(row[1]), "timestamp": row[2]}
+    finally:
+        conn.close()
+
+
+def get_daily_checkin_history(user_id, limit=90):
+    """Return newest-first unique daily rows for the current account only."""
+    try:
+        limit = max(1, min(365, int(limit)))
+    except Exception:
+        limit = 90
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        # Fetch extra rows so legacy duplicate days can be collapsed in Python.
+        c.execute(
+            f"SELECT checkin_date, severity, timestamp FROM daily_checkins "
+            f"WHERE user_hash={PH} AND checkin_date IS NOT NULL "
+            "ORDER BY checkin_date DESC, timestamp DESC, id DESC",
+            (_hash_user(user_id),),
         )
         rows = c.fetchall()
     finally:
         conn.close()
-    by_day = {}
-    for ts, sev in rows:
-        day = ts[:10]
-        by_day.setdefault(day, []).append(sev)
+    seen = set()
     out = []
-    for day in sorted(by_day):
-        vals = by_day[day]
-        out.append((day, round(sum(vals) / len(vals), 2)))
+    for day, sev, ts in rows:
+        day = str(day or "")[:10]
+        if not day or day in seen:
+            continue
+        seen.add(day)
+        out.append({"date": day, "value": int(sev), "timestamp": ts})
+        if len(out) >= limit:
+            break
     return out
+
+
+def get_daily_checkins(user_id, days=7):
+    """Backward-compatible chart data: [(date, value), ...], oldest first."""
+    try:
+        days = max(1, min(365, int(days)))
+    except Exception:
+        days = 7
+    cutoff = (datetime.now(timezone.utc).date() - timedelta(days=days - 1)).isoformat()
+    rows = get_daily_checkin_history(user_id, limit=max(days * 3, 30))
+    filtered = [(r["date"], r["value"]) for r in rows if r["date"] >= cutoff]
+    filtered.sort(key=lambda x: x[0])
+    return filtered
 
 
 def add_med_reminder(user_id, med_name, time_utc, lang="ar"):
@@ -1651,7 +1770,6 @@ def delete_member(user_id, member_id):
         conn.commit()
     finally:
         conn.close()
-
 
 def save_med_plan(user_id, member_id, med_name, times, dose="", days=None, start_date=None, frequency="daily"):
     import json as _json

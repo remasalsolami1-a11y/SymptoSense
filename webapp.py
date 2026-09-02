@@ -158,7 +158,7 @@ body.ss-accessibility{font-size:112%;line-height:1.75}body.ss-accessibility .btn
 .footer .f-brand,.footer .f-sec h4,.footer .f-love{color:var(--v2-blue-dark)!important}.footer .f-tag,.footer .f-sec p,.footer .f-copy{color:var(--v2-muted)!important}.footer a,.footer .f-links a,.footer .f-sec .f-owner{color:var(--v2-blue)!important}.footer .f-tg{background:var(--v2-blue)!important;color:#fff!important}
 .v2-symptom-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.v2-symptom-chip{display:inline-flex;align-items:center;min-height:34px;padding:6px 10px;border-radius:999px;background:var(--v2-sky);border:1px solid var(--v2-line);color:var(--v2-blue-dark);font-size:12px;font-weight:700}
 .v2-low-confidence-card{margin:12px 0;padding:15px;border:1px solid #cfe4f5;border-radius:15px;background:#f7fbff;color:#284764}.v2-low-confidence-card h3{color:#123B70;margin-bottom:7px}.v2-low-confidence-card ul{margin:8px 20px 0;line-height:1.8}
-.data-quality-card{margin:12px 0;padding:16px;border:1px solid #CFE3F2;border-radius:17px;background:#F8FCFF;color:#24445F}.dq-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.dq-score{font-size:23px;font-weight:900;color:#123B70}.dq-level{font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86}.dq-track{height:9px;background:#E5EEF5;border-radius:999px;overflow:hidden;margin:11px 0}.dq-fill{height:100%;background:var(--v2-blue);border-radius:inherit;transition:width .28s ease}.dq-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dq-item{padding:8px 10px;border-radius:11px;background:#fff;border:1px solid #E1ECF3;font-size:12px}.dq-item.missing{background:#FFF9ED;border-color:#F6E3B2}.dq-item.clarify{background:#FFF4EA;border-color:#F5D2AE}.dq-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--v2-muted)}.xai-card{margin:13px 0;border:1px solid #D4E6F1;border-radius:17px;background:#fff;overflow:hidden}.xai-card summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:900;color:#123B70;background:#F7FBFE;display:flex;align-items:center;justify-content:space-between;gap:10px}.xai-card summary::-webkit-details-marker{display:none}.xai-body{padding:15px}.xai-basis{display:inline-flex;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;margin-bottom:10px}.xai-factor{padding:11px 0;border-bottom:1px solid #EDF2F6}.xai-factor:last-child{border-bottom:0}.xai-factor-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.xai-influence{font-size:10px;font-weight:900;border-radius:999px;padding:4px 8px;background:#F1F5F9;color:#475569}.xai-influence.high{background:#EAF5FC;color:#155D8B}.xai-influence.medium{background:#FFF7E6;color:#8A5A00}.xai-influence.low{background:#F1F5F9;color:#526477}.xai-detail{font-size:12px;color:var(--v2-muted);line-height:1.7;margin-top:5px}.xai-meter{display:inline-flex;gap:3px;align-items:center;margin-inline-start:7px}.xai-meter i{display:block;width:18px;height:5px;border-radius:999px;background:#DFE7ED}.xai-meter i.on{background:#6EAED3}.xai-note{margin-top:10px;padding:10px 11px;background:#F8FAFC;border-radius:11px;color:#526477;font-size:11px;line-height:1.7}@media(max-width:600px){.dq-grid{grid-template-columns:1fr}.dq-head{align-items:flex-start}.xai-factor-head{align-items:flex-start;flex-direction:column}}.v2-emergency-card{background:var(--v2-red-bg);border:1px solid #F2CACA;border-inline-start:4px solid var(--v2-red);border-radius:16px;padding:16px;margin:12px 0;color:#713434}.v2-emergency-card h3{color:var(--v2-red);font-size:17px;margin-bottom:7px}.v2-emergency-card strong{display:block;color:#713434;margin-top:10px}.v2-emergency-card p{margin:4px 0;line-height:1.75}
+.data-quality-card{margin:12px 0;padding:16px;border:1px solid #CFE3F2;border-radius:17px;background:#F8FCFF;color:#24445F}.dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}.dq-head>div:first-child{min-width:0}.dq-head>div:last-child{min-width:76px;max-width:110px;flex:none}.dq-score{font-size:23px;font-weight:900;color:#123B70;white-space:nowrap;direction:ltr;unicode-bidi:isolate;line-height:1.15}.dq-level{display:inline-flex;align-items:center;justify-content:center;max-width:100%;white-space:normal;word-break:normal;overflow-wrap:normal;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;line-height:1.35}.dq-track{height:9px;background:#E5EEF5;border-radius:999px;overflow:hidden;margin:11px 0}.dq-fill{height:100%;background:var(--v2-blue);border-radius:inherit;transition:width .28s ease}.dq-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dq-item{padding:8px 10px;border-radius:11px;background:#fff;border:1px solid #E1ECF3;font-size:12px}.dq-item.missing{background:#FFF9ED;border-color:#F6E3B2}.dq-item.clarify{background:#FFF4EA;border-color:#F5D2AE}.dq-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--v2-muted)}.xai-card{margin:13px 0;border:1px solid #D4E6F1;border-radius:17px;background:#fff;overflow:hidden}.xai-card summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:900;color:#123B70;background:#F7FBFE;display:flex;align-items:center;justify-content:space-between;gap:10px}.xai-card summary::-webkit-details-marker{display:none}.xai-body{padding:15px}.xai-basis{display:inline-flex;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;margin-bottom:10px}.xai-factor{padding:11px 0;border-bottom:1px solid #EDF2F6}.xai-factor:last-child{border-bottom:0}.xai-factor-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.xai-influence{font-size:10px;font-weight:900;border-radius:999px;padding:4px 8px;background:#F1F5F9;color:#475569}.xai-influence.high{background:#EAF5FC;color:#155D8B}.xai-influence.medium{background:#FFF7E6;color:#8A5A00}.xai-influence.low{background:#F1F5F9;color:#526477}.xai-detail{font-size:12px;color:var(--v2-muted);line-height:1.7;margin-top:5px}.xai-meter{display:inline-flex;gap:3px;align-items:center;margin-inline-start:7px}.xai-meter i{display:block;width:18px;height:5px;border-radius:999px;background:#DFE7ED}.xai-meter i.on{background:#6EAED3}.xai-note{margin-top:10px;padding:10px 11px;background:#F8FAFC;border-radius:11px;color:#526477;font-size:11px;line-height:1.7}@media(max-width:600px){.dq-grid{grid-template-columns:1fr}.dq-head{grid-template-columns:minmax(0,1fr) 82px;align-items:start}.dq-score{font-size:22px}.dq-level{font-size:10px;padding:5px 6px}.xai-factor-head{align-items:flex-start;flex-direction:column}}.v2-emergency-card{background:var(--v2-red-bg);border:1px solid #F2CACA;border-inline-start:4px solid var(--v2-red);border-radius:16px;padding:16px;margin:12px 0;color:#713434}.v2-emergency-card h3{color:var(--v2-red);font-size:17px;margin-bottom:7px}.v2-emergency-card strong{display:block;color:#713434;margin-top:10px}.v2-emergency-card p{margin:4px 0;line-height:1.75}
 .v2-condition-card{border-inline-start:3px solid var(--v2-blue)!important}.v2-match-badge{margin-inline-start:auto;background:var(--v2-sky);color:var(--v2-blue-dark);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}.v2-match-list{display:grid;gap:5px;margin-top:8px}.v2-match-item{color:var(--v2-text);font-size:13px}
 .v2-redflag-card{background:var(--v2-red-bg)!important;border-color:#F2CACA!important;border-inline-start:3px solid var(--v2-red)!important}.v2-redflag-card .rec-head b{color:var(--v2-red)!important}.v2-safe-note{background:var(--v2-green-bg);border:1px solid #CDE7D8;border-radius:14px;padding:13px 15px;color:var(--v2-green);font-weight:700;margin:8px 0 14px}.v2-disclaimer{background:var(--v2-bg);border:1px solid var(--v2-line);border-radius:14px;padding:13px 15px;color:var(--v2-muted);font-size:12px;line-height:1.75;margin-top:16px;text-align:center}
 .v2-result-section-title{font-size:15px!important;color:var(--v2-blue-dark)!important;margin-top:18px!important;margin-bottom:8px!important}.v2-source-link{display:inline-flex;align-items:center;min-height:38px;margin-top:7px}
@@ -2325,7 +2325,7 @@ def require_first_language_choice():
         return None
     path = request.path or "/"
     public_paths = {"/", "/manifest.webmanifest", "/service-worker.js", "/favicon.ico", "/offline", "/robots.txt", "/sitemap.xml"}
-    if path in public_paths or path.startswith("/api/") or path.startswith("/icons/"):
+    if path in public_paths or path.startswith("/api/") or path.startswith("/icons/") or path.startswith("/share/health/"):
         return None
     target = request.full_path.rstrip("?")
     return redirect(url_for("index", next=target))
@@ -5971,9 +5971,9 @@ def chat_page():
       const fields=[['symptoms',LANG==='ar'?'الأعراض':'Symptoms'],['duration',LANG==='ar'?'المدة':'Duration'],['severity',LANG==='ar'?'الشدة':'Severity'],['location',LANG==='ar'?'المكان':'Location'],['notes',LANG==='ar'?'الملاحظات':'Notes'],['medications',LANG==='ar'?'معلومات الأدوية':'Medication information']];
       const choices=fields.map(x=>'<label style="display:flex;gap:8px;align-items:center;padding:8px 0"><input type="checkbox" data-share="'+x[0]+'"> '+esc(x[1])+'</label>').join('');
       const prev=candidates.length?'<div style="margin-top:10px"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-share="previous_assessments" id="includePrevious"> '+esc(LANG==='ar'?'تقييمات سابقة مختارة':'Selected previous assessments')+'</label><div id="prevChoices" style="display:none;margin:8px 0;padding:10px;background:var(--v2-bg);border-radius:12px">'+candidates.slice(0,6).map(x=>'<label style="display:block;padding:5px"><input type="checkbox" data-prev="'+x.id+'"> '+esc((x.symptoms||[]).join(LANG==='ar'?'، ':', '))+' · '+esc(String(x.timestamp||'').slice(0,10))+'</label>').join('')+'</div></div>':'';
-      overlay.innerHTML='<div style="width:min(620px,100%);background:#fff;border-radius:20px;padding:22px;border:1px solid var(--v2-line);box-shadow:0 24px 70px rgba(20,50,80,.22)"><div style="display:flex;justify-content:space-between;gap:10px"><div><h2>🗣️ '+esc(LANG==='ar'?'تجهيز ملخص لزيارة الطبيب':'Prepare for a Doctor Visit')+'</h2><p class="muted">'+esc(LANG==='ar'?'اختر فقط المعلومات التي تريد مشاركتها. لا يتم اختيار أي حقل تلقائيًا.':'Choose only what you want to share. No field is selected by default.')+'</p></div><button class="opt" id="closeHandoff">✕</button></div><div style="margin-top:12px"><b>'+esc(LANG==='ar'?'اختر ما تريد مشاركته':'Choose what to share')+'</b>'+choices+prev+'</div><label style="display:block;margin-top:12px"><b>'+esc(LANG==='ar'?'مدة صلاحية الرابط':'Link expiration')+'</b><select id="handoffExpiry" style="width:100%;margin-top:6px"><option value="15">15 '+esc(LANG==='ar'?'دقيقة':'minutes')+'</option><option value="60">1 '+esc(LANG==='ar'?'ساعة':'hour')+'</option><option value="1440">24 '+esc(LANG==='ar'?'ساعة':'hours')+'</option></select></label><div id="handoffStatus" class="muted" style="margin-top:10px"></div><button class="btn pri" id="generateHandoff" style="width:100%;margin-top:12px">📱 '+esc(LANG==='ar'?'إنشاء QR مؤقت':'Generate Temporary QR')+'</button><div id="handoffResult"></div></div>';
+      overlay.innerHTML='<div style="width:min(620px,100%);background:#fff;border-radius:20px;padding:22px;border:1px solid var(--v2-line);box-shadow:0 24px 70px rgba(20,50,80,.22)"><div style="display:flex;justify-content:space-between;gap:10px"><div><h2>🗣️ '+esc(LANG==='ar'?'تجهيز ملخص لزيارة الطبيب':'Prepare for a Doctor Visit')+'</h2><p class="muted">'+esc(LANG==='ar'?'اختر فقط المعلومات التي تريد مشاركتها. لا يتم اختيار أي حقل تلقائيًا.':'Choose only what you want to share. No field is selected by default.')+'</p></div><button type="button" class="opt" id="closeHandoff">✕</button></div><div style="margin-top:12px"><b>'+esc(LANG==='ar'?'اختر ما تريد مشاركته':'Choose what to share')+'</b>'+choices+prev+'</div><label style="display:block;margin-top:12px"><b>'+esc(LANG==='ar'?'مدة صلاحية الرابط':'Link expiration')+'</b><select id="handoffExpiry" style="width:100%;margin-top:6px"><option value="15">15 '+esc(LANG==='ar'?'دقيقة':'minutes')+'</option><option value="60">1 '+esc(LANG==='ar'?'ساعة':'hour')+'</option><option value="1440">24 '+esc(LANG==='ar'?'ساعة':'hours')+'</option></select></label><div id="handoffStatus" class="muted" style="margin-top:10px"></div><button type="button" class="btn pri" id="generateHandoff" style="width:100%;margin-top:12px">📱 '+esc(LANG==='ar'?'إنشاء QR مؤقت':'Generate Temporary QR')+'</button><div id="handoffResult"></div></div>';
       document.body.appendChild(overlay);document.getElementById('closeHandoff').onclick=()=>overlay.remove();const ip=document.getElementById('includePrevious');if(ip)ip.onchange=()=>document.getElementById('prevChoices').style.display=ip.checked?'block':'none';
-      document.getElementById('generateHandoff').onclick=async function(){const selected={};overlay.querySelectorAll('[data-share]').forEach(x=>selected[x.dataset.share]=x.checked);if(!Object.values(selected).some(Boolean)){document.getElementById('handoffStatus').textContent=LANG==='ar'?'اختر معلومة واحدة على الأقل.':'Select at least one item.';return;}const previous_ids=Array.from(overlay.querySelectorAll('[data-prev]:checked')).map(x=>parseInt(x.dataset.prev));document.getElementById('handoffStatus').textContent=LANG==='ar'?'جاري إنشاء الرابط المؤقت…':'Generating temporary link…';try{const r=await fetch('/api/handoff/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId,selected:selected,previous_ids:previous_ids,expires_minutes:parseInt(document.getElementById('handoffExpiry').value)})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'failed');window.__handoffToken=d.token;const qr=d.qr_data_uri?'<img alt="QR" src="'+d.qr_data_uri+'" style="width:220px;max-width:100%;margin:12px auto;display:block">':'';document.getElementById('handoffResult').innerHTML='<div class="res-assess" style="margin-top:12px;text-align:center">'+qr+'<a class="v2-source-link" href="'+esc(d.share_url)+'" target="_blank" rel="noopener">'+esc(LANG==='ar'?'فتح رابط المشاركة':'Open share link')+'</a><div class="muted" id="handoffCountdown" style="margin:8px 0"></div><button class="btn ghost" id="copyHandoff">🔗 '+esc(LANG==='ar'?'نسخ الرابط':'Copy Link')+'</button> <button class="btn ghost danger-lite" id="revokeHandoff">'+esc(LANG==='ar'?'إلغاء الرابط':'Revoke Link')+'</button></div>';document.getElementById('copyHandoff').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(d.share_url);document.getElementById('revokeHandoff').onclick=()=>revokeDoctorLink(d.token);startHandoffCountdown(d.expires_at);document.getElementById('handoffStatus').textContent='';}catch(e){document.getElementById('handoffStatus').textContent=LANG==='ar'?'تعذر إنشاء الرابط.':'Unable to create the link.';}};
+      document.getElementById('generateHandoff').onclick=async function(){const selected={};overlay.querySelectorAll('[data-share]').forEach(x=>selected[x.dataset.share]=x.checked);if(!Object.values(selected).some(Boolean)){document.getElementById('handoffStatus').textContent=LANG==='ar'?'اختر معلومة واحدة على الأقل.':'Select at least one item.';return;}const previous_ids=Array.from(overlay.querySelectorAll('[data-prev]:checked')).map(x=>parseInt(x.dataset.prev));document.getElementById('handoffStatus').textContent=LANG==='ar'?'جاري إنشاء الرابط المؤقت…':'Generating temporary link…';try{const r=await fetch('/api/handoff/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({record_id:recordId,selected:selected,previous_ids:previous_ids,expires_minutes:parseInt(document.getElementById('handoffExpiry').value)})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'failed');window.__handoffToken=d.token;const qr=d.qr_data_uri?'<img alt="QR" src="'+d.qr_data_uri+'" style="width:220px;max-width:100%;margin:12px auto;display:block">':'';document.getElementById('handoffResult').innerHTML='<div class="res-assess" style="margin-top:12px;text-align:center">'+qr+'<a class="v2-source-link" href="'+esc(d.share_url)+'" target="_blank" rel="noopener">'+esc(LANG==='ar'?'فتح رابط المشاركة':'Open share link')+'</a><div class="muted" id="handoffCountdown" style="margin:8px 0"></div><button type="button" class="btn ghost" id="copyHandoff">🔗 '+esc(LANG==='ar'?'نسخ الرابط':'Copy Link')+'</button> <button type="button" class="btn ghost danger-lite" id="revokeHandoff">'+esc(LANG==='ar'?'إلغاء الرابط':'Revoke Link')+'</button></div>';document.getElementById('copyHandoff').onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(d.share_url);document.getElementById('revokeHandoff').onclick=()=>revokeDoctorLink(d.token);startHandoffCountdown(d.expires_at);document.getElementById('handoffStatus').textContent='';}catch(e){const m=String((e&&e.message)||'');document.getElementById('handoffStatus').textContent=m.includes('selected_information_empty')?(LANG==='ar'?'المعلومة التي اخترتها غير موجودة في هذا التحليل. اختر معلومة أخرى للمشاركة.':'The selected item has no saved value in this analysis. Choose another item to share.'):(LANG==='ar'?'تعذر إنشاء الرابط.':'Unable to create the link.');}};
     }
     function startHandoffCountdown(expiresAt){const el=document.getElementById('handoffCountdown');if(!el)return;const tick=()=>{const ms=new Date(expiresAt).getTime()-Date.now();if(ms<=0){el.textContent=LANG==='ar'?'انتهت صلاحية الرابط.':'Link expired.';return;}const m=Math.ceil(ms/60000);el.textContent=(LANG==='ar'?'ينتهي الرابط خلال ':'Link expires in ')+m+(LANG==='ar'?' دقيقة':' min');setTimeout(tick,30000)};tick();}
     async function revokeDoctorLink(token){if(!confirm(LANG==='ar'?'إلغاء الرابط الآن؟':'Revoke this link now?'))return;const r=await fetch('/api/handoff/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:token})});const d=await r.json();if(d.ok){const box=document.getElementById('handoffResult');if(box)box.innerHTML='<div class="v2-safe-note">'+esc(LANG==='ar'?'تم إلغاء الرابط ولم يعد متاحًا.':'The link was revoked and is no longer available.')+'</div>';}}
@@ -8554,43 +8554,144 @@ def emergency_page():
 
 # ---------------------------------------------------------------- checkin
 def checkin_page():
-    t = CT["en" if _lang() == "en" else "ar"]
-    body = """
-    <div class="card">
-      <h2>__CIH__</h2>
-      <p class="muted">__CISUB__</p>
-      <div style="margin-top:14px;text-align:center;">
-        <button class="btn ghost" onclick="ci(1)">😞 1</button>
-        <button class="btn ghost" onclick="ci(2)">😕 2</button>
-        <button class="btn ghost" onclick="ci(3)">😐 3</button>
-        <button class="btn ghost" onclick="ci(4)">🙂 4</button>
-        <button class="btn ghost" onclick="ci(5)">😊 5</button>
-      </div>
-      <div id="ciMsg" style="margin-top:10px;font-weight:700;color:#1976D2;text-align:center;"></div>
-      <div id="ciChart" style="margin-top:20px;text-align:center;"></div>
-    </div>
+    ar = _lang() == "ar"
+    if not _ss_user_id():
+        body = '''
+        <main style="max-width:560px;margin:38px auto;padding:0 12px">
+          <section class="card" style="text-align:center;padding:28px 22px">
+            <div style="font-size:42px;margin-bottom:8px">📋</div>
+            <h1>__TITLE__</h1>
+            <p class="muted" style="margin:10px 0 18px">__TEXT__</p>
+            <a class="btn primary" href="/login?next=/checkin">__LOGIN__</a>
+          </section>
+        </main>
+        '''.replace("__TITLE__", "متابعة الحالة اليومية" if ar else "Daily Health Tracking") \
+           .replace("__TEXT__", "سجّل الدخول لحفظ ومتابعة حالتك اليومية." if ar else "Sign in to save and track your daily health status.") \
+           .replace("__LOGIN__", "تسجيل الدخول" if ar else "Sign in")
+        return _page(_t("title_checkin"), body)
+
+    labels = {
+        "title": "📋 متابعة الحالة اليومية" if ar else "📋 Daily Health Tracking",
+        "sub": "سجّل حالتك اليوم وتابع تحسنك بمرور الوقت." if ar else "Record how you feel today and follow your progress over time.",
+        "question": "كيف كانت حالتك اليوم؟" if ar else "How were you feeling today?",
+        "save": "حفظ تسجيل اليوم" if ar else "Save today's check-in",
+        "update": "تعديل تسجيل اليوم" if ar else "Update today's check-in",
+        "today_saved": "لقد سجلت حالتك اليوم بالفعل." if ar else "You already recorded today's check-in.",
+        "saved": "تم حفظ تسجيل حالتك اليوم بنجاح ✓" if ar else "Today's check-in was saved successfully ✓",
+        "updated": "تم تعديل تسجيل اليوم بنجاح ✓" if ar else "Today's check-in was updated successfully ✓",
+        "history": "📊 سجل حالتي" if ar else "📊 My Check-in History",
+        "summary": "📈 ملخص حالتك" if ar else "📈 Your Summary",
+        "today": "اليوم" if ar else "Today",
+        "week": "متوسط آخر 7 أيام" if ar else "Average of last 7 days",
+        "count": "عدد التسجيلات" if ar else "Total check-ins",
+        "date": "التاريخ" if ar else "Date",
+        "status": "الحالة" if ar else "Status",
+        "rating": "التقييم" if ar else "Rating",
+        "empty": "لا توجد تسجيلات سابقة بعد." if ar else "No previous check-ins yet.",
+        "error": "تعذر حفظ أو تحميل التسجيلات الآن. حاول مرة أخرى." if ar else "Unable to save or load check-ins right now. Please try again.",
+        "very_bad": "سيئة جدًا" if ar else "Very bad",
+        "bad": "سيئة" if ar else "Bad",
+        "medium": "متوسطة" if ar else "Average",
+        "good": "جيدة" if ar else "Good",
+        "excellent": "ممتازة" if ar else "Excellent",
+    }
+    body = r'''
+    <style>
+      .ss-checkin-shell{max-width:820px;margin:0 auto;padding:8px 0 28px}
+      .ss-checkin-card{background:#fff;border:1px solid #D7E6F1;border-radius:22px;padding:24px;box-shadow:0 10px 30px rgba(27,74,112,.07);margin-bottom:18px}
+      .ss-checkin-card h1,.ss-checkin-card h2{margin:0;color:#184568}.ss-checkin-card p{line-height:1.8}
+      .ss-checkin-question{font-size:18px;font-weight:800;color:#24445F;margin:20px 0 12px}
+      .ss-mood-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+      .ss-mood-option{appearance:none;border:1.5px solid #D7E6F1;background:#F9FCFE;border-radius:16px;min-height:100px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#35556F;font:inherit;transition:border-color .18s,box-shadow .18s,background .18s,transform .18s}
+      .ss-mood-option .emoji{font-size:30px;line-height:1}.ss-mood-option .label{font-size:12px;font-weight:800;text-align:center;line-height:1.45}
+      .ss-mood-option:hover{border-color:#9ECBE8;background:#F3FAFE}.ss-mood-option:focus-visible{outline:3px solid rgba(40,127,193,.22);outline-offset:2px}
+      .ss-mood-option.selected{border-color:#287FC1;background:#EAF6FD;box-shadow:0 0 0 3px rgba(40,127,193,.12);transform:translateY(-1px)}
+      .ss-checkin-save{width:100%;margin-top:16px;min-height:48px;border:0;border-radius:13px;background:#287FC1;color:#fff;font-weight:900;font-size:15px;cursor:pointer;padding:12px 16px}.ss-checkin-save:disabled{opacity:.5;cursor:not-allowed}
+      .ss-checkin-msg{min-height:24px;margin-top:10px;text-align:center;font-size:13px;font-weight:800}.ss-checkin-msg.ok{color:#237352}.ss-checkin-msg.err{color:#B23A3A}
+      .ss-today-note{display:none;margin-top:14px;padding:12px 14px;border-radius:13px;background:#F3F9FD;border:1px solid #D7E6F1;color:#35556F}.ss-today-note.show{display:block}
+      .ss-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.ss-summary-item{padding:14px;border:1px solid #E2EDF4;border-radius:15px;background:#F9FCFE}.ss-summary-item span{display:block;color:#6B7F91;font-size:11px;margin-bottom:5px}.ss-summary-item strong{color:#184568;font-size:14px}
+      .ss-history-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:14px;overflow:hidden;border:1px solid #E2EDF4;border-radius:15px}.ss-history-table th,.ss-history-table td{padding:12px 14px;text-align:start;border-bottom:1px solid #E8F0F5}.ss-history-table th{background:#F5FAFD;color:#536B7D;font-size:12px}.ss-history-table td{font-size:13px;color:#2F4D63}.ss-history-table tr:last-child td{border-bottom:0}
+      .ss-history-mobile{display:none;margin-top:12px}.ss-history-row-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border:1px solid #E2EDF4;border-radius:14px;background:#FAFCFE;margin-bottom:9px}.ss-history-date{font-weight:800;color:#24445F;font-size:13px}.ss-history-state{display:flex;align-items:center;gap:8px}.ss-history-state .emoji{font-size:24px}.ss-history-state strong{font-size:13px;color:#35556F}
+      .ss-empty-checkins{text-align:center;padding:20px;color:#738798;border:1px dashed #D7E6F1;border-radius:14px;margin-top:12px}.ss-login-needed{text-align:center;max-width:520px;margin:40px auto}.ss-checkin-icon{font-size:42px;margin-bottom:8px}
+      @media(max-width:640px){.ss-checkin-shell{padding:4px 0 20px}.ss-checkin-card{padding:18px 15px;border-radius:18px;margin-bottom:14px}.ss-mood-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.ss-mood-option{min-height:88px;padding:9px 4px;border-radius:13px}.ss-mood-option .emoji{font-size:26px}.ss-mood-option .label{font-size:10px}.ss-summary-grid{grid-template-columns:1fr}.ss-history-table{display:none}.ss-history-mobile{display:block}}
+      @media(max-width:370px){.ss-mood-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ss-mood-option:nth-child(4),.ss-mood-option:nth-child(5){min-height:82px}}
+    </style>
+    <main class="ss-checkin-shell">
+      <section class="ss-checkin-card">
+        <h1>__TITLE__</h1>
+        <p class="muted">__SUB__</p>
+        <div class="ss-checkin-question">__QUESTION__</div>
+        <div class="ss-mood-grid" id="moodGrid" role="radiogroup" aria-label="__QUESTION__">
+          <button type="button" class="ss-mood-option" data-rating="1" role="radio" aria-checked="false"><span class="emoji">😞</span><span class="label">__V1__</span></button>
+          <button type="button" class="ss-mood-option" data-rating="2" role="radio" aria-checked="false"><span class="emoji">😕</span><span class="label">__V2__</span></button>
+          <button type="button" class="ss-mood-option" data-rating="3" role="radio" aria-checked="false"><span class="emoji">😐</span><span class="label">__V3__</span></button>
+          <button type="button" class="ss-mood-option" data-rating="4" role="radio" aria-checked="false"><span class="emoji">🙂</span><span class="label">__V4__</span></button>
+          <button type="button" class="ss-mood-option" data-rating="5" role="radio" aria-checked="false"><span class="emoji">😊</span><span class="label">__V5__</span></button>
+        </div>
+        <div class="ss-today-note" id="todayNote"></div>
+        <button type="button" class="ss-checkin-save" id="saveCheckin" disabled>__SAVE__</button>
+        <div id="ciMsg" class="ss-checkin-msg" aria-live="polite"></div>
+      </section>
+
+      <section class="ss-checkin-card" id="summaryCard">
+        <h2>__SUMMARY__</h2>
+        <div class="ss-summary-grid">
+          <div class="ss-summary-item"><span>__TODAY__</span><strong id="sumToday">—</strong></div>
+          <div class="ss-summary-item"><span>__WEEK__</span><strong id="sumWeek">—</strong></div>
+          <div class="ss-summary-item"><span>__COUNT__</span><strong id="sumCount">0</strong></div>
+        </div>
+      </section>
+
+      <section class="ss-checkin-card">
+        <h2>__HISTORY__</h2>
+        <div id="historyEmpty" class="ss-empty-checkins" hidden>__EMPTY__</div>
+        <table class="ss-history-table" id="historyTable" hidden>
+          <thead><tr><th>__DATE__</th><th>__STATUS__</th><th>__RATING__</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+        <div class="ss-history-mobile" id="historyMobile"></div>
+      </section>
+    </main>
     <script>
-    const T = __PT__;
-    function TT(k) { return T[k] || k; }
-    async function ci(rating) {
-      const r = await fetch('/api/checkin', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rating: rating})});
-      const d = await r.json();
-      if (d.ok) { document.getElementById('ciMsg').textContent = TT('ci_saved'); loadChart(); }
-      else document.getElementById('ciMsg').textContent = TT('ci_err') + (d.error || '?');
-    }
-    async function loadChart() {
-      const r = await fetch('/api/checkin');
-      const d = await r.json();
-      const box = document.getElementById('ciChart');
-      if (!d.ok) { box.innerHTML = '<div class="muted">' + TT('ci_chart_err') + '</div>'; return; }
-      if (!d.rows.length) { box.innerHTML = '<div class="muted">' + TT('ci_empty') + '</div>'; return; }
-      box.innerHTML = '<img src="' + d.chart + '" alt="' + TT('ci_alt') + '" style="max-width:100%;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08);">';
-    }
-    loadChart();
+    (function(){
+      const AR=__AR__;
+      const labels={1:__L1__,2:__L2__,3:__L3__,4:__L4__,5:__L5__};
+      const emoji={1:'😞',2:'😕',3:'😐',4:'🙂',5:'😊'};
+      const text={save:__SAVE_JS__,update:__UPDATE_JS__,todaySaved:__TODAY_SAVED__,saved:__SAVED__,updated:__UPDATED__,error:__ERROR__};
+      const today=(function(){const d=new Date(),pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());})();
+      let selected=null,todayRecord=null;
+      const options=[...document.querySelectorAll('.ss-mood-option')],save=document.getElementById('saveCheckin'),msg=document.getElementById('ciMsg');
+      function setSelected(v){selected=Number(v);options.forEach(b=>{const on=Number(b.dataset.rating)===selected;b.classList.toggle('selected',on);b.setAttribute('aria-checked',on?'true':'false')});save.disabled=!selected;save.textContent=todayRecord?text.update:text.save;}
+      options.forEach(b=>b.addEventListener('click',()=>setSelected(b.dataset.rating)));
+      function stateText(v){v=Number(v);return (emoji[v]||'')+' '+(labels[v]||v);}
+      function formatDate(s){try{return new Intl.DateTimeFormat(AR?'ar-SA-u-ca-gregory':'en-GB',{day:'numeric',month:'long',year:'numeric'}).format(new Date(s+'T12:00:00'));}catch(e){return s}}
+      function render(d){
+        const rows=Array.isArray(d.rows)?d.rows:[];todayRecord=d.today||null;
+        if(todayRecord){setSelected(todayRecord.value);const note=document.getElementById('todayNote');note.classList.add('show');note.textContent=text.todaySaved+' '+stateText(todayRecord.value);}
+        else{document.getElementById('todayNote').classList.remove('show');save.textContent=text.save;}
+        document.getElementById('sumToday').textContent=todayRecord?stateText(todayRecord.value):'—';
+        document.getElementById('sumCount').textContent=String(d.summary&&d.summary.count!=null?d.summary.count:rows.length);
+        const avg=d.summary&&d.summary.last7_average;document.getElementById('sumWeek').textContent=avg?stateText(Math.max(1,Math.min(5,Math.round(avg))))+' ('+avg+')':'—';
+        const empty=document.getElementById('historyEmpty'),table=document.getElementById('historyTable'),tbody=document.getElementById('historyBody'),mobile=document.getElementById('historyMobile');
+        tbody.innerHTML='';mobile.innerHTML='';
+        if(!rows.length){empty.hidden=false;table.hidden=true;return;}empty.hidden=true;table.hidden=false;
+        rows.forEach(r=>{const v=Number(r.value);const tr=document.createElement('tr');tr.innerHTML='<td>'+formatDate(r.date)+'</td><td><span style="font-size:20px">'+emoji[v]+'</span></td><td>'+labels[v]+'</td>';tbody.appendChild(tr);const card=document.createElement('div');card.className='ss-history-row-card';card.innerHTML='<div class="ss-history-date">'+formatDate(r.date)+'</div><div class="ss-history-state"><span class="emoji">'+emoji[v]+'</span><strong>'+labels[v]+'</strong></div>';mobile.appendChild(card);});
+      }
+      async function load(){try{const r=await fetch('/api/checkin?date='+encodeURIComponent(today),{headers:{'Accept':'application/json'}});const d=await r.json();if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok)throw new Error(d.error||'load_failed');render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error;}}
+      save.addEventListener('click',async function(){if(!selected)return;save.disabled=true;msg.textContent='';try{const r=await fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({rating:selected,date:today})});const d=await r.json();if(d.consent_required&&d.consent_url){location.href=d.consent_url;return;}if(r.status===401){location.href='/login?next=/checkin';return;}if(!r.ok||!d.ok)throw new Error(d.error||'save_failed');msg.className='ss-checkin-msg ok';msg.textContent=d.created?text.saved:text.updated;render(d);}catch(e){msg.className='ss-checkin-msg err';msg.textContent=text.error;}finally{save.disabled=!selected;}});
+      load();
+    })();
     </script>
-    """
-    body = body.replace("__PT__", json.dumps(t, ensure_ascii=False))
-    body = body.replace("__CIH__", t["ci_h"]).replace("__CISUB__", t["ci_sub"])
+    '''
+    repl={
+      '__TITLE__':labels['title'],'__SUB__':labels['sub'],'__QUESTION__':labels['question'],'__SAVE__':labels['save'],
+      '__V1__':labels['very_bad'],'__V2__':labels['bad'],'__V3__':labels['medium'],'__V4__':labels['good'],'__V5__':labels['excellent'],
+      '__SUMMARY__':labels['summary'],'__TODAY__':labels['today'],'__WEEK__':labels['week'],'__COUNT__':labels['count'],'__HISTORY__':labels['history'],
+      '__DATE__':labels['date'],'__STATUS__':labels['status'],'__RATING__':labels['rating'],'__EMPTY__':labels['empty'],
+      '__AR__':'true' if ar else 'false','__L1__':json.dumps(labels['very_bad'],ensure_ascii=False),'__L2__':json.dumps(labels['bad'],ensure_ascii=False),'__L3__':json.dumps(labels['medium'],ensure_ascii=False),'__L4__':json.dumps(labels['good'],ensure_ascii=False),'__L5__':json.dumps(labels['excellent'],ensure_ascii=False),
+      '__SAVE_JS__':json.dumps(labels['save'],ensure_ascii=False),'__UPDATE_JS__':json.dumps(labels['update'],ensure_ascii=False),'__TODAY_SAVED__':json.dumps(labels['today_saved'],ensure_ascii=False),'__SAVED__':json.dumps(labels['saved'],ensure_ascii=False),'__UPDATED__':json.dumps(labels['updated'],ensure_ascii=False),'__ERROR__':json.dumps(labels['error'],ensure_ascii=False),
+    }
+    for k,v in repl.items(): body=body.replace(k,v)
     return _page(_t("title_checkin"), body)
 
 # ---------------------------------------------------------------- routes
@@ -11599,7 +11700,13 @@ def api_handoff_create():
     try:
         data=request.get_json(silent=True) or {}
         result=privacy_features.create_handoff(_data_user_id(),int(data.get("record_id") or 0),data.get("selected") or {},data.get("previous_ids") or [],int(data.get("expires_minutes") or 60))
-        share_url=request.url_root.rstrip("/")+"/share/health/"+result["token"]
+        payload_lang = "en" if (result.get("payload") or {}).get("lang") == "en" else "ar"
+        # Build the QR from the dedicated PUBLIC HTML route only.  Using the
+        # canonical public host avoids reverse-proxy/API-path leakage on Railway,
+        # and the language query lets a recipient open it without an existing
+        # SymptoSense language cookie.
+        share_path = url_for("public_health_handoff", token=result["token"], lang=payload_lang)
+        share_url = _site_url().rstrip("/") + share_path
         return jsonify({"ok":True,"token":result["token"],"share_url":share_url,"expires_at":result["expires_at"],"qr_data_uri":privacy_features.qr_png_data_uri(share_url)})
     except PermissionError as e:
         return jsonify({"ok":False,"error":str(e)}),403
@@ -11635,6 +11742,9 @@ def public_health_handoff(token):
     if prev:
         lis=''.join('<li>%s — %s — %s</li>'%(("، ".join(x.get("symptoms") or []) if ar else ", ".join(x.get("symptoms") or [])),x.get("duration") or "—",x.get("risk_level") or "—") for x in prev)
         blocks.append('<section><h2>%s</h2><ul>%s</ul></section>'%(labels["previous_assessments"],lis))
+    if not blocks:
+        empty_msg = "لا توجد معلومات متاحة ضمن الحقول التي اختارها المستخدم لهذا الرابط. أنشئ رابط مشاركة جديدًا واختر معلومات موجودة في التحليل." if ar else "No information is available in the fields selected for this link. Create a new share link and choose information that exists in the analysis."
+        blocks.append('<section><p class="v2-safe-note">%s</p></section>' % empty_msg)
     disc="يحتوي هذا الملخص على معلومات أبلغ عنها المستخدم ويهدف للمساعدة في توصيل المعلومات إلى مختص صحي. لا يحل محل التقييم الطبي المتخصص." if ar else "This summary contains user-reported information and is intended to help communicate information to a healthcare professional. It does not replace professional medical evaluation."
     body='<main class="v2-info-page"><section><h1>🗣️ SymptoSense Health Summary</h1><p class="muted">%s</p></section>%s<section><p class="v2-disclaimer">%s</p></section></main>'%(payload.get("created_at") or "",''.join(blocks),disc)
     return _page("SymptoSense Health Summary",body)
@@ -11875,29 +11985,74 @@ def api_assistant_feedback():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
+def _checkin_api_payload(uid, day):
+    rows = db.get_daily_checkin_history(uid, limit=180)
+    today = db.get_daily_checkin_for_date(uid, day)
+    try:
+        end_day = datetime.strptime(day, "%Y-%m-%d").date()
+    except Exception:
+        end_day = datetime.now(timezone.utc).date()
+    start_day = end_day - timedelta(days=6)
+    recent = []
+    for row in rows:
+        try:
+            row_day = datetime.strptime(str(row.get("date") or ""), "%Y-%m-%d").date()
+        except Exception:
+            continue
+        if start_day <= row_day <= end_day:
+            recent.append(row)
+    avg = round(sum(float(r.get("value") or 0) for r in recent) / len(recent), 1) if recent else None
+    return {
+        "ok": True,
+        "today": today,
+        "rows": [{"date": r.get("date"), "value": int(r.get("value") or 0)} for r in rows],
+        "summary": {"count": len(rows), "last7_average": avg},
+    }
+
+
+@app.route("/api/checkin", methods=["GET", "POST"])
 def api_checkin():
+    # Daily tracking is intentionally account-bound. Guest/session identifiers
+    # are not used because the history must follow the signed-in user only.
+    if not _ss_user_id():
+        return jsonify({
+            "ok": False,
+            "login_required": True,
+            "error": "سجّل الدخول لحفظ ومتابعة حالتك اليومية." if _lang() == "ar" else "Sign in to save and track your daily health status.",
+        }), 401
+
     uid = _data_user_id()
     if request.method == "POST":
-        if not _service_consent_ok(): return _consent_required_json("/checkin")
+        if not _service_consent_ok():
+            return _consent_required_json("/checkin")
         try:
-            data = request.get_json(force=True)
+            data = request.get_json(force=True) or {}
             rating = int(data.get("rating"))
             if rating < 1 or rating > 5:
-                return jsonify({"ok": False, "error": "التقييم من 1 إلى 5"})
+                return jsonify({"ok": False, "error": "التقييم من 1 إلى 5" if _lang() == "ar" else "Rating must be from 1 to 5"}), 400
+            day = str(data.get("date") or "").strip()
+            try:
+                datetime.strptime(day, "%Y-%m-%d")
+            except Exception:
+                return jsonify({"ok": False, "error": "invalid_date"}), 400
             db.init_db()
-            db.save_daily_checkin(uid, rating)
-            return jsonify({"ok": True})
+            saved = db.save_daily_checkin(uid, rating, day)
+            payload = _checkin_api_payload(uid, day)
+            payload.update({"created": bool(saved.get("created")), "updated": not bool(saved.get("created"))})
+            return jsonify(payload)
         except Exception as e:
-            return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+            return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500
+
     try:
+        day = str(request.args.get("date") or datetime.now(timezone.utc).date().isoformat()).strip()
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except Exception:
+            day = datetime.now(timezone.utc).date().isoformat()
         db.init_db()
-        rows = db.get_daily_checkins(uid, days=14)
-        chart = None
-        if rows:
-            chart = _checkin_chart(rows)
-        return jsonify({"ok": True, "rows": [{"date": d, "value": v} for d, v in rows], "chart": chart})
+        return jsonify(_checkin_api_payload(uid, day))
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500
 
 
 @app.route("/api/feedback", methods=["POST"])
