@@ -90,6 +90,28 @@ class DailyCheckinRegressionTest(unittest.TestCase):
         row = db.get_daily_checkin_history("legacy", 7)
         self.assertEqual([(r["date"], r["value"]) for r in row], [("2026-09-03", 5)])
 
+    def test_broken_legacy_table_does_not_block_new_tracking_store(self):
+        conn = sqlite3.connect(self.path)
+        # Deliberately incompatible legacy shape: missing timestamp/checkin_date.
+        conn.execute(
+            "CREATE TABLE daily_checkins (id INTEGER PRIMARY KEY AUTOINCREMENT, user_hash TEXT, severity INTEGER)"
+        )
+        conn.execute(
+            "INSERT INTO daily_checkins(user_hash,severity) VALUES (?,?)",
+            (db._hash_user("account-legacy-broken"), 2),
+        )
+        conn.commit()
+        conn.close()
+
+        # Simulate the live app already being initialized; only the tracking
+        # feature guard runs now. The broken legacy table must not take it down.
+        db._DB_READY_KEY = db._database_identity()
+        db.ensure_daily_checkins_schema()
+        saved = db.save_daily_checkin("account-legacy-broken", 4, "2026-09-03")
+        self.assertTrue(saved["created"])
+        row = db.get_daily_checkin_for_date("account-legacy-broken", "2026-09-03")
+        self.assertEqual(row["value"], 4)
+
     def test_handoff_refuses_an_empty_selected_field(self):
         db.init_db()
         privacy_features.init_schema()

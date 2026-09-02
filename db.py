@@ -814,14 +814,76 @@ def _migrate_daily_checkins(conn, c):
     c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ci_user_date_unique ON daily_checkins(user_hash, checkin_date)")
 
 
-def ensure_daily_checkins_schema():
-    """Ensure the daily-tracking table is usable for the active database.
+def _import_legacy_daily_checkins_best_effort():
+    """Copy any usable legacy daily_checkins rows into the stable tracking table.
 
-    This targeted guard is intentionally separate from the process-wide database
-    initialization cache. It lets an older Railway database repair the check-in
-    schema on first use even if the rest of the application schema was already
-    considered ready. A failed repair is never cached, so the next request can
-    retry automatically.
+    Legacy import must never make the live tracking feature unavailable. Railway
+    databases may contain older variants of daily_checkins, so this runs in its
+    own transaction and quietly skips incompatible legacy shapes after logging.
+    """
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        if USE_POSTGRES:
+            c.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                ("daily_checkins",),
+            )
+            cols = {row[0] for row in c.fetchall()}
+        else:
+            c.execute("PRAGMA table_info(daily_checkins)")
+            cols = {row[1] for row in c.fetchall()}
+        if not {"user_hash", "severity"}.issubset(cols):
+            return
+        if "checkin_date" in cols:
+            day_expr = "checkin_date"
+        elif "timestamp" in cols:
+            day_expr = "SUBSTR(CAST(timestamp AS TEXT),1,10)"
+        else:
+            return
+        ts_expr = "CAST(timestamp AS TEXT)" if "timestamp" in cols else "''"
+        c.execute(
+            f"SELECT user_hash,{day_expr},severity,{ts_expr} FROM daily_checkins "
+            f"WHERE {day_expr} IS NOT NULL AND severity IS NOT NULL"
+        )
+        rows = c.fetchall()
+        for user_hash, day, severity, updated_at in rows:
+            day = str(day or '')[:10]
+            if not day:
+                continue
+            try:
+                rating = int(severity)
+            except Exception:
+                continue
+            if rating < 1 or rating > 5:
+                continue
+            c.execute(
+                f"INSERT INTO ss_daily_checkins (user_hash,checkin_date,severity,updated_at) "
+                f"VALUES ({PH},{PH},{PH},{PH}) "
+                "ON CONFLICT(user_hash,checkin_date) DO UPDATE SET "
+                "severity=excluded.severity,updated_at=excluded.updated_at",
+                (str(user_hash), day, rating, str(updated_at or '')),
+            )
+        conn.commit()
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        _logger.warning("Legacy daily_checkins import skipped: %s", type(exc).__name__)
+    finally:
+        conn.close()
+
+
+def ensure_daily_checkins_schema():
+    """Ensure a stable account/day tracking store exists for the active DB.
+
+    The live feature no longer depends on mutating the historical
+    ``daily_checkins`` table. Some Railway databases contain older variants of
+    that table, and an ALTER/index migration can fail even though the rest of
+    the application is healthy. ``ss_daily_checkins`` uses a compact stable
+    schema with a composite primary key, so one account can have at most one
+    row per day without relying on a legacy index migration.
     """
     global _CHECKIN_SCHEMA_READY_KEY
     key = _database_identity()
@@ -835,39 +897,29 @@ def ensure_daily_checkins_schema():
         conn = _conn()
         try:
             c = conn.cursor()
-            if USE_POSTGRES:
-                c.execute("""
-                    CREATE TABLE IF NOT EXISTS daily_checkins (
-                        id SERIAL PRIMARY KEY,
-                        user_hash TEXT NOT NULL,
-                        timestamp TEXT NOT NULL,
-                        severity INTEGER,
-                        checkin_date TEXT
-                    )
-                """)
-            else:
-                c.execute("""
-                    CREATE TABLE IF NOT EXISTS daily_checkins (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_hash TEXT NOT NULL,
-                        timestamp TEXT NOT NULL,
-                        severity INTEGER,
-                        checkin_date TEXT
-                    )
-                """)
-            c.execute("CREATE INDEX IF NOT EXISTS idx_ci_user ON daily_checkins(user_hash)")
-            _migrate_daily_checkins(conn, c)
+            c.execute(f"""
+                CREATE TABLE IF NOT EXISTS ss_daily_checkins (
+                    user_hash TEXT NOT NULL,
+                    checkin_date TEXT NOT NULL,
+                    severity INTEGER NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (user_hash, checkin_date)
+                )
+            """)
+            c.execute("CREATE INDEX IF NOT EXISTS idx_ss_ci_user_date ON ss_daily_checkins(user_hash, checkin_date)")
             if USE_POSTGRES:
                 c.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
-                    ("daily_checkins",),
+                    ("ss_daily_checkins",),
                 )
                 cols = {row[0] for row in c.fetchall()}
             else:
-                c.execute("PRAGMA table_info(daily_checkins)")
+                c.execute("PRAGMA table_info(ss_daily_checkins)")
                 cols = {row[1] for row in c.fetchall()}
-            if "checkin_date" not in cols:
-                raise RuntimeError("Daily check-in schema migration incomplete: checkin_date missing")
+            required = {"user_hash", "checkin_date", "severity", "updated_at"}
+            missing = sorted(required - cols)
+            if missing:
+                raise RuntimeError("Stable daily tracking schema incomplete: " + ", ".join(missing))
             conn.commit()
         except Exception:
             try:
@@ -878,6 +930,9 @@ def ensure_daily_checkins_schema():
         finally:
             conn.close()
         _CHECKIN_SCHEMA_READY_KEY = _database_identity()
+        # Import old rows only after the new store is fully committed. A broken
+        # legacy table must never take the new feature down.
+        _import_legacy_daily_checkins_best_effort()
 
 
 def _migrate_feedback(conn, c):
@@ -1482,12 +1537,8 @@ def _valid_checkin_date(value):
 
 
 def save_daily_checkin(user_id, severity, checkin_date=None):
-    """Create or update one daily check-in for a user/date.
-
-    Returns ``{"created": bool, "date": YYYY-MM-DD}``.  The caller supplies
-    the browser-local date so a Saudi user around midnight is not accidentally
-    grouped under the previous UTC day.
-    """
+    """Create or update exactly one daily check-in for an account/date."""
+    ensure_daily_checkins_schema()
     rating = int(severity)
     if rating < 1 or rating > 5:
         raise ValueError("severity must be between 1 and 5")
@@ -1498,18 +1549,16 @@ def save_daily_checkin(user_id, severity, checkin_date=None):
     try:
         c = conn.cursor()
         c.execute(
-            f"SELECT id FROM daily_checkins WHERE user_hash={PH} AND checkin_date={PH} "
-            "ORDER BY timestamp DESC, id DESC LIMIT 1",
+            f"SELECT 1 FROM ss_daily_checkins WHERE user_hash={PH} AND checkin_date={PH} LIMIT 1",
             (user_hash, day),
         )
-        row = c.fetchone()
-        created = not bool(row)
+        created = c.fetchone() is None
         c.execute(
-            f"INSERT INTO daily_checkins (user_hash, timestamp, severity, checkin_date) "
+            f"INSERT INTO ss_daily_checkins (user_hash,checkin_date,severity,updated_at) "
             f"VALUES ({PH},{PH},{PH},{PH}) "
             "ON CONFLICT(user_hash,checkin_date) DO UPDATE SET "
-            "timestamp=excluded.timestamp,severity=excluded.severity",
-            (user_hash, now, rating, day),
+            "severity=excluded.severity,updated_at=excluded.updated_at",
+            (user_hash, day, rating, now),
         )
         conn.commit()
         return {"created": created, "date": day}
@@ -1518,6 +1567,7 @@ def save_daily_checkin(user_id, severity, checkin_date=None):
 
 
 def get_daily_checkin_for_date(user_id, checkin_date):
+    ensure_daily_checkins_schema()
     day = _valid_checkin_date(checkin_date)
     if not day:
         return None
@@ -1525,20 +1575,21 @@ def get_daily_checkin_for_date(user_id, checkin_date):
     try:
         c = conn.cursor()
         c.execute(
-            f"SELECT checkin_date, severity, timestamp FROM daily_checkins "
-            f"WHERE user_hash={PH} AND checkin_date={PH} ORDER BY timestamp DESC, id DESC LIMIT 1",
+            f"SELECT checkin_date,severity,updated_at FROM ss_daily_checkins "
+            f"WHERE user_hash={PH} AND checkin_date={PH} LIMIT 1",
             (_hash_user(user_id), day),
         )
         row = c.fetchone()
         if not row:
             return None
-        return {"date": row[0], "value": int(row[1]), "timestamp": row[2]}
+        return {"date": str(row[0])[:10], "value": int(row[1]), "timestamp": row[2]}
     finally:
         conn.close()
 
 
 def get_daily_checkin_history(user_id, limit=90):
-    """Return newest-first unique daily rows for the current account only."""
+    """Return newest-first daily rows for the signed-in account only."""
+    ensure_daily_checkins_schema()
     try:
         limit = max(1, min(365, int(limit)))
     except Exception:
@@ -1546,27 +1597,19 @@ def get_daily_checkin_history(user_id, limit=90):
     conn = _conn()
     try:
         c = conn.cursor()
-        # Fetch extra rows so legacy duplicate days can be collapsed in Python.
         c.execute(
-            f"SELECT checkin_date, severity, timestamp FROM daily_checkins "
-            f"WHERE user_hash={PH} AND checkin_date IS NOT NULL "
-            "ORDER BY checkin_date DESC, timestamp DESC, id DESC",
+            f"SELECT checkin_date,severity,updated_at FROM ss_daily_checkins "
+            f"WHERE user_hash={PH} ORDER BY checkin_date DESC LIMIT {int(limit)}",
             (_hash_user(user_id),),
         )
         rows = c.fetchall()
     finally:
         conn.close()
-    seen = set()
-    out = []
-    for day, sev, ts in rows:
-        day = str(day or "")[:10]
-        if not day or day in seen:
-            continue
-        seen.add(day)
-        out.append({"date": day, "value": int(sev), "timestamp": ts})
-        if len(out) >= limit:
-            break
-    return out
+    return [
+        {"date": str(day or '')[:10], "value": int(sev), "timestamp": ts}
+        for day, sev, ts in rows
+        if day
+    ]
 
 
 def get_daily_checkins(user_id, days=7):
