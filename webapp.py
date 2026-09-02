@@ -12333,9 +12333,9 @@ def api_assistant_feedback():
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
 
 
-def _checkin_api_payload(uid, day):
-    rows = db.get_daily_checkin_history(uid, limit=180)
-    today = db.get_daily_checkin_for_date(uid, day)
+def _checkin_api_payload(account_id, day):
+    rows = db.get_web_daily_checkin_history(account_id, limit=180)
+    today = db.get_web_daily_checkin_for_date(account_id, day)
     try:
         end_day = datetime.strptime(day, "%Y-%m-%d").date()
     except Exception:
@@ -12355,6 +12355,7 @@ def _checkin_api_payload(uid, day):
         "today": today,
         "rows": [{"date": r.get("date"), "value": int(r.get("value") or 0)} for r in rows],
         "summary": {"count": len(rows), "last7_average": avg},
+        "storage_version": "user_data_v1",
     }
 
 
@@ -12369,7 +12370,11 @@ def api_checkin():
             "error": "سجّل الدخول لحفظ ومتابعة حالتك اليومية." if _lang() == "ar" else "Sign in to save and track your daily health status.",
         }), 401
 
-    uid = _data_user_id()
+    # Guarantee the long-standing core tables (including user_data) exist.
+    # init_db() is cached per database identity, so this is effectively free
+    # after the first successful request in a Railway process.
+    db.init_db()
+    account_id = _ss_user_id()
     if request.method == "POST":
         if not _service_consent_ok():
             return _consent_required_json("/checkin")
@@ -12383,9 +12388,8 @@ def api_checkin():
                 datetime.strptime(day, "%Y-%m-%d")
             except Exception:
                 return jsonify({"ok": False, "error": "invalid_date"}), 400
-            db.ensure_daily_checkins_schema()
-            saved = db.save_daily_checkin(uid, rating, day)
-            payload = _checkin_api_payload(uid, day)
+            saved = db.save_web_daily_checkin(account_id, rating, day)
+            payload = _checkin_api_payload(account_id, day)
             payload.update({"created": bool(saved.get("created")), "updated": not bool(saved.get("created"))})
             return jsonify(payload)
         except Exception as e:
@@ -12397,8 +12401,7 @@ def api_checkin():
             datetime.strptime(day, "%Y-%m-%d")
         except Exception:
             day = datetime.now(timezone.utc).date().isoformat()
-        db.ensure_daily_checkins_schema()
-        return jsonify(_checkin_api_payload(uid, day))
+        return jsonify(_checkin_api_payload(account_id, day))
     except Exception as e:
         return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}), 500
 

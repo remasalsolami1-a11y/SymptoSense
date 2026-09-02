@@ -1536,6 +1536,125 @@ def _valid_checkin_date(value):
     return text
 
 
+# ---- Stable web daily tracking on the existing user_data table ----------------
+# Railway installations from older releases can have incompatible daily_checkins
+# schemas.  The website tracker therefore stores its small per-account day map in
+# the long-standing user_data table using a reserved negative integer key.  This
+# keeps the data persistent in PostgreSQL without requiring any new DDL/migration.
+_WEB_CHECKIN_USERDATA_OFFSET = 1_000_000_000
+
+def _web_checkin_storage_id(account_id):
+    uid = int(account_id)
+    if uid <= 0:
+        raise ValueError("invalid account id")
+    # ss_users uses small positive SERIAL/INTEGER ids. Telegram/user_data ids are
+    # positive, so a reserved negative key cleanly namespaces website tracking.
+    return -(_WEB_CHECKIN_USERDATA_OFFSET + uid)
+
+def _clean_web_checkin_map(value):
+    src = value if isinstance(value, dict) else {}
+    out = {}
+    for day, rating in src.items():
+        day = _valid_checkin_date(day)
+        try:
+            rating = int(rating)
+        except Exception:
+            continue
+        if day and 1 <= rating <= 5:
+            out[day] = rating
+    return out
+
+def save_web_daily_checkin(account_id, severity, checkin_date=None):
+    """Persist exactly one website check-in per account/day in existing user_data.
+
+    The reserved row is created first and then locked on PostgreSQL so two tabs
+    cannot overwrite each other's day map. No schema creation is needed here.
+    """
+    rating = int(severity)
+    if rating < 1 or rating > 5:
+        raise ValueError("severity must be between 1 and 5")
+    day = _valid_checkin_date(checkin_date) or datetime.now(timezone.utc).date().isoformat()
+    storage_id = _web_checkin_storage_id(account_id)
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        now = datetime.now(timezone.utc).isoformat()
+        empty_blob = json.dumps(
+            {"kind": "symptosense_web_daily_tracking_v1", "checkins": {}},
+            ensure_ascii=False, separators=(",", ":")
+        )
+        c.execute(
+            f"INSERT INTO user_data (user_id,data,updated_at) VALUES ({PH},{PH},{PH}) "
+            "ON CONFLICT (user_id) DO NOTHING",
+            (storage_id, empty_blob, now),
+        )
+        lock_suffix = " FOR UPDATE" if USE_POSTGRES else ""
+        c.execute(f"SELECT data FROM user_data WHERE user_id={PH}" + lock_suffix, (storage_id,))
+        row = c.fetchone()
+        payload = {}
+        if row and row[0]:
+            try:
+                payload = json.loads(row[0]) or {}
+            except Exception:
+                payload = {}
+        checkins = _clean_web_checkin_map(payload.get("checkins"))
+        created = day not in checkins
+        checkins[day] = rating
+        payload = {
+            "kind": "symptosense_web_daily_tracking_v1",
+            "checkins": checkins,
+        }
+        blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        c.execute(
+            f"UPDATE user_data SET data={PH}, updated_at={PH} WHERE user_id={PH}",
+            (blob, now, storage_id),
+        )
+        conn.commit()
+        return {"created": created, "date": day}
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()
+
+def get_web_daily_checkin_history(account_id, limit=180):
+    try:
+        limit = max(1, min(365, int(limit)))
+    except Exception:
+        limit = 180
+    storage_id = _web_checkin_storage_id(account_id)
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(f"SELECT data,updated_at FROM user_data WHERE user_id={PH}", (storage_id,))
+        row = c.fetchone()
+    finally:
+        conn.close()
+    if not row or not row[0]:
+        return []
+    try:
+        payload = json.loads(row[0]) or {}
+    except Exception:
+        return []
+    checkins = _clean_web_checkin_map(payload.get("checkins"))
+    return [
+        {"date": day, "value": checkins[day], "timestamp": row[1]}
+        for day in sorted(checkins, reverse=True)[:limit]
+    ]
+
+def get_web_daily_checkin_for_date(account_id, checkin_date):
+    day = _valid_checkin_date(checkin_date)
+    if not day:
+        return None
+    for item in get_web_daily_checkin_history(account_id, limit=365):
+        if item["date"] == day:
+            return item
+    return None
+
+
 def save_daily_checkin(user_id, severity, checkin_date=None):
     """Create or update exactly one daily check-in for an account/date."""
     ensure_daily_checkins_schema()
@@ -2742,6 +2861,7 @@ def delete_ss_user(user_id):
         c = conn.cursor()
         uid = int(user_id)
         owner = _hash_user("account-%s" % uid)
+        web_checkin_storage_id = -(_WEB_CHECKIN_USERDATA_OFFSET + uid)
         # Remove all account-owned health/service records. Guest records use a
         # different random browser key and are never attached to the account.
         for table in ("med_logs", "med_plans", "family_members", "results",
@@ -2755,6 +2875,8 @@ def delete_ss_user(user_id):
         c.execute("UPDATE ss_content SET created_by=NULL WHERE created_by=%s" % PH, (uid,))
         c.execute("UPDATE ss_content SET updated_by=NULL WHERE updated_by=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_chat_history WHERE user_id=%s" % PH, (uid,))
+        # Daily website tracking is namespaced in the existing user_data table.
+        c.execute("DELETE FROM user_data WHERE user_id=%s" % PH, (web_checkin_storage_id,))
         c.execute("DELETE FROM ss_privacy WHERE user_id=%s" % PH, (uid,))
         c.execute("DELETE FROM ss_health_profiles WHERE user_id=%s" % PH, (uid,))
         # Optional advanced-feature tables may not exist on older deployments.
