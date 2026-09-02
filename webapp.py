@@ -5799,7 +5799,7 @@ def chat_page():
         recommendations: Array.isArray(lr.recommendations) ? lr.recommendations.slice(0,4) : []
       };
       const contextLabel = LANG === 'ar' ? 'سياق مختصر من نتيجة التحليل الحالية:' : 'Brief context from the current analysis result:';
-      const prompt = q + '\n\n' + contextLabel + ' ' + JSON.stringify(safeContext);
+      const prompt = q + '\\n\\n' + contextLabel + ' ' + JSON.stringify(safeContext);
       fetch('/api/assistant', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({lang:LANG, messages:[{role:'user', content:prompt}]})

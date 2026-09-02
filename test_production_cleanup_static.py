@@ -95,3 +95,25 @@ def test_about_uses_static_real_screenshot_not_home_iframe():
     assert '<iframe src="/home"' not in WEBAPP
     assert '/static/images/about-home-preview.webp' in WEBAPP
     assert (ROOT / 'static/images/about-home-preview.webp').exists()
+
+
+def test_chat_result_assistant_prompt_keeps_escaped_newlines_in_runtime_html():
+    """A Python triple-quoted template must emit JS \\n escapes, not literal line breaks."""
+    import ast
+
+    tree = ast.parse(WEBAPP)
+    chat_body = None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "chat_page":
+            for stmt in node.body:
+                if (
+                    isinstance(stmt, ast.Assign)
+                    and any(isinstance(t, ast.Name) and t.id == "body" for t in stmt.targets)
+                    and isinstance(stmt.value, ast.Constant)
+                    and isinstance(stmt.value.value, str)
+                ):
+                    chat_body = stmt.value.value
+                    break
+    assert chat_body is not None
+    assert "const prompt = q + '\\n\\n' + contextLabel" in chat_body
+    assert "const prompt = q + '\n\n' + contextLabel" not in chat_body
