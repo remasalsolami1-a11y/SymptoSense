@@ -4138,20 +4138,20 @@ def consent_page():
     """
     vals = {
         "__TITLE__": title,
-        "__P1__": ("📝 نجمع بس المعلومات اللي تدخلينها بنفسك (الأعراض، العمر، المدة، الشدة) عشان نقدّم لك الخدمة." if ar else "📝 We only collect what you enter yourself (symptoms, age, duration, severity) to provide the service."),
-        "__P2__": ("📊 بموافقتك، نقدر نستخدم بيانات مجمّعة ومجهولة الهوية لتحسين النظام." if ar else "📊 With your consent, aggregated anonymized data may help us improve the system."),
-        "__P3__": ("⚠️ النتائج توعوية فقط، وما تغني عن رأي الطبيب." if ar else "⚠️ Results are educational only and don't replace a doctor's opinion."),
+        "__P1__": ("📝 نجمع فقط المعلومات التي يتم إدخالها لاستخدام الخدمة (الأعراض، العمر، المدة، الشدة)." if ar else "📝 We only collect what you enter yourself (symptoms, age, duration, severity) to provide the service."),
+        "__P2__": ("📊 عند الموافقة، يمكن استخدام بيانات مجمّعة ومجهولة الهوية لتحسين النظام." if ar else "📊 With your consent, aggregated anonymized data may help us improve the system."),
+        "__P3__": ("⚠️ النتائج توعوية فقط، ولا تغني عن رأي الطبيب." if ar else "⚠️ Results are educational only and don't replace a doctor's opinion."),
         "__SERVICE_H__": ("موافقة استخدام الخدمة" if ar else "Service usage consent"),
-        "__SERVICE_P__": ("أوافق على معالجة معلوماتي لاستخدام خدمات SymptoSense — ضرورية لأي ميزة تحتاج بيانات صحية." if ar else "I agree to processing my information to use SymptoSense's services — required for any feature that needs health data."),
+        "__SERVICE_P__": ("تُعالج المعلومات اللازمة لاستخدام خدمات SymptoSense بعد الموافقة — وهذا مطلوب لأي ميزة تحتاج بيانات صحية." if ar else "I agree to processing my information to use SymptoSense's services — required for any feature that needs health data."),
         "__AN_H__": ("التحليلات والبحث الإحصائي" if ar else "Analytics & statistical research"),
-        "__AN_P__": ("أوافق على استخدام بياناتي بشكل مجمع ومجهول لتحسين النظام — اختياري ويمكنك رفضه." if ar else "I agree to use of my data in aggregated, anonymized form to improve the system — optional, you can decline."),
+        "__AN_P__": ("يمكن استخدام البيانات بشكل مجمع ومجهول لتحسين النظام بعد الموافقة — هذا الخيار اختياري ويمكن رفضه." if ar else "I agree to use of my data in aggregated, anonymized form to improve the system — optional, you can decline."),
         "__REQUIRED__": ("مطلوب للخدمة" if ar else "Required for service"), "__OPTIONAL__": ("اختياري" if ar else "Optional"),
-        "__READ__": ("اقرأ سياسة الخصوصية" if ar else "Read Privacy Policy"), "__HOW__": ("كيف نستخدم بياناتك؟" if ar else "How do we use your data?"),
+        "__READ__": ("اقرأ سياسة الخصوصية" if ar else "Read Privacy Policy"), "__HOW__": ("كيف تُستخدم البيانات؟" if ar else "How do we use your data?"),
         "__CONTINUE__": ("حفظ الاختيارات والمتابعة" if ar else "Save choices & continue"),
         "__SAVING__": json.dumps("جاري المتابعة…" if ar else "Continuing…"),
         "__DISC__": ("SymptoSense أداة معلوماتية وتحليلية ولا تحل محل الاستشارة الطبية أو التشخيص أو العلاج من قبل المختصين." if ar else "SymptoSense is an informational and analytical tool and does not replace professional medical advice, diagnosis, or treatment."),
         "__SERVICE_ERR__": json.dumps("يجب الموافقة على معالجة البيانات اللازمة لاستخدام خدمة التحليل." if ar else "Service usage consent is required to use the assessment service."),
-        "__GEN_ERR__": json.dumps("تعذر حفظ الاختيارات الآن. حاول مرة أخرى." if ar else "Unable to save your choices right now. Please try again."),
+        "__GEN_ERR__": json.dumps("تعذر حفظ الاختيارات الآن. يرجى المحاولة مرة أخرى." if ar else "Unable to save your choices right now. Please try again."),
         "__NEXT__": json.dumps(next_url),
     }
     for k,v in vals.items(): body=body.replace(k,str(v))
