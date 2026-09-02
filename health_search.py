@@ -36,6 +36,32 @@ SEARCH_KB = {
             "doctor": "See a doctor if dizziness lasts more than a couple of days, keeps coming back, or is accompanied by ear pain, hearing loss, repeated vomiting, or if you started a new medication that might be the cause.",
         },
     },
+    "sweet_taste": {
+        "emoji": "👅", "category": "symptom",
+        "aliases": ["طعم حلو في الفم", "طعم حلو بالفم", "طعم سكر في الفم", "طعم سكر بالفم",
+                    "طعم سكر", "طعم السكر", "مذاق حلو", "مذاق السكر", "احس بطعم سكر",
+                    "أحس بطعم سكر", "طعم غريب في الفم", "تغير التذوق", "تغير في التذوق",
+                    "sweet taste in mouth", "sweet taste", "altered taste", "taste change", "dysgeusia"],
+        "causes_label": {"ar": "💡 أسباب محتملة لتغيّر الطعم", "en": "💡 Possible causes of taste change"},
+        "ar": {
+            "title": "طعم حلو أو غير معتاد في الفم",
+            "what": "الإحساس بطعم حلو أو غير معتاد في الفم يُعد تغيرًا في حاسة التذوق. قد يكون مؤقتًا وله أسباب متعددة، ولا يكفي هذا العرض وحده لتحديد مرض أو تشخيص معين.",
+            "causes": ["جفاف الفم أو قلة شرب السوائل", "احتقان الأنف أو عدوى تنفسية تؤثر في الشم والتذوق",
+                       "مشكلات الفم أو الأسنان أو اللسان", "بعض الأدوية أو المكملات",
+                       "الارتجاع المعدي المريئي", "تغير مؤقت في حاسة التذوق بعد مرض أو عدوى"],
+            "worry": "اطلب رعاية عاجلة إذا ظهر تغير الطعم مع دوخة شديدة مفاجئة، أو إغماء، أو ضعف أو تنميل في جهة واحدة، أو صعوبة في الكلام، أو ألم صدر، أو ضيق تنفس.",
+            "doctor": "راجع الطبيب أو طبيب الأسنان إذا استمر تغير الطعم عدة أيام، أو تكرر دون سبب واضح، أو صاحبه ألم أو تورم بالفم، أو فقدان وزن، أو عطش وتبول متكرران، أو أعراض أخرى مستمرة.",
+        },
+        "en": {
+            "title": "Sweet or unusual taste in the mouth",
+            "what": "A sweet or otherwise unusual taste is a change in the sense of taste. It can be temporary and has many possible causes; this symptom alone is not enough to identify a disease or make a diagnosis.",
+            "causes": ["Dry mouth or not drinking enough fluids", "Nasal congestion or a respiratory infection affecting smell and taste",
+                       "Mouth, dental, or tongue problems", "Certain medicines or supplements",
+                       "Acid reflux", "A temporary taste change after an illness or infection"],
+            "worry": "Seek urgent care if a taste change occurs with sudden severe dizziness, fainting, one-sided weakness or numbness, trouble speaking, chest pain, or shortness of breath.",
+            "doctor": "See a doctor or dentist if the taste change lasts for several days, keeps recurring without a clear reason, or comes with mouth pain or swelling, weight loss, frequent thirst and urination, or other persistent symptoms.",
+        },
+    },
     "fever": {
         "emoji": "🤒", "category": "symptom",
         "aliases": ["حمى", "الحمى", "حرارة", "سخونة", "سخونه", "fever", "high temperature", "temp", "hot"],
@@ -931,56 +957,147 @@ def _strip_question(q):
     return None
 
 
-def search_health(query, lang="ar"):
-    """Match a free-text query to a knowledge base entry (in the requested language)."""
+def _matched_entries(query):
+    """Return distinct KB entries mentioned in a free-text query.
+
+    Compound queries are intentionally preserved: e.g. ``sweet taste + dizziness``
+    returns both concepts instead of silently choosing only one.
+    """
     q = _norm(query)
     if not q:
-        return None
+        return []
+
     candidates = []
     stripped = _strip_question(q)
     if stripped:
         candidates.append(stripped)
     candidates.append(q)
-    # 1) exact alias match
+
+    # Exact matches keep the old fast/specific behavior.
     for c in candidates:
         if not c:
             continue
-        for e in SEARCH_KB.values():
+        exact = []
+        for key, e in SEARCH_KB.items():
             for al in e["aliases"]:
                 if _norm(al) == c:
-                    return _entry(e, lang)
-    # 2) contains match, prefer longest alias
-    best = None
-    best_len = -1
+                    exact.append((key, e, len(c)))
+                    break
+        if exact:
+            return exact
+
+    # For full phrases, collect every distinct concept whose alias is actually
+    # present in the query. Keep the strongest/longest alias per concept.
+    found = {}
     for c in candidates:
-        for e in SEARCH_KB.values():
+        for key, e in SEARCH_KB.items():
+            best_len = found.get(key, (None, None, -1))[2]
             for al in e["aliases"]:
                 a = _norm(al)
                 if len(a) < 3:
                     continue
-                if a in c or c in a:
+                if a in c:
                     if len(a) > best_len:
-                        best = e
+                        found[key] = (key, e, len(a))
                         best_len = len(a)
-    return _entry(best, lang) if best else None
+
+    if found:
+        # Avoid treating the word "sugar" inside a taste phrase as a separate
+        # diabetes search concept. The longer, explicit taste phrase is the
+        # intended match; diabetes should only appear when the user actually
+        # searches for diabetes/blood sugar itself.
+        if "sweet_taste" in found and "diabetes" in found:
+            if any(p in q for p in ("طعم السكر", "مذاق السكر", "sweet taste")):
+                found.pop("diabetes", None)
+        return sorted(found.values(), key=lambda x: x[2], reverse=True)
+
+    # Fallback for short partial searches (keeps the previous autocomplete-like
+    # behavior without affecting compound-query detection).
+    best = None
+    best_len = -1
+    for c in candidates:
+        for key, e in SEARCH_KB.items():
+            for al in e["aliases"]:
+                a = _norm(al)
+                if len(a) < 3:
+                    continue
+                if c in a and len(c) >= 3 and len(c) > best_len:
+                    best = (key, e, len(c))
+                    best_len = len(c)
+    return [best] if best else []
 
 
-def _entry(e, lang):
+def search_health(query, lang="ar"):
+    """Match free text to one or more health-knowledge entries.
+
+    The function is educational only. Multiple recognized symptoms are returned
+    as a compound result without implying that one causes the other.
+    """
+    matches = _matched_entries(query)
+    if not matches:
+        return None
+
+    if len(matches) == 1:
+        key, entry, _ = matches[0]
+        result = _entry(entry, lang, key=key)
+        result["recognized_topics"] = [result["title"]]
+        result["original_query"] = (query or "").strip()
+        return result
+
+    # Keep a small, focused set so a long sentence does not become a wall of
+    # unrelated cards. This is presentation-only; no medical score is computed.
+    topic_results = []
+    seen = set()
+    for key, entry, _ in matches[:3]:
+        if key in seen:
+            continue
+        seen.add(key)
+        topic_results.append(_entry(entry, lang, key=key))
+
+    ar = lang == "ar"
+    titles = [t["title"] for t in topic_results]
+    return {
+        "key": "compound",
+        "emoji": "🩺",
+        "category": "combined",
+        "title": " + ".join(titles),
+        "what": (
+            "تم التعرف على أكثر من عرض أو مفهوم في عبارتك. وجودها معًا لا يعني أن لها سببًا واحدًا؛ "
+            "لذلك نعرض المعلومات والأسباب المحتملة لكل واحد منها بشكل منفصل."
+            if ar else
+            "More than one symptom or health concept was recognized in your query. Their presence together does not mean they share one cause, so the possible causes for each are shown separately."
+        ),
+        "causes": [],
+        "worry": None,
+        "doctor": (
+            "إذا كانت الأعراض تحدث معًا أو تتكرر، استخدم تحليل الأعراض أو اسأل المساعد ليجمع التفاصيل والسياق بدل الاعتماد على البحث وحده."
+            if ar else
+            "If these symptoms occur together or keep recurring, use Symptom Analysis or ask the assistant so the details and context can be considered together rather than relying on search alone."
+        ),
+        "causes_label": "",
+        "matched_topics": topic_results,
+        "recognized_topics": titles,
+        "original_query": (query or "").strip(),
+    }
+
+
+def _entry(e, lang, key=None):
     ar = lang == "ar"
     lang_data = e["ar"] if ar else e["en"]
     cat = e["category"]
     causes_label = (e.get("causes_label") or {}).get("ar" if ar else "en",
                                                       "الأسباب الشائعة" if ar else "Common causes")
     return {
-        "key": None,
+        "key": key,
         "emoji": e["emoji"],
         "category": cat,
         "title": lang_data["title"],
         "what": lang_data["what"],
-        "causes": lang_data["causes"],
-        "worry": lang_data["worry"],
-        "doctor": lang_data["doctor"],
+        "causes": list(lang_data.get("causes") or []),
+        "worry": lang_data.get("worry"),
+        "doctor": lang_data.get("doctor"),
         "causes_label": causes_label,
+        "sources": [],
     }
 
 

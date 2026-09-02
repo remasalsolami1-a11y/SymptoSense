@@ -204,7 +204,7 @@ table th{color:#163B5C;background:#F4F9FC;font-weight:800}table td,table th{padd
 .hh-l{flex:1.08}.hh-l h1{max-width:13ch;font-size:clamp(36px,5.2vw,58px)!important;line-height:1.24!important;margin-bottom:14px!important}.hh-sub{font-size:clamp(16px,2vw,20px)!important;margin-bottom:10px!important}.hh-desc{font-size:15px!important;line-height:1.9!important;margin-bottom:26px!important}.hh-badge{padding:0!important;background:transparent!important;border-radius:0!important;color:#287FC1!important;font-size:13px!important;letter-spacing:.03em;margin-bottom:14px!important}.hh-btns{gap:10px!important}.hh-btns .btn{margin:0!important}
 .hh-r{min-height:340px!important}.hh-product-art{display:block;width:min(440px,100%);height:auto;object-fit:contain;filter:saturate(.88)}
 .hh-product-visual{position:relative;width:min(440px,100%);aspect-ratio:1;border-radius:32px;border:1px solid #cfe3ef;background:#f4fafe;display:grid;place-items:center;overflow:hidden;box-shadow:0 16px 36px rgba(31,86,127,.10)}.hh-product-visual:before,.hh-product-visual:after{content:'';position:absolute;border:1px solid #c7e0ed;border-radius:50%}.hh-product-visual:before{width:76%;height:76%}.hh-product-visual:after{width:49%;height:49%;background:#fff;box-shadow:0 12px 30px rgba(31,86,127,.08)}.hh-product-core{position:relative;z-index:2;width:96px;height:96px;border-radius:28px;background:#287fc1;color:#fff;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:0 13px 28px rgba(40,127,193,.22)}.hh-product-node{position:absolute;z-index:3;width:66px;height:66px;border-radius:20px;background:#fff;border:1px solid #d6e7f0;display:grid;place-items:center;font-size:28px;box-shadow:0 8px 20px rgba(31,86,127,.08)}.hh-p1{top:10%;left:11%}.hh-p2{top:11%;right:10%}.hh-p3{bottom:10%;left:12%}.hh-p4{bottom:10%;right:11%}
-.home-trust{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:-10px auto 36px;color:#607487;font-size:13px}.home-trust a{color:#287FC1;font-weight:800}.home-trust-dot{width:6px;height:6px;border-radius:50%;background:#267A52}
+.home-trust{display:grid;justify-items:center;gap:4px;margin:-10px auto 36px;color:#607487;font-size:13px;text-align:center}.home-trust a{color:#287FC1;font-weight:800;text-decoration:none}.home-trust a:hover{text-decoration:underline}
 .v2-section-head{margin-top:42px!important}.svc-grid{gap:14px!important}.svc-card{padding:22px!important}.svc-ic{width:48px!important;height:48px!important;border-radius:14px!important;font-size:24px!important}.svc-btn{background:transparent!important;color:#287FC1!important;padding:5px 0!important;min-height:auto!important}.svc-card:hover .svc-btn{background:transparent!important;color:#163B5C!important}
 @media(max-width:1180px){.nav{display:none}.ss-mobile-head{display:flex}.ss-bnav{display:flex;justify-content:space-evenly;align-items:center}.ss-bnav a{flex:0 1 170px}.container{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 80px)}.asst-fab{bottom:calc(var(--bnav-h) + var(--safe-bottom) + 12px);left:12px;width:54px;height:54px;padding:0;justify-content:center}.asst-fab .asst-fab-lb{display:none}.asst-panel{left:12px;right:12px;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 76px);width:auto;height:min(72dvh,600px)}[dir="rtl"] .asst-panel{left:12px;right:12px}}
 @media(min-width:1181px){.nav{display:flex!important}.ss-mobile-head,.ss-bnav{display:none!important}.container{padding-bottom:clamp(42px,6vw,72px)!important}.asst-fab{bottom:22px!important}}
@@ -1211,6 +1211,12 @@ __GSC_TAG__
 .asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 400px; max-width: calc(100vw - 24px); height: min(78vh, 600px); display: none; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 22px; box-shadow: 0 24px 70px rgba(25,118,210,.26); overflow: hidden; }
 [dir="rtl"] .asst-panel { left: 22px; right: auto; }
 .asst-panel.open { display: flex; }
+/* Lock the document behind the assistant. Only the assistant body may scroll. */
+html.ss-assistant-open { overflow: hidden !important; overscroll-behavior: none; }
+body.ss-assistant-open { overflow: hidden !important; overscroll-behavior: none; }
+body.ss-assistant-open::after { content: ""; position: fixed; inset: 0; z-index: 998; background: rgba(18,59,112,.14); pointer-events: auto; }
+.asst-panel, .asst-fab { isolation: isolate; }
+.asst-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .asst-head { background: linear-gradient(120deg, var(--primary-dark), #1976D2); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .asst-head .asst-back { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex: 0 0 auto; }
 .asst-head-tx { flex: 1; min-width: 0; }
@@ -1419,7 +1425,52 @@ function asstTT(k) { return ASST_T[k] || k; }
 var asstPageCtx = '';
 var asstMhMode = false;
 var asstBrTimer = null, asstBrPhase = 0;
+var asstLockedScrollY = 0;
+var asstBodyLockState = null;
 function asstSetCtx(k) { asstPageCtx = k || ''; }
+function asstIsTouchViewport() {
+  return window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+function asstFocusInput() {
+  /* iOS Safari may move the whole viewport when focus() is called programmatically.
+     Auto-focus only on desktop/fine-pointer devices; mobile users can tap the field. */
+  if (asstIsTouchViewport() || window.innerWidth <= 768) return;
+  var inp = document.getElementById('asstInput');
+  if (!inp) return;
+  try { inp.focus({preventScroll:true}); } catch (e) { inp.focus(); }
+}
+function asstLockPage() {
+  if (document.body.classList.contains('ss-assistant-open')) return;
+  asstLockedScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+  asstBodyLockState = {
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width
+  };
+  document.documentElement.classList.add('ss-assistant-open');
+  document.body.classList.add('ss-assistant-open');
+  document.body.style.position = 'fixed';
+  document.body.style.top = (-asstLockedScrollY) + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+function asstUnlockPage() {
+  if (!document.body.classList.contains('ss-assistant-open')) return;
+  document.documentElement.classList.remove('ss-assistant-open');
+  document.body.classList.remove('ss-assistant-open');
+  var st = asstBodyLockState || {};
+  document.body.style.position = st.position || '';
+  document.body.style.top = st.top || '';
+  document.body.style.left = st.left || '';
+  document.body.style.right = st.right || '';
+  document.body.style.width = st.width || '';
+  asstBodyLockState = null;
+  /* Restore the exact pre-open position without animation. */
+  window.scrollTo(0, asstLockedScrollY);
+}
 function asstToggle() {
   var p = document.getElementById('asstPanel');
   var f = document.getElementById('asstFab');
@@ -1427,10 +1478,12 @@ function asstToggle() {
   f.querySelector('.asst-fab-ic').textContent = open ? '✕' : '🤖';
   f.querySelector('.asst-fab-lb').textContent = open ? asstTT('asst_close') : asstTT('asst_title');
   if (open) {
+    asstLockPage();
     asstShowMain();
-    document.getElementById('asstInput').focus();
+    asstFocusInput();
   } else {
     asstBreathStop();
+    asstUnlockPage();
   }
 }
 function asstGreeting() {
@@ -1544,13 +1597,13 @@ function asstOptClick(act, k) {
   if (k === 'drug') { location.href = '/meds'; return; }
   if (k === 'blood') { location.href = '/blood'; return; }
   if (k === 'calc') { location.href = '/calculators'; return; }
-  if (k === 'q') { document.getElementById('asstInput').focus(); return; }
+  if (k === 'q') { asstFocusInput(); return; }
 }
 function asstMhAction(k) {
   if (k === 'calm') {
     asstBreathStart();
     asstMhMsg(asstTT('asst_mh_calm_msg'));
-    document.getElementById('asstInput').focus();
+    asstFocusInput();
     return;
   }
   var send = {
@@ -1609,10 +1662,10 @@ function nightCalmAction(choice) {
     }, 1000);
   } else if (choice === 'listen') {
     asstMhMsg(asstTT('night_calm_listen_reply'));
-    document.getElementById('asstInput').focus();
+    asstFocusInput();
   } else if (choice === 'think') {
     asstMhMsg(asstTT('night_calm_think_reply'));
-    document.getElementById('asstInput').focus();
+    asstFocusInput();
   } else if (choice === 'sleep') {
     asstMhMsg(asstTT('night_calm_sleep_reply'));
     setTimeout(function(){
@@ -3735,7 +3788,7 @@ def home_page():
       <div class="hh-r" aria-hidden="true"><div class="hh-product-visual"><span class="hh-product-core">S</span><span class="hh-product-node hh-p1">📊</span><span class="hh-product-node hh-p2">🧠</span><span class="hh-product-node hh-p3">🩺</span><span class="hh-product-node hh-p4">✦</span></div></div>
     </section>
 
-    <div class="home-trust"><span class="home-trust-dot" aria-hidden="true"></span><span>__TRUST_COPY__</span><a href="/sources">__VIEW_SOURCES__</a></div>
+    <div class="home-trust"><span>__TRUST_COPY__</span><a href="/sources">__VIEW_SOURCES__</a></div>
 
     <div class="v2-section-head" id="services"><div><h2>__CORE_H__</h2><p class="muted">__CORE_P__</p></div></div>
     <div class="svc-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
@@ -3765,12 +3818,12 @@ def home_page():
     """
     replacements = {
         "__TITLE__": bi("افهم أعراضك. اعرف خطوتك التالية.", "Understand your symptoms. Know your next step."),
-        "__TRUSTED_LABEL__": bi("وعي صحي أوضح", "Clearer health awareness"),
-        "__TRUST_COPY__": bi("معلومات مدعومة بمصادر طبية موثوقة.", "Information supported by reputable medical sources."),
-        "__VIEW_SOURCES__": bi("عرض المصادر", "View sources"),
-        "__SUB__": bi("منصة صحية رقمية مبسطة وموثوقة.", "A simple, trustworthy digital health platform."),
-        "__DESC__": bi("افهم الأعراض، راجع علامات الخطر، واطّلع على مصادر طبية موثوقة دون تشخيص قطعي.", "Understand symptoms, review safety signals, and see trusted medical sources—without definitive diagnosis."),
-        "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد", "Ask the assistant"),
+        "__TRUSTED_LABEL__": bi("مساعدك لفهم الأعراض", "Your guide to understanding symptoms"),
+        "__TRUST_COPY__": bi("معلومات صحية مدعومة بمصادر طبية موثوقة", "Health information supported by trusted medical sources"),
+        "__VIEW_SOURCES__": bi("عرض المصادر الطبية ←", "View medical sources →"),
+        "__SUB__": bi("حلّل أعراضك بطريقة ذكية، وتعرّف على مستوى الخطورة والخطوة المناسبة لك.", "Analyze your symptoms intelligently and understand your risk level and the right next step."),
+        "__DESC__": bi("معلومات صحية موثوقة تساعدك على فهم الأعراض واتخاذ قرار أفضل، دون تشخيص طبي.", "Trusted health information to help you understand symptoms and make a better-informed decision, without a medical diagnosis."),
+        "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد الذكي", "Ask the AI assistant"),
         "__CORE_H__": bi("الخدمات الرئيسية", "Core services"), "__CORE_P__": bi("ثلاثة مسارات واضحة لما تحتاجه غالبًا.", "Three clear paths for the things you need most."),
         "__SYM_H__": bi("تحليل الأعراض", "Symptom analysis"), "__SYM_P__": bi("تحليل الأعراض وتقييم مستوى الخطورة بخطوات واضحة.", "Review symptoms and assess risk through clear steps."),
         "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("أسئلة صحية، صحة نفسية، أدوية وتحاليل في تجربة تفاعلية.", "Interactive support for health questions, mental wellbeing, medicines, and labs."),
@@ -5937,11 +5990,11 @@ def chat_page():
       h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>'+esc(LANG==='ar'?'الإجراءات':'Actions')+'</h3></div><div class="ss-report-actions">';
       h += '<button type="button" class="ss-report-action primary" onclick="restart()">🔄 '+esc(LANG==='ar'?'إعادة التحليل':'New analysis')+'</button>';
       if (d.record_id) {
-        h += '<a class="ss-report-action" href="/api/analyze/export/'+encodeURIComponent(String(d.record_id))+'">📄 '+esc(LANG==='ar'?'تحميل التقرير':'Download report')+'</a>';
+        h += '<button type="button" class="ss-report-action" onclick="downloadAnalysisReport(this,'+Number(d.record_id)+')">📄 '+esc(LANG==='ar'?'تحميل التقرير':'Download report')+'</button>';
         h += '<button type="button" class="ss-report-action" onclick="openDoctorHandoff('+Number(d.record_id)+')">🩺 '+esc(LANG==='ar'?'ملخص الطبيب':'Doctor summary')+'</button>';
       }
       if ('speechSynthesis' in window) h += '<button type="button" class="ss-report-action" onclick="speakResult()">🔊 '+esc(LANG==='ar'?'الاستماع للتحليل':'Listen to analysis')+'</button>';
-      h += '</div></section>';
+      h += '</div><div id="reportActionStatus" class="ss-feedback-msg" aria-live="polite" hidden></div></section>';
 
       // 11) Feedback — reuse current endpoint/rating semantics.
       h += '<section class="ss-report-card ss-feedback"><p>'+esc(LANG==='ar'?'هل كانت نتيجة التحليل مفيدة؟':'Was this analysis result useful?')+'</p><div class="ss-feedback-btns"><button type="button" class="ss-feedback-btn" onclick="fb(1)">👍 '+esc(LANG==='ar'?'نعم':'Yes')+'</button><button type="button" class="ss-feedback-btn" onclick="fb(4)">👎 '+esc(LANG==='ar'?'لا':'No')+'</button></div><div id="fbMsg" class="ss-feedback-msg" aria-live="polite"></div></section>';
@@ -5964,6 +6017,36 @@ def chat_page():
           requestAnimationFrame(function(){ bodyEl.scrollTop = keep; });
         });
       });
+    }
+    async function downloadAnalysisReport(btn, recordId){
+      const original = btn ? btn.innerHTML : '';
+      const status = document.getElementById('reportActionStatus');
+      if (status) { status.hidden = true; status.textContent = ''; }
+      if (btn) { btn.disabled = true; btn.textContent = LANG==='ar' ? '⏳ جاري تجهيز التقرير…' : '⏳ Preparing report…'; }
+      try {
+        const response = await fetch('/api/analyze/export/'+encodeURIComponent(String(recordId)), {credentials:'same-origin'});
+        const type = (response.headers.get('content-type') || '').toLowerCase();
+        if (!response.ok || !type.includes('application/pdf')) {
+          let message = LANG==='ar' ? 'تعذر تحميل التقرير حاليًا. حاول مرة أخرى.' : 'Unable to download the report right now. Please try again.';
+          try { const data = await response.json(); if (data && data.error) message = data.error; } catch(e) {}
+          throw new Error(message);
+        }
+        const blob = await response.blob();
+        if (!blob.size) throw new Error(LANG==='ar' ? 'ملف التقرير فارغ.' : 'The report file is empty.');
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'symptosense-report-'+recordId+'.pdf';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function(){ URL.revokeObjectURL(url); link.remove(); }, 2000);
+      } catch (err) {
+        const msg = (err && err.message) || (LANG==='ar' ? 'تعذر تحميل التقرير حاليًا.' : 'Unable to download the report.');
+        if (status) { status.textContent = msg; status.hidden = false; } else { alert(msg); }
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
+      }
     }
     async function openDoctorHandoff(recordId){
       let candidates=[];try{const d=await fetch('/api/handoff/candidates').then(r=>r.json());candidates=(d.analyses||[]).filter(x=>x.id!==recordId);}catch(e){}
@@ -7763,11 +7846,21 @@ SEARCH_CSS = """
 [dir="ltr"] .sea-result .sr-causes li::before { right: auto; left: 4px; }
 .sea-worry { background: #FEF2F2; border: 1px solid #FECACA; color: #7F1D1D; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 10px; }
 .sea-doctor { background: #EAF4FF; border: 1px solid #DCEBFA; color: #123B70; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+.sea-query-context { background:#F8FBFF; border:1px solid #DCEBFA; border-radius:14px; padding:10px 12px; margin:0 0 14px; color:#40566F; font-size:13px; line-height:1.7; }
+.sea-query-context b { color:#123B70; }
+.sea-topic-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
+.sea-topic-card { border:1px solid #DCEBFA; border-radius:16px; padding:16px; background:#FBFDFF; min-width:0; }
+.sea-topic-head { display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+.sea-topic-emoji { font-size:26px; flex:0 0 auto; }
+.sea-topic-title { color:#123B70; font-weight:800; font-size:16px; line-height:1.55; }
+.sea-topic-card .sr-sec { margin-bottom:10px; }
+.sea-topic-card .sr-causes { margin-bottom:10px; }
+.sea-topic-card .sea-worry, .sea-topic-card .sea-doctor { margin-top:9px; margin-bottom:0; }
 .sea-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 .sea-actions .btn.sea-assist { background: linear-gradient(135deg, #1976D2, #1976D2); }
 .sea-no { text-align: center; color: #5F7185; margin-top: 22px; font-size: 14px; }
 .sea-disc { background: #FFF7ED; border: 1px dashed #FDBA74; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.7; margin-top: 16px; text-align: center; }
-@media (max-width: 560px) { .sea-box { flex-wrap: wrap; border-radius: 22px; padding: 12px; } .sea-box .sea-btn { width: 100%; } }
+@media (max-width: 560px) { .sea-box { flex-wrap: wrap; border-radius: 22px; padding: 12px; } .sea-box .sea-btn { width: 100%; } .sea-topic-grid { grid-template-columns:1fr; } .sea-result { padding:16px; border-radius:16px; } .sea-actions .btn { width:100%; } }
 """
 
 
@@ -7794,6 +7887,7 @@ def search_page():
     function sT(k) { return ST[k] || k; }
     function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
     let curTopic = '';
+    let curExplain = '';
     const API_LANG = function() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; };
     function loadSuggestions() {
       fetch('/api/search?lang=' + API_LANG())
@@ -7823,30 +7917,82 @@ def search_page():
     }
     function catTxt(c) {
       const m = { symptom: 'sea_cat_symp', test: 'sea_cat_test', term: 'sea_cat_term', medication: 'sea_cat_med' };
+      if (c === 'combined') return API_LANG()==='ar' ? 'أعراض/مفاهيم متعددة' : 'Multiple symptoms/concepts';
       return sT(m[c] || 'sea_cat_term');
+    }
+    function renderTopicCard(t) {
+      let h = '<div class="sea-topic-card">';
+      h += '<div class="sea-topic-head"><span class="sea-topic-emoji">' + esc(t.emoji || '🩺') + '</span><div class="sea-topic-title">' + esc(t.title || '') + '</div></div>';
+      if (t.what) h += '<div class="sr-sec">' + esc(t.what) + '</div>';
+      if (t.causes && t.causes.length) {
+        h += '<b style="color:#1976D2;">' + esc(t.causes_label || sT('sea_causes')) + '</b><ul class="sr-causes">';
+        t.causes.forEach(function(c) { h += '<li>' + esc(c) + '</li>'; });
+        h += '</ul>';
+      }
+      if (t.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(t.worry) + '</div>';
+      if (t.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(t.doctor) + '</div>';
+      if (t.sources && t.sources.length) {
+        h += '<div class="sr-sec"><b>' + (API_LANG()==='ar'?'📚 مصادر هذا العرض':'📚 Sources for this symptom') + '</b><ul class="sr-causes">';
+        t.sources.forEach(function(s) {
+          if (s && s.url) h += '<li><a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">' + esc(s.name||s.organization||s.url) + '</a></li>';
+        });
+        h += '</ul></div>';
+      }
+      h += '</div>';
+      return h;
+    }
+    function renderSources(sources) {
+      if (!sources || !sources.length) return '';
+      let h = '<div class="sr-sec"><b>'+(API_LANG()==='ar'?'📚 المصادر الطبية':'📚 Medical sources')+'</b><ul class="sr-causes">';
+      sources.forEach(function(s){
+        if (!s || !s.url) return;
+        h += '<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name||s.organization||s.url)+'</a></li>';
+      });
+      h += '</ul></div>';
+      return h;
     }
     function renderResult(r) {
       const box = document.getElementById('seaRes');
       let h = '<div class="sea-result">';
       h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(r.title) + '</div><span class="sr-cat">' + esc(catTxt(r.category)) + '</span></div></div>';
-      h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
-      if (r.causes && r.causes.length) {
-        h += '<b style="color:#1976D2;">' + esc(r.causes_label || sT('sea_causes')) + '</b><ul class="sr-causes">';
-        r.causes.forEach(function(c) { h += '<li>' + esc(c) + '</li>'; });
-        h += '</ul>';
+      if (r.original_query) {
+        h += '<div class="sea-query-context"><b>' + (API_LANG()==='ar'?'بحثك: ':'Your search: ') + '</b>' + esc(r.original_query) + '</div>';
       }
-      if (r.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(r.worry) + '</div>';
+      if (r.what) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
+
+      if (r.matched_topics && r.matched_topics.length) {
+        h += '<div class="sea-topic-grid">';
+        r.matched_topics.forEach(function(t) { h += renderTopicCard(t); });
+        h += '</div>';
+      } else {
+        if (r.causes && r.causes.length) {
+          h += '<b style="color:#1976D2;">' + esc(r.causes_label || sT('sea_causes')) + '</b><ul class="sr-causes">';
+          r.causes.forEach(function(c) { h += '<li>' + esc(c) + '</li>'; });
+          h += '</ul>';
+        }
+        if (r.worry) h += '<div class="sea-worry">🚨 <b>' + esc(sT('sea_worry')) + '</b><br>' + esc(r.worry) + '</div>';
+      }
+
       if (r.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(r.doctor) + '</div>';
-      if (r.sources && r.sources.length) { h += '<div class="sr-sec"><b>'+(API_LANG()==='ar'?'📚 المصادر الطبية':'📚 Medical sources')+'</b><ul class="sr-causes">'; r.sources.forEach(function(s){h+='<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name||s.organization)+'</a></li>'}); h += '</ul></div>'; }
-      h += '<div class="sea-actions">' +
-        '<button class="btn" onclick="openExplain(\\'' + esc(r.title).replace(/["\'\\\\]/g, '') + '\\')">✨ ' + esc(sT('sea_explain')) + '</button>' +
-        '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>' +
-        '</div>';
-      h += '</div>';
+      h += renderSources(r.sources);
+      h += '<div class="sea-actions">';
+      if (!r.matched_topics || r.matched_topics.length === 1) {
+        h += '<button class="btn" onclick="openExplainCurrent()">✨ ' + esc(sT('sea_explain')) + '</button>';
+      }
+      h += '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>';
+      if (r.category === 'combined') {
+        h += '<button class="btn" onclick="startSymptomAnalysis()">🩺 ' + (API_LANG()==='ar'?'ابدأ تحليل الأعراض':'Start symptom analysis') + '</button>';
+      }
+      h += '</div></div>';
       h += '<div class="sea-disc">' + esc(sT('sea_disc')) + '</div>';
       box.innerHTML = h;
-      curTopic = r.title;
+      curTopic = r.original_query || r.title;
+      curExplain = r.title || '';
     }
+    function openExplainCurrent() {
+      if (curExplain && typeof openExplain === 'function') openExplain(curExplain);
+    }
+    function startSymptomAnalysis() { window.location.href = '/chat'; }
     function askAboutTopic() {
       if (typeof asstOpenWithContext === 'function') asstOpenWithContext(curTopic);
     }
@@ -11750,6 +11896,205 @@ def public_health_handoff(token):
     return _page("SymptoSense Health Summary",body)
 
 
+def _pdf_report(result, lang="ar"):
+    """Create the symptom-analysis PDF from the already-saved analysis result.
+
+    Uses PyMuPDF Story so Arabic shaping/RTL work without relying on a bundled
+    application font. No medical values are recalculated here: this function
+    only formats the data already stored for the analysis.
+    """
+    import html as _html
+    try:
+        import fitz
+    except Exception as exc:
+        raise RuntimeError("PDF renderer is unavailable") from exc
+
+    ar = lang != "en"
+
+    def esc(value):
+        return _html.escape(str(value if value not in (None, "") else "—"))
+
+    def as_lines(value):
+        if value in (None, "", []):
+            return []
+        if isinstance(value, (tuple, list)):
+            out = []
+            for item in value:
+                if isinstance(item, dict):
+                    text = item.get("tip") or item.get("text") or item.get("message") or item.get("name") or item.get("title") or ""
+                    if text:
+                        out.append(str(text))
+                elif item not in (None, ""):
+                    out.append(str(item))
+            return out
+        text = str(value).replace("\r", "\n")
+        parts = []
+        for line in text.split("\n"):
+            line = re.sub(r"^\s*[-•*]+\s*", "", line).strip()
+            if line:
+                parts.append(line)
+        return parts or [text.strip()]
+
+    def data_quality_text():
+        dq = result.get("data_quality")
+        if isinstance(dq, dict):
+            val = dq.get("percentage")
+            if val is None:
+                val = dq.get("percent")
+            if val is None:
+                val = dq.get("score")
+            label = dq.get("label_ar" if ar else "label_en") or dq.get("label") or ""
+            if val is not None:
+                try:
+                    val = round(float(val))
+                    return (f"{val}% - {label}" if label else f"{val}%")
+                except Exception:
+                    pass
+        if isinstance(dq, (int, float)):
+            return f"{round(float(dq))}%"
+        return "—"
+
+    risk = str(result.get("urgency") or result.get("risk_level") or "low").lower()
+    risk_labels = ({
+        "low": "خطورة منخفضة", "monitor": "خطورة منخفضة", "medium": "يحتاج مراجعة طبية",
+        "review": "يحتاج مراجعة طبية", "high": "طوارئ", "urgent": "طوارئ", "emergency": "طوارئ",
+    } if ar else {
+        "low": "Low risk", "monitor": "Low risk", "medium": "Needs medical review",
+        "review": "Needs medical review", "high": "Emergency", "urgent": "Emergency", "emergency": "Emergency",
+    })
+    risk_label = result.get("risk_label") or risk_labels.get(risk) or ("تقييم صحي" if ar else "Health assessment")
+
+    symptoms = result.get("symptoms") or []
+    if not isinstance(symptoms, list):
+        symptoms = as_lines(symptoms)
+    symptom_text = ("، ".join(map(str, symptoms)) if ar else ", ".join(map(str, symptoms))) or "—"
+    gender_raw = str(result.get("gender") or "").strip().lower()
+    if ar:
+        gender = {"f":"أنثى", "female":"أنثى", "m":"ذكر", "male":"ذكر"}.get(gender_raw, result.get("gender") or "—")
+    else:
+        gender = {"f":"Female", "female":"Female", "m":"Male", "male":"Male"}.get(gender_raw, result.get("gender") or "—")
+
+    conditions = result.get("knowledge_matches") or []
+    condition_blocks = []
+    for item in conditions:
+        if not isinstance(item, dict):
+            continue
+        name = (item.get("name_ar") if ar else item.get("name_en")) or item.get("name") or item.get("disease_name") or ""
+        if not name:
+            continue
+        score = item.get("score")
+        if score is None:
+            score = item.get("matching_score")
+        if score is None:
+            score = item.get("match_score")
+        score_html = ""
+        if score not in (None, ""):
+            score_html = f'<span class="pill">{esc("التوافق" if ar else "Match")}: {esc(score)}</span>'
+        reason = item.get("why") or item.get("reason") or item.get("match_reason") or ""
+        condition_blocks.append(
+            '<div class="condition"><div class="condition-head"><strong>%s</strong>%s</div>%s</div>' % (
+                esc(name), score_html, ('<p>%s</p>' % esc(reason)) if reason else ''
+            )
+        )
+    if not condition_blocks:
+        raw_pc = result.get("possible_conditions") or ""
+        if raw_pc:
+            condition_blocks.append('<div class="condition"><p>%s</p></div>' % esc(raw_pc))
+
+    recommendations = result.get("recommendations") or []
+    rec_lines = as_lines(recommendations)
+    danger_lines = as_lines(result.get("danger_signs"))
+    home_lines = as_lines(result.get("home_care"))
+    seek_lines = as_lines(result.get("when_to_seek_care"))
+    doctor_lines = as_lines(result.get("questions_for_doctor"))
+
+    source_cards = []
+    for src in (result.get("medical_sources") or []):
+        if not isinstance(src, dict):
+            continue
+        name = src.get("source_name") or src.get("organization") or src.get("name") or ("مصدر طبي" if ar else "Medical source")
+        title = (src.get("reference_title_ar") if ar else src.get("reference_title_en")) or src.get("reference_title_en") or src.get("reference_title_ar") or ""
+        source_cards.append('<div class="source"><strong>%s</strong>%s</div>' % (esc(name), ('<small>%s</small>' % esc(title)) if title else ''))
+
+    labels = ({
+        "title":"تقرير تحليل الأعراض", "subtitle":"SymptoSense - ملخص صحي توعوي",
+        "summary":"نتيجة التحليل", "risk":"مستوى الخطورة", "quality":"جودة المعلومات المدخلة",
+        "entered":"المعلومات المدخلة", "symptoms":"الأعراض", "duration":"المدة", "severity":"شدة الأعراض",
+        "age":"العمر", "gender":"الجنس", "conditions":"الاحتمالات المحتملة", "now":"ماذا أفعل الآن؟",
+        "warnings":"علامات تستدعي الانتباه", "home":"الرعاية المنزلية", "doctor":"أسئلة للطبيب",
+        "sources":"المصادر الطبية", "none":"لم يتم تحديد معلومات إضافية ضمن هذا القسم.",
+        "disclaimer":"هذه النتيجة توعوية ولا تُعد تشخيصًا طبيًا نهائيًا ولا تغني عن استشارة الطبيب عند الحاجة.",
+        "generated":"تاريخ إنشاء التقرير",
+    } if ar else {
+        "title":"Symptom Analysis Report", "subtitle":"SymptoSense - Educational health summary",
+        "summary":"Analysis result", "risk":"Risk level", "quality":"Information completeness",
+        "entered":"Information entered", "symptoms":"Symptoms", "duration":"Duration", "severity":"Symptom severity",
+        "age":"Age", "gender":"Gender", "conditions":"Possible conditions", "now":"What should I do now?",
+        "warnings":"Warning signs", "home":"Home care", "doctor":"Questions for your clinician",
+        "sources":"Medical sources", "none":"No additional information was provided for this section.",
+        "disclaimer":"This result is educational, is not a final medical diagnosis, and does not replace professional medical advice when needed.",
+        "generated":"Report generated",
+    })
+
+    def list_html(lines, empty=False):
+        if not lines:
+            return ('<p class="muted">%s</p>' % esc(labels["none"])) if empty else ""
+        return '<ul>%s</ul>' % ''.join('<li>%s</li>' % esc(x) for x in lines)
+
+    direction = "rtl" if ar else "ltr"
+    align = "right" if ar else "left"
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    html_doc = f"""<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{{box-sizing:border-box}} body{{font-family:sans-serif;color:#23384A;font-size:10.5pt;line-height:1.55;direction:{direction};text-align:{align};}}
+h1{{font-size:22pt;color:#163B5C;margin:0 0 4px}} h2{{font-size:14pt;color:#163B5C;margin:0 0 10px}} p{{margin:4px 0 8px}}
+.header{{border-bottom:2px solid #DCE8F0;padding-bottom:14px;margin-bottom:16px}} .muted{{color:#607487}} .card{{border:1px solid #DCE8F0;border-radius:12px;padding:14px;margin:0 0 12px;background:#FFFFFF}}
+.summary{{background:#F3F9FD}} .risk{{font-size:16pt;font-weight:700;color:#163B5C}} .pill{{display:inline-block;border:1px solid #DCE8F0;border-radius:999px;padding:2px 8px;font-size:8.5pt;color:#607487}}
+.grid{{display:flex;flex-wrap:wrap;gap:8px}} .field{{width:48%;border:1px solid #E4EDF3;border-radius:9px;padding:8px}} .field b{{display:block;color:#607487;font-size:8.5pt;margin-bottom:2px}}
+.condition,.source{{border:1px solid #E4EDF3;border-radius:9px;padding:10px;margin:7px 0}} .condition-head{{display:flex;justify-content:space-between;gap:8px;align-items:center}} .source small{{display:block;color:#607487;margin-top:3px}}
+ul{{margin:4px 0 0;padding-{'right' if ar else 'left'}:20px}} li{{margin:3px 0}} .disclaimer{{border:1px solid #EFDAA7;background:#FFF8E7;border-radius:10px;padding:10px;color:#6F531B;margin-top:15px}}
+</style></head><body>
+<div class="header"><h1>{esc(labels['title'])}</h1><p class="muted">{esc(labels['subtitle'])}</p><p class="muted">{esc(labels['generated'])}: {esc(generated)}</p></div>
+<div class="card summary"><h2>{esc(labels['summary'])}</h2><div class="risk">{esc(labels['risk'])}: {esc(risk_label)}</div><p><b>{esc(labels['quality'])}:</b> {esc(data_quality_text())}</p></div>
+<div class="card"><h2>{esc(labels['entered'])}</h2><div class="grid">
+<div class="field"><b>{esc(labels['symptoms'])}</b>{esc(symptom_text)}</div>
+<div class="field"><b>{esc(labels['duration'])}</b>{esc(result.get('duration'))}</div>
+<div class="field"><b>{esc(labels['severity'])}</b>{esc(result.get('severity'))}</div>
+<div class="field"><b>{esc(labels['age'])}</b>{esc(result.get('age'))}</div>
+<div class="field"><b>{esc(labels['gender'])}</b>{esc(gender)}</div>
+</div></div>
+<div class="card"><h2>{esc(labels['conditions'])}</h2>{''.join(condition_blocks) or '<p class="muted">'+esc(labels['none'])+'</p>'}</div>
+<div class="card"><h2>{esc(labels['now'])}</h2>{list_html(rec_lines + seek_lines, True)}</div>
+<div class="card"><h2>{esc(labels['warnings'])}</h2>{list_html(danger_lines, True)}</div>
+{('<div class="card"><h2>'+esc(labels['home'])+'</h2>'+list_html(home_lines)+'</div>') if home_lines else ''}
+{('<div class="card"><h2>'+esc(labels['doctor'])+'</h2>'+list_html(doctor_lines)+'</div>') if doctor_lines else ''}
+{('<div class="card"><h2>'+esc(labels['sources'])+'</h2>'+''.join(source_cards)+'</div>') if source_cards else ''}
+<div class="disclaimer">{esc(labels['disclaimer'])}</div>
+</body></html>"""
+
+    buf = io.BytesIO()
+    writer = fitz.DocumentWriter(buf)
+    page = fitz.paper_rect("a4")
+    story = fitz.Story(html=html_doc)
+    more = True
+    page_count = 0
+    try:
+        while more:
+            page_count += 1
+            if page_count > 40:
+                raise RuntimeError("PDF exceeded safe page limit")
+            device = writer.begin_page(page)
+            more, _ = story.place(fitz.Rect(42, 42, page.width - 42, page.height - 42))
+            story.draw(device)
+            writer.end_page()
+    finally:
+        writer.close()
+    buf.seek(0)
+    if not buf.getvalue().startswith(b"%PDF"):
+        raise RuntimeError("Invalid PDF output")
+    return buf
+
+
 @app.route("/api/analyze/export/<int:record_id>")
 def api_export_pdf(record_id):
     db.init_db()
@@ -12077,32 +12422,94 @@ def api_search():
         q = (request.args.get("q") or "").strip()
         if not q:
             return jsonify({"ok": True, "result": None, "suggestions": health_search.suggestion_terms(lang)})
+
         result = health_search.search_health(q, lang)
-        # Prefer the editable Medical Knowledge Base for symptoms. The curated
-        # glossary remains a safe fallback for tests and general terms.
-        normalized = medical_knowledge.normalize_symptoms([q], lang)
-        if normalized.get("canonical"):
-            symptom = normalized["canonical"][0]
+
+        def _entity_sources(entity):
+            sources = []
+            for source in (entity or {}).get("sources", []):
+                url = source.get("reference_url") or source.get("official_url")
+                if not url:
+                    continue
+                sources.append({
+                    "name": source.get("source_name"),
+                    "organization": source.get("organization"),
+                    "url": url,
+                })
+            return sources
+
+        def _enrich_search_topic(topic):
+            """Add trusted source metadata without replacing curated search text.
+
+            Previously this route replaced a useful search result with a Medical
+            Knowledge Base symptom object whose ``causes`` list was empty. That
+            made the UI show only the symptom name. Keep the search result as the
+            source of explanatory copy and use the editable KB only to enrich it.
+            """
+            if not topic or topic.get("category") != "symptom":
+                return topic
+            probe = topic.get("title") or ""
+            normalized = medical_knowledge.normalize_symptoms([probe], lang)
+            canonical = normalized.get("canonical") or []
+            if not canonical:
+                return topic
+            symptom = canonical[0]
             entity = medical_knowledge.get_entity("symptom", symptom["symptom_id"], public=True)
-            if entity:
-                sources=[]
-                for source in entity.get("sources",[]):
-                    sources.append({"name":source.get("source_name"),"organization":source.get("organization"),"url":source.get("reference_url") or source.get("official_url")})
-                result = {
-                    "key": entity.get("slug"), "emoji":"🩺", "category":"symptom",
-                    "title": entity.get("name_en") if lang=="en" else entity.get("name_ar"),
-                    "what": entity.get("description_en") if lang=="en" else entity.get("description_ar"),
-                    "causes": [], "worry": entity.get("red_flags_en") if lang=="en" else entity.get("red_flags_ar"),
-                    "doctor": "Seek medical review if symptoms persist, worsen, or a red flag appears." if lang=="en" else "اطلب مراجعة طبية إذا استمرت الأعراض أو ساءت أو ظهرت علامة خطر.",
-                    "sources": sources,
-                }
+            if not entity:
+                return topic
+            sources = _entity_sources(entity)
+            if sources:
+                topic["sources"] = sources
+            # Only fill missing fields. Never erase richer curated health-search
+            # content and never recalculate medical logic in this endpoint.
+            if not topic.get("worry"):
+                topic["worry"] = entity.get("red_flags_en") if lang == "en" else entity.get("red_flags_ar")
+            if not topic.get("what"):
+                topic["what"] = entity.get("description_en") if lang == "en" else entity.get("description_ar")
+            return topic
+
+        if result:
+            if result.get("matched_topics"):
+                result["matched_topics"] = [_enrich_search_topic(dict(t)) for t in result["matched_topics"]]
+                # Sources stay attached to the concept they support. Do not merge
+                # them into one compound list that could look like a source for a
+                # causal relationship between the symptoms.
+                result["sources"] = []
+            else:
+                result = _enrich_search_topic(result)
+        else:
+            # Fallback to the editable Medical Knowledge Base when the curated
+            # health-search glossary does not recognize the query at all.
+            normalized = medical_knowledge.normalize_symptoms([q], lang)
+            canonical = normalized.get("canonical") or []
+            if canonical:
+                symptom = canonical[0]
+                entity = medical_knowledge.get_entity("symptom", symptom["symptom_id"], public=True)
+                if entity:
+                    result = {
+                        "key": entity.get("slug"), "emoji": "🩺", "category": "symptom",
+                        "title": entity.get("name_en") if lang == "en" else entity.get("name_ar"),
+                        "what": entity.get("description_en") if lang == "en" else entity.get("description_ar"),
+                        "causes": [],
+                        "causes_label": "💡 Common causes" if lang == "en" else "💡 الأسباب المحتملة",
+                        "worry": entity.get("red_flags_en") if lang == "en" else entity.get("red_flags_ar"),
+                        "doctor": (
+                            "Seek medical review if symptoms persist, worsen, or a red flag appears."
+                            if lang == "en" else
+                            "اطلب مراجعة طبية إذا استمرت الأعراض أو ساءت أو ظهرت علامة خطر."
+                        ),
+                        "sources": _entity_sources(entity),
+                        "recognized_topics": [entity.get("name_en") if lang == "en" else entity.get("name_ar")],
+                        "original_query": q,
+                    }
+
         return jsonify({
             "ok": True,
             "result": result,
             "suggestions": health_search.suggestion_terms(lang),
         })
     except Exception as e:
-        return _mk_error(e,500)
+        return _mk_error(e, 500)
 
 
 @app.route("/api/explain")

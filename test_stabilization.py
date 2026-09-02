@@ -348,6 +348,24 @@ class StabilizationTest(unittest.TestCase):
         self.assertNotIn("database password",payload["error"])
         self.assertEqual(payload["request_id"],failed.headers["X-Request-ID"])
 
+    def test_analysis_pdf_export_returns_real_pdf(self):
+        uid=self.verified_user("pdf-export@example.test"); c=self.client("ar"); self.login_session(c,uid)
+        owner_key=f"account:{uid}"
+        record_id=db.save_record(owner_key,"ar",22,"f",["صداع","غثيان"],"1-3 أيام",2,"low")
+        db.save_result(owner_key,record_id,{
+            "lang":"ar","age":22,"gender":"f","symptoms":["صداع","غثيان"],
+            "duration":"1-3 أيام","severity":2,"urgency":"low","risk_level":"low",
+            "risk_label":"خطورة منخفضة","data_quality":{"score":100,"level_label":"ممتاز"},
+            "knowledge_matches":[{"name_ar":"الصداع النصفي","score":"توافق مرتفع"}],
+            "recommendations":[{"tip":"راقب تطور الأعراض."}],
+            "danger_signs":"","home_care":"","medical_sources":[]
+        })
+        response=c.get(f"/api/analyze/export/{record_id}")
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(response.headers.get("Content-Type","").startswith("application/pdf"))
+        self.assertTrue(response.data.startswith(b"%PDF"))
+        self.assertGreater(len(response.data),1000)
+
     def test_medications_has_iphone_home_screen_install_guidance(self):
         uid=self.verified_user("iphone-install@example.test"); c=self.client("ar"); self.login_session(c,uid)
         html=c.get("/meds").get_data(as_text=True)
