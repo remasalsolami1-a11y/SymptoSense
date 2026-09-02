@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "SymptoSense V2 — مساعدك الصحي الذكي",
-  "short_name": "SymptoSense V2",
+  "name": "SymptoSense — مساعدك لفهم الأعراض",
+  "short_name": "SymptoSense",
   "description": "منصة صحية تثقيفية لفهم الأعراض وتقييم الخطورة والوصول إلى مصادر موثوقة.",
   "lang": "ar",
   "dir": "rtl",
@@ -13,37 +13,28 @@
   "theme_color": "#287FC1",
   "categories": ["medical", "health"],
   "icons": [
-    {
-      "src": "/brand-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/brand-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/brand-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
   ],
   "shortcuts": [
     {
       "name": "فحص الأعراض",
       "short_name": "فحص الأعراض",
       "url": "/chat?source=pwa",
-      "icons": [{ "src": "/brand-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "الأدوية",
       "short_name": "الأدوية",
       "url": "/meds?source=pwa",
-      "icons": [{ "src": "/brand-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "الطوارئ",
       "short_name": "الطوارئ",
       "url": "/emergency?source=pwa",
-      "icons": [{ "src": "/brand-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

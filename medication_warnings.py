@@ -97,7 +97,7 @@ MEDICATIONS = {
     "amlodipine": (
         "أملوديبين", "Amlodipine",
         {"أملوديبين", "amlodipine", "نورفاسك", "norvasc"},
-        "قد يسبب تورماً خفيفاً بالكاحلين — لو زاد التورم فجأة أو صار تنفس صعب، راجعي طبيبك.",
+        "قد يسبب تورماً خفيفاً بالكاحلين — لو زاد التورم فجأة أو صار تنفس صعب، راجع الطبيب.",
         "May cause mild ankle swelling — if swelling suddenly worsens or breathing is hard, see your doctor.",
         "علاج ارتفاع ضغط الدم وبعض حالات الذبحة الصدرية.",
         "Treating high blood pressure and some cases of angina.",

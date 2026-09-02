@@ -86,10 +86,21 @@ app.secret_key = _configured_web_secret or secrets.token_hex(32)
 if not _configured_web_secret:
     app.logger.warning("WEB_SECRET is not configured; using an ephemeral session key for this process")
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
+_secure_cookie_env = os.environ.get("SESSION_COOKIE_SECURE")
+_is_https_production = bool(
+    os.environ.get("RAILWAY_ENVIRONMENT")
+    or os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+    or os.environ.get("SITE_URL", "").strip().lower().startswith("https://")
+)
+_secure_cookie = (
+    _secure_cookie_env == "1"
+    if _secure_cookie_env is not None
+    else _is_https_production
+)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    SESSION_COOKIE_SECURE=_secure_cookie,
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
 )
 
@@ -1171,6 +1182,7 @@ PAGE_FRAME = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="/brand-icon.svg">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2062,7 +2074,7 @@ function smartCtxAction(action) {
     box.dataset.mode = mode;
     if (mode === 'ios') {
       text.textContent = isArabic
-        ? 'لتثبيت SymptoSense: اضغطي مشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».'
+        ? 'لتثبيت SymptoSense: افتح قائمة المشاركة ⬆️ ثم اختر «إضافة إلى الشاشة الرئيسية».'
         : 'To install SymptoSense, tap Share ⬆️ then “Add to Home Screen”.';
       installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
     } else if (mode === 'native') {
@@ -2072,7 +2084,7 @@ function smartCtxAction(action) {
       installBtn.textContent = isArabic ? 'تثبيت' : 'Install';
     } else {
       text.textContent = isArabic
-        ? 'من قائمة المتصفح اختاري «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».'
+        ? 'من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».'
         : 'From your browser menu, choose “Add to Home Screen” or “Install app”.';
       installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
     }
@@ -2414,9 +2426,20 @@ def v2_request_timer():
 
 @app.after_request
 def v2_operational_metrics(response):
-    """Collect content-free operational counts and anonymous journey activity."""
+    """Record optional product analytics only after explicit analytics consent.
+
+    Server logs still capture request failures for reliability/security, but product
+    usage, page-view and journey telemetry are not persisted when Analytics is off.
+    """
     try:
         path = request.path or "/"
+        is_candidate = (
+            response.status_code >= 400
+            or (request.method == "POST" and (path == "/api/analyze" or path.startswith("/api/assistant")))
+            or (request.method == "GET" and (path in {"/sources", "/medical-sources"} or (response.mimetype == "text/html" and not path.startswith("/admin"))))
+        )
+        if not is_candidate or not _analytics_consent_ok():
+            return response
         event_type = None
         if response.status_code >= 400:
             event_type = "error"
@@ -2432,14 +2455,13 @@ def v2_operational_metrics(response):
             elapsed = round((time.perf_counter() - getattr(g, "v2_started_at", time.perf_counter())) * 1000)
             platform_v2.record_usage(event_type, path, _lang(), request.headers.get("User-Agent", ""), response.status_code, elapsed)
         if request.method == "GET" and response.status_code < 400 and response.mimetype == "text/html" and not path.startswith("/admin"):
-            try:
-                admin_operational.touch_session(_analytics_session_id(), request.headers.get("User-Agent", ""))
-                if path in {"/home","/"}: admin_operational.record_journey(_analytics_session_id(), "home", request.headers.get("User-Agent", ""))
-                elif path == "/chat": admin_operational.record_journey(_analytics_session_id(), "start_analysis", request.headers.get("User-Agent", ""))
-            except Exception:
-                pass
-    except Exception:
-        pass
+            admin_operational.touch_session(_analytics_session_id(), request.headers.get("User-Agent", ""))
+            if path in {"/home","/"}:
+                admin_operational.record_journey(_analytics_session_id(), "home", request.headers.get("User-Agent", ""))
+            elif path == "/chat":
+                admin_operational.record_journey(_analytics_session_id(), "start_analysis", request.headers.get("User-Agent", ""))
+    except Exception as exc:
+        app.logger.debug("Optional analytics recording skipped: %s", type(exc).__name__)
     return response
 
 
@@ -2495,7 +2517,7 @@ def production_security_headers(response):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), payment=(), usb=()")
+    response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(self), payment=(), usb=()")
     if app.config.get("SESSION_COOKIE_SECURE"):
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     response.headers.setdefault(
@@ -2503,7 +2525,7 @@ def production_security_headers(response):
         "default-src 'self'; script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; "
-        "connect-src 'self'; frame-src 'self'; worker-src 'self'; object-src 'none'; "
+        "connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com; worker-src 'self'; object-src 'none'; "
         "base-uri 'self'; form-action 'self'",
     )
     response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
@@ -2597,7 +2619,7 @@ L = {
         "footer_love": "صُنع بكل حب 🤍 بواسطة",
         "footer_love_name": "ريماس",
         "footer_copy_full": "© 2026 SymptoSense — جميع الحقوق محفوظة",
-        "keywords": "تحليل الأعراض, فحص الأعراض, تشخيص مبدئي, صحة, طب, مستشفيات السعودية, SymptoSense",
+        "keywords": "تحليل الأعراض, فحص الأعراض, تقييم أولي, صحة, طب, مستشفيات السعودية, SymptoSense",
         "title_landing": "SymptoSense — تحليل الأعراض بالذكاء الاصطناعي",
         "title_chat": "SymptoSense — فحص الأعراض",
         "title_blood": "SymptoSense — تحليل الدم",
@@ -2620,7 +2642,7 @@ L = {
         "w_ar_d": "المتابعة باللغة العربية",
         "w_en_l": "English 🇬🇧",
         "w_en_d": "Continue in English",
-        "home_hero_t1": "كيف تحسين؟",
+        "home_hero_t1": "كيف هي الحالة اليوم؟",
         "home_hero_t2": "لنكتشف معاً 🩺",
         "home_hero_p": "أدخل أعراضك بخطوات بسيطة واحصل على تقييم أولي ذكي يعتمد على نموذج التحليل المعتمد في النظام — مع تحذيرات الأدوية، أقرب المستشفيات، تحليل فحوصات الدم، والإسعافات الأولية.",
         "home_btn_start": "ابدأ الفحص الآن 🚀",
@@ -2709,7 +2731,7 @@ L = {
         "ab_p4": "هذا الموقع <b>ليس تشخيصاً طبياً نهائياً</b> ولا بديلاً عن استشارة الطبيب المختص. عند أي عرض خطر اتصل بالإسعاف فوراً.",
         "ab_srcs": "المصادر الطبية المعتمدة:",
         "ab_srcs_p": "Mayo Clinic، NHS، World Health Organization (WHO)، CDC، MedlinePlus — تُذكر داخل كل توصية مع رابطها.",
-        "ab_note": "بياناتك تُخزّن بشكل مجهول (بدون هوية) وتُستخدم فقط لتحسين الخدمة والإحصاءات.",
+        "ab_note": "تُحفظ البيانات وفق إعدادات الخصوصية التي يختارها المستخدم، ولا تُستخدم تحليلات الاستخدام الاختيارية إلا بعد الموافقة عليها.",
         "ab_hero_sub": "مساعدك الذكي لفهم صحتك",
         "ab_hero_p": "SymptoSense أداة توعوية تساعدك على فهم أعراضك، وتحليل فحوصات الدم، والحصول على معلومات دوائية وإرشادات صحية — بالاعتماد على مصادر طبية معتمدة — لمساعدتك على اتخاذ الخطوة الصحيحة نحو صحتك.",
         "ab_alert": "⚠️ SymptoSense أداة توعية مساعدة وليست بديلاً عن الطبيب. عند وجود أعراض خطرة اتصل بالإسعاف <b>997</b> فوراً.",
@@ -2727,7 +2749,7 @@ L = {
         "ab_srcs_h": "📚 مصادرنا الطبية",
         "ab_srcs_p2": "نعتمد في معلوماتنا على مصادر طبية موثوقة ومعترف بها، ويُذكر المصدر مع كل توصية ورابطها.",
         "ab_priv_h": "🔐 الخصوصية",
-        "ab_priv_p": "نحترم خصوصيتك: تُخزَّن تقييماتك بمعرّف داخلي لا يتضمن هويتك، وتُستخدم البيانات فقط لتحسين الخدمة، ولا نشاركها مع أي طرف ثالث.",
+        "ab_priv_p": "نحترم الخصوصية: تُحفظ البيانات وفق إعدادات الحساب والموافقة. عند استخدام المساعد أو بعض وظائف التحليل قد يُرسل النص اللازم إلى مزود الذكاء الاصطناعي المهيأ للمشروع، بينما تبقى تحليلات الاستخدام الاختيارية متوقفة ما لم تتم الموافقة عليها.",
         "chat_sub": "مساعد التحليل الذكي",
         "chat_head_p": "مساعد التحليل الذكي — بالعربية 🇸🇦",
         "chat_muted": "التوعية فقط وليس تشخيصاً نهائياً — راجع الطبيب عند أي شك.",
@@ -2812,7 +2834,7 @@ L = {
         "register_sub": "ابدأ رحلتك الصحية مع SymptoSense",
         "register_name": "الاسم",
         "register_email": "البريد الإلكتروني",
-        "register_pass": "كلمة المرور (٦ أحرف على الأقل)",
+        "register_pass": "كلمة المرور (٨ أحرف على الأقل)",
         "register_confirm": "تأكيد كلمة المرور",
         "register_btn": "إنشاء حساب",
         "register_hasaccount": "لديك حساب بالفعل؟",
@@ -2898,7 +2920,7 @@ L = {
         "incomplete_q_gender": "ما الجنس؟ هذا مهم للتحليل الطبي.",
         "incomplete_q_duration": "متى بدأت الأعراض بالضبط؟",
         "incomplete_q_notes": "هل فيه شي ثاني تبي تضيفه؟",
-        "incomplete_q_general": "محتاج معلومة إضافية صغيرة ل giving نتيجة أدق.",
+        "incomplete_q_general": "نحتاج معلومة إضافية بسيطة لتقديم نتيجة أدق.",
         "incomplete_today": "اليوم",
         "incomplete_yesterday": "أمس",
         "incomplete_days": "عدة أيام",
@@ -3078,7 +3100,7 @@ L = {
         "ab_p4": "This website is <b>not a final medical diagnosis</b> and not a substitute for consulting a specialist. If you have any dangerous symptom, call an ambulance immediately.",
         "ab_srcs": "Trusted medical sources:",
         "ab_srcs_p": "Mayo Clinic, NHS, World Health Organization (WHO), CDC, MedlinePlus — mentioned within each recommendation with its link.",
-        "ab_note": "Your data is stored anonymously (no identity) and used only to improve the service and statistics.",
+        "ab_note": "Data is stored according to the privacy settings you choose, and optional usage analytics are not used unless you explicitly enable them.",
         "ab_hero_sub": "Your smart assistant to understand your health",
         "ab_hero_p": "SymptoSense is an awareness tool that helps you understand your symptoms, analyze blood tests, get medication information, and health guidance — based on trusted medical sources — to help you take the right step for your health.",
         "ab_alert": "⚠️ SymptoSense is a supportive awareness tool and not a substitute for a doctor. For dangerous symptoms call an ambulance at <b>997</b> immediately.",
@@ -3096,7 +3118,7 @@ L = {
         "ab_srcs_h": "📚 Our medical sources",
         "ab_srcs_p2": "We rely on trusted, recognized medical sources, and the source is mentioned with each recommendation and its link.",
         "ab_priv_h": "🔐 Privacy",
-        "ab_priv_p": "We respect your privacy: your assessments are stored under an internal identifier that does not include your identity. Data is used only to improve the service and is never shared with third parties.",
+        "ab_priv_p": "We respect your privacy: data is stored according to your account and consent settings. When you use the assistant or some analysis functions, the text required for the response may be sent to the configured AI provider, while optional usage analytics remain off unless you enable them.",
         "chat_sub": "Smart analysis assistant",
         "chat_head_p": "Smart analysis assistant — English 🇬🇧",
         "chat_muted": "Awareness only, not a final diagnosis — see a doctor if in any doubt.",
@@ -3181,7 +3203,7 @@ L = {
         "register_sub": "Start your health journey with SymptoSense",
         "register_name": "Name",
         "register_email": "Email",
-        "register_pass": "Password (min 6 characters)",
+        "register_pass": "Password (minimum 8 characters)",
         "register_confirm": "Confirm password",
         "register_btn": "Create Account",
         "register_hasaccount": "Already have an account?",
@@ -3936,7 +3958,7 @@ def about_us_page():
 
       <section class="au-section au-purpose au-reveal"><span class="au-kicker">04 · ❤️</span><h2>__WHY_TITLE__</h2><div class="au-copy"><p>__WHY__</p></div><div class="au-purpose-icons" aria-label="__WHY_TITLE__"><div class="au-purpose-item"><span>💡</span>__IDEA__</div><div class="au-purpose-item"><span>❤️</span>__PURPOSE__</div><div class="au-purpose-item"><span>🩺</span>__HEALTH__</div></div></section>
 
-      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">05 · 💻</span><h2>__REAL_TITLE__</h2><p>__REAL_COPY__</p></div><div class="au-device"><div class="au-laptop"><div class="au-screen au-live-frame"><div class="au-project-fallback" role="img" aria-label="__PROJECT_ALT__"><div><span>🩺</span><b>SymptoSense</b><small>__PROJECT_TAGLINE__</small></div></div><iframe src="/home" title="__FRAME_TITLE__" loading="lazy" tabindex="-1" onload="try{if(this.contentDocument&amp;&amp;this.contentDocument.body&amp;&amp;this.contentDocument.body.innerText.trim())this.parentElement.classList.add('is-loaded')}catch(e){}"></iframe></div><div class="au-base"></div></div></div></section>
+      <section class="au-section au-project au-reveal"><div class="au-project-head"><span class="au-kicker">05 · 💻</span><h2>__REAL_TITLE__</h2><p>__REAL_COPY__</p></div><div class="au-device"><div class="au-laptop"><div class="au-screen au-live-frame"><img src="/static/images/about-home-preview.webp" alt="__PROJECT_ALT__" loading="lazy"></div><div class="au-base"></div></div></div></section>
 
       <section class="au-section au-message au-reveal"><div class="au-message-card"><div><span class="au-kicker">06 · ✍️</span><h2>__MESSAGE_TITLE__</h2><blockquote>__MESSAGE__</blockquote><cite>— __NAME__</cite></div><div class="au-voice-mark" aria-hidden="true"><span>R</span><div>💡 · 📊 · 🩺</div></div></div></section>
 
@@ -3957,10 +3979,10 @@ def about_us_page():
         "__WHY__": bi("أؤمن أن أعظم أثر للتقنية هو أن تجعل حياة الإنسان أبسط، ووعيه أكبر، وقراراته أذكى.", "I believe technology has its greatest impact when it makes people's lives simpler, their awareness greater, and their decisions smarter."),
         "__IDEA__": bi("فكرة", "Idea"), "__DATA__": bi("بيانات", "Data"), "__AI__": bi("ذكاء اصطناعي", "AI"), "__PURPOSE__": bi("هدف", "Purpose"), "__HEALTH__": bi("صحة", "Healthcare"),
         "__REAL_TITLE__": bi("من فكرة إلى مشروع حقيقي", "From an idea to a real project"),
-        "__REAL_COPY__": bi("واجهة من النسخة الحالية للمشروع، مع عرض بصري بديل إذا تعذر تحميل المعاينة الحية.", "A view of the current project, with a visual fallback when the live preview cannot load."),
+        "__REAL_COPY__": bi("لقطة حقيقية من واجهة SymptoSense الحالية.", "A real screenshot from the current SymptoSense interface."),
         "__PROJECT_ALT__": bi("تصميم أصلي من SymptoSense يعرض تجربة صحية على الهاتف", "An original SymptoSense visual showing the mobile health experience"),
         "__PROJECT_TAGLINE__": bi("افهم أعراضك. اعرف خطوتك التالية.", "Understand your symptoms. Know your next step."),
-        "__FRAME_TITLE__": bi("معاينة مباشرة لموقع SymptoSense", "Live preview of the SymptoSense website"),
+        "__FRAME_TITLE__": bi("لقطة من واجهة SymptoSense", "Screenshot of the SymptoSense interface"),
         "__MESSAGE_TITLE__": bi("رسالة ريماس", "A message from Remas"),
         "__MESSAGE__": bi("SymptoSense هو مشروعي لتطبيق ما تعلمته في علوم البيانات والذكاء الاصطناعي على فكرة صحية تهدف إلى تقديم تجربة أبسط وأكثر تنظيمًا للمستخدم.", "SymptoSense is my project for applying what I have learned in data science and artificial intelligence to a health-focused idea that aims to give users a simpler, more organized experience."),
         "__NAME__": bi("ريماس حميد السلمي", "Remas Hameed Alsolami"),
@@ -4064,7 +4086,7 @@ def privacy_page():
         "__COLLECT_H__": bi("ما البيانات التي نجمعها؟", "What data do we collect?"),
         "__COLLECT_1__": bi("بيانات الحساب الأساسية فقط عند اختيار إنشاء حساب: الاسم والبريد الإلكتروني وكلمة مرور مشفرة.", "Basic account data only when you choose to register: name, email, and a securely hashed password."),
         "__COLLECT_2__": bi("المعلومات الصحية التي تُدخلها داخل الخدمة أو تختار حفظها؛ لا نطلبها أثناء التسجيل.", "Health information you enter in a service or explicitly choose to save; it is not requested during sign-up."),
-        "__COLLECT_3__": bi("بيانات تشغيل مجمعة مثل نوع الجهاز واللغة والخدمة المستخدمة، دون نص الأعراض أو المحادثة.", "Aggregate operational data such as device type, language, and service used—without symptom or chat text."),
+        "__COLLECT_3__": bi("سجلات تشغيل وأمان أساسية مثل حالة الطلب ورقم مرجعي للخطأ تُستخدم لتشغيل الخدمة وحمايتها ولا تتضمن نص الأعراض أو المحادثة. أما إحصاءات الاستخدام مثل الصفحات والخدمات المستخدمة فلا تُحفظ إلا عند تفعيل خيار التحليلات الاختياري.", "Essential reliability and security logs such as request status and an error reference ID are used to operate and protect the service and do not include symptom or chat text. Usage analytics such as pages or services used are stored only when optional Analytics is enabled."),
         "__SAVE_H__": bi("ما الذي يتم حفظه؟", "What is saved?"),
         "__SAVE_P__": bi("للزائر، تبقى الخدمات الأساسية متاحة دون حساب. عند تسجيل الدخول، يمكن حفظ الملف والنتائج والمحادثات وفق إعدادات الخصوصية التي تختارها.", "Core services remain available to guests. When signed in, your profile, results, and conversations may be saved according to the privacy settings you choose."),
         "__USE_H__": bi("كيف نستخدم البيانات المصرح بها؟", "How do we use authorized data?"),
@@ -4296,17 +4318,17 @@ CHAT = {
         "age": "كم عمرك؟ (اكتب الرقم فقط) 🧒👵", "age_ph": "مثال: 28",
         "age_invalid": "يرجى إدخال عمر صحيح بين 1 و 120.",
         "gender": "ما جنسك؟", "male": "👨 ذكر", "female": "👩 أنثى",
-        "syms_f": "ما هي أعراضك؟ اضغطي على الأعراض التي تشعرين بها (يمكنك اختيار أكثر من واحد). وإذا لم تجدي ما تشعرين به، اكتبيه في صندوق الكتابة. عند الانتهاء اضغطي: ✅ انتهيت",
-        "syms_m": "ما هي أعراضك؟ اضغط على الأعراض التي تشعر بها (يمكنك اختيار أكثر من واحد). وإذا لم تجد ما تشعر به، اكتبه في صندوق الكتابة. عند الانتهاء اضغط: ✅ انتهيت",
+        "syms_f": "ما الأعراض الموجودة؟ اختر عرضًا أو أكثر. وإذا لم يظهر العرض المطلوب، يمكن كتابته في صندوق الإدخال. عند الانتهاء اختر: ✅ انتهيت",
+        "syms_m": "ما الأعراض الموجودة؟ اختر عرضًا أو أكثر. وإذا لم يظهر العرض المطلوب، يمكن كتابته في صندوق الإدخال. عند الانتهاء اختر: ✅ انتهيت",
         "write_yourself": "✍️ اكتب عرضاً بنفسك",
         "sym_ph": "مثال: ألم في الساق",
-        "custom_f": "لم تجدي ما تشعرين به؟ اكتبيه هنا:",
-        "custom_m": "لم تجد ما تشعر به؟ اكتبه هنا:",
-        "atleast_f": "اختاري عرضاً واحداً على الأقل قبل المتابعة.",
-        "atleast_m": "اختر عرضاً واحداً على الأقل قبل المتابعة.",
+        "custom_f": "لم يظهر العرض المطلوب؟ يمكن كتابته هنا:",
+        "custom_m": "لم يظهر العرض المطلوب؟ يمكن كتابته هنا:",
+        "atleast_f": "اختر عرضًا واحدًا على الأقل قبل المتابعة.",
+        "atleast_m": "اختر عرضًا واحدًا على الأقل قبل المتابعة.",
         "done": "✅ انتهيت", "chosen": "✅ تم اختيار: ",
-        "added_f": "✅ أُضيف العرض. اضغطي ✅ انتهيت عند الانتهاء أو أضيفي المزيد.",
-        "added_m": "✅ أُضيف العرض. اضغط ✅ انتهيت عند الانتهاء أو أضف المزيد.",
+        "added_f": "✅ أُضيف العرض. اختر ✅ انتهيت عند الاكتفاء أو أضف المزيد.",
+        "added_m": "✅ أُضيف العرض. اختر ✅ انتهيت عند الاكتفاء أو أضف المزيد.",
         "start_sub": "مساعدك الذكي لفهم الأعراض الصحية",
         "start_desc": "سأطرح عليك بعض الأسئلة عن الأعراض التي تشعر بها لمساعدتك في الحصول على تقييم أولي آمن وسهل.",
         "syms_q": "ما الأعراض التي تشعر بها؟",
@@ -4325,15 +4347,15 @@ CHAT = {
         "result_disclaimer": "⚠️ هذا التقييم لا يُعد تشخيصًا طبيًا، ولا يُغني عن استشارة الطبيب.",
         "duration": "كم مدة هذه الأعراض؟",
         "severity": "ما شدة الأعراض؟ (من 1 خفيف جداً إلى 5 حرج جداً)",
-        "conditions_f": "هل لديكِ أمراض مزمنة سابقة؟",
-        "conditions_m": "هل لديك أمراض مزمنة سابقة؟",
+        "conditions_f": "هل توجد أمراض مزمنة سابقة؟",
+        "conditions_m": "هل توجد أمراض مزمنة سابقة؟",
         "other_diseases": "✏️ أمراض أخرى",
-        "other_diseases_f": "✏️ اكتبي الأمراض:", "other_diseases_m": "✏️ اكتب الأمراض:",
+        "other_diseases_f": "✏️ اكتب الأمراض:", "other_diseases_m": "✏️ اكتب الأمراض:",
         "cond_ph": "مثال: غدة درقية",
-        "meds_f": "هل تأخذين حالياً أي أدوية؟ اذكري أسماءها (أو اضغطي تخطي).",
-        "meds_m": "هل تأخذ حالياً أي أدوية؟ اذكر أسماءها (أو اضغط تخطي).",
+        "meds_f": "هل توجد أدوية مستخدمة حاليًا؟ اذكر أسماءها (أو اختر تخطي).",
+        "meds_m": "هل توجد أدوية مستخدمة حاليًا؟ اذكر أسماءها (أو اختر تخطي).",
         "skip": "⏭️ تخطي", "meds_ph": "مثال: بنادول، فولتارين",
-        "notes_f": "أي ملاحظات إضافية؟ (أو اضغطي تخطي)", "notes_m": "أي ملاحظات إضافية؟ (أو اضغط تخطي)",
+        "notes_f": "أي ملاحظات إضافية؟ (أو اختر تخطي)", "notes_m": "أي ملاحظات إضافية؟ (أو اختر تخطي)",
         "notes_ph": "مثال: أعاني منذ الصباح بعد الأكل",
         "analyzing": "جاري التحليل... ⏳", "answering": "جاري الإجابة... ⏳",
         "err": "حدث خطأ: ", "conn_err": "تعذر الاتصال، حاول مجدداً.",
@@ -4402,14 +4424,14 @@ CHAT = {
         "fb_thanks": "شكراً لتقييمك 🌟",
         "ask_more": "💬 اسأل عن حالتك", "hospitals": "🏥 أقرب مستشفى", "new": "🔄 تحليل جديد",
         "share": "🔗 مشاركة", "share_txt": "تقييمي الأولي: ",
-        "followup_f": "اكتبي سؤالك عن حالتك 👇", "followup_m": "اكتب سؤالك عن حالتك 👇",
+        "followup_f": "اكتب سؤالك عن الحالة 👇", "followup_m": "اكتب سؤالك عن الحالة 👇",
         "followup_ph": "مثال: هل هذا طبيعي؟ متى أتحسن؟",
         "another_q": "💬 سؤال آخر",
         "no_speech": "متصفحك لا يدعم القراءة الصوتية.",
         "no_mic": "الإدخال الصوتي غير مدعوم على هذا الجهاز أو المتصفح. يمكنك الاستمرار بالكتابة.",
         "locating": "جاري تحديد موقعك... 📍",
-        "loc_err_f": "تعذر الوصول لموقعك — تأكدي من تفعيل الموقع.",
-        "loc_err_m": "تعذر الوصول لموقعك — تأكد من تفعيل الموقع.",
+        "loc_err_f": "تعذر الوصول إلى الموقع — تحقق من تفعيل إذن الموقع في المتصفح.",
+        "loc_err_m": "تعذر الوصول إلى الموقع — تحقق من تفعيل إذن الموقع في المتصفح.",
         "no_hosp": "ما لقينا مستشفيات قريبة.",
         "hosp_title": "🏥 أقرب المستشفيات", "map": "🗺️ فتح في الخريطة", "km": " كم",
         "sp_result": "نتيجة التحليل: الخطورة ", "sp_possible": "الاحتمالات المحتملة: ",
@@ -4846,12 +4868,21 @@ def chat_page():
     textInp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); submitText(); }
     });
-    // Load family members into switcher
-    (function loadFamilyMembers() {
-      fetch('/api/family').then(r=>r.json()).then(d=>{
-        if(d.ok && d.members && d.members.length) {
+    // Load family members only after /api/user-info confirms the user is signed in.
+    // This prevents expected guest sessions from generating 401 responses in the console.
+    function loadFamilyMembers() {
+      if (!(userInfo && userInfo.ok && userInfo.logged_in)) {
+        return Promise.resolve({ok:true, members:[]});
+      }
+      return fetch('/api/family').then(function(r){
+        if (r.status === 401) return {ok:true, members:[]};
+        return r.json();
+      }).then(function(d){
+        const members = (d && d.ok && Array.isArray(d.members)) ? d.members : [];
+        while (famSelect.options.length > 1) famSelect.remove(1);
+        if (members.length) {
           const emojis = {'me':'👤','mother':'👩','father':'👨','daughter':'👧','son':'👦','grandparent':'👵','other':'🧑'};
-          d.members.forEach(m => {
+          members.forEach(function(m) {
             const opt = document.createElement('option');
             opt.value = m.id;
             const em = emojis[m.relation] || '🧑';
@@ -4859,8 +4890,9 @@ def chat_page():
             famSelect.appendChild(opt);
           });
         }
-      }).catch(()=>{});
-    })();
+        return {ok:true, members:members};
+      }).catch(function(){ return {ok:false, members:[]}; });
+    }
     function switchFamilyMember(val) {
       state.member_id = parseInt(val) || 0;
       state.member_name = famSelect.options[famSelect.selectedIndex].textContent.replace(/^[^\\s]+\\s*/, '');
@@ -4985,7 +5017,13 @@ def chat_page():
     function askMember() {
       state.step = 'member';
       updateFlow(state.step);
-      fetch('/api/family').then(r => r.json()).then(d => {
+      if (!(userInfo && userInfo.ok && userInfo.logged_in)) {
+        MEMBERS = [];
+        state.member = null;
+        askAge();
+        return;
+      }
+      loadFamilyMembers().then(function(d) {
         MEMBERS = (d && d.members) || [];
         if (!MEMBERS.length) { state.member = null; askAge(); return; }
         const items = [{label: TT('me_short'), fn:()=>{ state.member = null; add(TT('me_short'),'user'); askAge(); }}];
@@ -4998,7 +5036,7 @@ def chat_page():
         }}));
         addQ('👥 ' + TT('for_whom'));
         showOpts(items);
-      }).catch(() => { state.member = null; askAge(); });
+      }).catch(function() { state.member = null; askAge(); });
     }
     function appendStartBtn(first) {
       const s = document.createElement('button');
@@ -5607,7 +5645,7 @@ def chat_page():
         addHtml(dataQualityHtml(q,false),'bot');
         const missing=(q.missing||[]);
         if(!q.sufficient){
-          add(LANG==='ar'?'أكملي المعلومات المطلوبة أولًا. إذا ظهرت علامة خطر، ستظل طبقة الأمان لها الأولوية عند تشغيل التقييم.':'Please complete the required information first. If a red flag is present, the safety layer still takes priority when the assessment runs.','bot');
+          add(LANG==='ar'?'أكمل المعلومات المطلوبة أولًا. إذا ظهرت علامة خطر، ستظل طبقة الأمان لها الأولوية عند تشغيل التقييم.':'Please complete the required information first. If a red flag is present, the safety layer still takes priority when the assessment runs.','bot');
           showOpts([{label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}}]);
           return;
         }
@@ -5747,11 +5785,27 @@ def chat_page():
     function askQuestionFromResult(q) {
       add('💬 ' + q, 'user');
       clearOpts();
-      fetch('/api/chat', {
+      const lr = lastResult || {};
+      const rawMatches = Array.isArray(lr.knowledge_matches) ? lr.knowledge_matches : (Array.isArray(lr.possible_conditions) ? lr.possible_conditions : []);
+      const safeContext = {
+        urgency: lr.urgency || lr.risk_level || lr.risk || null,
+        possible_conditions: rawMatches.slice(0,3).map(function(x){
+          return {
+            name: x.name_ar || x.name_en || x.name || x.condition || '',
+            match_level: x.match_level || x.match || x.score || null
+          };
+        }),
+        red_flags: Array.isArray(lr.red_flags) ? lr.red_flags.slice(0,5) : [],
+        recommendations: Array.isArray(lr.recommendations) ? lr.recommendations.slice(0,4) : []
+      };
+      const contextLabel = LANG === 'ar' ? 'سياق مختصر من نتيجة التحليل الحالية:' : 'Brief context from the current analysis result:';
+      const prompt = q + '\n\n' + contextLabel + ' ' + JSON.stringify(safeContext);
+      fetch('/api/assistant', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({msg:q, lang:LANG, symptoms:state.symptoms, context:lastResult})
+        body:JSON.stringify({lang:LANG, messages:[{role:'user', content:prompt}]})
       }).then(function(r){return r.json();}).then(function(d){
-        if (d.ok) add(d.reply || TT('fallback_chat'), 'bot');
+        if (d.consent_required) { location.href = d.consent_url || '/consent?next=/chat'; return; }
+        if (d.ok) add(d.answer || TT('fallback_chat'), 'bot');
         else add(TT('err'), 'bot');
         showOpts([
           {label:TT('ask_more'), fn:askFollowup},
@@ -6540,7 +6594,7 @@ CT = {
         "em_s5": "🗣️ أعراض سكتة دماغية مفاجئة",
         "em_call_btn": "📞 اتصل بالطوارئ",
         "em_geo_title": "📍 أقرب مستشفى إليك",
-        "em_geo_sub": "ابحث عن أقرب مستشفى أو مركز طوارئ بناءً على موقعك الحالي.",
+        "em_geo_sub": "ابحث عن أقرب مستشفى أو مركز طوارئ بناءً على موقعك الحالي. يُستخدم موقعك لهذا البحث فقط ولا يتم حفظه في حسابك.",
         "em_geo_24h": "متوفر على مدار الساعة 24/7",
         "em_safety": "🛡️ السلامة أولًا — لا تنتظر أبداً عندما تكون الأعراض خطرة؛ كل دقيقة قد تكون مهمة.",
         "em_warn": "⚠️ في حالة الأعراض الخطرة (ألم صدر حاد، صعوبة تنفس، نزيف حاد، فقدان وعي) اتصل بالإسعاف <b>997</b> فوراً ولا تنتظر.",
@@ -7009,7 +7063,7 @@ CT = {
         "em_s5": "🗣️ Sudden stroke symptoms",
         "em_call_btn": "📞 Call emergency",
         "em_geo_title": "📍 Nearest hospital to you",
-        "em_geo_sub": "Find the nearest hospital or emergency center based on your current location.",
+        "em_geo_sub": "Find the nearest hospital or emergency center based on your current location. Your location is used only for this search and is not saved to your account.",
         "em_geo_24h": "Available 24/7",
         "em_safety": "🛡️ Safety first — never wait when symptoms are dangerous; every minute may matter.",
         "em_warn": "⚠️ For dangerous symptoms (severe chest pain, difficulty breathing, heavy bleeding, loss of consciousness) call an ambulance at <b>997</b> immediately; don't wait.",
@@ -7433,7 +7487,7 @@ def meds_page():
     async function loadCalendar(){if(!LOGGED_IN)return;const d=await fetch('/api/meds/calendar?days='+document.getElementById('calDays').value).then(r=>r.json());const sm=d.summary||{},g=document.getElementById('summaryGrid');g.innerHTML=[[sm.scheduled||0,AR?'مجدول':'Scheduled'],[sm.taken||0,AR?'تم أخذه':'Taken'],[sm.skipped||0,AR?'تم تخطيه':'Skipped'],[(sm.adherence||0)+'%',AR?'استجابة للتذكيرات':'Reminder response']].map(x=>'<div class="summary-box"><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('');const e=(d.entries||[]).slice().reverse(),box=document.getElementById('calendarList');if(!e.length){box.innerHTML='<p class="muted">'+(AR?'لا يوجد سجل تذكيرات بعد.':'No reminder history yet.')+'</p>';return}const st={taken:AR?'✓ تم أخذه':'✓ Taken',skipped:AR?'— تم تخطيه':'— Skipped',snoozed:AR?'😴 غفوة':'😴 Snoozed',deferred:AR?'😴 غفوة':'😴 Snoozed',scheduled:AR?'○ مجدول':'○ Scheduled'};box.innerHTML=e.slice(0,120).map(x=>'<div class="cal-row"><span>'+esc(x.date)+'</span><b>'+esc(x.time)+'</b><span class="cal-med">'+esc(x.med_name)+'</span><span class="status-'+esc(x.status)+'">'+esc(st[x.status]||x.status)+'</span></div>').join('')}
     function urlB64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
     function pushSupported(){return location.protocol==='https:'&&'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}
-    async function refreshPush(){if(!LOGGED_IN)return;const dot=document.getElementById('pushDot'),label=document.getElementById('pushLabel'),support=document.getElementById('pushSupport'),on=document.getElementById('enablePushBtn'),off=document.getElementById('disablePushBtn'),isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent),standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;document.getElementById('iosInstallCard').classList.toggle('hide',!(isiOS&&!standalone));document.getElementById('iosHelp').classList.toggle('hide',!isiOS);if(!pushSupported()){label.textContent=AR?'الإشعارات غير مدعومة على هذا الجهاز/المتصفح.':"Push notifications aren't supported on this device/browser.";support.textContent=AR?'يتطلب Web Push اتصال HTTPS ومتصفحًا يدعمه.':'Web Push requires HTTPS and browser support.';on.classList.add('hide');return}const d=await fetch('/api/push/status').then(r=>r.json());const perm=Notification.permission;dot.classList.toggle('on',d.subscribed&&perm==='granted');label.textContent=d.subscribed&&perm==='granted'?(AR?'الإشعارات مفعلة':'Notifications ON'):(AR?'الإشعارات متوقفة':'Notifications OFF');support.textContent=!d.configured?(AR?'خدمة Push لم يتم إعداد مفاتيحها على الخادم بعد.':'Push keys are not configured on the server yet.'):(perm==='denied'?(AR?'الإذن مرفوض. فعّليه من إعدادات المتصفح.':'Permission is blocked. Enable it in browser settings.'):'');on.classList.toggle('hide',d.subscribed&&perm==='granted');off.classList.toggle('hide',!(d.subscribed&&perm==='granted'));const s=d.settings||{};document.getElementById('notifEnabled').checked=s.enabled!==false;document.getElementById('notifSound').checked=s.sound!==false;document.getElementById('snoozeMinutes').value=String(s.snooze_minutes||10)}
+    async function refreshPush(){if(!LOGGED_IN)return;const dot=document.getElementById('pushDot'),label=document.getElementById('pushLabel'),support=document.getElementById('pushSupport'),on=document.getElementById('enablePushBtn'),off=document.getElementById('disablePushBtn'),isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent),standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;document.getElementById('iosInstallCard').classList.toggle('hide',!(isiOS&&!standalone));document.getElementById('iosHelp').classList.toggle('hide',!isiOS);if(!pushSupported()){label.textContent=AR?'الإشعارات غير مدعومة على هذا الجهاز/المتصفح.':"Push notifications aren't supported on this device/browser.";support.textContent=AR?'يتطلب Web Push اتصال HTTPS ومتصفحًا يدعمه.':'Web Push requires HTTPS and browser support.';on.classList.add('hide');return}const d=await fetch('/api/push/status').then(r=>r.json());const perm=Notification.permission;dot.classList.toggle('on',d.subscribed&&perm==='granted');label.textContent=d.subscribed&&perm==='granted'?(AR?'الإشعارات مفعلة':'Notifications ON'):(AR?'الإشعارات متوقفة':'Notifications OFF');support.textContent=!d.configured?(AR?'خدمة Push لم يتم إعداد مفاتيحها على الخادم بعد.':'Push keys are not configured on the server yet.'):(perm==='denied'?(AR?'الإذن مرفوض. يمكن تفعيله من إعدادات المتصفح.':'Permission is blocked. Enable it in browser settings.'):'');on.classList.toggle('hide',d.subscribed&&perm==='granted');off.classList.toggle('hide',!(d.subscribed&&perm==='granted'));const s=d.settings||{};document.getElementById('notifEnabled').checked=s.enabled!==false;document.getElementById('notifSound').checked=s.sound!==false;document.getElementById('snoozeMinutes').value=String(s.snooze_minutes||10)}
     async function enablePush(){if(!pushSupported())return;const cfg=await fetch('/api/push/vapid-public').then(r=>r.json());if(!cfg.configured||!cfg.public_key){alert(AR?'خدمة Push غير مهيأة على الخادم.':'Push is not configured on the server.');return}const perm=await Notification.requestPermission();if(perm!=='granted'){refreshPush();return}const reg=await navigator.serviceWorker.register('/service-worker.js');const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(cfg.public_key)});const r=await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),timezone,lang:AR?'ar':'en'})});if(!r.ok){alert(AR?'تعذر تفعيل الإشعارات.':'Unable to enable notifications.');return}await saveNotifSettings();refreshPush()}
     async function disablePush(){try{const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub){await fetch('/api/push/unsubscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe()}}catch(e){}document.getElementById('notifEnabled').checked=false;await saveNotifSettings();refreshPush()}
     async function saveNotifSettings(){if(!LOGGED_IN)return;await fetch('/api/meds/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:document.getElementById('notifEnabled').checked,sound:document.getElementById('notifSound').checked,snooze_minutes:Number(document.getElementById('snoozeMinutes').value||10),timezone})})}
@@ -7446,7 +7500,7 @@ def meds_page():
       '__INFO_TITLE__':tx('معلومات الدواء','Medication Information'),'__INFO_SUB__':tx('اعرض المعلومات المتاحة من المصادر الموجودة في النظام فقط.','View only the verified information currently available in the system.'),'__SEARCH_PH__':tx('اكتب اسم الدواء','Enter medication name'),'__SEARCH__':tx('بحث','Search'),
       '__LOGIN_TITLE__':tx('سجّل الدخول لاستخدام التذكيرات','Sign in to use reminders'),'__LOGIN_TEXT__':tx('البحث متاح للجميع، أما التذكيرات والسجل فخاصة بحسابك.','Search is public; reminders and history are private to your account.'),'__SIGN_IN__':tx('تسجيل الدخول','Sign in'),
       '__REMINDERS__':tx('تذكيرات الأدوية','Medication Reminders'),'__REM_SUB__':tx('أنت من تحدد الاسم والوقت والجرعة الاختيارية.','You choose the name, time, and optional dose.'),'__ADD__':tx('إضافة','Add'),'__ADD_MED__':tx('إضافة دواء','Add Medication'),'__MED_NAME__':tx('اسم الدواء','Medication Name'),'__DOSE__':tx('الجرعة (اختيارية)','Dose (Optional)'),'__OPTIONAL__':tx('اختياري','Optional'),'__TIMES__':tx('أوقات التذكير','Reminder Times'),'__MULTI_TIME__':tx('يمكن إضافة أكثر من وقت، مثال: 08:00, 20:00','Multiple times are supported, e.g. 08:00, 20:00'),'__FREQ__':tx('التكرار','Frequency'),'__DAILY__':tx('يوميًا','Daily'),'__SPECIFIC__':tx('أيام محددة','Specific Days'),'__TZ__':tx('المنطقة الزمنية','Timezone'),'__DAYS__':tx('الأيام','Days'),'__START__':tx('تاريخ البداية','Start Date'),'__END__':tx('تاريخ النهاية (اختياري)','End Date (Optional)'),'__NOTES__':tx('ملاحظات (اختيارية)','Notes (Optional)'),'__SAVE__':tx('حفظ التذكير','Save Reminder'),'__CANCEL__':tx('إلغاء','Cancel'),'__SAFETY__':tx('هذه الميزة للتذكير فقط. لا تستخدمها لاتخاذ قرار ببدء دواء أو إيقافه أو تغيير الجرعة.','This feature is for reminders only. Do not use it to decide to start, stop, or change a medication or dose.'),
-      '__NOTIF__':tx('إشعارات الدواء','Medication Notifications'),'__CHECKING__':tx('جاري التحقق…','Checking…'),'__ENABLE__':tx('تفعيل الإشعارات','Enable Notifications'),'__DISABLE__':tx('إيقاف الإشعارات','Disable Notifications'),'__IOS_HELP__':tx('على iPhone/iPad، Web Push متاح لتطبيقات الويب المضافة إلى الشاشة الرئيسية على الإصدارات المدعومة. أضف SymptoSense إلى Home Screen ثم فعّل الإشعارات من داخل التطبيق.','On supported iPhone/iPad versions, Web Push is available for web apps added to the Home Screen. Add SymptoSense to Home Screen, then enable notifications from the app.'),'__IOS_INSTALL_TITLE__':tx('آيفونك يحتاج خطوة صغيرة 🐣','Your iPhone needs one small step 🐣'),'__IOS_INSTALL_TEXT__':tx('أضيفي SymptoSense إلى الشاشة الرئيسية، ثم افتحيه من الأيقونة وفعّلي الإشعارات حتى تصلك تذكيرات الدواء بعد إغلاق الصفحة.','Add SymptoSense to your Home Screen, open it from the icon, then enable notifications to receive medication reminders after closing the page.'),'__IOS_INSTALL_BUTTON__':tx('طريقة الإضافة للشاشة الرئيسية','How to add to Home Screen'),'__NOTIF_ON__':tx('Medication Notifications','Medication Notifications'),'__SOUND__':tx('صوت التذكير','Reminder Sound'),'__SNOOZE__':tx('مدة الغفوة (دقيقة)','Snooze (minutes)'),
+      '__NOTIF__':tx('إشعارات الدواء','Medication Notifications'),'__CHECKING__':tx('جاري التحقق…','Checking…'),'__ENABLE__':tx('تفعيل الإشعارات','Enable Notifications'),'__DISABLE__':tx('إيقاف الإشعارات','Disable Notifications'),'__IOS_HELP__':tx('على iPhone/iPad، تتوفر إشعارات Web Push لتطبيقات الويب المضافة إلى الشاشة الرئيسية على الإصدارات المدعومة. بعد إضافة SymptoSense إلى الشاشة الرئيسية، يمكن تفعيل الإشعارات من داخل التطبيق.','On supported iPhone/iPad versions, Web Push is available for web apps added to the Home Screen. Add SymptoSense to Home Screen, then enable notifications from the app.'),'__IOS_INSTALL_TITLE__':tx('خطوة إضافية على iPhone 🐣','Your iPhone needs one small step 🐣'),'__IOS_INSTALL_TEXT__':tx('يمكن إضافة SymptoSense إلى الشاشة الرئيسية، ثم فتحه من الأيقونة وتفعيل الإشعارات لاستقبال تذكيرات الدواء بعد إغلاق الصفحة.','Add SymptoSense to your Home Screen, open it from the icon, then enable notifications to receive medication reminders after closing the page.'),'__IOS_INSTALL_BUTTON__':tx('طريقة الإضافة للشاشة الرئيسية','How to add to Home Screen'),'__NOTIF_ON__':tx('إشعارات الدواء','Medication Notifications'),'__SOUND__':tx('صوت التذكير','Reminder Sound'),'__SNOOZE__':tx('مدة الغفوة (دقيقة)','Snooze (minutes)'),
       '__SUMMARY__':tx('ملخص التذكيرات','Reminder Summary'),'__ADH_NOTE__':tx('النسبة تعكس استجابتك للتذكيرات فقط، وليست تقييمًا طبيًا للالتزام بالعلاج.','This percentage reflects reminder responses only; it is not a medical assessment of treatment adherence.'),'__CALENDAR__':tx('سجل التذكيرات','Reminder Calendar'),'__CAL_SUB__':tx('✓ تم أخذه · ○ مجدول · — تم تخطيه','✓ Taken · ○ Scheduled · — Skipped'),'__DAYS_WORD__':tx('أيام','days'),
       '__AR__':'true' if ar else 'false','__LOGGED_IN__':'true' if logged_in else 'false','__GATE_HIDE__':'hide' if logged_in else '','__PRIVATE_HIDE__':'' if logged_in else 'hide'
     }
@@ -8684,11 +8738,22 @@ def emergency_page():
           if (!d.ok) { msg.textContent = EM.em_geo_err + (d.error ? ' (' + d.error + ')' : ''); return; }
           if (!d.hospitals || !d.hospitals.length) { msg.textContent = EM.em_geo_empty; return; }
           msg.textContent = '';
-          let html = '<h3 style="margin-bottom:8px;">' + EM.em_nearby + '</h3>';
+          const escHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+          let html = '<h3 style="margin-bottom:8px;">' + escHtml(EM.em_nearby) + '</h3>';
           d.hospitals.forEach(function(h) {
-            html += '<div class="hist-card"><div class="hist-head"><b>🏥 ' + (h.name || '?') + '</b></div>' +
-              '<p class="muted">📍 ' + (h.distance_km || '') + ' km</p>' +
-              (h.maps_url ? '<a class="btn ghost small" href="' + h.maps_url + '" target="_blank" rel="noopener">🗺️ ' + EM.em_geo_btn + '</a>' : '') +
+            const name = escHtml(h.name || '?');
+            const distance = Number.isFinite(Number(h.distance_km)) ? Number(h.distance_km).toFixed(1) : '';
+            const mapsUrl = String(h.maps_url || '');
+            let safeMap = '';
+            try {
+              const parsed = new URL(mapsUrl);
+              const host = parsed.hostname.toLowerCase();
+              const allowedHost = host === 'www.openstreetmap.org' || host === 'openstreetmap.org' || host === 'www.google.com' || host === 'google.com' || host === 'maps.google.com';
+              if (parsed.protocol === 'https:' && allowedHost) safeMap = parsed.href;
+            } catch (_) {}
+            html += '<div class="hist-card"><div class="hist-head"><b>🏥 ' + name + '</b></div>' +
+              '<p class="muted">📍 ' + escHtml(distance) + ' km</p>' +
+              (safeMap ? '<a class="btn ghost small" href="' + escHtml(safeMap) + '" target="_blank" rel="noopener noreferrer">🗺️ ' + escHtml(EM.em_geo_btn) + '</a>' : '') +
               '</div>';
           });
           list.innerHTML = html;
@@ -9516,7 +9581,7 @@ def _send_auth_email_brevo(email, subject, html, category):
         status=int(response.status_code or 0); code=""
         try:
             payload=response.json() or {}; code=str(payload.get("code") or "").lower()
-        except Exception: pass
+        except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         if status in {401,403}: reason="email_brevo_auth_failed"
         elif status==429: reason="email_brevo_rate_limited"
         elif status in {400,404} and ("sender" in code or "invalid_parameter" in code): reason="email_brevo_sender_invalid"
@@ -9719,7 +9784,7 @@ def _issue_verification_email(user_id, lang=None):
     sent, send_error=_send_auth_email(email, subject, html, "verify_email")
     if not sent:
         try: platform_v2.discard_email_verification_token(token)
-        except Exception: pass
+        except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         return False, send_error
     return True, None
 
@@ -9772,9 +9837,9 @@ def login():
     error=None; error_code=None
     next_param=_safe_next_url("/profile")
     if next_param.startswith("/family"):
-        reason="سجّلي الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang=="ar" else "Sign in to securely save and access family profiles on any device."
+        reason="يلزم تسجيل الدخول لحفظ ملفات العائلة ومتابعتها بأمان من أي جهاز." if lang=="ar" else "Sign in to securely save and access family profiles on any device."
     elif next_param.startswith("/meds"):
-        reason="سجّلي الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang=="ar" else "Sign in to save medication reminders to your account."
+        reason="يلزم تسجيل الدخول لحفظ تذكيرات الأدوية وربطها بحسابك." if lang=="ar" else "Sign in to save medication reminders to your account."
     else:
         reason="بعد تسجيل الدخول يمكنك الوصول إلى ملفك ونتائجك المحفوظة." if lang=="ar" else "After signing in, you can access your profile and saved results."
     if request.method=="POST" and not _auth_csrf_valid():
@@ -9804,7 +9869,7 @@ def login():
             if is_admin:
                 session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())
                 try: platform_v2.audit(int(user_id),"login","admin_session","self",None,{"status":"success"})
-                except Exception: pass
+                except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
             redirect_target="/admin" if is_admin else next_param
             _admin_auth_debug("login_success",login_user,granted=is_admin,redirect_target=redirect_target)
             return redirect(redirect_target)
@@ -9812,7 +9877,7 @@ def login():
         _admin_auth_debug("login_failed",None,granted=False,redirect_target=None)
         if db.is_owner_admin_email(email):
             try: platform_v2.audit(None,"login_failed","admin_session","owner",None,{"status":"failed"})
-            except Exception: pass
+            except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         error=(("محاولات تسجيل دخول كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى."
                 if lang=="ar" else "Too many sign-in attempts. Wait 15 minutes and try again.")
                if error_code=="rate_limited" else _auth_login_error(lang,error_code))
@@ -9860,8 +9925,9 @@ def register():
             if user_id:
                 session.clear(); session["pending_verification_user_id"]=int(user_id); session["post_verify_next"]=next_param; session.permanent=True
                 sent,send_error=_issue_verification_email(int(user_id),lang)
-                try: platform_v2.record_usage("new_account","/register",lang,request.headers.get("User-Agent",""),201,None)
-                except Exception: pass
+                if _analytics_consent_ok():
+                    try: platform_v2.record_usage("new_account","/register",lang,request.headers.get("User-Agent",""),201,None)
+                    except Exception as exc: app.logger.debug("Optional account analytics skipped: %s", type(exc).__name__)
                 session["verification_send_state"]="sent" if sent else (send_error or "failed")
                 return redirect(url_for("verify_email_pending"))
             mapping={"email_exists":"يوجد حساب بهذا البريد بالفعل. سجّل الدخول بدلًا من إنشاء حساب جديد." if lang=="ar" else "An account with this email already exists. Please sign in instead.","owner_account_must_exist":"حساب مالك المشروع يجب أن يكون موجودًا مسبقًا ولا يمكن إنشاؤه من صفحة التسجيل." if lang=="ar" else "The project owner account must already exist and cannot be created from this page.","password_too_short":"استخدم 8 أحرف على الأقل لكلمة المرور." if lang=="ar" else "Use at least 8 characters for your password.","invalid_email":"أدخل بريدًا إلكترونيًا صالحًا." if lang=="ar" else "Enter a valid email address.","invalid_name":"أدخل اسمًا صالحًا." if lang=="ar" else "Enter a valid name."}
@@ -9923,7 +9989,7 @@ def verify_email_pending():
             ok,err=db.update_unverified_email(int(uid),new_email,current_password)
             if ok:
                 try: platform_v2.invalidate_email_verifications(int(uid))
-                except Exception: pass
+                except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
                 user=db.get_ss_user(uid)
                 sent,reason=_issue_verification_email(int(uid),_lang())
                 notice=("تم تحديث البريد وإرسال رابط تحقق جديد." if ar else "Email updated and a new verification link was sent.") if sent else ("تم تحديث البريد، لكن تعذر إرسال الرسالة. تحقق من إعداد مزود البريد." if ar else "Email updated, but the message could not be sent. Check the email provider configuration.")
@@ -10062,7 +10128,7 @@ def forgot_password():
                 ok,send_error=_send_password_reset_email(email,reset_url,_lang())
                 if not ok:
                     try: platform_v2.discard_password_reset_token(token)
-                    except Exception: pass
+                    except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
                     provider_error=True
         sent=True
     generic="إذا كان الحساب موجودًا لهذا البريد، فقد تم إرسال رابط إعادة تعيين كلمة المرور." if ar else "If an account exists for this email, a password reset link has been sent."
@@ -10111,7 +10177,7 @@ def logout():
     try:
         u=_ss_user()
         if u and u.get("role")=="admin": platform_v2.audit(int(u.get("id")),"logout","admin_session","self",None,{"status":"success"})
-    except Exception: pass
+    except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
     session.clear(); return redirect("/home")
 
 
@@ -10225,7 +10291,7 @@ def api_admin_auth_email_test():
     )
     ok,reason=_send_auth_email(email,subject,html,"auth_test")
     try: platform_v2.audit(int(user.get("id")),"test_auth_email","authentication","delivery",None,{"status":"success" if ok else "failed","reason":reason or "accepted"})
-    except Exception: pass
+    except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
     return jsonify({"ok":bool(ok),"error":None if ok else reason}), (200 if ok else 502)
 
 
@@ -10272,7 +10338,7 @@ def api_login():
             if is_admin:
                 session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())
                 try: platform_v2.audit(int(user_id),"login","admin_session","self",None,{"status":"success"})
-                except Exception: pass
+                except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
             redirect_target="/admin" if is_admin else "/profile"
             _admin_auth_debug("api_login_success",login_user,granted=is_admin,redirect_target=redirect_target)
             return jsonify({"ok":True,"redirect_url":redirect_target,"role":login_user.get("role","user"),"is_admin":is_admin,"user":login_user})
@@ -10280,7 +10346,7 @@ def api_login():
         code=result.get("error") or "incorrect_credentials"
         if db.is_owner_admin_email(email):
             try: platform_v2.audit(None,"login_failed","admin_session","owner",None,{"status":"failed"})
-            except Exception: pass
+            except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         status=404 if code=="account_not_found" else 401
         if code=="account_unavailable": status=403
         return jsonify({"ok":False,"error":code,"create_account_url":"/register" if code=="account_not_found" else None}),status
@@ -10314,7 +10380,7 @@ def api_health_profile():
         db.save_health_profile(uid, data)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/health-profile/delete", methods=["POST"])
@@ -10325,7 +10391,7 @@ def api_delete_health_profile():
         db.delete_health_profile(_ss_user_id())
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/health-profile/field", methods=["POST"])
@@ -10347,7 +10413,7 @@ def api_update_health_field():
         db.save_health_profile(uid, existing)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/health-profile/field/delete", methods=["POST"])
@@ -10366,7 +10432,7 @@ def api_delete_health_field():
         db.save_health_profile(uid, existing)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/consent/status", methods=["GET"])
@@ -10375,7 +10441,7 @@ def api_consent_status():
         state = privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
         return jsonify({"ok": True, "consent": state, "ai_improvement_available": privacy_features.AI_IMPROVEMENT_ACTIVE})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+        return _mk_error(e, 500)
 
 
 @app.route("/api/consent/preferences", methods=["POST"])
@@ -10388,7 +10454,7 @@ def api_consent_preferences():
         state = privacy_features.save_consent(_consent_subject_key(), _ss_user_id(), service, analytics)
         return jsonify({"ok": True, "consent": state})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 400
+        return _mk_error(e, 500)
 
 
 @app.route("/api/privacy/withdraw-analytics", methods=["POST"])
@@ -10398,7 +10464,7 @@ def api_withdraw_analytics():
         state = privacy_features.withdraw_analytics(_consent_subject_key(), _ss_user_id())
         return jsonify({"ok": True, "consent": state})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 400
+        return _mk_error(e, 500)
 
 
 @app.route("/api/privacy/delete-health-data", methods=["POST"])
@@ -10408,7 +10474,7 @@ def api_delete_health_data():
         result = privacy_features.delete_health_data(int(_ss_user_id()), _data_user_id())
         return jsonify({"ok": True, **result})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+        return _mk_error(e, 500)
 
 
 @app.route("/api/privacy/download", methods=["GET"])
@@ -10418,7 +10484,7 @@ def api_download_my_data():
         buf = privacy_features.user_export_bytes(int(_ss_user_id()), _data_user_id())
         return send_file(buf, mimetype="application/json; charset=utf-8", as_attachment=True, download_name="SymptoSense_My_Data_%s.json" % datetime.now(timezone.utc).date().isoformat())
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+        return _mk_error(e, 500)
 
 
 @app.route("/api/privacy", methods=["GET", "POST"])
@@ -10433,7 +10499,7 @@ def api_privacy():
         db.save_privacy_settings(uid, data)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/account/delete", methods=["POST"])
@@ -10447,7 +10513,7 @@ def api_delete_account():
         session.clear()
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/chat-history", methods=["GET"])
@@ -10458,7 +10524,7 @@ def api_chat_history():
         history = db.get_chat_history(_ss_user_id(), limit=50)
         return jsonify({"ok": True, "history": history})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/chat-history/clear", methods=["POST"])
@@ -10469,7 +10535,7 @@ def api_clear_chat_history():
         db.clear_chat_history(_ss_user_id())
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:200]})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/user-info", methods=["GET"])
@@ -11123,7 +11189,7 @@ def api_admin_analytics_export_xlsx():
         return send_file(buf,mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",as_attachment=True,download_name=f"SymptoSense_Data_Analytics_{stamp}.xlsx")
     except Exception as exc:
         try: platform_v2.audit(int(_ss_user_id()),"export_failed","analytics","medication_analytics",None,{"error_type":type(exc).__name__})
-        except Exception: pass
+        except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         return _mk_error(exc)
 
 
@@ -11174,7 +11240,7 @@ def api_admin_export_xlsx():
         return send_file(buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=f"SymptoSense_Export_{stamp}.xlsx")
     except Exception as exc:
         try: platform_v2.audit(int(_ss_user_id()), "export_failed", "admin_data", "excel", None, {"error_type": type(exc).__name__})
-        except Exception: pass
+        except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         return _mk_error(exc)
 
 
@@ -11236,7 +11302,7 @@ def api_admin_profile_password():
     ok,error=db.change_ss_user_password(int(_ss_user_id()),current,new)
     if not ok:
         try: platform_v2.audit(int(_ss_user_id()),"password_change_failed","admin_security","self",None,{"status":"failed","reason":error})
-        except Exception: pass
+        except Exception as exc: app.logger.debug("Non-critical operation skipped: %s", type(exc).__name__)
         return jsonify({"ok":False,"error":error}),400
     platform_v2.audit(int(_ss_user_id()),"password_changed","admin_security","self",None,{"status":"success"})
     # Rotate all session state after a credential change to prevent fixation.
@@ -11272,7 +11338,7 @@ def api_admin_privacy_analytics():
     try:
         return jsonify({"ok": True, "analytics": privacy_features.anonymous_health_analytics()})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:160]}), 500
+        return _mk_error(e, 500)
 
 
 @app.route("/api/admin/ask-data", methods=["POST"])
@@ -11428,7 +11494,7 @@ def api_family():
             m["adherence"] = db.med_adherence(uid, member_id=m["id"])["percent"]
         return jsonify({"ok": True, "members": members})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/family/<int:mid>", methods=["POST", "DELETE"])
@@ -11455,7 +11521,7 @@ def api_family_one(mid):
         )
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/analytics/journey", methods=["POST"])
@@ -11490,7 +11556,7 @@ def api_meds_plan():
         members={m["id"]:m["name"] for m in db.list_members(uid)}
         for plan in plans: plan["member_name"]=members.get(plan["member_id"], _t("me_short") if plan["member_id"]==0 else "")
         return jsonify({"ok":True,"plans":plans})
-    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except PermissionError: return jsonify({"ok":False,"error":"action_not_allowed","error_code":"action_not_allowed"}),403
     except Exception as exc: return _mk_error(exc)
 
 
@@ -11505,7 +11571,7 @@ def api_meds_plan_item(pid):
         if not _service_consent_ok(): return _consent_required_json("/meds")
         updated=medication_push.save_plan(uid,request.get_json(silent=True) or {},plan_id=pid)
         return jsonify({"ok":True,"id":updated})
-    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except PermissionError: return jsonify({"ok":False,"error":"action_not_allowed","error_code":"action_not_allowed"}),403
     except Exception as exc: return _mk_error(exc)
 
 
@@ -11543,7 +11609,7 @@ def api_meds_snooze():
     try:
         data=request.get_json(silent=True) or {}; mins=medication_push.schedule_snooze(_data_user_id(),int(data.get("plan_id") or 0),int(data.get("member_id") or 0),str(data.get("date") or datetime.now(timezone.utc).date().isoformat()),str(data.get("time") or ""),data.get("minutes"))
         return jsonify({"ok":True,"minutes":mins})
-    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except PermissionError: return jsonify({"ok":False,"error":"action_not_allowed","error_code":"action_not_allowed"}),403
     except Exception as exc: return _mk_error(exc)
 
 
@@ -11609,7 +11675,7 @@ def api_push_unsubscribe():
 def api_push_action():
     try:
         data=request.get_json(silent=True) or {}; result=medication_push.handle_push_action(str(data.get("token") or ""),str(data.get("action") or "")); return jsonify({"ok":True,**result})
-    except PermissionError as exc: return jsonify({"ok":False,"error":str(exc)}),403
+    except PermissionError: return jsonify({"ok":False,"error":"action_not_allowed","error_code":"action_not_allowed"}),403
     except Exception as exc: return _mk_error(exc)
 
 
@@ -11633,7 +11699,7 @@ def api_timeline():
         events = db.member_timeline(_data_user_id(), member_id, days)
         return jsonify({"ok": True, "events": events})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/analyze/differential-question", methods=["POST"])
@@ -11657,7 +11723,7 @@ def api_analyze_differential_question():
         result["ok"] = True
         return jsonify(result)
     except Exception as exc:
-        return jsonify({"ok": False, "error": f"{type(exc).__name__}: {str(exc)[:160]}"}), 400
+        return _mk_error(exc, 500)
 
 
 @app.route("/api/analyze/data-quality", methods=["POST"])
@@ -11678,7 +11744,7 @@ def api_analyze_data_quality():
         }
         return jsonify({"ok":True,"data_quality":analysis_core.assess_data_quality(patient,lang)})
     except Exception as exc:
-        return jsonify({"ok":False,"error":f"{type(exc).__name__}: {str(exc)[:160]}"}),400
+        return _mk_error(exc, 500)
 
 
 @app.route("/api/analyze", methods=["POST"])
@@ -11827,12 +11893,13 @@ def api_analyze():
                 result["emergency_flags"] = flags
                 if member and member.get("name"):
                     result["emergency_person"] = member["name"]
-                platform_v2.record_usage("safety_alert", "/api/analyze", lang, request.headers.get("User-Agent", ""), 200, service="symptom_analysis")
+                if _analytics_consent_ok():
+                    platform_v2.record_usage("safety_alert", "/api/analyze", lang, request.headers.get("User-Agent", ""), 200, service="symptom_analysis")
         except Exception:
             pass
         return jsonify(result)
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/profile", methods=["POST"])
@@ -11853,7 +11920,7 @@ def api_profile():
         )
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/handoff/candidates", methods=["GET"])
@@ -11863,7 +11930,7 @@ def api_handoff_candidates():
         out=[{"id":r.get("id"),"timestamp":r.get("timestamp"),"symptoms":r.get("symptoms") or [],"risk_level":(r.get("result") or {}).get("risk_level") or r.get("urgency")} for r in rows]
         return jsonify({"ok":True,"analyses":out})
     except Exception as e:
-        return jsonify({"ok":False,"error":str(e)[:160]}),500
+        return _mk_error(e, 500)
 
 
 @app.route("/api/handoff/create", methods=["POST"])
@@ -11879,10 +11946,13 @@ def api_handoff_create():
         share_path = url_for("public_health_handoff", token=result["token"], lang=payload_lang)
         share_url = _site_url().rstrip("/") + share_path
         return jsonify({"ok":True,"token":result["token"],"share_url":share_url,"expires_at":result["expires_at"],"qr_data_uri":privacy_features.qr_png_data_uri(share_url)})
-    except PermissionError as e:
-        return jsonify({"ok":False,"error":str(e)}),403
+    except PermissionError:
+        return jsonify({"ok":False,"error":"analysis_not_found","error_code":"analysis_not_found"}),403
+    except ValueError as e:
+        code = str(e) if str(e) in {"invalid_expiration","select_at_least_one_field","selected_information_empty"} else "invalid_request"
+        return jsonify({"ok":False,"error":code,"error_code":code}),400
     except Exception as e:
-        return jsonify({"ok":False,"error":str(e)[:160]}),400
+        return _mk_error(e, 500)
 
 
 @app.route("/api/handoff/revoke", methods=["POST"])
@@ -11892,7 +11962,7 @@ def api_handoff_revoke():
         ok=privacy_features.revoke_handoff(_data_user_id(),str(data.get("token") or ""))
         return jsonify({"ok":bool(ok)}) if ok else (jsonify({"ok":False,"error":"not_found_or_not_owned"}),404)
     except Exception as e:
-        return jsonify({"ok":False,"error":str(e)[:160]}),400
+        return _mk_error(e, 500)
 
 
 @app.route("/share/health/<token>")
@@ -12134,8 +12204,9 @@ def api_export_pdf(record_id):
     lang = "en" if result.get("lang") == "en" else "ar"
     buf = _pdf_report(result, lang)
     try:
-        platform_v2.record_usage("report_generated", "/api/analyze/export", lang, request.headers.get("User-Agent", ""), 200, None)
-        admin_operational.record_journey(_analytics_session_id(), "report", request.headers.get("User-Agent", ""))
+        if _analytics_consent_ok():
+            platform_v2.record_usage("report_generated", "/api/analyze/export", lang, request.headers.get("User-Agent", ""), 200, None)
+            admin_operational.record_journey(_analytics_session_id(), "report", request.headers.get("User-Agent", ""))
     except Exception:
         pass
     fname = "symptosense-report-%s.pdf" % record_id
@@ -12184,7 +12255,7 @@ def api_followup():
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5,
             max_tokens=500,
-            timeout=45,
+            timeout=20,
         )
         answer = r.choices[0].message.content.strip()
         return jsonify({"ok": True, "answer": answer})
@@ -12195,7 +12266,7 @@ def api_followup():
                         if lang != "en" else
                         "Hi! I can't give a full reply right now, but in general you should see a doctor if symptoms persist or worsen. This is awareness information, not a final diagnosis.")
             return jsonify({"ok": True, "answer": fallback})
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {err[:200]}"})
+        return _mk_error(e, 500)
 
 
 def _assistant_services(text, lang):
@@ -12323,7 +12394,7 @@ def api_assistant():
                 messages=msgs,
                 temperature=0.5,
                 max_tokens=400,
-                timeout=45,
+                timeout=20,
             )
             answer = r.choices[0].message.content.strip()
         except Exception:
@@ -12334,7 +12405,7 @@ def api_assistant():
                         "medical_sources": assistant_sources})
     except Exception as e:
         err = str(e)
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {err[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/assistant/feedback", methods=["POST"])
@@ -12352,7 +12423,7 @@ def api_assistant_feedback():
         db.save_assistant_feedback(_data_user_id(), message, rating, reason)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 def _checkin_api_payload(account_id, day):
@@ -12455,7 +12526,7 @@ def api_feedback():
         db.save_feedback(_data_user_id(), None, rating, comment or None)
         return jsonify({"ok": True})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/search")
@@ -12562,7 +12633,7 @@ def api_explain():
         term = (request.args.get("term") or "").strip()[:120]
         return jsonify({"ok": True, "result": health_search.explain_term(term, lang) if term else None})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 @app.route("/api/calc")
@@ -12611,10 +12682,10 @@ def api_calc():
             res = calcmod.calc_sugar(val, unit, mtype, age=age)
             return jsonify({"ok": True, "kind": "sugar", "type": mtype, **res})
         return jsonify({"ok": False, "error": "unknown kind"})
-    except (ValueError, TypeError) as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:120]}"})
+    except (ValueError, TypeError):
+        return jsonify({"ok": False, "error": "مدخلات غير صالحة." if _lang()=="ar" else "Invalid input.", "error_code": "invalid_input"}), 400
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:120]}"})
+        return _mk_error(e, 500)
 
 
 def _checkin_chart(rows):
@@ -12653,13 +12724,18 @@ def _checkin_chart(rows):
 
 @app.route("/api/hospitals", methods=["POST"])
 def api_hospitals():
-    data = request.get_json(force=True)
-    lat, lng = data.get("lat"), data.get("lng")
+    data = request.get_json(silent=True) or {}
     try:
-        hospitals = geo_hospitals.find_nearby_hospitals(float(lat), float(lng))
+        lat, lng = float(data.get("lat")), float(data.get("lng"))
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            raise ValueError("invalid_coordinates")
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "إحداثيات غير صالحة." if _lang()=="ar" else "Invalid coordinates.", "error_code": "invalid_coordinates"}), 400
+    try:
+        hospitals = geo_hospitals.find_nearby_hospitals(lat, lng)
         return jsonify({"ok": True, "hospitals": hospitals})
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)})
+        return _mk_error(e, 502)
 
 
 @app.route("/api/meds", methods=["POST"])
@@ -12733,7 +12809,7 @@ def _extract_blood_from_image(client, image_bytes):
         }],
         max_tokens=500,
         temperature=0,
-        timeout=45,
+        timeout=20,
     )
     return resp.choices[0].message.content or ""
 
@@ -12774,12 +12850,14 @@ def api_blood():
         else:
             return jsonify({"ok": False, "error": "الصيغة غير مدعومة (JPG / PNG / PDF)"})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"قراءة الملف فشلت: {type(e).__name__}: {str(e)[:150]}"})
+        request_id = getattr(g, "request_id", "")
+        app.logger.warning("Blood report extraction failed; request_id=%s error_type=%s", request_id, type(e).__name__)
+        return jsonify({"ok": False, "error": "تعذر قراءة ملف التحليل حاليًا. تحقق من وضوح الملف وحاول مرة أخرى." if _lang()=="ar" else "Unable to read the lab file right now. Check the file quality and try again.", "request_id": request_id}), 422
 
     try:
         entries, auto_age = blood_test.parse_blood_text(extracted)
         if not entries:
-            return jsonify({"ok": False, "error": "ما قدرنا نستخرج القيم من الصورة — تأكدي من وضوح الصورة وأعدي المحاولة."})
+            return jsonify({"ok": False, "error": "تعذر استخراج قيم واضحة من الصورة — تحقق من وضوح الصورة ثم أعد المحاولة."})
         if age is None and member and member.get("age"):
             try:
                 age = int(member["age"])
@@ -12823,7 +12901,7 @@ def api_blood():
             "member_name": member.get("name") if member else None,
         })
     except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+        return _mk_error(e, 500)
 
 
 def run_webapp():
