@@ -5230,7 +5230,7 @@ def chat_page():
         if (!d.ok || d.done || !d.question || !d.symptom_slug) { showDataQualityGate(); return; }
         differentialCount += 1;
         differentialAsked.push(d.symptom_slug);
-        addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'سؤال تمييزي ':'Differential question ')+differentialCount)+'</div>','bot');
+        addHtml('<div class="adaptive-step">'+esc(LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more')+'</div>','bot');
         addQ('🩺 ' + d.question);
         showOpts([
           {label:TT('clar_yes'), fn:function(){
