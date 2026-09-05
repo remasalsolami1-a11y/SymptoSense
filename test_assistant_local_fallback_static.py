@@ -35,5 +35,6 @@ def test_compound_query_keeps_both_topics():
 
 def test_assistant_route_uses_local_fallback_and_symptom_chip():
     _, source = _load_helper()
-    assert 'local_answer = None if mode == "mh" else _assistant_local_health_answer(last_text, lang)' in source
+    assert '_assistant_local_mental_answer(last_text, lang)' in source
+    assert '_assistant_local_health_answer(last_text, lang)' in source
     assert '"دوخة", "دوار", "غثيان", "تنميل"' in source

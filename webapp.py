@@ -1917,6 +1917,21 @@ function asstAsk(q) {
   document.getElementById('asstInput').value = q;
   asstSend();
 }
+function asstMhOfflineReply(text) {
+  var lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+  var low = (text || '').toLowerCase();
+  if (lang === 'ar') {
+    if (low.includes('قلق') || low.includes('خايف') || low.includes('خوف') || low.includes('هلع')) return 'أنا معك 🤍 خذ نفسًا هادئًا وبطيئًا للحظة. وش أكثر شيء يقلقك الآن: فكرة، موقف، أو إحساس جسدي؟';
+    if (low.includes('حزن') || low.includes('حزين') || low.includes('ضايق') || low.includes('ضيقة')) return 'واضح أن في ثِقل عليك. ما تحتاج ترتب كل شيء الآن؛ احكِ لي وش أكثر شيء مأثر عليك اليوم؟';
+    if (low.includes('نوم') || low.includes('أرق') || low.includes('انام') || low.includes('أنام')) return 'قلة النوم مرهقة. هل المشكلة صعوبة في بدء النوم، أم أنك تصحى كثيرًا؟';
+    if (low.includes('ضغط') || low.includes('متوتر') || low.includes('مضغوط')) return 'الضغط لما يتراكم يصير ثقيل. خلّنا نأخذها خطوة واحدة: وش أكثر شيء ضاغط عليك الآن؟';
+    return 'أنا معك هنا 🤍 اكتب اللي بخاطرك بالطريقة اللي تقدر عليها. وش أكثر شعور أو فكرة ضاغطة عليك الآن؟';
+  }
+  if (low.includes('anx') || low.includes('panic') || low.includes('worr')) return "I'm with you 🤍 Take one slow breath. What is weighing on you most right now: a thought, a situation, or a body sensation?";
+  if (low.includes('sad') || low.includes('down')) return "It sounds heavy right now. You don't need to organize everything first. What has been affecting you most today?";
+  if (low.includes('sleep') || low.includes('insomnia')) return "Poor sleep is exhausting. Is the main problem falling asleep, or waking repeatedly?";
+  return "I'm here with you 🤍 Share whatever feels most present right now. What feeling or thought is weighing on you most?";
+}
 function asstSend() {
   var inp = document.getElementById('asstInput');
   var text = inp.value.trim();
@@ -1940,28 +1955,52 @@ function asstSend() {
     document.getElementById('asstBody').appendChild(d);
     return;
   }
+  /* Capture the mode at SEND time. Do not rely on the mutable global while
+     the network request is pending: on mobile a UI/back/toggle event can
+     otherwise make a mental-health request fall through to the general-health
+     offline message. The panel class is a second source of truth for safety. */
+  var panelNow = document.getElementById('asstPanel');
+  var requestIsMh = !!asstMhMode || !!(panelNow && panelNow.classList.contains('asst-mh'));
+  var histKey = requestIsMh ? 'asst_hist_mh' : 'asst_hist';
   var hist = [];
-  try { hist = JSON.parse(sessionStorage.getItem('asst_hist') || '[]'); } catch(e) {}
+  try { hist = JSON.parse(sessionStorage.getItem(histKey) || '[]'); } catch(e) {}
   hist.push({ role: 'user', content: text });
   hist = hist.slice(-8);
-  sessionStorage.setItem('asst_hist', JSON.stringify(hist));
+  sessionStorage.setItem(histKey, JSON.stringify(hist));
   asstTyping(true);
   fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: hist, lang: document.documentElement.lang === 'en' ? 'en' : 'ar', mode: asstMhMode ? 'mh' : '' }) })
+    body: JSON.stringify({ messages: hist, lang: document.documentElement.lang === 'en' ? 'en' : 'ar', mode: requestIsMh ? 'mh' : '' }) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       asstTyping(false);
+      if (d.consent_required) {
+        location.href = d.consent_url || '/consent?next=/assistant';
+        return;
+      }
       if (d.ok) {
-        asstReply(d.answer, d.emergency_flags || []);
-        hist.push({ role: 'assistant', content: d.answer });
-        sessionStorage.setItem('asst_hist', JSON.stringify(hist.slice(-16)));
-        if (d.services && d.services.length) asstShowServices(d.services);
-        if (d.medical_sources && d.medical_sources.length) asstShowSources(d.medical_sources);
+        var answer = String(d.answer || '').trim();
+        /* A mental-health conversation must never show the generic health
+           fallback ("try symptom analysis / see a doctor"). This also protects
+           older/stale backend responses during a rolling Railway deploy. */
+        var wrongMentalFallback = /لا أستطيع الرد|لا استطيع الرد|فحص الأعراض|فحص الاعراض|راجع الطبيب عند الحاجة|can't reply right now|cannot reply right now|symptom analysis page|symptom check/i.test(answer);
+        if (requestIsMh && (!answer || wrongMentalFallback)) {
+          answer = asstMhOfflineReply(text);
+        }
+        asstReply(answer, d.emergency_flags || []);
+        hist.push({ role: 'assistant', content: answer });
+        sessionStorage.setItem(histKey, JSON.stringify(hist.slice(-16)));
+        if (!requestIsMh && d.services && d.services.length) asstShowServices(d.services);
+        if (!requestIsMh && d.medical_sources && d.medical_sources.length) asstShowSources(d.medical_sources);
+      } else if (requestIsMh) {
+        asstReply(asstMhOfflineReply(text));
       } else {
         asstReply(asstTT('asst_offline'));
       }
     })
-    .catch(function() { asstTyping(false); asstReply(asstTT('asst_offline')); });
+    .catch(function() {
+      asstTyping(false);
+      asstReply(requestIsMh ? asstMhOfflineReply(text) : asstTT('asst_offline'));
+    });
 }
 asstInitQs();
 </script>
@@ -12331,6 +12370,124 @@ def _assistant_local_health_answer(text, lang):
     return (answer + "\n\n" + disclaimer).strip()
 
 
+
+def _assistant_local_mental_answer(text, lang):
+    """Safe local fallback for the mental-wellbeing assistant.
+
+    Used when the external assistant provider is unavailable. It does not
+    diagnose or infer a mental disorder; it offers brief supportive language,
+    one simple grounding step, and a gentle follow-up question. Crisis wording
+    is handled locally as well so safety guidance never depends on an external
+    model being reachable.
+    """
+    query = " ".join(str(text or "").strip().split())[:600]
+    if not query:
+        return None
+    low = query.lower()
+    ar = lang != "en"
+
+    crisis_terms_ar = (
+        "انتحار", "أنتحر", "انتحر", "أقتل نفسي", "اقتل نفسي", "أؤذي نفسي",
+        "اؤذي نفسي", "أضر بنفسي", "اضر بنفسي", "ما أبي أعيش", "لا أريد العيش",
+        "أريد الموت", "ابي اموت", "أبي أموت", "أتمنى الموت",
+    )
+    crisis_terms_en = (
+        "suicide", "kill myself", "hurt myself", "harm myself", "want to die",
+        "don't want to live", "do not want to live", "end my life",
+    )
+    crisis = any(term in low for term in (crisis_terms_en if not ar else crisis_terms_ar + crisis_terms_en))
+    if crisis:
+        if ar:
+            return (
+                "أنا قلق على سلامتك الآن، وكلامك مهم. إذا كنت في خطر مباشر أو تخشى أن تؤذي نفسك، "
+                "لا تبق وحدك: تواصل الآن مع شخص تثق به، واتصل بخدمات الطوارئ 997 أو بوزارة الصحة 937. "
+                "إذا أمكن، ابتعد عن أي شيء قد تستخدمه لإيذاء نفسك وابقَ مع شخص آخر حتى تصل المساعدة."
+            )
+        return (
+            "I'm concerned about your safety, and what you said matters. If you may hurt yourself or are in immediate danger, "
+            "please do not stay alone: contact someone you trust now and call emergency services (997 in Saudi Arabia) or the Ministry of Health at 937. "
+            "If possible, move away from anything you could use to hurt yourself and stay with another person until help arrives."
+        )
+
+    if ar:
+        if any(k in low for k in ("قلق", "خايف", "خوف", "هلع", "توتر شديد", "متوتر")):
+            return (
+                "أفهم أن القلق ممكن يكون مرهقًا. خلّنا نخفف الضغط للحظة: خذ نفسًا هادئًا ببطء، ثم سمِّ شيئًا واحدًا حولك تراه وشيئًا واحدًا تسمعه. "
+                "ما أكثر شيء يشغل بالك الآن: فكرة محددة، موقف، أو إحساس جسدي؟\n\n"
+                "هذه مساحة دعم توعوي وليست بديلًا عن المختص."
+            )
+        if any(k in low for k in ("حزين", "حزن", "مكتئب", "مزاجي منخفض", "ضايق", "ضيقة", "منهار")):
+            return (
+                "واضح أن في ثِقل عليك، ومن حقك تأخذ مساحة للكلام. لا تحتاج ترتب كل شيء الآن. إذا تقدر، خلك قريبًا من شخص ترتاح له اليوم. "
+                "هل هذا الشعور مرتبط بشيء حصل مؤخرًا، أم مستمر من فترة؟\n\n"
+                "هذه مساحة دعم توعوي وليست تشخيصًا أو بديلًا عن المختص."
+            )
+        if any(k in low for k in ("ضغط", "مضغوط", "توتر", "إرهاق", "مرهق", "متعب نفسي")):
+            return (
+                "الضغط لما يتراكم يصير ثقيل. الآن لا تحاول تحل كل شيء دفعة واحدة؛ اختر أمرًا صغيرًا واحدًا يمكن تأجيله أو تخفيفه اليوم، وخذ دقيقة تنفس هادئ. "
+                "وش أكثر شيء ضاغط عليك حاليًا؟\n\n"
+                "هذه مساحة دعم توعوي وليست بديلًا عن المختص."
+            )
+        if any(k in low for k in ("ما اقدر انام", "ما أقدر أنام", "نوم", "أرق", "ما انام", "ما أنام")):
+            return (
+                "قلة النوم مرهقة وتزيد توتر الأفكار. ما تحتاج تجبر نفسك على النوم الآن؛ خفف الإضاءة والشاشة قليلًا، وخذ تنفسًا هادئًا، وحاول تبعد عن حل المشكلات في السرير. "
+                "هل المشكلة صعوبة في بدء النوم، أم أنك تصحى كثيرًا؟\n\n"
+                "إذا استمر الأرق أو أثر على يومك، يفيد التحدث مع مختص."
+            )
+        if any(k in low for k in ("أفكاري كثيرة", "افكاري كثيرة", "تفكير كثير", "أفكار متزاحمة", "افكار متزاحمة", "ما اقدر اوقف تفكير", "ما أقدر أوقف التفكير")):
+            return (
+                "لما تتزاحم الأفكار، محاولة إيقافها كلها قد تزيد الضغط. جرّب تكتب أكثر فكرة تضغط عليك في جملة واحدة فقط، بدون محاولة حلها الآن. "
+                "أي فكرة ترجع لك أكثر من غيرها؟\n\n"
+                "هذه مساحة دعم توعوي وليست بديلًا عن المختص."
+            )
+        if any(k in low for k in ("وحدي", "وحيد", "وحدة", "ما عندي احد", "ما عندي أحد")):
+            return (
+                "الإحساس بالوحدة مؤلم، وأنا أسمعك هنا. إذا فيه شخص واحد ترتاح له حتى لو ما تعرف وش تقول، ممكن تبدأ برسالة بسيطة مثل: «محتاج أحد يسمعني شوي». "
+                "هل الوحدة بسبب موقف معين، أم هذا الإحساس موجود من فترة؟\n\n"
+                "إذا صار الشعور شديدًا أو مستمرًا، التحدث مع مختص قد يساعد."
+            )
+        return (
+            "أنا معك هنا 🤍 وما تحتاج ترتب كلامك. اكتب اللي بخاطرك بالطريقة اللي تقدر عليها. "
+            "إذا تحب نبدأ بخطوة بسيطة: وش أكثر شعور أو فكرة ضاغطة عليك الآن؟\n\n"
+            "هذه مساحة دعم توعوي ولا تُعد تشخيصًا نفسيًا أو بديلًا عن المختص."
+        )
+
+    if any(k in low for k in ("anxious", "anxiety", "panic", "worried", "worry", "scared")):
+        return (
+            "Anxiety can feel exhausting. For a moment, slow your breathing and name one thing you can see and one thing you can hear. "
+            "What is weighing on you most right now: a specific thought, a situation, or a body sensation?\n\n"
+            "This is supportive education, not a diagnosis or a replacement for a professional."
+        )
+    if any(k in low for k in ("sad", "sadness", "low mood", "depressed", "down")):
+        return (
+            "It sounds like things feel heavy right now. You do not need to organize everything before talking. If you can, stay connected with someone you feel safe with today. "
+            "Did this feeling follow something that happened recently, or has it been there for a while?\n\n"
+            "This is supportive education, not a diagnosis or a replacement for a professional."
+        )
+    if any(k in low for k in ("stress", "stressed", "overwhelmed", "burned out", "burnt out")):
+        return (
+            "When stress piles up, everything can feel urgent. Pick one small thing you can postpone or reduce today, and take a minute of slow breathing. "
+            "What is putting the most pressure on you right now?\n\n"
+            "This is supportive education, not a replacement for a professional."
+        )
+    if any(k in low for k in ("sleep", "insomnia", "can't sleep", "cannot sleep")):
+        return (
+            "Poor sleep can make thoughts and stress feel louder. You do not need to force sleep; dim the lights, reduce screen stimulation, and try calm breathing. "
+            "Is the main problem falling asleep, or waking repeatedly?\n\n"
+            "If sleep problems persist or affect your days, consider speaking with a professional."
+        )
+    if any(k in low for k in ("racing thoughts", "too many thoughts", "can't stop thinking", "cannot stop thinking")):
+        return (
+            "When thoughts race, trying to stop all of them at once can add pressure. Write the most persistent thought in one sentence without trying to solve it yet. "
+            "Which thought keeps returning the most?\n\n"
+            "This is supportive education, not a replacement for a professional."
+        )
+    return (
+        "I'm here with you 🤍 You do not need to organize your words first. Share whatever feels most present right now. "
+        "If it helps, start with this: what feeling or thought is weighing on you most?\n\n"
+        "This is supportive education and is not a mental-health diagnosis or a replacement for a professional."
+    )
+
 def _assistant_services(text, lang):
     low = text.lower()
     if lang == "en":
@@ -12459,20 +12616,38 @@ def api_assistant():
                 timeout=20,
             )
             answer = r.choices[0].message.content.strip()
+            # Defensive mode guard: a mental-wellbeing request must not surface
+            # a generic physical-health fallback. This also covers providers
+            # that return a canned refusal/fallback as a successful response.
+            if mode == "mh":
+                _mh_wrong = (
+                    "لا أستطيع الرد", "لا استطيع الرد", "فحص الأعراض", "فحص الاعراض",
+                    "راجع الطبيب عند الحاجة", "can't reply right now", "cannot reply right now",
+                    "symptom analysis page", "symptom check",
+                )
+                if (not answer) or any(x in answer.lower() for x in _mh_wrong):
+                    answer = _assistant_local_mental_answer(last_text, lang) or answer
         except Exception:
             # Do not drop simple health questions into a generic "offline"
             # message. Use the curated local health-search knowledge as a safe
             # fallback so terms such as "دوخة" remain useful even when the
             # external AI provider is temporarily unavailable.
-            local_answer = None if mode == "mh" else _assistant_local_health_answer(last_text, lang)
+            local_answer = (
+                _assistant_local_mental_answer(last_text, lang)
+                if mode == "mh"
+                else _assistant_local_health_answer(last_text, lang)
+            )
             if local_answer:
                 answer = local_answer
-                # Sources retrieved from disease matching can be broader than
-                # the exact local-search topic, so avoid displaying potentially
-                # misleading source chips on this fallback path.
+                # Local fallbacks intentionally do not attach broad medical
+                # source chips that may not match the exact user message.
                 assistant_sources = []
             else:
-                answer = ("تعذر الوصول إلى المساعد الكامل الآن. يمكن استخدام تحليل الأعراض، وإذا كانت الأعراض مستمرة أو تزداد سوءًا فاطلب تقييمًا طبيًا. هذه معلومات توعوية وليست تشخيصًا."
+                answer = ("أنا معك هنا 🤍 اكتب ما يشغلك بكلمات بسيطة، وسأحاول مساعدتك بخطوة هادئة وآمنة."
+                          if (lang == "ar" and mode == "mh") else
+                          "I'm here with you 🤍 Share what is on your mind in simple words, and I'll try to support you with a calm, safe next step."
+                          if mode == "mh" else
+                          "تعذر الوصول إلى المساعد الكامل الآن. يمكن استخدام تحليل الأعراض، وإذا كانت الأعراض مستمرة أو تزداد سوءًا فاطلب تقييمًا طبيًا. هذه معلومات توعوية وليست تشخيصًا."
                           if lang == "ar" else
                           "The full assistant is temporarily unavailable. You can use Symptom Analysis, and if symptoms persist or worsen, seek medical evaluation. This is awareness information, not a diagnosis.")
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services,
