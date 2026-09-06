@@ -5283,7 +5283,7 @@ def chat_page():
           </select>
         </div>
         <div class="chat-head-toggles" aria-label="__AUDIO_CONTROLS__">
-          <button id="spkBtn" type="button" class="spk-btn chat-audio-btn" onclick="toggleSpeak()" aria-pressed="false" aria-label="__SPEAKER_OFF_ARIA__" title="__SPEAKER_OFF_ARIA__">
+          <button id="spkBtn" type="button" class="spk-btn chat-audio-btn" aria-pressed="false" aria-label="__SPEAKER_OFF_ARIA__" title="__SPEAKER_OFF_ARIA__">
             <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path class="audio-stroke" d="M4 9.5h4l5-4v13l-5-4H4z"/>
               <path class="audio-stroke speaker-wave" d="M16 9c1.3 1.7 1.3 4.3 0 6"/>
@@ -5291,7 +5291,7 @@ def chat_page():
               <path class="audio-stroke speaker-slash" d="M5 5l14 14"/>
             </svg>
           </button>
-          <button id="micBtn" type="button" class="spk-btn chat-audio-btn" onclick="toggleQuickMic()" aria-pressed="false" aria-label="__MIC_READY_ARIA__" title="__MIC_READY_ARIA__">
+          <button id="micBtn" type="button" class="spk-btn chat-audio-btn" aria-pressed="false" aria-label="__MIC_READY_ARIA__" title="__MIC_READY_ARIA__">
             <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <g class="mic-ready-icon">
                 <rect class="audio-stroke" x="9" y="3" width="6" height="11" rx="3"/>
@@ -5442,8 +5442,9 @@ def chat_page():
     textInp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); submitText(); }
     });
-    syncSpeakerButton();
-    syncMicButton(false);
+    // Audio controls are synchronized after all audio state variables are
+    // initialized. Calling them here would access `let` bindings before
+    // initialization and stop the entire chat script on Safari/Chrome.
     // Load family members only after /api/user-info confirms the user is signed in.
     // This prevents expected guest sessions from generating 401 responses in the console.
     function loadFamilyMembers() {
@@ -6809,6 +6810,15 @@ def chat_page():
       const safetyNote = document.getElementById('chatSafetyNote'); if (safetyNote) safetyNote.style.visibility = 'visible';
       startChat();
     }
+    // Initialize audio controls only now, after autoSpeak / quickMicActive
+    // and the related functions have been created. Bind with addEventListener
+    // instead of relying on inline onclick so Safari/CSP cannot drop the tap.
+    const speakerControl = document.getElementById('spkBtn');
+    if (speakerControl) speakerControl.addEventListener('click', toggleSpeak);
+    const micControl = document.getElementById('micBtn');
+    if (micControl) micControl.addEventListener('click', toggleQuickMic);
+    syncSpeakerButton();
+    syncMicButton(false);
     startChat();
     </script>
     """
