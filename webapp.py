@@ -282,8 +282,8 @@ body.ss-chat-page .smart-next{background:#FBFDFE!important}
   body.ss-chat-page .chat-head p{font-size:10.5px!important;line-height:1.35;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   body.ss-chat-page .chat-head-toggles{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:flex-end;gap:6px;margin:0!important}
   body.ss-chat-page .chat-head .spk-btn{width:38px;height:38px;min-width:38px;padding:0!important;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22)!important;border-radius:11px!important;font-size:0!important;background:rgba(255,255,255,.14)!important}
-  body.ss-chat-page #voiceModeBtn::before{content:'🎙️';font-size:17px;line-height:1}.chat-access{position:relative}.chat-access summary{list-style:none;cursor:pointer;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.13);color:#fff;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800}.chat-access summary::-webkit-details-marker{display:none}.chat-access-menu{position:absolute;z-index:30;top:calc(100% + 7px);inset-inline-end:0;width:190px;padding:9px;border-radius:14px;background:#fff;border:1px solid #D5E4ED;box-shadow:0 14px 34px rgba(22,59,92,.18);display:grid;gap:7px}.chat-access-menu .spk-btn{width:100%;color:#29485F!important;background:#F7FBFD!important;border:1px solid #D5E4ED!important;text-align:start!important}
-  body.ss-chat-page #spkBtn::before{content:'🔊';font-size:17px;line-height:1}
+  body.ss-chat-page .chat-access-menu #voiceModeBtn::before{content:none!important}.chat-access{position:relative}.chat-access summary{list-style:none;cursor:pointer;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.13);color:#fff;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800}.chat-access summary::-webkit-details-marker{display:none}.chat-access-menu{position:absolute;z-index:30;top:calc(100% + 7px);inset-inline-end:0;width:190px;padding:9px;border-radius:14px;background:#fff;border:1px solid #D5E4ED;box-shadow:0 14px 34px rgba(22,59,92,.18);display:grid;gap:7px}.chat-access-menu .spk-btn{width:100%;color:#29485F!important;background:#F7FBFD!important;border:1px solid #D5E4ED!important;text-align:start!important;font-size:12px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;padding:10px 11px!important;min-height:42px!important;line-height:1.45!important}
+  body.ss-chat-page .chat-access-menu #spkBtn::before{content:none!important}
   body.ss-chat-page #profileSwitcher{grid-column:1/-1;grid-row:2;width:100%;margin:0!important;display:block!important}
   body.ss-chat-page #famSelect{width:100%!important;max-width:none!important;min-height:38px!important;height:38px;padding:5px 10px!important;border-radius:10px!important;font-size:12px!important;background:rgba(255,255,255,.14)!important;color:#fff!important;border-color:rgba(255,255,255,.28)!important;box-shadow:none!important}
   body.ss-chat-page #famSelect option{color:#1F3345;background:#fff}
@@ -1299,7 +1299,6 @@ body.ss-assistant-open::after { content: ""; position: fixed; inset: 0; z-index:
 @keyframes brIn { 0% { transform: scale(.72); } 100% { transform: scale(1.05); } }
 @keyframes brHold { 0%,100% { transform: scale(1.05); } 50% { transform: scale(1.08); } }
 @keyframes brOut { 0% { transform: scale(1.05); } 100% { transform: scale(.72); } }
-.asst-panel.no-anim *, .asst-panel.no-anim *::before, .asst-panel.no-anim *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .asst-fab.pulse, .asst-br-0, .asst-br-1, .asst-br-2, .ss-bnav a, .ss-completion .bar-fill-green, .welcome-card { animation: none !important; transition: none !important; } }
 .asst-fb { display: flex; gap: 6px; align-items: center; margin: 2px 0 6px; }
 .asst-fb-btn { border: 1px solid var(--border-card); background: var(--bg-card); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
@@ -1422,7 +1421,6 @@ __FOOTER__
   </div>
   <div class="asst-foot">
     <input class="asst-inp" id="asstInput" placeholder="__AST_PH__" onkeydown="if(event.key==='Enter')asstSend()">
-    <button class="asst-mh-btn" id="asstMhBtn" onclick="asstToggleAnim()" style="display:none;">__AST_MH_ANIM__</button>
     <button onclick="asstSend()">➤</button>
   </div>
   <div class="asst-disc">__AST_DISC__</div>
@@ -1611,12 +1609,6 @@ function asstEnterMH() {
   document.getElementById('asstSubT').textContent = asstTT('asst_mh_sub');
   document.getElementById('asstBack').style.display = '';
   document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
-  var mhMotionBtn = document.getElementById('asstMhBtn');
-  mhMotionBtn.style.display = '';
-  mhMotionBtn.title = document.documentElement.lang === 'en'
-    ? 'Reduces visual animations only; it does not stop the conversation.'
-    : 'يقلل المؤثرات المتحركة فقط، ولا يوقف المحادثة.';
-  mhMotionBtn.setAttribute('aria-label', mhMotionBtn.title);
   var g = document.getElementById('asstGreet');
   if (g) { g.textContent = asstTT('asst_mh_greet'); g.style.whiteSpace = 'pre-line'; }
   asstRenderOpts();
@@ -1632,7 +1624,6 @@ function asstBackMain() {
   document.getElementById('asstSubT').textContent = asstTT('asst_sub');
   document.getElementById('asstBack').style.display = 'none';
   document.getElementById('asstInput').placeholder = asstTT('asst_ph');
-  document.getElementById('asstMhBtn').style.display = 'none';
   asstRestoreModeHistory(false);
   asstShowMain();
 }
@@ -1640,16 +1631,6 @@ function openAsstGeneral() {
   var p = document.getElementById('asstPanel');
   if (!p.classList.contains('open')) asstToggle();
   asstBackMain();
-}
-function asstToggleAnim() {
-  var p = document.getElementById('asstPanel');
-  p.classList.toggle('no-anim');
-  var btn = document.getElementById('asstMhBtn');
-  btn.textContent = p.classList.contains('no-anim') ? asstTT('asst_mh_anim_on') : asstTT('asst_mh_anim');
-  btn.title = document.documentElement.lang === 'en'
-    ? (p.classList.contains('no-anim') ? 'Restore visual animations.' : 'Reduce visual animations only; the conversation keeps working.')
-    : (p.classList.contains('no-anim') ? 'إعادة المؤثرات المتحركة.' : 'تقليل المؤثرات المتحركة فقط؛ المحادثة تستمر بشكل طبيعي.');
-  btn.setAttribute('aria-label', btn.title);
 }
 function asstOptClick(act, k) {
   if (act === 'mh') { asstEnterMH(); return; }
@@ -1690,7 +1671,6 @@ function asstEnterNightCalm() {
   document.getElementById('asstSubT').textContent = asstTT('night_calm_greet');
   document.getElementById('asstBack').style.display = '';
   document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
-  document.getElementById('asstMhBtn').style.display = 'none';
   var body = document.getElementById('asstBody');
   body.innerHTML = '';
   asstMhMsg(asstTT('night_calm_greet'));
@@ -3598,7 +3578,6 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__AST_GREET__", ast["asst_greet"])
         .replace("__AST_PH__", ast["asst_ph"])
         .replace("__AST_DISC__", ast["asst_disc"])
-        .replace("__AST_MH_ANIM__", ast["asst_mh_anim"])
         .replace("__AST_EXPLAIN_ASK__", ast["asst_explain_ask"])
         .replace("__AST_T__", json.dumps(ast, ensure_ascii=False))
         .replace("__BODY__", body)
@@ -4307,6 +4286,43 @@ HOME_CSS = """
 }
 .home-how{margin:30px 0;padding:26px;border:1px solid #DCE8F0;border-radius:22px;background:#F8FCFF}.home-how h2{margin:0 0 6px;color:#163B5C}.home-how>p{margin:0 0 18px;color:#60788B}.home-how-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.home-how-step{padding:18px 14px;border-radius:16px;background:#fff;border:1px solid #DCE8F0;text-align:center;color:#163B5C;font-weight:800}.home-how-step span{display:block;font-size:25px;margin-bottom:7px}.home-how-step small{display:block;color:#60788B;font-weight:600;margin-top:5px;line-height:1.5}.trust-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.trust-pills span{padding:7px 10px;border-radius:999px;background:#F4FAFE;border:1px solid #D6E7F0;color:#29485F;font-size:12px;font-weight:800}@media(max-width:480px){.home-how{padding:18px 14px;margin:22px 0}.home-how-flow{grid-template-columns:1fr 1fr;gap:9px}.home-how-step{padding:14px 9px;font-size:13px}.home-how-step span{font-size:21px;margin-bottom:5px}.home-how-step small{font-size:11px}}@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}}
 
+
+/* Explore tools: desktop grid, mobile 4-at-a-time horizontal pages */
+.explore-tools{margin:26px 0 30px;padding:24px;border:1px solid #DCE8F0;border-radius:22px;background:#F8FCFF;overflow:hidden}
+.explore-tools-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}
+.explore-tools-head h2{margin:0 0 5px;color:#163B5C;font-size:clamp(21px,2.2vw,28px)}
+.explore-tools-head p{margin:0;color:#60788B;font-size:14px;line-height:1.7}
+.explore-tools-hint{display:none;color:#287FC1;font-size:12px;font-weight:800;white-space:nowrap}
+.explore-tools-scroll{display:block;overflow:visible;outline:none}
+.explore-tools-page{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.explore-tools-page:last-child{margin-bottom:0}
+.explore-tool-card{min-height:116px;padding:16px 12px;border:1px solid #DCE8F0;border-radius:17px;background:#fff;color:#163B5C;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;font-weight:800;box-shadow:0 4px 14px rgba(31,86,127,.05);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+.explore-tool-card:hover{transform:translateY(-2px);border-color:#8FC6EB;box-shadow:0 10px 22px rgba(31,86,127,.10)}
+.explore-tool-icon{width:44px;height:44px;border-radius:14px;background:#EAF4FF;display:grid;place-items:center;font-size:23px}
+.explore-tool-card b{font-size:13.5px;line-height:1.45}
+.explore-tools-dots{display:none}
+@media(max-width:900px) and (min-width:481px){.explore-tools-page{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){
+  .explore-tools{margin:22px 0 26px;padding:17px 0 16px;border-radius:20px}
+  .explore-tools-head{align-items:flex-start;padding:0 14px;margin-bottom:13px}
+  .explore-tools-head h2{font-size:20px;line-height:1.35}
+  .explore-tools-head p{font-size:12.5px;line-height:1.65;max-width:31ch}
+  .explore-tools-hint{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding-top:5px}
+  .explore-tools-scroll{display:flex;gap:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x;padding:0 12px 4px;scrollbar-width:none}
+  .explore-tools-scroll::-webkit-scrollbar{display:none}
+  .explore-tools-page{flex:0 0 100%;min-width:100%;scroll-snap-align:start;scroll-snap-stop:always;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,104px);gap:9px;margin:0;padding-inline:2px}
+  .explore-tool-card{min-height:0;height:104px;padding:11px 8px;border-radius:15px;gap:5px}
+  .explore-tool-icon{width:38px;height:38px;border-radius:12px;font-size:20px}
+  .explore-tool-card b{font-size:12px;line-height:1.35}
+  .explore-tools-dots{display:flex;justify-content:center;gap:5px;margin-top:10px}
+  .explore-tools-dots span{width:6px;height:6px;border-radius:50%;background:#B8D6E9}
+  .explore-tools-dots span:first-child{width:16px;border-radius:999px;background:#4A9DD4}
+}
+@media(max-width:330px){
+  .explore-tools-head{padding-inline:11px}.explore-tools-head p{font-size:12px}.explore-tools-hint{display:none}
+  .explore-tools-scroll{padding-inline:9px}.explore-tools-page{grid-template-rows:repeat(2,98px);gap:7px}.explore-tool-card{height:98px}.explore-tool-card b{font-size:11.3px}
+}
+
 @media (max-width: 480px) {
   .svc-card { padding: 18px; }
   .mh-card, .asst-cta { padding: 18px; }
@@ -4343,26 +4359,39 @@ def home_page():
       <a class="svc-card" href="/blood"><span class="svc-ic">🧪</span><h3>__LAB_H__</h3><p>__LAB_P__</p><span class="svc-btn">__OPEN__</span></a>
     </div>
 
-    <section class="home-how" aria-labelledby="homeHowTitle"><h2 id="homeHowTitle">__HOW_TITLE__</h2><p>__HOW_SUB__</p><div class="home-how-flow"><div class="home-how-step"><span>1️⃣</span>__HOW1__<small>__HOW1S__</small></div><div class="home-how-step"><span>2️⃣</span>__HOW2__<small>__HOW2S__</small></div><div class="home-how-step"><span>3️⃣</span>__HOW3__<small>__HOW3S__</small></div><div class="home-how-step"><span>4️⃣</span>__HOW4__<small>__HOW4S__</small></div></div></section>
-
-
-    <details class="v2-services-more">
-      <summary>__MORE__</summary>
-      <div class="v2-more-grid">
-        <a class="v2-more-link" href="/meds"><span>💊</span>__MEDS__</a>
-        <a class="v2-more-link" href="/calculators"><span>🧮</span>__CALC__</a>
-        <a class="v2-more-link" href="/family"><span>👨‍👩‍👧</span>__FAMILY__</a>
-        <a class="v2-more-link" href="/search"><span>🔎</span>__SEARCH__</a>
-        <a class="v2-more-link" href="/sources"><span>📚</span>__SOURCES__</a>
-        <a class="v2-more-link" href="/home?assistant=mh" onclick="openAsstMH();return false;"><span>🧠</span>__MENTAL__</a>
-        <a class="v2-more-link" href="/relax"><span>🌿</span>__RELAX__</a>
-        <a class="v2-more-link" href="/checkin"><span>📋</span>__CHECK__</a>
-        <a class="v2-more-link" href="/tips"><span>💡</span>__TIPS__</a>
-        <a class="v2-more-link" href="/firstaid"><span>🩹</span>__FIRSTAID__</a>
-        <a class="v2-more-link" href="/emergency"><span>🚑</span>__EMERGENCY__</a>
-        <a class="v2-more-link" href="/about-us"><span>ℹ️</span>__ABOUT__</a>
+    <section class="explore-tools" aria-labelledby="exploreToolsTitle">
+      <div class="explore-tools-head">
+        <div>
+          <h2 id="exploreToolsTitle">__TOOLS_TITLE__</h2>
+          <p>__TOOLS_SUB__</p>
+        </div>
+        <span class="explore-tools-hint" aria-hidden="true">__TOOLS_HINT__</span>
       </div>
-    </details>
+
+      <div class="explore-tools-scroll" role="region" aria-label="__TOOLS_TITLE__" tabindex="0">
+        <div class="explore-tools-page">
+          <a class="explore-tool-card" href="/meds"><span class="explore-tool-icon">💊</span><b>__MEDS__</b></a>
+          <a class="explore-tool-card" href="/calculators"><span class="explore-tool-icon">🧮</span><b>__CALC__</b></a>
+          <a class="explore-tool-card" href="/family"><span class="explore-tool-icon">👨‍👩‍👧</span><b>__FAMILY__</b></a>
+          <a class="explore-tool-card" href="/search"><span class="explore-tool-icon">🔎</span><b>__SEARCH__</b></a>
+        </div>
+        <div class="explore-tools-page">
+          <a class="explore-tool-card" href="/sources"><span class="explore-tool-icon">📚</span><b>__SOURCES__</b></a>
+          <a class="explore-tool-card" href="/home?assistant=mh" onclick="openAsstMH();return false;"><span class="explore-tool-icon">🧠</span><b>__MENTAL__</b></a>
+          <a class="explore-tool-card" href="/relax"><span class="explore-tool-icon">🌿</span><b>__RELAX__</b></a>
+          <a class="explore-tool-card" href="/checkin"><span class="explore-tool-icon">📋</span><b>__CHECK__</b></a>
+        </div>
+        <div class="explore-tools-page">
+          <a class="explore-tool-card" href="/tips"><span class="explore-tool-icon">💡</span><b>__TIPS__</b></a>
+          <a class="explore-tool-card" href="/firstaid"><span class="explore-tool-icon">🩹</span><b>__FIRSTAID__</b></a>
+          <a class="explore-tool-card" href="/emergency"><span class="explore-tool-icon">🚑</span><b>__EMERGENCY__</b></a>
+          <a class="explore-tool-card" href="/about-us"><span class="explore-tool-icon">ℹ️</span><b>__ABOUT__</b></a>
+        </div>
+      </div>
+      <div class="explore-tools-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    </section>
+
+    <section class="home-how" aria-labelledby="homeHowTitle"><h2 id="homeHowTitle">__HOW_TITLE__</h2><p>__HOW_SUB__</p><div class="home-how-flow"><div class="home-how-step"><span>1️⃣</span>__HOW1__<small>__HOW1S__</small></div><div class="home-how-step"><span>2️⃣</span>__HOW2__<small>__HOW2S__</small></div><div class="home-how-step"><span>3️⃣</span>__HOW3__<small>__HOW3S__</small></div><div class="home-how-step"><span>4️⃣</span>__HOW4__<small>__HOW4S__</small></div></div></section>
     """
     replacements = {
         "__TITLE__": bi("افهم أعراضك. اعرف خطوتك التالية.", "Understand your symptoms. Know your next step."),
@@ -4381,6 +4410,9 @@ def home_page():
         "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("أسئلة صحية، صحة نفسية، أدوية وتحاليل في تجربة تفاعلية.", "Interactive support for health questions, mental wellbeing, medicines, and labs."),
         "__LAB_H__": bi("تحليل التحاليل", "Lab analysis"), "__LAB_P__": bi("مساعدة مبسطة وتثقيفية لفهم نتائج التحاليل.", "Simple, educational help understanding laboratory results."),
         "__OPEN__": bi("فتح الخدمة", "Open service"), "__MORE__": bi("الخدمات الأخرى", "More services"),
+        "__TOOLS_TITLE__": bi("استكشف أدوات SymptoSense", "Explore SymptoSense tools"),
+        "__TOOLS_SUB__": bi("كل ما تحتاجه لفهم صحتك ومتابعتها في مكان واحد.", "Everything you need to understand and track your health in one place."),
+        "__TOOLS_HINT__": bi("اسحب للمزيد ←", "Swipe for more →"),
         "__HOW_TITLE__": bi("كيف يعمل SymptoSense؟", "How does SymptoSense work?"),
         "__HOW_SUB__": bi("مسار واضح من أول عرض إلى الخطوة التالية.", "A clear path from the first symptom to the next step."),
         "__HOW1__": bi("أدخل الأعراض", "Enter symptoms"), "__HOW1S__": bi("صف ما تشعر به والبيانات الأساسية.", "Describe what you feel and basic context."),
@@ -4836,17 +4868,17 @@ def sources_page():
 CHAT = {
     "ar": {
         "me": "👤 أنا",
-        "voice_mode_on": "🎙️ صوتي: مفعل",
-        "voice_mode_off": "🔇 صوتي: متوقف",
-        "voice_mode_title": "تبديل وضع المحادثة الصوتية",
+        "voice_mode_on": "🎙️ المحادثة الصوتية: مفعلة",
+        "voice_mode_off": "🎙️ المحادثة الصوتية: متوقفة",
+        "voice_mode_title": "المحادثة الصوتية: يستمع المساعد ثم يقرأ الرد بصوت عالٍ",
         "voice_listening": "🎧 جاري الاستماع...",
         "voice_processing": "⏳ جاري المعالجة...",
         "voice_speaking_state": "🔊 جاري القراءة...",
         "welcome": "🩺 مرحبًا بك في SymptoSense",
         "head_p": "مساعدك الذكي لفهم الأعراض الصحية",
         "muted": "التوعية فقط وليس تشخيصاً نهائياً — راجع الطبيب عند أي شك.",
-        "speak_on": "🔊 قراءة: مفعلة", "speak_off": "🔇 قراءة: متوقفة",
-        "speak_title": "تشغيل/إيقاف القراءة الصوتية",
+        "speak_on": "🔊 القراءة بصوت عالٍ: مفعلة", "speak_off": "🔊 القراءة بصوت عالٍ: متوقفة",
+        "speak_title": "القراءة بصوت عالٍ: يقرأ SymptoSense النص لك",
         "input_ph": "اكتب هنا...", "send": "إرسال", "mic_title": "إدخال صوتي",
         "age": "كم عمرك؟ (اكتب الرقم فقط) 🧒👵", "age_ph": "مثال: 28",
         "age_invalid": "يرجى إدخال عمر صحيح بين 1 و 120.",
@@ -5007,17 +5039,17 @@ CHAT = {
     },
     "en": {
         "me": "👤 Me",
-        "voice_mode_on": "🎙️ Voice: On",
-        "voice_mode_off": "🔇 Voice: Off",
-        "voice_mode_title": "Toggle voice conversation mode",
+        "voice_mode_on": "🎙️ Voice conversation: On",
+        "voice_mode_off": "🎙️ Voice conversation: Off",
+        "voice_mode_title": "Voice conversation: listens to you and reads the reply aloud",
         "voice_listening": "🎧 Listening...",
         "voice_processing": "⏳ Processing...",
         "voice_speaking_state": "🔊 Reading...",
         "welcome": "🩺 Welcome to SymptoSense",
         "head_p": "Your smart assistant to understand health symptoms",
         "muted": "Awareness only, not a final diagnosis — see a doctor if in any doubt.",
-        "speak_on": "🔊 Read: On", "speak_off": "🔇 Read: Off",
-        "speak_title": "Toggle voice reading",
+        "speak_on": "🔊 Read aloud: On", "speak_off": "🔊 Read aloud: Off",
+        "speak_title": "Read aloud: SymptoSense reads text to you",
         "input_ph": "Type here...", "send": "Send", "mic_title": "Voice input",
         "age": "How old are you? (type the number only) 🧒👵", "age_ph": "Example: 28",
         "age_invalid": "Please enter a valid age between 1 and 120.",
@@ -5248,7 +5280,7 @@ def chat_page():
             <option value="0">👤 __ME__</option>
           </select>
         </div>
-        <details class="chat-access"><summary>🔊 __ACCESSIBILITY__</summary><div class="chat-access-menu"><button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_OFF__</button><button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button><button type="button" class="spk-btn" onclick="startVoice()">🎙️ __VOICE_INPUT__</button></div></details>
+        <details class="chat-access"><summary>🔊 __ACCESSIBILITY__</summary><div class="chat-access-menu"><button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_OFF__</button><button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button><button type="button" class="spk-btn" onclick="startVoice()">🎤 __VOICE_INPUT__</button></div></details>
       </div>
       <div class="ss-flow" aria-live="polite"><div class="ss-flow-copy"><span id="flowStepLabel">__FLOW_STEP__</span><span id="flowStepName">__FLOW_DEMO__</span></div><div class="ss-flow-track" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="flowProgress"><div class="ss-flow-fill" id="flowFill"></div></div></div>
       <div class="chat-body" id="chatBody"></div>
@@ -6817,7 +6849,7 @@ def chat_page():
         .replace("__REL__", json.dumps(_related_map(ar), ensure_ascii=False))
         .replace("__ME__", CHAT["ar" if ar else "en"]["me"])
         .replace("__ACCESSIBILITY__", "إمكانية الوصول" if ar else "Accessibility")
-        .replace("__VOICE_INPUT__", "إدخال صوتي" if ar else "Voice input")
+        .replace("__VOICE_INPUT__", "إملاء الأعراض/النص بالصوت" if ar else "Dictate symptoms/text by voice")
         .replace("__VOICE_MODE_TITLE__", CHAT["ar" if ar else "en"]["voice_mode_title"])
         .replace("__VOICE_MODE_OFF__", CHAT["ar" if ar else "en"]["voice_mode_off"])
         .replace("__SPEAK_OFF__", CHAT["ar" if ar else "en"]["speak_off"])
@@ -7013,8 +7045,6 @@ CT = {
         "asst_mh_opt3": "أبي أفهم شعوري",
         "asst_mh_opt3_d": "إذا كنت تريد فهم ما تشعر به بشكل أفضل.",
         "asst_mh_ph": "احكِ لي براحتك...",
-        "asst_mh_anim": "تقليل الحركة",
-        "asst_mh_anim_on": "إعادة الحركة",
         "asst_mh_talk_msg": "🤍 أنا معك هنا. ابدأ بأي شيء يشغل بالك — حتى لو كان الكلام غير مرتب، لا بأس. أنا أسمعك.",
         "asst_mh_calm_msg": "🌿 خذ نفسًا عميقًا معي… شاهد الدائرة وتنفس معها. خذ وقتك، أنا هنا.",
         "asst_mh_feel_msg": "🧠 خذ وقتك… متى ظهر هذا الشعور؟ وش كان قبله؟ اكتب ما يخطر ببالك مهما كان بسيطًا.",
@@ -7482,8 +7512,6 @@ CT = {
         "asst_mh_opt3": "Help me understand my feeling",
         "asst_mh_opt3_d": "If you want to understand what you feel better.",
         "asst_mh_ph": "Tell me freely...",
-        "asst_mh_anim": "Reduce motion",
-        "asst_mh_anim_on": "Restore motion",
         "asst_mh_talk_msg": "🤍 I'm here with you. Start with anything on your mind — even if it's unorganized. I'm listening.",
         "asst_mh_calm_msg": "🌿 Take a deep breath with me... watch the circle and breathe with it. Take your time, I'm here.",
         "asst_mh_feel_msg": "🧠 Take your time... when did this feeling appear? What came before it? Write whatever comes to mind, however small.",
@@ -13125,6 +13153,43 @@ def api_followup():
         return jsonify({"ok": True, "answer": _followup_local_answer(question, ctx, lang), "fallback": True})
 
 
+def _assistant_contextual_health_answer(text, lang):
+    """Handle short health phrases whose meaning depends on their modifier/context.
+
+    The generic health search can otherwise reduce a phrase such as
+    "غثيان الدورة" to the standalone topic "غثيان". Keep the full phrase
+    intact for common context-dependent intents before generic topic lookup.
+    """
+    import re as _re
+    query = " ".join(str(text or "").strip().split())[:600]
+    if not query:
+        return None
+    low = query.lower()
+    ar = lang != "en"
+
+    # Menstrual-period nausea: answer the combined intent, not generic nausea.
+    period_ar = ("الدورة", "الدوره", "الحيض", "الطمث", "وقت الدورة", "اثناء الدورة", "أثناء الدورة", "قبل الدورة")
+    nausea_ar = ("غثيان", "لوعه", "لوعة", "ترجيع", "استفراغ", "قيء")
+    period_en = ("period", "menstrual", "menstruation", "menses")
+    nausea_en = ("nausea", "nauseous", "vomit", "vomiting", "sick")
+    has_period = any(k in low for k in (period_ar if ar else period_en))
+    has_nausea = any(k in low for k in (nausea_ar if ar else nausea_en))
+    if has_period and has_nausea:
+        if ar:
+            return (
+                "الغثيان مع الدورة ممكن يحصل عند بعض الأشخاص بسبب تغيّرات الهرمونات ومواد مثل البروستاغلاندينات، خصوصًا إذا كان معه مغص. "
+                "جرّبي وجبات خفيفة، سوائل على دفعات، وراحة؛ وإذا كان القيء متكررًا، ما تقدرين تحتفظين بالسوائل، عندك دوخة/إغماء، نزيف شديد جدًا أو ألم غير معتاد فالأفضل تقييم طبي. "
+                "هذه معلومات توعوية وليست تشخيصًا."
+            )
+        return (
+            "Nausea around a period can happen for some people because of hormonal changes and prostaglandins, especially when cramps are present. "
+            "Small meals, frequent sips of fluid, and rest may help. Seek medical care if vomiting is repeated, you cannot keep fluids down, you feel faint, bleeding is unusually heavy, or pain is severe/unusual. "
+            "This is educational information, not a diagnosis."
+        )
+
+    return None
+
+
 def _assistant_local_health_answer(text, lang):
     """Build a useful offline/general-health answer from curated local knowledge.
 
@@ -13136,6 +13201,9 @@ def _assistant_local_health_answer(text, lang):
     query = (text or "").strip()[:600]
     if not query:
         return None
+    contextual = _assistant_contextual_health_answer(query, lang)
+    if contextual:
+        return contextual
     try:
         result = health_search.search_health(query, lang)
     except Exception:
@@ -13404,6 +13472,10 @@ def api_assistant():
                 answer = ("أقلقني ما وصفته — قد يكون علامة طارئة (" + "، ".join(flags) +
                           "). يرجى الاتصال بالإسعاف فوراً 997 أو التوجه لأقرب طوارئ. لا تنتظر الرد هنا.")
             return jsonify({"ok": True, "answer": answer, "emergency_flags": flags, "services": services})
+        contextual_answer = None if mode == "mh" else _assistant_contextual_health_answer(last_text, lang)
+        if contextual_answer:
+            return jsonify({"ok": True, "answer": _assistant_compact_response(contextual_answer, lang, mode),
+                            "emergency_flags": [], "services": services, "medical_sources": []})
         kb_bundle = None
         assistant_sources = []
         if mode != "mh" and last_text:
@@ -13435,7 +13507,7 @@ def api_assistant():
                 )
         elif lang == "en":
             sys = (
-                "You are SymptoSense's in-site assistant. Answer the user's question directly and concisely in warm English. For a simple question, use 2-4 short sentences and at most 80 words. Do not repeat the question, add a long introduction, or list unrelated causes. Expand only when the user asks for more detail. "
+                "You are SymptoSense's in-site assistant. Answer the user's exact question directly and concisely in warm English. Preserve the full meaning of multi-word phrases: modifiers such as 'during my period', 'after food', 'while pregnant', body location, timing, and duration are part of the question and must not be dropped. Never answer only one keyword when the user supplied a more specific phrase. For a simple question, use 2-4 short sentences and at most 80 words. Do not repeat the question, add a long introduction, or list unrelated causes. Expand only when the user asks for more detail. "
                 "You help navigate the site: /chat symptom analysis, /blood CBC upload, /meds medication info & reminders, "
                 "/family Family Health Hub with per-person records, /search smart health search, /calculators health calculators (BMI, fluids, calories, blood sugar), "
                 "/emergency emergency numbers & nearest hospitals, "
@@ -13444,7 +13516,7 @@ def api_assistant():
             )
         else:
             sys = (
-                "أنت المساعد الداخلي لموقع SymptoSense. أجب على سؤال المستخدم مباشرة وباختصار وبالعربية بأسلوب سعودي ودود. للسؤال البسيط استخدم 2 إلى 4 جمل قصيرة وبحد أقصى 80 كلمة. لا تكرر السؤال، ولا تبدأ بمقدمة طويلة، ولا تسرد أسبابًا كثيرة غير مطلوبة. توسع فقط إذا طلب المستخدم تفاصيل أكثر. "
+                "أنت المساعد الداخلي لموقع SymptoSense. أجب على سؤال المستخدم نفسه مباشرة وباختصار وبالعربية بأسلوب سعودي ودود. حافظ على معنى العبارة كاملة: الكلمات التي تحدد السياق مثل «مع الدورة»، «بعد الأكل»، «أثناء الحمل»، مكان العرض، توقيته ومدته جزء أساسي من السؤال ولا يجوز تجاهلها. إذا كتب المستخدم عبارة مركبة مثل «غثيان الدورة» فلا تجب عن «الغثيان» وحده. للسؤال البسيط استخدم 2 إلى 4 جمل قصيرة وبحد أقصى 80 كلمة. لا تكرر السؤال، ولا تبدأ بمقدمة طويلة، ولا تسرد أسبابًا كثيرة غير مطلوبة. توسع فقط إذا طلب المستخدم تفاصيل أكثر. "
                 "تساعد في التوجيه داخل الموقع: /chat فحص الأعراض، /blood رفع فحص الدم، /meds معلومات وتذكير الأدوية، "
                 "/family مركز صحة العائلة بسجلات منفصلة لكل فرد، /search البحث الصحي الذكي، /calculators الحاسبات الصحية (BMI والسوائل والسعرات والسكر)، /emergency أرقام الطوارئ وأقرب مستشفى، /checkin المتابعة اليومية. "
                 "إذا وصف المستخدم أعراضاً خطرة (ألم صدر، صعوبة تنفس، نزيف، تشوش، إغماء) حثه على الاتصال بالإسعاف 997 فوراً. "
