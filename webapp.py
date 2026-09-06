@@ -4336,6 +4336,7 @@ HOME_CSS = """
 }
 
 /* Competition hero: product-first health-tech showcase. */
+.ss-home-page .asst-fab{display:none!important}
 .home-showcase{position:relative;display:grid;direction:ltr;grid-template-columns:minmax(390px,.92fr) minmax(0,1.12fr);gap:clamp(38px,5.5vw,82px);align-items:center;min-height:600px;margin:0 0 38px;padding:clamp(38px,5vw,64px);overflow:hidden;border:1px solid #CFE3EF;border-radius:30px;background:linear-gradient(118deg,#F7FCFF 0%,#FFFFFF 56%,#FBFDFF 100%);box-shadow:0 10px 30px rgba(31,86,127,.055);isolation:isolate}
 .home-showcase:before{content:'';position:absolute;width:460px;height:460px;border-radius:50%;left:-105px;top:58px;background:radial-gradient(circle,#EAF5FC 0%,rgba(234,245,252,.66) 58%,rgba(234,245,252,0) 70%);z-index:-1}
 .home-showcase:after{content:'';position:absolute;width:74px;height:74px;border-radius:50%;left:44%;bottom:54px;background:#EFF7FC;z-index:-1}
@@ -4363,8 +4364,42 @@ HOME_CSS = """
 html[dir="ltr"] .home-showcase-copy{direction:ltr}html[dir="ltr"] .home-showcase-copy h1{max-width:12ch}
 @media(max-width:1050px){.home-showcase{grid-template-columns:minmax(330px,.9fr) minmax(0,1.05fr);gap:30px;padding:38px 30px}.home-showcase-copy h1{font-size:clamp(43px,5.7vw,62px)!important}.home-showcase-demo{padding-inline:40px;transform:scale(.94)}.home-tech-chip{width:112px}}
 @media(max-width:820px){.home-showcase{grid-template-columns:1fr;gap:26px;padding:34px 24px}.home-showcase-copy{order:1}.home-showcase-demo{order:2;width:min(590px,100%);min-height:500px;margin:0 auto;transform:none}.home-showcase-copy h1{max-width:14ch;font-size:clamp(40px,7vw,58px)!important}.home-showcase-sub{font-size:20px}.home-showcase-actions{margin-top:22px}.home-primary-cta,.home-secondary-cta{flex:1 1 210px}.home-showcase-line{margin-bottom:22px}}
-@media(max-width:560px){.home-showcase{margin-inline:0;padding:27px 15px 30px;border-radius:22px;gap:20px}.home-showcase-kicker{font-size:11.5px}.home-showcase-line{width:52px;height:3px;margin:8px 0 18px}.home-showcase-copy h1{font-size:clamp(34px,10.4vw,46px)!important;line-height:1.22!important}.home-showcase-sub{margin:16px 0 4px;font-size:16px;line-height:1.75}.home-showcase-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:18px}.home-primary-cta,.home-secondary-cta{width:100%;min-width:0;min-height:52px;padding:11px 16px;font-size:14px;border-radius:12px}.home-showcase-demo{min-height:455px;padding:14px 30px 20px}.home-result-preview{width:min(330px,88vw);padding:13px;border-radius:18px}.home-result-head strong{font-size:13px}.home-risk-preview{padding:12px;gap:12px}.home-risk-preview b{font-size:22px}.home-risk-check{width:42px;height:42px;font-size:22px;box-shadow:0 0 0 7px rgba(79,208,139,.12)}.home-tech-chip{width:92px;min-height:82px;padding:8px 5px;border-radius:14px}.home-tech-chip b{font-size:10px}.home-tech-chip small{font-size:7px}.home-tech-icon{font-size:23px}.home-tech-data{left:2px;top:72px}.home-tech-ai{right:0;top:35px}.home-tech-health{left:0;bottom:76px}.home-demo-caption{left:8px;bottom:4px;font-size:10px}.home-demo-caption span{font-size:27px}.home-demo-halo{width:330px;height:330px}.home-source-logos i{font-size:15px}.home-source-logos span{font-size:7px}}
-@media(max-width:380px){.home-showcase{padding-inline:12px}.home-showcase-demo{padding-inline:22px;min-height:440px}.home-result-preview{width:min(300px,88vw)}.home-tech-chip{width:82px}.home-tech-data{left:-2px}.home-tech-ai{right:-2px}.home-tech-health{left:-3px}.home-condition-row b{font-size:10.5px}.home-next-preview p{font-size:9px}}
+@media(max-width:560px){
+  .home-showcase{margin:0;padding:24px 14px 28px;border-radius:22px;gap:24px;min-height:0;overflow:hidden}
+  .home-showcase-copy{text-align:center;display:flex;flex-direction:column;align-items:center}
+  .home-showcase-kicker{font-size:11px;justify-content:center;margin:0}
+  .home-showcase-line{width:48px;height:3px;margin:8px auto 16px}
+  .home-showcase-copy h1{max-width:11ch!important;margin:0 auto;font-size:clamp(32px,9.3vw,40px)!important;line-height:1.2!important;letter-spacing:-.02em;text-align:center}
+  html[dir="ltr"] .home-showcase-copy h1{max-width:15ch!important}
+  .home-showcase-sub{max-width:31ch;margin:17px auto 0;font-size:15px;line-height:1.8;text-align:center}
+  .home-showcase-actions{width:100%;display:grid;grid-template-columns:1fr;gap:10px;margin-top:20px}
+  .home-primary-cta,.home-secondary-cta{width:100%;min-width:0;min-height:54px;padding:12px 15px;font-size:14px;border-radius:14px}
+  .home-primary-cta b{font-size:23px}
+
+  /* Mobile: keep the three technology labels, but make them part of the layout
+     instead of floating over the product preview. */
+  .home-showcase-demo{order:2;width:100%;min-height:0!important;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch;place-items:stretch;transform:none!important}
+  .home-demo-halo,.home-demo-caption{display:none!important}
+  .home-tech-chip{position:static!important;transform:none!important;width:auto!important;min-width:0;min-height:68px;padding:8px 4px;border-radius:14px;box-shadow:none;background:#F8FCFE;justify-content:center;overflow:hidden}
+  .home-tech-chip b{font-size:9.5px;line-height:1.15;white-space:nowrap}
+  .home-tech-chip small{margin-top:2px;font-size:6.8px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+  .home-tech-icon{font-size:21px}
+  .home-result-preview{grid-column:1/-1;width:100%;max-width:430px;margin:5px auto 0;padding:13px;border-radius:19px;box-shadow:0 10px 25px rgba(31,86,127,.08)}
+  .home-result-head{grid-template-columns:30px 1fr 30px;padding-bottom:11px}.home-result-head strong{font-size:13px}.home-result-doc{font-size:19px}.home-result-back{width:29px;height:29px;font-size:22px}
+  .home-risk-preview{padding:12px 10px;gap:10px;margin:11px 0}.home-risk-preview small{font-size:10px}.home-risk-preview b{font-size:21px}.home-risk-preview span:not(.home-risk-check){font-size:9px}.home-risk-check{width:42px;height:42px;font-size:22px;box-shadow:0 0 0 7px rgba(79,208,139,.11)}
+  .home-preview-panel h3,.home-next-preview h3,.home-source-preview h3{font-size:12px}.home-preview-panel>h3{padding:9px 10px}.home-condition-row{padding:8px 9px;gap:7px}.home-condition-row b{font-size:11px}.home-condition-row small{font-size:8.5px}.home-condition-row>span{font-size:17px}
+  .home-next-preview,.home-source-preview{margin-top:9px;padding:10px}.home-next-preview p{font-size:9.2px;line-height:1.65}.home-source-logos{margin:8px 0 6px}.home-source-logos i{font-size:15px}.home-source-logos span{font-size:7px}.home-source-preview>a{font-size:8.5px}
+}
+@media(max-width:380px){
+  .home-showcase{padding:21px 11px 25px;gap:20px}
+  .home-showcase-copy h1{font-size:clamp(30px,9.5vw,35px)!important}
+  .home-showcase-sub{font-size:14px}
+  .home-tech-chip{min-height:64px;padding-inline:3px}.home-tech-chip b{font-size:8.8px}.home-tech-chip small{font-size:6.2px}.home-tech-icon{font-size:19px}
+  .home-result-preview{padding:11px}.home-condition-row b{font-size:10.5px}.home-next-preview p{font-size:8.8px}
+}
+@media(max-width:330px){
+  .home-showcase-demo{grid-template-columns:1fr 1fr}.home-tech-health{grid-column:1/-1}.home-tech-chip{min-height:58px}
+}
 @media(prefers-reduced-motion:reduce){.home-primary-cta,.home-secondary-cta{transition:none}}
 """
 
@@ -4373,6 +4408,7 @@ def home_page():
     ar = _lang() == "ar"
     bi = lambda a, e: a if ar else e
     body = """
+    <script>document.body.classList.add('ss-home-page');</script>
     <section class="home-showcase" aria-labelledby="homeTitle">
       <div class="home-showcase-demo" aria-label="__DEMO_ARIA__">
         <div class="home-demo-halo" aria-hidden="true"></div>
