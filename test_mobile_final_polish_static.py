@@ -13,8 +13,12 @@ def test_home_how_flow_is_2x2_on_regular_phones():
     assert '@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}}' in WEBAPP
 
 
-def test_home_community_stats_are_2x2_on_phone():
-    assert '.home-community-stats{display:grid;grid-template-columns:1fr 1fr;width:100%' in WEBAPP
+def test_home_does_not_duplicate_community_dashboard_stats():
+    start = WEBAPP.index('def home_page():')
+    end = WEBAPP.index('\n\ndef _tools_html', start)
+    block = WEBAPP[start:end]
+    assert 'home-community' not in block
+    assert '__USER_COUNT__' not in block
 
 
 def test_community_dashboard_kpis_stay_2x2_on_common_phones():

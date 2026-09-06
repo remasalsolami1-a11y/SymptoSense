@@ -27,10 +27,14 @@ def test_feedback_is_explicit_not_blocked_by_analytics_consent():
     block = WEB[start:end]
     assert '_analytics_consent_ok()' not in block
 
-def test_home_has_how_it_works_and_community_card():
-    assert 'كيف يعمل SymptoSense؟' in WEB
-    assert 'home-community' in WEB
-    assert 'href="/community-dashboard"' in WEB
+def test_home_has_how_it_works_without_duplicate_community_dashboard():
+    start = WEB.index('def home_page():')
+    end = WEB.index('\n\ndef _tools_html', start)
+    block = WEB[start:end]
+    assert 'كيف يعمل SymptoSense؟' in block
+    assert 'home-community' not in block
+    assert 'href="/community-dashboard"' not in block
+    assert '@app.route("/community-dashboard")' in WEB
 
 def test_about_has_methodology_box():
     assert 'AI + Data Science + Digital Health' in WEB

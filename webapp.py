@@ -3526,7 +3526,6 @@ def _footer():
         '</div>'
         '</div>'
         '<div class="f-links">'
-        '<a href="/about-us">%s</a>'
         '<a href="/privacy">%s</a>'
         '<a href="/terms">%s</a>'
         '<a href="/sources">%s</a>'
@@ -3540,7 +3539,7 @@ def _footer():
          _t("footer_synopsis_t"), _t("footer_synopsis_d"),
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
          _t("footer_contact_t"), tg, _t("footer_wa_btn"),
-         _t("nav_about"), _t("footer_privacy"), _t("footer_terms"),
+         _t("footer_privacy"), _t("footer_terms"),
          ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
          ("معلومات الموقع" if _lang() == "ar" else "Site information"),
          ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
@@ -3894,7 +3893,7 @@ HOME_CSS = """
   .svc-grid { grid-template-columns: 1fr; }
   .mh-card, .asst-cta { flex-direction: column; align-items: flex-start; }
 }
-.home-how{margin:30px 0;padding:26px;border:1px solid #DCE8F0;border-radius:22px;background:#F8FCFF}.home-how h2{margin:0 0 6px;color:#163B5C}.home-how>p{margin:0 0 18px;color:#60788B}.home-how-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.home-how-step{padding:18px 14px;border-radius:16px;background:#fff;border:1px solid #DCE8F0;text-align:center;color:#163B5C;font-weight:800}.home-how-step span{display:block;font-size:25px;margin-bottom:7px}.home-how-step small{display:block;color:#60788B;font-weight:600;margin-top:5px;line-height:1.5}.home-community{margin:30px 0 28px;display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:20px;align-items:center;padding:24px 26px;border-radius:22px;border:1px solid #CFE2EE;background:linear-gradient(135deg,#F7FCFF,#EEF7FC)}.home-community-main{display:block;text-decoration:none;border-radius:16px;padding:4px;transition:transform .15s ease}.home-community-main:hover{transform:translateY(-1px)}.home-community h2{margin:0 0 6px;color:#163B5C}.home-community p{margin:0;color:#60788B}.home-community-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.home-community-stat{min-width:105px;padding:12px 14px;border-radius:15px;background:#fff;border:1px solid #DCE8F0;text-align:center;text-decoration:none;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.home-community-stat:hover{transform:translateY(-2px);border-color:#287FC1;box-shadow:0 8px 18px rgba(31,86,127,.09)}.home-community-stat strong{display:block;font-size:21px;color:#287FC1}.home-community-stat small{color:#60788B}.trust-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.trust-pills span{padding:7px 10px;border-radius:999px;background:#F4FAFE;border:1px solid #D6E7F0;color:#29485F;font-size:12px;font-weight:800}@media(max-width:920px){.home-community{grid-template-columns:1fr}.home-community-stats{justify-content:flex-start}}@media(max-width:480px){.home-how{padding:18px 14px;margin:22px 0}.home-how-flow{grid-template-columns:1fr 1fr;gap:9px}.home-how-step{padding:14px 9px;font-size:13px}.home-how-step span{font-size:21px;margin-bottom:5px}.home-how-step small{font-size:11px}.home-community{padding:19px 16px;margin-top:22px}.home-community-stats{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px}.home-community-stat{min-width:0;padding:11px 8px}.home-community-stat strong{font-size:19px}}@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}}@media(max-width:330px){.home-community-stats{grid-template-columns:1fr}}
+.home-how{margin:30px 0;padding:26px;border:1px solid #DCE8F0;border-radius:22px;background:#F8FCFF}.home-how h2{margin:0 0 6px;color:#163B5C}.home-how>p{margin:0 0 18px;color:#60788B}.home-how-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.home-how-step{padding:18px 14px;border-radius:16px;background:#fff;border:1px solid #DCE8F0;text-align:center;color:#163B5C;font-weight:800}.home-how-step span{display:block;font-size:25px;margin-bottom:7px}.home-how-step small{display:block;color:#60788B;font-weight:600;margin-top:5px;line-height:1.5}.trust-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.trust-pills span{padding:7px 10px;border-radius:999px;background:#F4FAFE;border:1px solid #D6E7F0;color:#29485F;font-size:12px;font-weight:800}@media(max-width:480px){.home-how{padding:18px 14px;margin:22px 0}.home-how-flow{grid-template-columns:1fr 1fr;gap:9px}.home-how-step{padding:14px 9px;font-size:13px}.home-how-step span{font-size:21px;margin-bottom:5px}.home-how-step small{font-size:11px}}@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}}
 
 @media (max-width: 480px) {
   .svc-card { padding: 18px; }
@@ -3911,11 +3910,6 @@ HOME_CSS = """
 def home_page():
     ar = _lang() == "ar"
     bi = lambda a, e: a if ar else e
-    try:
-        db.init_db()
-        public_stats = db.public_site_summary(comment_limit=0)
-    except Exception:
-        public_stats = {"users": 0, "ratings": 0, "average_5": 0.0, "comment_count": 0}
     body = """
     <section class="hh" aria-labelledby="homeTitle">
       <div class="hh-l">
@@ -3939,7 +3933,6 @@ def home_page():
 
     <section class="home-how" aria-labelledby="homeHowTitle"><h2 id="homeHowTitle">__HOW_TITLE__</h2><p>__HOW_SUB__</p><div class="home-how-flow"><div class="home-how-step"><span>1️⃣</span>__HOW1__<small>__HOW1S__</small></div><div class="home-how-step"><span>2️⃣</span>__HOW2__<small>__HOW2S__</small></div><div class="home-how-step"><span>3️⃣</span>__HOW3__<small>__HOW3S__</small></div><div class="home-how-step"><span>4️⃣</span>__HOW4__<small>__HOW4S__</small></div></div></section>
 
-    <section class="home-community" aria-label="__COMM_ARIA__"><a class="home-community-main" href="/community-dashboard"><div><h2>👥 __COMM_TITLE__</h2><p>__COMM_SUB__</p></div></a><div class="home-community-stats"><a class="home-community-stat" href="/community-dashboard"><strong>__USER_COUNT__</strong><small>__USERS_LABEL__</small></a><a class="home-community-stat" href="/community-dashboard"><strong>__AVG_RATING__</strong><small>__RATING_LABEL__</small></a><a class="home-community-stat" href="/community-dashboard"><strong>__RATING_COUNT__</strong><small>__REVIEWS_LABEL__</small></a><a class="home-community-stat" href="/community-dashboard"><strong>__COMMENT_COUNT__</strong><small>__COMMENTS_LABEL__</small></a></div></section>
 
     <details class="v2-services-more">
       <summary>__MORE__</summary>
@@ -3982,14 +3975,6 @@ def home_page():
         "__HOW2__": bi("أسئلة متابعة", "Follow-up questions"), "__HOW2S__": bi("أسئلة تتكيف مع إجاباتك.", "Questions adapt to your answers."),
         "__HOW3__": bi("نقيّم الخطورة", "Assess risk"), "__HOW3S__": bi("تحديد مستوى الخطورة وعلامات التنبيه.", "Identify risk level and warning signs."),
         "__HOW4__": bi("نوضح الخطوة التالية", "Explain the next step"), "__HOW4S__": bi("توجيه واضح مع المصادر الطبية.", "Clear guidance with medical sources."),
-        "__COMM_TITLE__": bi("مستخدمو SymptoSense", "SymptoSense community"),
-        "__COMM_SUB__": bi("إحصاءات عامة وتقييمات وتعليقات منشورة بموافقة أصحابها.", "Public usage stats, ratings, and comments shared with permission."),
-        "__COMM_ARIA__": bi("فتح لوحة مستخدمي SymptoSense", "Open SymptoSense community dashboard"),
-        "__USER_COUNT__": str(public_stats.get("users", 0)), "__USERS_LABEL__": bi("مستخدم", "users"),
-        "__AVG_RATING__": ((str(public_stats.get("average_5", 0)) + "/5") if public_stats.get("ratings") else "—/5"),
-        "__RATING_LABEL__": bi("متوسط التقييم", "average rating"),
-        "__RATING_COUNT__": str(public_stats.get("ratings", 0)), "__REVIEWS_LABEL__": bi("تقييم", "ratings"),
-        "__COMMENT_COUNT__": str(public_stats.get("comment_count", 0)), "__COMMENTS_LABEL__": bi("تعليق منشور", "published comments"),
         "__MEDS__": bi("معلومات الأدوية", "Medicine information"), "__CALC__": bi("الحاسبات الصحية", "Health calculators"),
         "__FAMILY__": bi("ملفات العائلة", "Family profiles"), "__SEARCH__": bi("البحث الصحي", "Health search"),
         "__SOURCES__": bi("المصادر الطبية", "Medical sources"), "__MENTAL__": bi("الصحة النفسية", "Mental wellbeing"),
