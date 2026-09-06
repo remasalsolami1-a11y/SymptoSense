@@ -3759,54 +3759,172 @@ body { font-family: 'Poppins', 'Cairo', 'Segoe UI', Tahoma, sans-serif; backgrou
 
 
 LANG_PICKER_CSS = """
-html, body { min-height: 100%; background: #F5F9FF !important; color: #123B70; }
-body { font-family: 'Poppins', 'Cairo', 'Segoe UI', sans-serif; }
-.container { max-width: none; padding: 0; min-height: 100vh; min-height: 100dvh; }
-.ss-bnav, .asst-fab, .asst-panel, .expl-bg, .asst-modal-bg, .ss-modal-overlay, .pwa-install { display: none !important; }
-.first-lang { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 38%, #EAF4FF 0, #F5F9FF 45%, #FFFFFF 100%); }
-.first-lang-head { min-height: 82px; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(255,255,255,.88); border-bottom: 1px solid #DCEBFA; }
-.first-lang-logo { display: inline-flex; align-items: center; gap: 10px; color: #123B70; font-size: clamp(20px,3vw,28px); font-weight: 900; letter-spacing: -.4px; }
-.first-lang-logo em { color: #1976D2; font-style: normal; }
-.first-lang-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 34px 18px; }
-.first-lang-card { width: min(760px,100%); background: rgba(255,255,255,.94); border: 1px solid #DCEBFA; border-radius: 28px; padding: clamp(28px,5vw,54px); text-align: center; box-shadow: 0 22px 60px rgba(25,118,210,.12); }
-.first-lang-icon { width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 43px; background: linear-gradient(135deg,#EAF4FF,#D7EBFF); box-shadow: 0 12px 28px rgba(25,118,210,.15); }
-.first-lang-card h1 { color: #123B70; font-size: clamp(25px,4.2vw,38px); line-height: 1.45; margin-bottom: 4px; }
-.first-lang-card h2 { color: #123B70; font-size: clamp(21px,3.4vw,31px); line-height: 1.35; margin-bottom: 22px; }
-.first-lang-prompt-ar { color: #40566F; font-size: clamp(17px,2.7vw,21px); font-weight: 700; direction: rtl; }
-.first-lang-prompt-en { color: #5F7185; font-size: 15px; margin: 2px 0 24px; }
-.first-lang-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
-.first-lang-option { min-height: 112px; display: flex; align-items: center; justify-content: center; gap: 13px; padding: 20px; background: #FFFFFF; color: #123B70; border: 2px solid #DCEBFA; border-radius: 19px; font: 800 clamp(18px,3vw,23px) inherit; cursor: pointer; box-shadow: 0 6px 18px rgba(25,118,210,.06); transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease; }
-.first-lang-option:hover { transform: translateY(-3px); border-color: #1976D2; background: #EAF4FF; box-shadow: 0 13px 28px rgba(25,118,210,.14); }
-.first-lang-option:active { transform: scale(.98); }
-.first-lang-option:focus-visible { outline: 4px solid rgba(25,118,210,.24); outline-offset: 3px; }
-.first-lang-flag { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #EAF4FF; color: #1976D2; font-size: 14px; font-weight: 900; letter-spacing: .5px; }
-.first-lang-note { margin-top: 22px; color: #5F7185; font-size: 12.5px; line-height: 1.8; }
-.first-lang-loading { opacity: .7; pointer-events: none; }
-.first-lang-brand { font-size: clamp(30px,5vw,48px)!important; line-height:1.2!important; margin-bottom:16px!important; direction:ltr; }
-.first-lang-tag-ar { color:#163B5C;font-size:clamp(21px,3.3vw,31px);font-weight:900;direction:rtl;line-height:1.5; }
-.first-lang-tag-en { color:#287FC1;font-size:clamp(17px,2.7vw,24px);font-weight:700;margin:2px 0 14px;direction:ltr; }
-.first-lang-desc-ar,.first-lang-desc-en{max-width:660px;margin-inline:auto;color:#607487;line-height:1.9}.first-lang-desc-ar{direction:rtl;font-size:15px}.first-lang-desc-en{direction:ltr;font-size:14px;margin-top:3px}
-.first-lang-start{min-height:50px;margin:21px auto 20px;border:0;border-radius:13px;padding:11px 30px;background:#287FC1;color:#fff;font:800 16px inherit;cursor:pointer;box-shadow:0 8px 20px rgba(40,127,193,.16)}
-.first-lang-select-title{font-size:14px;color:#607487;font-weight:700;margin-bottom:10px}
-@media (max-width: 600px) {
-  .first-lang-head { min-height: 46px; padding: 10px; }
-  .first-lang-logo { font-size: 17px; gap: 6px; }
-  .first-lang-main { align-items: center; padding: 10px 12px; }
-  .first-lang-card { border-radius: 18px; padding: 16px 14px; }
-  .first-lang-icon { width: 46px; height: 46px; margin-bottom: 8px; border-radius: 16px; font-size: 22px; }
-  .first-lang-brand { font-size: 22px !important; margin-bottom: 6px !important; }
-  .first-lang-tag-ar { font-size: 15px; line-height: 1.3; }
-  .first-lang-tag-en { font-size: 13px; margin: 2px 0 6px; }
-  .first-lang-desc-ar, .first-lang-desc-en { display: none; }
-  .first-lang-start { min-height: 38px; margin: 10px auto; padding: 8px 20px; font-size: 13.5px; }
-  .first-lang-select-title { font-size: 13px; margin-bottom: 6px; }
-  .first-lang-options { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-  .first-lang-option { min-height: 56px; justify-content: center; padding-inline: 8px; gap: 8px; font-size: 15px; }
-  .first-lang-flag { width: 34px; height: 34px; flex: 0 0 34px; font-size: 13px; }
-  .first-lang-note { margin-top: 10px; font-size: 12px; line-height: 1.6; }
+:root{
+  --lp-navy:#0D3B73;
+  --lp-blue:#248EF3;
+  --lp-cyan:#56C6ED;
+  --lp-ink:#153F73;
+  --lp-muted:#607FA5;
+  --lp-line:#D8E9F8;
+  --lp-soft:#EEF7FF;
+  --lp-soft-2:#F7FBFF;
 }
-@media (max-width: 360px) { .first-lang-card { padding-inline: 12px; } .first-lang-option { padding-inline: 6px; font-size: 14px; } }
-@media (prefers-reduced-motion: reduce) { .first-lang-option { transition: none; } }
+html,body{min-height:100%;background:#fff!important;color:var(--lp-navy);}
+body{font-family:'Cairo','Poppins','Segoe UI',sans-serif;overflow-x:hidden;}
+.container{max-width:none;padding:0;min-height:100vh;min-height:100dvh;}
+.ss-bnav,.asst-fab,.asst-panel,.expl-bg,.asst-modal-bg,.ss-modal-overlay,.pwa-install{display:none!important;}
+
+.first-lang{
+  position:relative;
+  min-height:100vh;min-height:100dvh;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 10% 18%,rgba(157,211,255,.23) 0 12%,transparent 30%),
+    radial-gradient(circle at 92% 32%,rgba(182,220,255,.21) 0 10%,transparent 29%),
+    linear-gradient(180deg,#FBFDFF 0%,#FFFFFF 48%,#F7FBFF 100%);
+}
+.first-lang::before{
+  content:'';position:absolute;z-index:-2;inset:auto -18% -13% -18%;height:31%;
+  background:linear-gradient(180deg,rgba(222,240,255,.92),rgba(235,247,255,.96));
+  border-radius:50% 50% 0 0/36% 36% 0 0;
+  transform:rotate(-2deg);
+}
+.first-lang::after{
+  content:'';position:absolute;z-index:-1;left:-18%;right:-14%;bottom:-10%;height:24%;
+  background:rgba(205,231,255,.70);border-radius:50% 50% 0 0/40% 40% 0 0;
+  transform:rotate(4deg);
+}
+.first-lang-shell{
+  width:min(560px,100%);min-height:100vh;min-height:100dvh;margin:0 auto;
+  padding:clamp(18px,3.7vh,34px) 24px max(26px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:2;direction:ltr;
+}
+.first-lang-trust{
+  align-self:flex-end;display:inline-flex;align-items:center;gap:8px;
+  min-height:34px;padding:7px 12px;border-radius:999px;
+  background:rgba(237,247,255,.88);border:1px solid rgba(216,233,248,.75);
+  color:#3D668E;font-size:12px;font-weight:800;backdrop-filter:blur(6px);
+  margin-bottom:18px;white-space:nowrap;
+}
+.first-lang-trust svg{width:20px;height:20px;stroke:#3679C5;stroke-width:1.9;fill:none;}
+.first-lang-logo-mark{width:66px;height:66px;margin:0 auto 5px;filter:drop-shadow(0 9px 18px rgba(36,142,243,.14));}
+.first-lang-logo-mark svg{display:block;width:100%;height:100%;overflow:visible;}
+.first-lang-brand{margin:0!important;font-family:'Poppins','Cairo',sans-serif!important;font-size:clamp(30px,7vw,39px)!important;line-height:1.08!important;font-weight:800!important;letter-spacing:-1.15px;direction:ltr;color:var(--lp-navy)!important;}
+.first-lang-brand .sense{color:#51A9F6;}
+.first-lang-slogan{margin:6px 0 22px;color:#587AA3;font-family:'Poppins','Cairo',sans-serif;font-size:12px;letter-spacing:.18em;direction:ltr;}
+.first-lang-headline-ar{margin:0;color:#0B3267;font-size:clamp(31px,8vw,43px);font-weight:900;line-height:1.28;direction:rtl;letter-spacing:-.35px;}
+.first-lang-headline-en{margin:8px 0 0;color:#248EF3;font-family:'Poppins','Cairo',sans-serif;font-size:clamp(19px,5vw,27px);font-weight:700;line-height:1.35;direction:ltr;}
+.first-lang-copy{width:min(470px,100%);margin:24px auto 0;}
+.first-lang-desc-ar{margin:0;color:#55769C;font-size:16px;line-height:1.9;direction:rtl;font-weight:500;}
+.first-lang-desc-en{margin:4px 0 0;color:#476C98;font-family:'Poppins','Cairo',sans-serif;font-size:13px;line-height:1.7;direction:ltr;}
+.first-lang-start{
+  width:min(390px,88%);min-height:62px;margin:24px auto 22px;padding:9px 54px 9px 24px;
+  border:0;border-radius:999px;background:linear-gradient(95deg,#2389EF 0%,#4CB2F4 100%);color:#fff;
+  box-shadow:0 13px 28px rgba(36,142,243,.23);font-family:inherit;cursor:pointer;position:relative;
+  display:grid;place-items:center;transition:transform .16s ease,box-shadow .16s ease;
+}
+.first-lang-start:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(36,142,243,.29);}
+.first-lang-start:active{transform:scale(.985);}
+.first-lang-start strong{display:block;font-size:18px;line-height:1.05;font-weight:900;}
+.first-lang-start small{display:block;margin-top:4px;font-family:'Poppins','Cairo',sans-serif;font-size:13px;letter-spacing:.08em;font-weight:500;}
+.first-lang-start .arrow{position:absolute;right:22px;top:50%;transform:translateY(-50%);font:300 37px/1 'Segoe UI',sans-serif;color:#fff;}
+.first-lang-select-title{width:min(430px,100%);display:flex;align-items:center;gap:13px;margin:0 auto 13px;color:#3C6089;font-size:14px;font-weight:900;}
+.first-lang-select-title::before,.first-lang-select-title::after{content:'';height:1px;flex:1;background:#C9DFF2;}
+.first-lang-options{width:min(430px,100%);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.first-lang-option{
+  position:relative;min-height:86px;padding:14px 14px 14px 15px;border:1.5px solid #D3E6F6;border-radius:20px;
+  background:rgba(255,255,255,.94);box-shadow:0 8px 22px rgba(41,111,173,.07);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:12px;color:#0F356A;font:800 17px 'Cairo','Poppins',sans-serif;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.first-lang-option:hover{transform:translateY(-2px);border-color:#8DC7F3;background:#FBFDFF;box-shadow:0 12px 24px rgba(41,111,173,.12);}
+.first-lang-option:active{transform:scale(.985);}
+.first-lang-option:focus-visible{outline:4px solid rgba(36,142,243,.18);outline-offset:3px;}
+.first-lang-flag{width:45px;height:45px;flex:0 0 45px;border-radius:50%;display:grid;place-items:center;background:#F4F9FD;border:1px solid #E0EDF7;font-size:27px;line-height:1;overflow:hidden;}
+.first-lang-option .lang-arrow{margin-inline-start:auto;color:#5F84AA;font:300 30px/1 'Segoe UI',sans-serif;}
+.first-lang-loading{opacity:.68;pointer-events:none;}
+
+.first-lang-benefits{
+  width:min(430px,100%);min-height:115px;margin:24px auto 0;padding:18px 8px;border-radius:22px;
+  background:linear-gradient(180deg,rgba(239,248,255,.96),rgba(232,245,255,.90));border:1px solid rgba(220,237,249,.82);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;
+}
+.first-lang-benefit{padding:1px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#214C7D;min-width:0;}
+.first-lang-benefit+.first-lang-benefit{border-inline-start:1px solid #CDE3F3;}
+.first-lang-benefit svg{width:32px;height:32px;margin-bottom:7px;stroke:#4A89C8;stroke-width:1.7;fill:none;}
+.first-lang-benefit b{font-size:12.5px;line-height:1.35;white-space:nowrap;}
+.first-lang-benefit small{margin-top:3px;color:#6280A1;font:500 10.5px/1.3 'Poppins','Cairo',sans-serif;white-space:nowrap;}
+.first-lang-source{margin-top:auto;padding-top:24px;color:#3D6690;font-size:12px;line-height:1.5;position:relative;z-index:3;}
+.first-lang-source .dot{color:#70B8EF;font-size:17px;vertical-align:-1px;margin:0 5px;}
+.first-lang-source span[lang="en"]{display:block;margin-top:2px;font:500 11px/1.45 'Poppins','Cairo',sans-serif;color:#58789B;}
+.first-lang-leaf{position:absolute;z-index:1;left:18px;bottom:46px;width:64px;height:104px;opacity:.78;transform:rotate(-4deg);pointer-events:none;}
+.first-lang-leaf::before{content:'';position:absolute;left:28px;bottom:0;width:2px;height:92px;background:linear-gradient(#7ABCF0,#BDDDF7);transform:rotate(8deg);transform-origin:bottom;}
+.first-lang-leaf i{position:absolute;width:27px;height:45px;border-radius:80% 10% 80% 10%;background:linear-gradient(145deg,rgba(99,178,238,.50),rgba(196,226,250,.30));transform-origin:bottom right;}
+.first-lang-leaf i:nth-child(1){left:2px;bottom:20px;transform:rotate(-38deg)}
+.first-lang-leaf i:nth-child(2){left:30px;bottom:37px;transform:rotate(20deg) scale(.9)}
+.first-lang-leaf i:nth-child(3){left:5px;bottom:54px;transform:rotate(-30deg) scale(.72)}
+.first-lang-leaf i:nth-child(4){left:29px;bottom:68px;transform:rotate(22deg) scale(.63)}
+
+@media(min-width:700px){
+  .first-lang-shell{padding-top:30px;padding-bottom:38px;}
+  .first-lang-trust{margin-bottom:16px;}
+  .first-lang-headline-ar{font-size:43px;}
+  .first-lang-headline-en{font-size:25px;}
+  .first-lang-benefits{margin-top:22px;}
+}
+@media(max-width:480px){
+  .first-lang-shell{width:100%;padding:18px 17px max(21px,env(safe-area-inset-bottom));}
+  .first-lang-trust{min-height:31px;padding:5px 10px;font-size:10.5px;margin-bottom:14px;}
+  .first-lang-trust svg{width:18px;height:18px;}
+  .first-lang-logo-mark{width:55px;height:55px;margin-bottom:4px;}
+  .first-lang-brand{font-size:27px!important;}
+  .first-lang-slogan{font-size:10.5px;margin:5px 0 17px;letter-spacing:.15em;}
+  .first-lang-headline-ar{font-size:34px;line-height:1.26;}
+  .first-lang-headline-en{font-size:20px;line-height:1.33;margin-top:7px;}
+  .first-lang-copy{margin-top:18px;}
+  .first-lang-desc-ar{font-size:14px;line-height:1.75;}
+  .first-lang-desc-en{font-size:11.5px;line-height:1.55;margin-top:3px;}
+  .first-lang-start{width:88%;min-height:58px;margin:20px auto 18px;padding-right:47px;}
+  .first-lang-start strong{font-size:17px;}.first-lang-start small{font-size:12px;margin-top:3px;}
+  .first-lang-start .arrow{right:19px;font-size:32px;}
+  .first-lang-select-title{font-size:12.5px;gap:10px;margin-bottom:10px;}
+  .first-lang-options{gap:9px;}
+  .first-lang-option{min-height:75px;border-radius:17px;padding:10px 9px;gap:8px;font-size:15.5px;}
+  .first-lang-flag{width:39px;height:39px;flex-basis:39px;font-size:23px;}
+  .first-lang-option .lang-arrow{font-size:25px;}
+  .first-lang-benefits{min-height:104px;margin-top:19px;padding:14px 4px;border-radius:19px;}
+  .first-lang-benefit{padding-inline:5px;}
+  .first-lang-benefit svg{width:28px;height:28px;margin-bottom:6px;}
+  .first-lang-benefit b{font-size:10.8px;}.first-lang-benefit small{font-size:9px;}
+  .first-lang-source{padding-top:18px;font-size:10.7px;}.first-lang-source span[lang="en"]{font-size:9.7px;}
+  .first-lang-leaf{left:6px;bottom:39px;transform:scale(.82) rotate(-4deg);transform-origin:bottom left;}
+}
+@media(max-width:380px){
+  .first-lang-shell{padding-inline:13px;}
+  .first-lang-trust{margin-bottom:11px;}
+  .first-lang-logo-mark{width:51px;height:51px;}
+  .first-lang-slogan{margin-bottom:14px;}
+  .first-lang-headline-ar{font-size:31px;}
+  .first-lang-headline-en{font-size:18.5px;}
+  .first-lang-copy{margin-top:15px;}.first-lang-desc-ar{font-size:13.2px;}.first-lang-desc-en{font-size:10.8px;}
+  .first-lang-start{margin:17px auto 15px;min-height:54px;}
+  .first-lang-option{min-height:70px;font-size:14px;}.first-lang-flag{width:36px;height:36px;flex-basis:36px;font-size:21px;}
+  .first-lang-benefits{margin-top:16px;min-height:97px;}.first-lang-benefit b{font-size:10px}.first-lang-benefit small{font-size:8.4px;}
+}
+@media(max-width:335px){
+  .first-lang-headline-ar{font-size:28px;}.first-lang-headline-en{font-size:17px;}
+  .first-lang-option{font-size:13px;padding-inline:6px;gap:5px;}.first-lang-flag{width:33px;height:33px;flex-basis:33px;font-size:19px;}
+  .first-lang-benefit b{font-size:9.2px}.first-lang-benefit small{font-size:7.6px;}
+}
+@media(max-height:760px) and (max-width:480px){
+  .first-lang-shell{padding-top:12px;}
+  .first-lang-trust{margin-bottom:8px;}.first-lang-logo-mark{width:46px;height:46px;}.first-lang-brand{font-size:24px!important}.first-lang-slogan{margin:3px 0 10px;font-size:9.5px;}
+  .first-lang-headline-ar{font-size:29px;}.first-lang-headline-en{font-size:17.5px;margin-top:4px;}
+  .first-lang-copy{margin-top:11px;}.first-lang-desc-ar{font-size:12.5px;line-height:1.6}.first-lang-desc-en{font-size:10.3px;line-height:1.45;}
+  .first-lang-start{min-height:50px;margin:13px auto 12px}.first-lang-select-title{margin-bottom:8px}.first-lang-option{min-height:64px}.first-lang-benefits{min-height:88px;margin-top:12px;padding:10px 3px}.first-lang-benefit svg{width:24px;height:24px}.first-lang-source{padding-top:11px;}
+}
+@media(prefers-reduced-motion:reduce){.first-lang-start,.first-lang-option{transition:none!important}}
 """
 
 
@@ -3814,37 +3932,78 @@ def welcome_page():
     next_target = _safe_next_url("/home")
     body = """
     <main class="first-lang" aria-labelledby="languageTitle">
-      <header class="first-lang-head">
-        <div class="first-lang-logo" aria-label="SymptoSense"><span aria-hidden="true">❤️‍🩹</span><span>Sympto<em>Sense</em></span></div>
-      </header>
-      <section class="first-lang-main">
-        <div class="first-lang-card">
-          <div class="first-lang-icon" aria-hidden="true">🩺</div>
-          <h1 class="first-lang-brand" lang="en">SymptoSense 🩺</h1>
-          <p class="first-lang-tag-ar">افهم أعراضك. اعرف خطوتك التالية.</p>
-          <p class="first-lang-tag-en" lang="en">Understand your symptoms. Know your next step.</p>
+      <div class="first-lang-shell">
+        <div class="first-lang-trust" aria-label="Trusted health information">
+          <span dir="rtl">معلومات موثوقة لصحة أفضل</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.7-2.8 8.2-7 10-4.2-1.8-7-5.3-7-10V6l7-3Z"/><path d="M12 7v9M8.8 11.5h6.4"/></svg>
+        </div>
+
+        <div class="first-lang-logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <defs><linearGradient id="ssStethGrad" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse"><stop stop-color="#28C5D8"/><stop offset=".48" stop-color="#318AEF"/><stop offset="1" stop-color="#3555C8"/></linearGradient></defs>
+            <path d="M16 9v12c0 10 7.1 17.5 16 17.5S48 31 48 21V9" fill="none" stroke="url(#ssStethGrad)" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="16" cy="8" r="4" fill="#28C5D8"/><circle cx="48" cy="8" r="4" fill="#59BDF2"/>
+            <path d="M32 38.5v5.8c0 7.2 5.4 12.7 12.6 12.7h2.6" fill="none" stroke="url(#ssStethGrad)" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="52" cy="56" r="6.2" fill="#fff" stroke="#3A78E2" stroke-width="4"/><circle cx="52" cy="56" r="2" fill="#4FC0EF"/>
+          </svg>
+        </div>
+
+        <h1 class="first-lang-brand" lang="en">Sympto<span class="sense">Sense</span></h1>
+        <p class="first-lang-slogan" lang="en">Your Health, Smarter</p>
+
+        <p class="first-lang-headline-ar">افهم أعراضك.<br>اعرف خطوتك التالية.</p>
+        <p class="first-lang-headline-en" lang="en">Understand your symptoms.<br>Know your next step.</p>
+
+        <div class="first-lang-copy">
           <p class="first-lang-desc-ar">مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة.</p>
           <p class="first-lang-desc-en" lang="en">An AI-powered health assistant that helps you understand symptoms and assess risk in a simple way.</p>
-          <button type="button" class="first-lang-start" onclick="document.getElementById('languageTitle').focus()">ابدأ الآن / Get Started</button>
-          <p class="first-lang-select-title" id="languageTitle" tabindex="-1">اختر اللغة / Choose language</p>
-          <div class="first-lang-options" role="group" aria-labelledby="languageTitle">
-            <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
-              <span class="first-lang-flag" aria-hidden="true">SA</span><span dir="rtl">العربية</span>
-            </button>
-            <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Continue in English UK">
-              <span class="first-lang-flag" aria-hidden="true">UK</span><span lang="en">English (UK)</span>
-            </button>
-          </div>
-          <p class="first-lang-note"><span dir="rtl">يمكنك تغيير اللغة لاحقًا من داخل الموقع</span><br><span lang="en">You can change the language later</span></p>
         </div>
-      </section>
+
+        <button type="button" class="first-lang-start" onclick="ssFocusLanguages()" aria-controls="languageOptions">
+          <span><strong>ابدأ الآن</strong><small lang="en">Get Started</small></span><span class="arrow" aria-hidden="true">›</span>
+        </button>
+
+        <p class="first-lang-select-title" id="languageTitle" tabindex="-1"><span>اختر اللغة / <span lang="en">Choose language</span></span></p>
+        <div class="first-lang-options" id="languageOptions" role="group" aria-labelledby="languageTitle">
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
+            <span class="first-lang-flag" aria-hidden="true">🇸🇦</span><span dir="rtl">العربية</span><span class="lang-arrow" aria-hidden="true">›</span>
+          </button>
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Continue in English">
+            <span class="first-lang-flag" aria-hidden="true">🇬🇧</span><span lang="en">English</span><span class="lang-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <section class="first-lang-benefits" aria-label="SymptoSense benefits">
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 26 7v7c0 6.5-3.8 11.4-10 14-6.2-2.6-10-7.5-10-14V7l10-4Z"/><path d="M16 9v11M11.8 14.5h8.4"/></svg>
+            <b>معلومات موثوقة</b><small lang="en">Trusted information</small>
+          </div>
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="9" r="4"/><path d="M8.5 25v-3.5c0-4 3.2-7.1 7.5-7.1s7.5 3.1 7.5 7.1V25M5.4 12a3 3 0 1 0 0-6M4 24v-2.6c0-2.6 1.5-4.6 3.8-5.4M26.6 12a3 3 0 1 1 0-6M28 24v-2.6c0-2.6-1.5-4.6-3.8-5.4"/></svg>
+            <b>سهل الاستخدام</b><small lang="en">Easy to use</small>
+          </div>
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 27S5 20.4 5 12.5C5 8.5 7.7 6 11 6c2.2 0 4 1.2 5 3 1-1.8 2.8-3 5-3 3.3 0 6 2.5 6 6.5C27 20.4 16 27 16 27Z"/></svg>
+            <b>للتوعية فقط</b><small lang="en">For educational purposes only</small>
+          </div>
+        </section>
+
+        <div class="first-lang-source"><span class="dot">•</span><span dir="rtl">مدعومة بمصادر طبية موثوقة</span><span class="dot">—</span><span lang="en">Supported by trusted medical sources</span></div>
+        <div class="first-lang-leaf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
     </main>
     <script>
     var SS_NEXT_PAGE = __NEXT__;
+    function ssFocusLanguages(){
+      var t=document.getElementById('languageTitle');
+      if(t){t.focus({preventScroll:true});}
+      var o=document.getElementById('languageOptions');
+      if(o){o.scrollIntoView({behavior:'smooth',block:'center'});}
+    }
     function ssChooseLanguage(code, button) {
       var lang = code === 'en' ? 'en' : 'ar';
       document.querySelectorAll('.first-lang-option').forEach(function(el){ el.classList.add('first-lang-loading'); el.disabled = true; });
-      if (button) { button.style.borderColor = '#1976D2'; button.setAttribute('aria-pressed','true'); }
+      if (button) { button.style.borderColor = '#248EF3'; button.setAttribute('aria-pressed','true'); }
       document.cookie = 'lang=' + lang + ';path=/;max-age=31536000;SameSite=Lax';
       try { localStorage.setItem('ss_lang', lang); } catch(e) {}
       window.setTimeout(function(){ window.location.href = SS_NEXT_PAGE || '/home'; }, 180);
@@ -3853,7 +4012,7 @@ def welcome_page():
     """
     body = body.replace("__NEXT__", json.dumps(next_target))
     html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
-    return html.replace('dir="rtl"', 'dir="ltr"').replace('lang="ar"', 'lang="en"')
+    return html.replace('<html lang="ar" dir="rtl">', '<html lang="en" dir="ltr">')
 
 
 HOME_CSS = """
