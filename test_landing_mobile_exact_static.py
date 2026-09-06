@@ -37,10 +37,20 @@ def test_mobile_landing_reference_palette_and_shapes():
         'grid-template-columns:repeat(2,minmax(0,1fr))',
         'grid-template-columns:repeat(3,minmax(0,1fr))',
         '@media(max-width:480px)',
-        '@media(max-height:760px) and (max-width:480px)',
+        '@media(max-width:480px) and (max-height:900px)',
+        '@media(max-width:480px) and (max-height:760px)',
     ]
     for token in required:
         assert token in TEXT, token
+
+
+def test_mobile_landing_is_safari_safe_and_compact():
+    assert 'min-height:100svh' in TEXT
+    assert 'white-space:normal;max-width:96px' in TEXT
+    assert "o.classList.add('ss-attention')" in TEXT
+    assert "o.scrollIntoView({behavior:'smooth',block:'center'})" not in TEXT
+    assert '<meta name="theme-color" content="#F8FCFF">' in TEXT
+    assert "history.scrollRestoration = 'manual'" in TEXT
 
 
 def test_landing_language_behaviour_preserved():

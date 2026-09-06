@@ -1,13 +1,2 @@
-__pycache__/
-*.py[cod]
-*.db
-*.sqlite3
-*.bak*
-.env
-.venv/
-venv/
-uploads/
-*.log
-.DS_Store
-
-.pytest_cache/
+# Created by pytest automatically.
+*
