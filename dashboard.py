@@ -81,6 +81,7 @@ DASHBOARD_HTML = r"""
     <div class="grid" id="overviewStats"></div>
     <div class="two"><div class="card"><h2>{{ 'النشاط خلال 30 يومًا' if ar else 'Activity — 30 days' }}</h2><div class="chart"><canvas id="visChart"></canvas></div></div><div class="card"><h2>{{ 'حالة النظام' if ar else 'System status' }}</h2><div id="overviewHealth" class="health"></div></div></div>
     <div class="card"><h2>📊 Data Science Overview</h2><div class="grid" id="dataScienceOverview" style="margin-bottom:0"></div></div>
+    <div class="card"><div class="head" style="margin-bottom:12px"><div><h2 style="margin:0">⭐ {{ 'التقييمات والتعليقات' if ar else 'Ratings & Feedback' }}</h2><p class="muted" style="margin:5px 0 0">{{ 'تعليقات مجهولة الهوية؛ لا تظهر بيانات المستخدم أو بياناته الصحية.' if ar else 'Anonymous feedback only; user identity and health data are not shown.' }}</p></div></div><div class="grid" id="feedbackStats" style="margin-bottom:14px"></div><div class="table-wrap" id="feedbackComments"></div></div>
     <div class="card"><h2>{{ 'الخصوصية' if ar else 'Privacy' }}</h2><p class="muted">{{ 'تعرض لوحة الإدارة بيانات تشغيلية وإدارية مجمعة فقط، ولا تعرض الأعراض أو المحادثات أو النتائج الصحية الشخصية في التحليلات.' if ar else 'Admin analytics use aggregate operational data only and do not expose symptoms, chats, or personal health results.' }}</p></div>
   </section>
 
@@ -294,7 +295,7 @@ async function loadHeatmap(){try{const h=(await completeAnalytics(document.getEl
 
 async function loadUsage(){
   try{
-    const [a,k,h,c]=await Promise.all([req('/api/admin/v2/analytics?days=30'),req('/api/admin/knowledge/stats'),req('/api/admin/system-health'),req('/api/admin/complete-analytics?days=30')]);
+    const [a,k,h,c,f]=await Promise.all([req('/api/admin/v2/analytics?days=30'),req('/api/admin/knowledge/stats'),req('/api/admin/system-health'),req('/api/admin/complete-analytics?days=30'),req('/api/stats')]);
     const d=a.analytics||{}, s=k.statistics||{}, o=c.analytics?.overview||{}, cards=[
       ['👥',o.total_users,txt('إجمالي المستخدمين','Total Users')],
       ['🩺',o.total_symptom_analyses,txt('تحليلات الأعراض','Symptom Analyses')],
@@ -309,6 +310,9 @@ async function loadUsage(){
     overviewChart=lineChart(document.getElementById('visChart'),overviewChart,d.timeline||[],txt('النشاط','Activity'));
     const health=h.health||{components:{},checked_at:''};
     document.getElementById('overviewHealth').innerHTML=Object.entries(health.components||{}).map(([name,v])=>'<div class="health-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(name.replaceAll('_',' '))+'</b>'+statusBadge(v.status)+'</div><p class="muted" style="margin-top:7px">'+esc(v.response_ms??'—')+' ms</p></div>').join('')||'<div class="empty">'+txt('لا توجد بيانات بعد','No data yet')+'</div>';
+    const fb=f.feedback||{}, comments=f.fb_comments||[];
+    document.getElementById('feedbackStats').innerHTML=[[fb.average_5?Number(fb.average_5).toFixed(1)+'/5':'—/5',txt('متوسط التقييم','Average Rating')],[fb.total||0,txt('إجمالي التقييمات','Total Ratings')],[comments.length,txt('التعليقات المحفوظة','Saved Comments')]].map(x=>'<div class="stat"><strong>'+esc(x[0])+'</strong><span>'+esc(x[1])+'</span></div>').join('');
+    document.getElementById('feedbackComments').innerHTML=comments.length?'<table><thead><tr><th>'+txt('التقييم','Rating')+'</th><th>'+txt('التعليق','Comment')+'</th><th>'+txt('التاريخ','Date')+'</th></tr></thead><tbody>'+comments.map(x=>'<tr><td>'+esc((x.rating||0)+'/5')+'</td><td>'+esc(x.comment||'—')+'</td><td>'+esc(x.timestamp||x.created_at||'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">'+txt('لا توجد تعليقات حتى الآن','No comments yet')+'</div>';
     loadDataScienceOverview();
   }catch(e){console.error(e)}
 }
@@ -536,7 +540,7 @@ def index():
 @app.route("/api/stats")
 def api_stats():
     db.init_db()
-    return jsonify({"stats": db.get_usage_stats(days=7), "feedback": db.feedback_counts(), "fb_comments": []})
+    return jsonify({"stats": db.get_usage_stats(days=7), "feedback": db.feedback_counts(), "fb_comments": db.feedback_comments(100, public_only=False)})
 
 
 def run_dashboard():

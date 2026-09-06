@@ -538,7 +538,7 @@ def _knowledge_recommendations(bundle, lang):
         source = sources[0] if sources else {}
         name = match.get("name_ar") if lang == "ar" else match.get("name_en")
         recs.append({
-            "title": (("خطوة آمنة لـ " + name) if lang == "ar" else ("Safe next step: " + name)),
+            "title": (("خطوة مقترحة عند احتمال " + name) if lang == "ar" else ("Suggested step if this is " + name)),
             "tip": tip,
             "source": source.get("source_name") or "",
             "url": source.get("reference_url") or "",

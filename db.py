@@ -193,6 +193,7 @@ def _init_db_uncached():
                     record_id INTEGER,
                     rating TEXT,
                     comment TEXT,
+                    public_comment INTEGER NOT NULL DEFAULT 0,
                     timestamp TEXT NOT NULL
                 )
             """)
@@ -372,6 +373,7 @@ def _init_db_uncached():
                     record_id INTEGER,
                     rating TEXT,
                     comment TEXT,
+                    public_comment INTEGER NOT NULL DEFAULT 0,
                     timestamp TEXT NOT NULL
                 )
             """)
@@ -948,6 +950,8 @@ def _migrate_feedback(conn, c):
         existing = {row[1] for row in c.fetchall()}
     if "comment" not in existing:
         c.execute("ALTER TABLE feedback ADD COLUMN comment TEXT")
+    if "public_comment" not in existing:
+        c.execute("ALTER TABLE feedback ADD COLUMN public_comment INTEGER NOT NULL DEFAULT 0")
 
 
 def _migrate_records(conn, c):
@@ -1866,38 +1870,79 @@ def get_active_med_reminders():
         conn.close()
 
 
-def save_feedback(user_id, record_id, rating, comment=None):
+def save_feedback(user_id, record_id, rating, comment=None, public_comment=False):
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            f"INSERT INTO feedback (user_hash, record_id, rating, comment, timestamp) VALUES ({PH},{PH},{PH},{PH},{PH})",
-            (_hash_user(user_id), record_id, rating, comment, datetime.now(timezone.utc).isoformat()),
+            f"INSERT INTO feedback (user_hash, record_id, rating, comment, public_comment, timestamp) VALUES ({PH},{PH},{PH},{PH},{PH},{PH})",
+            (_hash_user(user_id), record_id, rating, comment, 1 if public_comment else 0, datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
     finally:
         conn.close()
 
 
+def _feedback_star_value(raw_rating):
+    """Normalize feedback to 1–5 while preserving legacy yes/no rows."""
+    value = str(raw_rating or "").strip().lower()
+    if value.startswith("star:"):
+        try:
+            n = int(value.split(":", 1)[1])
+            return n if 1 <= n <= 5 else None
+        except Exception:
+            return None
+    if value in {"great", "1"}: return 5
+    if value in {"good", "2"}: return 4
+    if value in {"ok", "3"}: return 3
+    if value in {"bad", "4"}: return 1
+    if value == "5": return 5
+    return None
+
 def feedback_counts():
-    """Return dashboard feedback using stable names across old and new releases."""
-    raw = dict(fetchall("SELECT rating, COUNT(*) FROM feedback GROUP BY rating"))
-
-    def count(*keys):
-        total = 0
-        for key in keys:
-            total += int(raw.get(key, 0) or 0)
-            if not isinstance(key, str):
-                total += int(raw.get(str(key), 0) or 0)
-        return total
-
+    rows = fetchall("SELECT rating FROM feedback")
+    stars = [_feedback_star_value(r[0]) for r in rows]
+    stars = [n for n in stars if n is not None]
+    distribution = {str(i): stars.count(i) for i in range(1, 6)}
     return {
-        "great": count("great", 1),
-        "good": count("good", 2),
-        "ok": count("ok", 3),
-        "bad": count("bad", 4),
+        "great": distribution["5"], "good": distribution["4"], "ok": distribution["3"],
+        "bad": distribution["1"] + distribution["2"], "total": len(stars),
+        "average_5": round(sum(stars) / len(stars), 1) if stars else 0.0,
+        "distribution": distribution,
     }
 
+def feedback_comments(limit=100, public_only=False):
+    """Anonymous comment rows. Public comments require explicit opt-in."""
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        where = "WHERE comment IS NOT NULL AND TRIM(comment) <> ''"
+        if public_only:
+            where += " AND COALESCE(public_comment,0)=1"
+        c.execute(f"SELECT comment, rating, timestamp FROM feedback {where} ORDER BY id DESC LIMIT {PH}", (max(1, min(int(limit), 200)),))
+        rows = c.fetchall()
+    finally:
+        conn.close()
+    return [{"comment":r[0] or "", "rating":_feedback_star_value(r[1]), "timestamp":r[2]} for r in rows]
+
+def public_site_summary(comment_limit=8):
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM ss_users WHERE COALESCE(role,'user') <> 'admin'")
+        row = c.fetchone(); users = int(row[0] if row else 0)
+        c.execute("SELECT COUNT(*) FROM feedback WHERE comment IS NOT NULL AND TRIM(comment) <> '' AND COALESCE(public_comment,0)=1")
+        row = c.fetchone(); comment_count = int(row[0] if row else 0)
+    finally:
+        conn.close()
+    fb = feedback_counts()
+    return {
+        "users": users,
+        "ratings": int(fb.get("total") or 0),
+        "average_5": float(fb.get("average_5") or 0),
+        "comment_count": comment_count,
+        "comments": feedback_comments(comment_limit, public_only=True) if comment_limit else [],
+    }
 
 def update_feedback_comment(user_id, record_id, comment):
     """Attaches a free-text comment to the latest feedback row for this record."""

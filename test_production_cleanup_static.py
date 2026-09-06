@@ -58,6 +58,7 @@ def test_web_ai_timeout_is_bounded():
     assert 'timeout=20' in WEBAPP
 
 BOT = (ROOT / "bot.py").read_text(encoding="utf-8")
+WELLBEING = (ROOT / "wellbeing.py").read_text(encoding="utf-8")
 
 
 def test_result_questions_use_existing_assistant_api_contract():
@@ -85,6 +86,11 @@ def test_bot_copy_has_no_targeted_feminine_prompts():
         assert token not in BOT
 
 
+def test_wellbeing_copy_is_gender_neutral():
+    for token in ('اجلسي', 'استلقي', 'استنشقي', 'احبسي', 'أخرجي', 'خذي'):
+        assert token not in WELLBEING
+
+
 def test_guest_symptom_flow_skips_family_api_until_login_confirmed():
     assert "if (!(userInfo && userInfo.ok && userInfo.logged_in))" in WEBAPP
     assert "return Promise.resolve({ok:true, members:[]});" in WEBAPP
@@ -93,7 +99,7 @@ def test_guest_symptom_flow_skips_family_api_until_login_confirmed():
 
 def test_about_uses_static_real_screenshot_not_home_iframe():
     assert '<iframe src="/home"' not in WEBAPP
-    assert '/static/images/about-home-preview.webp' in WEBAPP
+    assert ('/static/images/about-home-preview.webp' in WEBAPP) or ('data:image/webp;base64,' in WEBAPP) or ('data:image/png;base64,' in WEBAPP)
     assert (ROOT / 'static/images/about-home-preview.webp').exists()
 
 

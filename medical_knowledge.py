@@ -221,13 +221,13 @@ CATEGORIES = [
 ]
 
 SOURCES = [
-    ("saudi-moh", "وزارة الصحة السعودية", "Saudi Ministry of Health", "https://www.moh.gov.sa/", "government", 10),
-    ("who", "WHO", "World Health Organization", "https://www.who.int/", "international_organization", 20),
-    ("who-emro", "WHO EMRO", "WHO Regional Office for the Eastern Mediterranean", "https://www.emro.who.int/", "international_organization", 21),
-    ("nhs", "NHS", "National Health Service", "https://www.nhs.uk/", "national_health_service", 30),
-    ("cdc", "CDC", "Centers for Disease Control and Prevention", "https://www.cdc.gov/", "government", 11),
-    ("medlineplus", "MedlinePlus", "U.S. National Library of Medicine", "https://medlineplus.gov/", "government", 12),
-    ("mayo-clinic", "Mayo Clinic", "Mayo Foundation for Medical Education and Research", "https://www.mayoclinic.org/", "academic_medical_institution", 40),
+    ("saudi-moh", "وزارة الصحة السعودية", "Saudi Ministry of Health", "https://www.moh.gov.sa/", "government", 10, "المصدر الحكومي الرسمي للمعلومات والخدمات والتوعية الصحية في المملكة العربية السعودية.", "Saudi Arabia's official government source for health information, services, and public guidance."),
+    ("cdc", "CDC", "Centers for Disease Control and Prevention", "https://www.cdc.gov/", "government", 11, "وكالة صحة عامة أمريكية تنشر إرشادات وبيانات موثوقة عن الأمراض والوقاية منها.", "A U.S. public-health agency publishing authoritative disease, prevention, and safety guidance."),
+    ("medlineplus", "MedlinePlus", "U.S. National Library of Medicine", "https://medlineplus.gov/", "government", 12, "موسوعة صحية تثقيفية تابعة للمكتبة الوطنية الأمريكية للطب وموجّهة للجمهور.", "A consumer health resource from the U.S. National Library of Medicine."),
+    ("who", "WHO", "World Health Organization", "https://www.who.int/", "international_organization", 20, "المنظمة الدولية التابعة للأمم المتحدة والمسؤولة عن إرشادات وسياسات الصحة العالمية.", "The United Nations agency responsible for international public-health guidance and policy."),
+    ("who-emro", "WHO EMRO", "WHO Regional Office for the Eastern Mediterranean", "https://www.emro.who.int/", "international_organization", 21, "المكتب الإقليمي لمنظمة الصحة العالمية لشرق المتوسط ومصدر للإرشادات الصحية الإقليمية.", "WHO's Regional Office for the Eastern Mediterranean and a source of regional health guidance."),
+    ("nhs", "NHS", "National Health Service", "https://www.nhs.uk/", "national_health_service", 30, "الخدمة الصحية الوطنية البريطانية ومصدر عام للإرشادات الصحية المبسطة.", "The United Kingdom's National Health Service and a public source of accessible health guidance."),
+    ("mayo-clinic", "Mayo Clinic", "Mayo Foundation for Medical Education and Research", "https://www.mayoclinic.org/", "academic_medical_institution", 40, "مؤسسة طبية أكاديمية غير ربحية تنشر معلومات تثقيفية عن الحالات والأعراض.", "A nonprofit academic medical institution publishing educational information about symptoms and conditions."),
 ]
 
 SYMPTOMS = [
@@ -450,9 +450,17 @@ def _seed(c):
     now = _now()
     for slug, ar, en in CATEGORIES:
         c.execute(f"INSERT INTO mk_categories (slug,name_ar,name_en,status,created_at,updated_at) VALUES ({db.PH},{db.PH},{db.PH},'active',{db.PH},{db.PH}) ON CONFLICT(slug) DO NOTHING", (slug, ar, en, now, now))
-    for slug, name, org, url, typ, priority in SOURCES:
+    for slug, name, org, url, typ, priority, description_ar, description_en in SOURCES:
         c.execute(f"INSERT INTO mk_sources (slug,source_name,organization,official_url,description_ar,description_en,language,source_type,reliability_level,verification_status,last_verified,status,priority,version,created_at,updated_at) VALUES ({','.join([db.PH]*16)}) ON CONFLICT(slug) DO NOTHING",
-                  (slug,name,org,url,"مصدر طبي رسمي موثوق.","Official trusted medical source.","multiple",typ,"high","verified",now[:10],"active",priority,1,now,now))
+                  (slug,name,org,url,description_ar,description_en,"multiple",typ,"high","verified",now[:10],"active",priority,1,now,now))
+        # Upgrade only the old generic seed copy. Preserve descriptions edited
+        # by an administrator in an existing production database.
+        c.execute(
+            f"UPDATE mk_sources SET description_ar={db.PH},description_en={db.PH},updated_at={db.PH} "
+            f"WHERE slug={db.PH} AND (TRIM(COALESCE(description_ar,'')) IN ('','مصدر طبي رسمي موثوق.') "
+            f"OR TRIM(COALESCE(description_en,'')) IN ('','Official trusted medical source.'))",
+            (description_ar, description_en, now, slug),
+        )
     c.execute("SELECT id,slug FROM mk_categories")
     cats = {slug:int(i) for i,slug in c.fetchall()}
     c.execute("SELECT id,slug FROM mk_sources")
