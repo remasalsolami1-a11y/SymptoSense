@@ -280,8 +280,8 @@ body.ss-chat-page .smart-next{background:#FBFDFE!important}
   body.ss-chat-page .chat-head>div:nth-child(2){grid-column:2;grid-row:1;min-width:0}
   body.ss-chat-page .chat-head h3{font-size:15px!important;line-height:1.25;margin:0}
   body.ss-chat-page .chat-head p{font-size:10.5px!important;line-height:1.35;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  body.ss-chat-page .chat-head-toggles{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:flex-end;gap:6px;margin:0!important}
-  body.ss-chat-page .chat-head .spk-btn{width:38px;height:38px;min-width:38px;padding:0!important;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22)!important;border-radius:11px!important;font-size:0!important;background:rgba(255,255,255,.14)!important}
+  body.ss-chat-page .chat-head-toggles{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:flex-end;gap:6px;margin:0!important;position:relative;z-index:8;visibility:visible!important;opacity:1!important}
+  body.ss-chat-page .chat-head .spk-btn{width:40px;height:40px;min-width:40px;padding:0!important;display:grid;place-items:center;border:1px solid rgba(255,255,255,.28)!important;border-radius:11px!important;font-size:19px!important;line-height:1!important;background:rgba(255,255,255,.14)!important}
   body.ss-chat-page .chat-access-menu #voiceModeBtn::before{content:none!important}.chat-access{position:relative}.chat-access summary{list-style:none;cursor:pointer;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.13);color:#fff;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800}.chat-access summary::-webkit-details-marker{display:none}.chat-access-menu{position:absolute;z-index:30;top:calc(100% + 7px);inset-inline-end:0;width:190px;padding:9px;border-radius:14px;background:#fff;border:1px solid #D5E4ED;box-shadow:0 14px 34px rgba(22,59,92,.18);display:grid;gap:7px}.chat-access-menu .spk-btn{width:100%;color:#29485F!important;background:#F7FBFD!important;border:1px solid #D5E4ED!important;text-align:start!important;font-size:12px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;padding:10px 11px!important;min-height:42px!important;line-height:1.45!important}
   body.ss-chat-page .chat-access-menu #spkBtn::before{content:none!important}
   body.ss-chat-page #profileSwitcher{grid-column:1/-1;grid-row:2;width:100%;margin:0!important;display:block!important}
@@ -618,6 +618,8 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .chat-head p { font-size: 12px; opacity: .85; }
 .chat-head .spk-btn { margin: 0; background: rgba(255,255,255,.15); border: none; border-radius: 10px; padding: 8px 10px; font-size: 13px; cursor: pointer; color: #fff; white-space: nowrap; }
 .chat-head-toggles { display: flex; align-items: center; gap: 8px; }
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.chat-audio-btn{display:inline-grid!important;place-items:center!important;width:42px;height:42px;min-width:42px;padding:0!important;border:1px solid rgba(255,255,255,.38)!important;border-radius:12px!important;background:rgba(255,255,255,.16)!important;color:#fff!important;line-height:1!important;transition:background .15s ease,border-color .15s ease,transform .15s ease;position:relative;z-index:5;visibility:visible!important;opacity:1!important}.chat-audio-svg{width:22px;height:22px;display:block;overflow:visible}.audio-stroke{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.audio-fill{fill:currentColor}.chat-audio-btn .speaker-wave{display:none}.chat-audio-btn.is-on .speaker-wave{display:block}.chat-audio-btn.is-on .speaker-slash{display:none}.chat-audio-btn .mic-stop-icon{display:none}.chat-audio-btn.is-recording .mic-ready-icon{display:none}.chat-audio-btn.is-recording .mic-stop-icon{display:block}.chat-audio-btn.is-on{background:rgba(46,173,104,.30)!important;border-color:rgba(215,255,232,.78)!important}.chat-audio-btn.is-recording{background:rgba(220,62,62,.38)!important;border-color:rgba(255,224,224,.86)!important}.chat-audio-btn:active{transform:scale(.96)}
 .chat-body { flex: 1; overflow-y: auto; padding: 18px; background: #F5F9FF; }
 .bubble { max-width: 85%; margin-bottom: 10px; padding: 11px 15px; border-radius: 14px; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
 .bubble.bot { background: var(--bg-card); border: 1px solid var(--border-card); border-bottom-right-radius: 4px; }
@@ -5280,7 +5282,28 @@ def chat_page():
             <option value="0">👤 __ME__</option>
           </select>
         </div>
-        <details class="chat-access"><summary>🔊 __ACCESSIBILITY__</summary><div class="chat-access-menu"><button id="spkBtn" class="spk-btn" onclick="toggleSpeak()" title="__SPEAK_TITLE__">__SPEAK_OFF__</button><button id="voiceModeBtn" class="spk-btn" onclick="toggleVoiceMode()" title="__VOICE_MODE_TITLE__">__VOICE_MODE_OFF__</button><button type="button" class="spk-btn" onclick="startVoice()">🎤 __VOICE_INPUT__</button></div></details>
+        <div class="chat-head-toggles" aria-label="__AUDIO_CONTROLS__">
+          <button id="spkBtn" type="button" class="spk-btn chat-audio-btn" onclick="toggleSpeak()" aria-pressed="false" aria-label="__SPEAKER_OFF_ARIA__" title="__SPEAKER_OFF_ARIA__">
+            <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path class="audio-stroke" d="M4 9.5h4l5-4v13l-5-4H4z"/>
+              <path class="audio-stroke speaker-wave" d="M16 9c1.3 1.7 1.3 4.3 0 6"/>
+              <path class="audio-stroke speaker-wave" d="M18.5 6.5c2.8 3.1 2.8 7.9 0 11"/>
+              <path class="audio-stroke speaker-slash" d="M5 5l14 14"/>
+            </svg>
+          </button>
+          <button id="micBtn" type="button" class="spk-btn chat-audio-btn" onclick="toggleQuickMic()" aria-pressed="false" aria-label="__MIC_READY_ARIA__" title="__MIC_READY_ARIA__">
+            <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <g class="mic-ready-icon">
+                <rect class="audio-stroke" x="9" y="3" width="6" height="11" rx="3"/>
+                <path class="audio-stroke" d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v4M9 21h6"/>
+              </g>
+              <g class="mic-stop-icon">
+                <rect class="audio-fill" x="7" y="7" width="10" height="10" rx="2"/>
+              </g>
+            </svg>
+          </button>
+          <span id="audioState" class="sr-only" aria-live="polite"></span>
+        </div>
       </div>
       <div class="ss-flow" aria-live="polite"><div class="ss-flow-copy"><span id="flowStepLabel">__FLOW_STEP__</span><span id="flowStepName">__FLOW_DEMO__</span></div><div class="ss-flow-track" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="flowProgress"><div class="ss-flow-fill" id="flowFill"></div></div></div>
       <div class="chat-body" id="chatBody"></div>
@@ -5293,18 +5316,6 @@ def chat_page():
     <div class="muted" id="chatSafetyNote" style="text-align:center;margin-top:10px;">__MUTED__</div>
     <div class="blood-banner" id="bloodBanner" style="display:none;"></div>
     <div class="em-overlay" id="emOverlay"></div>
-    <div class="voice-overlay" id="voiceOverlay">
-      <div class="voice-card">
-        <div class="v-mic">🎙️</div>
-        <div class="v-title">__VOICE_SP__</div>
-        <div style="margin-top:10px"><select id="voiceLang" aria-label="Voice language"><option value="ar-SA">🇸🇦 العربية</option><option value="en-GB">🇬🇧 English</option></select></div>
-        <div class="muted" style="font-size:12px;margin-top:9px">__VOICE_PRIVACY__</div>
-        <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="vstop" onclick="stopVoice()">__VOICE_STOP__</button>
-          <button class="vcnl" onclick="cancelVoice()">__VOICE_CANCEL__</button>
-        </div>
-      </div>
-    </div>
 
     <script>
     document.body.classList.add('ss-chat-page');
@@ -5431,6 +5442,8 @@ def chat_page():
     textInp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); submitText(); }
     });
+    syncSpeakerButton();
+    syncMicButton(false);
     // Load family members only after /api/user-info confirms the user is signed in.
     // This prevents expected guest sessions from generating 401 responses in the console.
     function loadFamilyMembers() {
@@ -5476,10 +5489,28 @@ def chat_page():
     }
     let autoSpeak = false;
     let lastSpokenMsg = '';
+    function setAudioStatus(msg) {
+      const el = document.getElementById('audioState');
+      if (el) el.textContent = msg || '';
+    }
+    function syncSpeakerButton() {
+      const b = document.getElementById('spkBtn');
+      if (!b) return;
+      const label = autoSpeak
+        ? (LANG === 'ar' ? 'القراءة الصوتية مفعلة. اضغط لإيقافها.' : 'Read aloud is on. Press to turn it off.')
+        : (LANG === 'ar' ? 'القراءة الصوتية متوقفة. اضغط لتفعيلها.' : 'Read aloud is off. Press to turn it on.');
+      b.setAttribute('aria-pressed', autoSpeak ? 'true' : 'false');
+      b.setAttribute('aria-label', label);
+      b.title = label;
+      b.classList.toggle('is-on', autoSpeak);
+    }
     function toggleSpeak() {
       autoSpeak = !autoSpeak;
-      const b = document.getElementById('spkBtn');
-      if (b) b.textContent = autoSpeak ? TT('speak_on') : TT('speak_off');
+      if (!autoSpeak && 'speechSynthesis' in window) speechSynthesis.cancel();
+      syncSpeakerButton();
+      setAudioStatus(autoSpeak
+        ? (LANG === 'ar' ? 'تم تفعيل القراءة بصوت عالٍ.' : 'Read aloud enabled.')
+        : (LANG === 'ar' ? 'تم إيقاف القراءة بصوت عالٍ.' : 'Read aloud disabled.'));
     }
     function speakText(txt) {
       if (!('speechSynthesis' in window)) return;
@@ -5621,173 +5652,115 @@ def chat_page():
       askDuration();
     }
 
-    // ---------------- Voice symptom input ----------------
-    // Audio is not uploaded or stored by SymptoSense. The browser performs speech
-    // recognition when supported; only the transcript is sent for structured parsing.
-    let voiceRec = null;
-    function startVoice() {
-      if (state.step === 'followup') { add(TT('voice_manual'), 'bot'); return; }
+    // ---------------- On-demand microphone ----------------
+    // The microphone is OFF by default. It starts only after a user tap and
+    // stops after a second tap or when the browser ends the utterance.
+    // Only the recognized transcript is processed; no background listening.
+    let quickMicRec = null;
+    let quickMicActive = false;
+    let quickMicTranscript = '';
+    function syncMicButton(active) {
+      quickMicActive = !!active;
+      const b = document.getElementById('micBtn');
+      if (!b) return;
+      const label = quickMicActive
+        ? (LANG === 'ar' ? 'الميكروفون يسجل الآن. اضغط لإيقاف التسجيل.' : 'Microphone is recording. Press to stop.')
+        : (LANG === 'ar' ? 'الميكروفون متوقف. اضغط لبدء تسجيل إجابتك.' : 'Microphone is off. Press to record your answer.');
+      b.setAttribute('aria-pressed', quickMicActive ? 'true' : 'false');
+      b.setAttribute('aria-label', label);
+      b.title = label;
+      b.classList.toggle('is-recording', quickMicActive);
+      setAudioStatus(quickMicActive
+        ? (LANG === 'ar' ? 'بدأ تسجيل إجابتك.' : 'Recording started.')
+        : (LANG === 'ar' ? 'الميكروفون متوقف.' : 'Microphone stopped.'));
+    }
+    function toggleQuickMic() {
+      if (quickMicActive && quickMicRec) {
+        try { quickMicRec.stop(); } catch(e) {}
+        return;
+      }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) { add(TT('no_mic'), 'bot'); return; }
-      clearOpts(); addQ('🎙️ ' + TT('voice_speaking'));
-      const ov=document.getElementById('voiceOverlay'), sel=document.getElementById('voiceLang');
-      if(sel) sel.value=LANG==='en'?'en-GB':'ar-SA'; ov.style.display='flex';
-      voiceRec=new SR(); voiceRec.lang=sel?sel.value:(LANG==='en'?'en-GB':'ar-SA'); voiceRec.continuous=false; voiceRec.interimResults=false; voiceRec.maxAlternatives=1;
-      voiceRec.onresult=function(ev){const text=((ev.results&&ev.results[0]&&ev.results[0][0]&&ev.results[0][0].transcript)||'').trim(); hideVoice(); if(!text){add(TT('voice_no_audio'),'bot');return;} parseVoiceTranscript(text);};
-      voiceRec.onerror=function(ev){hideVoice(); const msg=(ev&&ev.error==='not-allowed')?(LANG==='ar'?'لم يتم منح إذن الميكروفون. يمكنك الاستمرار بالكتابة.':'Microphone permission was not granted. You can continue by typing.'):TT('voice_no_audio'); add(msg,'bot');};
-      voiceRec.onend=function(){ if(document.getElementById('voiceOverlay').style.display!=='none' && voiceRec){ hideVoice(); }};
-      try{voiceRec.start();}catch(e){hideVoice();add(TT('no_mic'),'bot');}
-    }
-    function stopVoice(){if(voiceRec){try{voiceRec.stop();}catch(e){}}}
-    function cancelVoice(){if(voiceRec){try{voiceRec.abort();}catch(e){}}hideVoice();}
-    function hideVoice(){document.getElementById('voiceOverlay').style.display='none';voiceRec=null;}
-    async function parseVoiceTranscript(text){
-      add(TT('voice_thinking'),'bot');
-      try{const langSel=document.getElementById('voiceLang');const parseLang=(langSel&&langSel.value&&langSel.value.startsWith('en'))?'en':'ar';const r=await fetch('/api/voice/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,lang:parseLang})});const d=await r.json();if(!r.ok||!d.ok){if(d.consent_required){location.href=d.consent_url;return;}add(TT('voice_err')+(d.error||''),'bot');return;}showParsed(d.text,d.parsed);}catch(e){add(TT('conn_err'),'bot');}
-    }
-    function showParsed(text, parsed) {
-      const symStr = parsed.symptoms && parsed.symptoms.length ? parsed.symptoms.join(LANG==='en' ? ', ' : '، ') : TT('voice_none');
-      let h='<div class="res-sec">🎙️ <i>"'+esc(text)+'"</i></div>';
-      h+='<div class="res-assess"><div class="res-assess-h">'+esc(LANG==='ar'?'فهمنا التالي':'We understood')+'</div>';
-      h+='<div class="res-assess-row"><span class="res-assess-label">🩺 '+esc(TT('voice_syms'))+'</span><span>'+esc(symStr)+'</span></div>';
-      if(parsed.duration)h+='<div class="res-assess-row"><span class="res-assess-label">📅 '+esc(TT('duration'))+'</span><span>'+esc(parsed.duration)+'</span></div>';
-      if(parsed.location)h+='<div class="res-assess-row"><span class="res-assess-label">📍 '+esc(LANG==='ar'?'المكان':'Location')+'</span><span>'+esc(parsed.location)+'</span></div>';
-      if(parsed.severity_10)h+='<div class="res-assess-row"><span class="res-assess-label">📊 '+esc(TT('severity'))+'</span><span>'+esc(String(parsed.severity_10))+'/10</span></div>';
-      h+='</div><div class="muted">'+esc(TT('voice_confirm_q'))+'</div>'; addHtml(h,'bot');
-      showOpts([{label:TT('voice_confirm'),fn:()=>voiceConfirm(parsed)},{label:TT('voice_retry'),fn:startVoice},{label:TT('voice_edit'),fn:()=>{add(TT('voice_manual'),'bot');askSymptoms();}}]);
-    }
-    function voiceConfirm(parsed){
-      if(parsed.symptoms&&parsed.symptoms.length){state.symptoms=parsed.symptoms;add(TT('chosen')+parsed.symptoms.join(LANG==='en'?', ':'، '),'user');}
-      if(parsed.duration)state.duration=parsed.duration;if(parsed.severity)state.severity=parsed.severity;if(parsed.location){state.location=parsed.location;state.notes=((state.notes||'')+' '+(LANG==='ar'?'المكان: ':'Location: ')+parsed.location).trim();}
-      clearOpts(); if(state.member&&state.member.age)askGender();else askAge();
+      quickMicTranscript = '';
+      quickMicRec = new SR();
+      quickMicRec.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
+      quickMicRec.continuous = false;
+      quickMicRec.interimResults = false;
+      quickMicRec.maxAlternatives = 1;
+      quickMicRec.onstart = function(){ syncMicButton(true); };
+      quickMicRec.onresult = function(ev){
+        const parts = [];
+        for (let i = ev.resultIndex || 0; i < ev.results.length; i++) {
+          const t = ev.results[i] && ev.results[i][0] ? ev.results[i][0].transcript : '';
+          if (t) parts.push(t);
+        }
+        quickMicTranscript = parts.join(' ').trim();
+      };
+      quickMicRec.onerror = function(ev){
+        const code = (ev && ev.error) || '';
+        syncMicButton(false);
+        quickMicRec = null;
+        if (code === 'aborted' || code === 'no-speech') return;
+        const msg = code === 'not-allowed'
+          ? (LANG === 'ar' ? 'لم يتم منح إذن الميكروفون. يمكنك الاستمرار بالكتابة.' : 'Microphone permission was not granted. You can continue by typing.')
+          : TT('no_mic');
+        add(msg, 'bot');
+      };
+      quickMicRec.onend = function(){
+        const text = String(quickMicTranscript || '').trim();
+        syncMicButton(false);
+        quickMicRec = null;
+        quickMicTranscript = '';
+        if (text) submitVoiceText(text);
+      };
+      try { quickMicRec.start(); }
+      catch(e) { syncMicButton(false); quickMicRec = null; add(TT('no_mic'), 'bot'); }
     }
 
-    // ---------------- Voice Conversation Mode ----------------
-    let voiceMode = false;
-    let liveRecognition = null;
-    let voiceState = 'idle';
-    function toggleVoiceMode() {
-      voiceMode = !voiceMode;
-      const btn = document.getElementById('voiceModeBtn');
-      const avatar = document.getElementById('chatAvatar');
-      if (voiceMode) {
-        btn.textContent = TT('voice_mode_on');
-        btn.style.background = 'rgba(46,173,104,.3)';
-        if (avatar) avatar.textContent = '🎙️';
-        startLiveRecognition();
-      } else {
-        btn.textContent = TT('voice_mode_off');
-        btn.style.background = 'rgba(255,255,255,.15)';
-        if (avatar) avatar.textContent = '🏥';
-        stopLiveRecognition();
-      }
-    }
-    function setVoiceState(s) {
-      voiceState = s;
-      const avatar = document.getElementById('chatAvatar');
-      if (s === 'listening') { if (avatar) avatar.textContent = '🎧'; }
-      else if (s === 'processing') { if (avatar) avatar.textContent = '⏳'; }
-      else if (s === 'speaking') { if (avatar) avatar.textContent = '🔊'; }
-      else { if (avatar) avatar.textContent = voiceMode ? '🎙️' : '🏥'; }
-    }
-    function startLiveRecognition() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { add(TT('no_speech_api') || 'Voice recognition not supported in this browser', 'bot'); voiceMode = false; document.getElementById('voiceModeBtn').textContent = TT('voice_mode_off'); return; }
-      liveRecognition = new SR();
-      liveRecognition.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
-      liveRecognition.continuous = true;
-      liveRecognition.interimResults = true;
-      let finalTranscript = '';
-      let silenceTimer = null;
-      liveRecognition.onresult = function(event) {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        if (silenceTimer) clearTimeout(silenceTimer);
-        if (finalTranscript.trim()) {
-          silenceTimer = setTimeout(function() {
-            if (voiceMode && finalTranscript.trim()) {
-              setVoiceState('processing');
-              submitVoiceText(finalTranscript.trim());
-              finalTranscript = '';
-            }
-          }, 1500);
-        }
-      };
-      liveRecognition.onerror = function(e) {
-        if (e.error === 'no-speech' || e.error === 'aborted') {
-          if (voiceMode) { setVoiceState('idle'); setTimeout(function(){ if (voiceMode) tryLiveRestart(); }, 500); }
-          return;
-        }
-        if (voiceMode) { setTimeout(function(){ if (voiceMode) tryLiveRestart(); }, 1000); }
-      };
-      liveRecognition.onend = function() {
-        if (voiceMode) { setVoiceState('idle'); setTimeout(function(){ if (voiceMode) tryLiveRestart(); }, 300); }
-      };
-      try { liveRecognition.start(); setVoiceState('listening'); } catch(e) {}
-    }
-    function tryLiveRestart() {
-      if (!voiceMode || !liveRecognition) return;
-      try { liveRecognition.start(); setVoiceState('listening'); } catch(e) { setTimeout(function(){ if (voiceMode) tryLiveRestart(); }, 500); }
-    }
-    function stopLiveRecognition() {
-      if (liveRecognition) { try { liveRecognition.stop(); } catch(e) {} liveRecognition = null; }
-      setVoiceState('idle');
-    }
     async function submitVoiceText(text) {
-      add(text, 'user');
+      const spoken = String(text || '').trim();
+      if (!spoken) return;
+      add(spoken, 'user');
+      hideText();
       clearOpts();
-      setVoiceState('processing');
       if (state.step === 'age') {
-        const num = parseInt(text);
-        if (num > 0 && num < 121) { state.age = num; setVoiceState('idle'); askGender(); }
-        else { add(TT('age_invalid'), 'bot'); setVoiceState('listening'); }
+        const normalizedAge = spoken.replace(/[٠-٩]/g,function(d){return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d));}).replace(/[۰-۹]/g,function(d){return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));});
+        const num = parseInt(normalizedAge, 10);
+        if (num > 0 && num < 121) { state.age = num; askGender(); }
+        else { add(TT('age_invalid'), 'bot'); showText(TT('age_ph')); }
+      } else if (state.step === 'gender') {
+        const v = spoken.toLowerCase();
+        if (/أنثى|انثى|female|woman|بنت/.test(v)) { state.gender='f'; add(TT('female'),'bot'); askSymptoms(); }
+        else if (/ذكر|male|man|ولد/.test(v)) { state.gender='m'; add(TT('male'),'bot'); askSymptoms(); }
+        else { add(LANG==='ar'?'قل «ذكر» أو «أنثى»، أو اختر الزر المناسب.':'Say “male” or “female”, or choose the matching button.','bot'); askGender(); }
       } else if (state.step === 'symptoms') {
-        const lowerText = text.toLowerCase();
-        const matched = SYMS.filter(function(s) { return lowerText.includes(s.replace(/[^\u0600-\u06FF\\w\\s]/g,'').trim().toLowerCase()); });
-        if (matched.length) { state.symptoms = matched; add(TT('chosen') + matched.join(', '), 'user'); setVoiceState('idle'); askDuration(); }
-        else { state.symptoms = [text]; add(TT('chosen') + text, 'user'); setVoiceState('idle'); askDuration(); }
+        await extractSmartSymptoms(spoken);
       } else if (state.step === 'duration') {
-        state.duration = text; setVoiceState('idle'); askSeverity();
+        state.duration = spoken; askSeverity();
       } else if (state.step === 'severity') {
-        const num = parseInt(text);
-        if (num >= 1 && num <= 5) { state.severity = num; setVoiceState('idle'); askConditions(); }
-        else { state.severity = 3; setVoiceState('idle'); askConditions(); }
+        const normalized = spoken.replace(/[٠-٩]/g,function(d){return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d));}).replace(/[۰-۹]/g,function(d){return String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));});
+        const num = parseInt(normalized, 10);
+        if (num >= 1 && num <= 5) { state.severity = String(num); askNotes(); }
+        else { add(LANG==='ar'?'اذكر الشدة من 1 إلى 5، أو اختر أحد الأزرار.':'Say a severity from 1 to 5, or choose one of the buttons.','bot'); askSeverity(); }
       } else if (state.step === 'conditions') {
-        state.conditions = text; setVoiceState('idle'); askMeds();
+        state.conditions = spoken; state.history_answered = true; askMeds();
       } else if (state.step === 'medications') {
-        state.medications = text; setVoiceState('idle'); askNotes();
+        state.medications = spoken; askAllergies();
+      } else if (state.step === 'allergies') {
+        state.allergies = spoken; startClarify();
       } else if (state.step === 'notes') {
-        state.notes = text; setVoiceState('idle'); showDataQualityGate();
+        state.notes = spoken; askConditions();
+      } else if (state.step === 'clarification') {
+        state.location = spoken;
+        state.notes += (state.notes?' ':'') + (LANG==='ar'?'تفصيل إضافي: ':'Additional detail: ') + spoken;
+        const next = clarCustomNext; clarCustomNext = null; walkClarNode(next);
+      } else if (state.step === 'followup') {
+        submitFollowup(spoken);
       } else {
-        state.notes = (state.notes || '') + ' ' + text;
-        setVoiceState('idle');
+        state.notes = ((state.notes || '') + ' ' + spoken).trim();
         showDataQualityGate();
       }
     }
-    // Override add() to auto-speak in voice mode
-    const _origAdd = add;
-    add = function(msg, cls) {
-      _origAdd(msg, cls);
-      if (voiceMode && cls === 'bot') {
-        setVoiceState('speaking');
-        const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
-        const t = clean(msg);
-        if (t && 'speechSynthesis' in window) {
-          speechSynthesis.cancel();
-          const uu = new SpeechSynthesisUtterance(t);
-          uu.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
-          uu.rate = 0.95;
-          uu.onend = function() { if (voiceMode) { setVoiceState('listening'); tryLiveRestart(); } };
-          speechSynthesis.speak(uu);
-        }
-      }
-    };
 
     const GENERIC_CLAR={prompt:['أين تشعر بهذا العرض أو في أي جزء من الجسم يظهر؟','Where do you feel this symptom, or which part of the body does it affect?'],options:[
       {label:['الرأس أو الوجه','Head or face']},{label:['الصدر أو التنفس','Chest or breathing']},
@@ -6848,8 +6821,9 @@ def chat_page():
         .replace("__CONDS__", json.dumps(conds, ensure_ascii=False))
         .replace("__REL__", json.dumps(_related_map(ar), ensure_ascii=False))
         .replace("__ME__", CHAT["ar" if ar else "en"]["me"])
-        .replace("__ACCESSIBILITY__", "إمكانية الوصول" if ar else "Accessibility")
-        .replace("__VOICE_INPUT__", "إملاء الأعراض/النص بالصوت" if ar else "Dictate symptoms/text by voice")
+        .replace("__AUDIO_CONTROLS__", "التحكم بالصوت والميكروفون" if ar else "Speaker and microphone controls")
+        .replace("__SPEAKER_OFF_ARIA__", "القراءة الصوتية متوقفة. اضغط لتفعيلها." if ar else "Read aloud is off. Press to turn it on.")
+        .replace("__MIC_READY_ARIA__", "الميكروفون متوقف. اضغط لبدء تسجيل إجابتك." if ar else "Microphone is off. Press to record your answer.")
         .replace("__VOICE_MODE_TITLE__", CHAT["ar" if ar else "en"]["voice_mode_title"])
         .replace("__VOICE_MODE_OFF__", CHAT["ar" if ar else "en"]["voice_mode_off"])
         .replace("__SPEAK_OFF__", CHAT["ar" if ar else "en"]["speak_off"])
