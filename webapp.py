@@ -5514,7 +5514,7 @@ def chat_page():
     }
     function speakText(txt) {
       if (!('speechSynthesis' in window)) return;
-      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
+      const clean = s => String(s || '').replace(/\\s{2,}/g, ' ').trim();
       const t = clean(txt);
       if (!t) return;
       speechSynthesis.cancel();
@@ -6744,7 +6744,7 @@ def chat_page():
     function speakResult() {
       if (!lastResult) return;
       if (!('speechSynthesis' in window)) { add(TT('no_speech'), 'bot'); return; }
-      const clean = s => String(s || '').replace(/[^\u0600-\u06FF\\w\\s.,!?()\\-%/،؟]/g, ' ').replace(/\\s{2,}/g, ' ').trim();
+      const clean = s => String(s || '').replace(/\\s{2,}/g, ' ').trim();
       const d = lastResult;
       const u = d.urgency;
       const pill = u==='high' ? TT('urg_high') : (u==='medium' ? TT('urg_medium') : TT('urg_low'));
