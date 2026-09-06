@@ -4334,6 +4334,38 @@ HOME_CSS = """
   .care-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .care-item { padding: 14px 10px; font-size: 13px; }
 }
+
+/* Competition hero: product-first health-tech showcase. */
+.home-showcase{position:relative;display:grid;direction:ltr;grid-template-columns:minmax(390px,.92fr) minmax(0,1.12fr);gap:clamp(38px,5.5vw,82px);align-items:center;min-height:600px;margin:0 0 38px;padding:clamp(38px,5vw,64px);overflow:hidden;border:1px solid #CFE3EF;border-radius:30px;background:linear-gradient(118deg,#F7FCFF 0%,#FFFFFF 56%,#FBFDFF 100%);box-shadow:0 10px 30px rgba(31,86,127,.055);isolation:isolate}
+.home-showcase:before{content:'';position:absolute;width:460px;height:460px;border-radius:50%;left:-105px;top:58px;background:radial-gradient(circle,#EAF5FC 0%,rgba(234,245,252,.66) 58%,rgba(234,245,252,0) 70%);z-index:-1}
+.home-showcase:after{content:'';position:absolute;width:74px;height:74px;border-radius:50%;left:44%;bottom:54px;background:#EFF7FC;z-index:-1}
+.home-showcase-copy{min-width:0;text-align:start;align-self:center;direction:rtl}
+.home-showcase-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:3px;color:#163B5C;font-size:clamp(13px,1.15vw,16px);font-weight:900}.home-showcase-kicker em{color:#2887CC;font-style:normal;font-weight:800}
+.home-showcase-line{display:block;width:74px;height:4px;border-radius:999px;margin:12px 0 34px;background:linear-gradient(90deg,#B9E0F7,#2E91DA)}
+.home-showcase-copy h1{max-width:10.5ch;margin:0;color:#113F75;font-size:clamp(48px,5.6vw,76px)!important;line-height:1.28!important;font-weight:900;letter-spacing:-.035em;text-wrap:balance}
+.home-showcase-sub{max-width:640px;margin:26px 0 8px;color:#405B72;font-size:clamp(20px,2vw,28px);line-height:1.75;font-weight:750}
+.home-showcase-desc{display:none}
+.home-showcase-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:30px}
+.home-primary-cta,.home-secondary-cta{min-height:64px;border-radius:14px;padding:15px 28px;font:inherit;font-size:clamp(15px,1.35vw,18px);font-weight:900;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:14px;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.home-primary-cta{min-width:240px;color:#fff;background:linear-gradient(135deg,#2C91E4,#237AC7);border:1px solid #2583D2;box-shadow:0 10px 24px rgba(40,127,193,.18)}.home-primary-cta b{font-size:27px;font-weight:400;line-height:1}
+.home-secondary-cta{min-width:220px;color:#123F71;background:#fff;border:1.5px solid #73B4E5;box-shadow:0 5px 16px rgba(31,86,127,.05)}
+@media(hover:hover) and (pointer:fine){.home-primary-cta:hover,.home-secondary-cta:hover{transform:translateY(-2px)}.home-primary-cta:hover{box-shadow:0 14px 30px rgba(40,127,193,.23)}.home-secondary-cta:hover{border-color:#287FC1}}
+.home-showcase-demo{position:relative;min-width:0;min-height:500px;display:grid;place-items:center;padding:20px 54px 24px 70px;direction:rtl}
+.home-demo-halo{position:absolute;width:430px;height:430px;border-radius:50%;left:50%;top:50%;transform:translate(-52%,-50%);background:radial-gradient(circle at 50% 50%,#E9F5FC 0%,#E7F3FA 58%,rgba(231,243,250,0) 72%);z-index:-1}
+.home-result-preview{position:relative;width:min(390px,100%);padding:17px 17px 16px;border:1px solid #CFE2EE;border-radius:22px;background:rgba(255,255,255,.98);box-shadow:0 18px 42px rgba(31,86,127,.12);z-index:3}
+.home-result-head{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;padding-bottom:13px;color:#163B5C;border-bottom:1px solid #E7EFF4}.home-result-head strong{text-align:center;font-size:16px}.home-result-doc{color:#287FC1;font-size:22px}.home-result-back{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#F2F8FC;color:#287FC1;font-size:26px}
+.home-risk-preview{display:flex;align-items:center;justify-content:center;gap:18px;margin:14px 0;padding:16px;border-radius:16px;background:linear-gradient(135deg,#EEFAF3,#E4F7ED);border:1px solid #D8EEE1;color:#1E754B;text-align:center}.home-risk-preview div{display:grid;gap:2px}.home-risk-preview small{font-size:11px;font-weight:800;color:#31596B}.home-risk-preview b{font-size:26px;line-height:1.15}.home-risk-preview span:not(.home-risk-check){font-size:10px;color:#3A8C63}.home-risk-check{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#4FD08B;color:#fff;font-size:28px;font-weight:900;box-shadow:0 0 0 10px rgba(79,208,139,.13)}
+.home-preview-panel,.home-next-preview,.home-source-preview{border:1px solid #D9E8F1;border-radius:15px;background:#fff;overflow:hidden}.home-preview-panel h3,.home-next-preview h3,.home-source-preview h3{margin:0;color:#163B5C;font-size:13px;font-weight:900}.home-preview-panel>h3{padding:10px 12px;border-bottom:1px solid #EAF1F5}.home-condition-row{display:grid;grid-template-columns:10px 1fr 18px;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid #EEF3F6;color:#27465F}.home-condition-row:last-child{border-bottom:0}.home-condition-row>div{display:grid}.home-condition-row b{font-size:12px;line-height:1.3}.home-condition-row small{font-size:9px;color:#708596}.home-condition-row>span{color:#287FC1;font-size:19px}.home-dot{width:8px;height:8px;border-radius:50%;background:#2D90D9}.home-dot.d2{background:#82C8F5}.home-dot.d3{background:#C4E3F7}
+.home-next-preview{margin-top:10px;padding:11px 12px;background:#F8FCFE}.home-next-preview p{margin:5px 0 0;color:#5E7486;font-size:10px;line-height:1.65}
+.home-source-preview{margin-top:10px;padding:11px 12px;text-align:center}.home-source-logos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:start;margin:9px 0 7px}.home-source-logos span{display:grid;justify-items:center;gap:2px;color:#365A75;font-size:8px;font-weight:800;line-height:1.25}.home-source-logos i{font-style:normal;font-size:18px}.home-source-preview>a{font-size:9px;color:#287FC1;font-weight:900;text-decoration:none}
+.home-tech-chip{position:absolute;z-index:5;width:128px;min-height:106px;padding:12px 9px;border:1px solid #E1ECF3;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 10px 24px rgba(31,86,127,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#163B5C}.home-tech-chip b{font-size:13px}.home-tech-chip small{margin-top:3px;color:#60788B;font-size:8.5px;line-height:1.35}.home-tech-icon{font-size:30px;line-height:1}.home-tech-data{left:-7px;top:92px;transform:rotate(-7deg)}.home-tech-ai{right:3px;top:48px;transform:rotate(6deg)}.home-tech-health{left:-15px;bottom:93px;transform:rotate(-4deg)}
+.home-demo-caption{position:absolute;left:0;bottom:17px;display:flex;align-items:center;gap:7px;color:#163B5C;font-size:12px;font-weight:800;transform:rotate(-3deg)}.home-demo-caption span{font-size:34px;font-weight:400}
+html[dir="ltr"] .home-showcase-copy{direction:ltr}html[dir="ltr"] .home-showcase-copy h1{max-width:12ch}
+@media(max-width:1050px){.home-showcase{grid-template-columns:minmax(330px,.9fr) minmax(0,1.05fr);gap:30px;padding:38px 30px}.home-showcase-copy h1{font-size:clamp(43px,5.7vw,62px)!important}.home-showcase-demo{padding-inline:40px;transform:scale(.94)}.home-tech-chip{width:112px}}
+@media(max-width:820px){.home-showcase{grid-template-columns:1fr;gap:26px;padding:34px 24px}.home-showcase-copy{order:1}.home-showcase-demo{order:2;width:min(590px,100%);min-height:500px;margin:0 auto;transform:none}.home-showcase-copy h1{max-width:14ch;font-size:clamp(40px,7vw,58px)!important}.home-showcase-sub{font-size:20px}.home-showcase-actions{margin-top:22px}.home-primary-cta,.home-secondary-cta{flex:1 1 210px}.home-showcase-line{margin-bottom:22px}}
+@media(max-width:560px){.home-showcase{margin-inline:0;padding:27px 15px 30px;border-radius:22px;gap:20px}.home-showcase-kicker{font-size:11.5px}.home-showcase-line{width:52px;height:3px;margin:8px 0 18px}.home-showcase-copy h1{font-size:clamp(34px,10.4vw,46px)!important;line-height:1.22!important}.home-showcase-sub{margin:16px 0 4px;font-size:16px;line-height:1.75}.home-showcase-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:18px}.home-primary-cta,.home-secondary-cta{width:100%;min-width:0;min-height:52px;padding:11px 16px;font-size:14px;border-radius:12px}.home-showcase-demo{min-height:455px;padding:14px 30px 20px}.home-result-preview{width:min(330px,88vw);padding:13px;border-radius:18px}.home-result-head strong{font-size:13px}.home-risk-preview{padding:12px;gap:12px}.home-risk-preview b{font-size:22px}.home-risk-check{width:42px;height:42px;font-size:22px;box-shadow:0 0 0 7px rgba(79,208,139,.12)}.home-tech-chip{width:92px;min-height:82px;padding:8px 5px;border-radius:14px}.home-tech-chip b{font-size:10px}.home-tech-chip small{font-size:7px}.home-tech-icon{font-size:23px}.home-tech-data{left:2px;top:72px}.home-tech-ai{right:0;top:35px}.home-tech-health{left:0;bottom:76px}.home-demo-caption{left:8px;bottom:4px;font-size:10px}.home-demo-caption span{font-size:27px}.home-demo-halo{width:330px;height:330px}.home-source-logos i{font-size:15px}.home-source-logos span{font-size:7px}}
+@media(max-width:380px){.home-showcase{padding-inline:12px}.home-showcase-demo{padding-inline:22px;min-height:440px}.home-result-preview{width:min(300px,88vw)}.home-tech-chip{width:82px}.home-tech-data{left:-2px}.home-tech-ai{right:-2px}.home-tech-health{left:-3px}.home-condition-row b{font-size:10.5px}.home-next-preview p{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.home-primary-cta,.home-secondary-cta{transition:none}}
 """
 
 
@@ -4341,18 +4373,68 @@ def home_page():
     ar = _lang() == "ar"
     bi = lambda a, e: a if ar else e
     body = """
-    <section class="hh" aria-labelledby="homeTitle">
-      <div class="hh-l">
-        <span class="hh-badge">SymptoSense · __TRUSTED_LABEL__</span>
-        <h1 id="homeTitle">__TITLE__</h1>
-        <p class="hh-sub">__SUB__</p>
-        <p class="hh-desc">__DESC__</p>
-        <div class="hh-btns"><a class="btn pri" href="/chat">__START__</a><button class="btn sec" onclick="asstToggle()">__ASK__</button></div>
-      </div>
-      <div class="hh-r" aria-hidden="true"><div class="hh-product-visual"><span class="hh-product-core">S</span><span class="hh-product-node hh-p1">📊</span><span class="hh-product-node hh-p2">🧠</span><span class="hh-product-node hh-p3">🩺</span><span class="hh-product-node hh-p4">✦</span></div></div>
-    </section>
+    <section class="home-showcase" aria-labelledby="homeTitle">
+      <div class="home-showcase-demo" aria-label="__DEMO_ARIA__">
+        <div class="home-demo-halo" aria-hidden="true"></div>
 
-    <div class="home-trust"><div class="trust-pills"><span>📚 __TRUST_SOURCE__</span><span>🔒 __TRUST_PRIVACY__</span><span>🌐 __TRUST_LANG__</span><span>🩺 __TRUST_NODIAG__</span></div><a href="/sources">__VIEW_SOURCES__</a></div>
+        <div class="home-tech-chip home-tech-data" aria-hidden="true">
+          <span class="home-tech-icon">📊</span><b>Data Science</b><small>__DATA_CHIP__</small>
+        </div>
+        <div class="home-tech-chip home-tech-ai" aria-hidden="true">
+          <span class="home-tech-icon">🧠</span><b>AI</b><small>__AI_CHIP__</small>
+        </div>
+        <div class="home-tech-chip home-tech-health" aria-hidden="true">
+          <span class="home-tech-icon">🩺</span><b>Digital Health</b><small>__HEALTH_CHIP__</small>
+        </div>
+
+        <div class="home-result-preview">
+          <div class="home-result-head">
+            <span class="home-result-doc" aria-hidden="true">▤</span>
+            <strong>__DEMO_TITLE__</strong>
+            <span class="home-result-back" aria-hidden="true">‹</span>
+          </div>
+
+          <div class="home-risk-preview">
+            <span class="home-risk-check" aria-hidden="true">✓</span>
+            <div><small>__RISK_LABEL__</small><b>__RISK_LOW__</b><span>__RISK_NOTE__</span></div>
+          </div>
+
+          <div class="home-preview-panel">
+            <h3>__POSSIBLE_TITLE__</h3>
+            <div class="home-condition-row"><i class="home-dot d1"></i><div><b>__COND1__</b><small>__COND1S__</small></div><span>‹</span></div>
+            <div class="home-condition-row"><i class="home-dot d2"></i><div><b>__COND2__</b><small>__COND2S__</small></div><span>‹</span></div>
+            <div class="home-condition-row"><i class="home-dot d3"></i><div><b>__COND3__</b><small>__COND3S__</small></div><span>‹</span></div>
+          </div>
+
+          <div class="home-next-preview">
+            <h3>__NEXT_TITLE__ <span aria-hidden="true">💡</span></h3>
+            <p>__NEXT_COPY__</p>
+          </div>
+
+          <div class="home-source-preview">
+            <h3>__SOURCES_PREVIEW__ <span aria-hidden="true">📖</span></h3>
+            <div class="home-source-logos">
+              <span><i>🇸🇦</i>__MOH__</span><span><i>🌐</i>WHO</span><span><i>♡</i>Mayo Clinic</span>
+            </div>
+            <a href="/sources">__ALL_SOURCES__</a>
+          </div>
+        </div>
+
+        <div class="home-demo-caption" aria-hidden="true"><span>↗</span> __DEMO_CAPTION__</div>
+      </div>
+
+      <div class="home-showcase-copy">
+        <span class="home-showcase-kicker">SymptoSense · <em>__TRUSTED_LABEL__</em></span>
+        <span class="home-showcase-line" aria-hidden="true"></span>
+        <h1 id="homeTitle">__TITLE__</h1>
+        <p class="home-showcase-sub">__SUB__</p>
+        <p class="home-showcase-desc">__DESC__</p>
+        <div class="home-showcase-actions">
+          <a class="home-primary-cta" href="/chat"><span>__START__</span><b aria-hidden="true">←</b></a>
+          <button class="home-secondary-cta" type="button" onclick="asstToggle()"><span aria-hidden="true">💬</span> __ASK__</button>
+        </div>
+      </div>
+    </section>
 
     <div class="v2-section-head" id="services"><div><h2>__CORE_H__</h2><p class="muted">__CORE_P__</p></div></div>
     <div class="svc-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
@@ -4407,6 +4489,24 @@ def home_page():
         "__SUB__": bi("حلّل أعراضك بطريقة ذكية، وتعرّف على مستوى الخطورة والخطوة المناسبة لك.", "Analyze your symptoms intelligently and understand your risk level and the right next step."),
         "__DESC__": bi("معلومات صحية موثوقة تساعدك على فهم الأعراض واتخاذ قرار أفضل، دون تشخيص طبي.", "Trusted health information to help you understand symptoms and make a better-informed decision, without a medical diagnosis."),
         "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد الذكي", "Ask the AI assistant"),
+        "__DEMO_ARIA__": bi("مثال توضيحي لنتيجة تحليل الأعراض", "Illustrative symptom analysis result"),
+        "__DATA_CHIP__": bi("تحليل ذكي للبيانات", "Smart data analysis"),
+        "__AI_CHIP__": bi("مساعد ذكي", "AI assistant"),
+        "__HEALTH_CHIP__": bi("صحة رقمية أفضل", "Better digital health"),
+        "__DEMO_TITLE__": bi("نتيجة تحليل الأعراض", "Symptom analysis result"),
+        "__RISK_LABEL__": bi("مستوى الخطورة", "Risk level"),
+        "__RISK_LOW__": bi("منخفض", "Low"),
+        "__RISK_NOTE__": bi("لا تظهر علامات مقلقة حاليًا", "No concerning warning signs currently"),
+        "__POSSIBLE_TITLE__": bi("الاحتمالات المحتملة", "Possible explanations"),
+        "__COND1__": bi("إجهاد عام", "General fatigue"), "__COND1S__": bi("احتمال مرتفع", "Higher likelihood"),
+        "__COND2__": bi("صداع توتري", "Tension headache"), "__COND2S__": bi("احتمال متوسط", "Moderate likelihood"),
+        "__COND3__": bi("نقص النوم", "Sleep deprivation"), "__COND3S__": bi("احتمال ممكن", "Possible"),
+        "__NEXT_TITLE__": bi("ماذا أفعل الآن؟", "What should I do now?"),
+        "__NEXT_COPY__": bi("احرص على الراحة وشرب السوائل ومراقبة الأعراض. إذا استمرت أو ازدادت، استشر مختصًا.", "Rest, stay hydrated, and monitor your symptoms. If they persist or worsen, consult a professional."),
+        "__SOURCES_PREVIEW__": bi("مصادر طبية موثوقة", "Trusted medical sources"),
+        "__MOH__": bi("وزارة الصحة", "Saudi MOH"),
+        "__ALL_SOURCES__": bi("عرض جميع المصادر ←", "View all sources →"),
+        "__DEMO_CAPTION__": bi("مثال على نتيجة التحليل", "Example analysis result"),
         "__CORE_H__": bi("الخدمات الرئيسية", "Core services"), "__CORE_P__": bi("ثلاثة مسارات واضحة لما تحتاجه غالبًا.", "Three clear paths for the things you need most."),
         "__SYM_H__": bi("تحليل الأعراض", "Symptom analysis"), "__SYM_P__": bi("تحليل الأعراض وتقييم مستوى الخطورة بخطوات واضحة.", "Review symptoms and assess risk through clear steps."),
         "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("أسئلة صحية، صحة نفسية، أدوية وتحاليل في تجربة تفاعلية.", "Interactive support for health questions, mental wellbeing, medicines, and labs."),
