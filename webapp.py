@@ -1611,7 +1611,12 @@ function asstEnterMH() {
   document.getElementById('asstSubT').textContent = asstTT('asst_mh_sub');
   document.getElementById('asstBack').style.display = '';
   document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
-  document.getElementById('asstMhBtn').style.display = '';
+  var mhMotionBtn = document.getElementById('asstMhBtn');
+  mhMotionBtn.style.display = '';
+  mhMotionBtn.title = document.documentElement.lang === 'en'
+    ? 'Reduces visual animations only; it does not stop the conversation.'
+    : 'يقلل المؤثرات المتحركة فقط، ولا يوقف المحادثة.';
+  mhMotionBtn.setAttribute('aria-label', mhMotionBtn.title);
   var g = document.getElementById('asstGreet');
   if (g) { g.textContent = asstTT('asst_mh_greet'); g.style.whiteSpace = 'pre-line'; }
   asstRenderOpts();
@@ -1639,7 +1644,12 @@ function openAsstGeneral() {
 function asstToggleAnim() {
   var p = document.getElementById('asstPanel');
   p.classList.toggle('no-anim');
-  document.getElementById('asstMhBtn').textContent = p.classList.contains('no-anim') ? asstTT('asst_mh_anim_on') : asstTT('asst_mh_anim');
+  var btn = document.getElementById('asstMhBtn');
+  btn.textContent = p.classList.contains('no-anim') ? asstTT('asst_mh_anim_on') : asstTT('asst_mh_anim');
+  btn.title = document.documentElement.lang === 'en'
+    ? (p.classList.contains('no-anim') ? 'Restore visual animations.' : 'Reduce visual animations only; the conversation keeps working.')
+    : (p.classList.contains('no-anim') ? 'إعادة المؤثرات المتحركة.' : 'تقليل المؤثرات المتحركة فقط؛ المحادثة تستمر بشكل طبيعي.');
+  btn.setAttribute('aria-label', btn.title);
 }
 function asstOptClick(act, k) {
   if (act === 'mh') { asstEnterMH(); return; }
@@ -7003,8 +7013,8 @@ CT = {
         "asst_mh_opt3": "أبي أفهم شعوري",
         "asst_mh_opt3_d": "إذا كنت تريد فهم ما تشعر به بشكل أفضل.",
         "asst_mh_ph": "احكِ لي براحتك...",
-        "asst_mh_anim": "إيقاف الحركة",
-        "asst_mh_anim_on": "تشغيل الحركة",
+        "asst_mh_anim": "تقليل الحركة",
+        "asst_mh_anim_on": "إعادة الحركة",
         "asst_mh_talk_msg": "🤍 أنا معك هنا. ابدأ بأي شيء يشغل بالك — حتى لو كان الكلام غير مرتب، لا بأس. أنا أسمعك.",
         "asst_mh_calm_msg": "🌿 خذ نفسًا عميقًا معي… شاهد الدائرة وتنفس معها. خذ وقتك، أنا هنا.",
         "asst_mh_feel_msg": "🧠 خذ وقتك… متى ظهر هذا الشعور؟ وش كان قبله؟ اكتب ما يخطر ببالك مهما كان بسيطًا.",
@@ -7472,8 +7482,8 @@ CT = {
         "asst_mh_opt3": "Help me understand my feeling",
         "asst_mh_opt3_d": "If you want to understand what you feel better.",
         "asst_mh_ph": "Tell me freely...",
-        "asst_mh_anim": "Stop motion",
-        "asst_mh_anim_on": "Start motion",
+        "asst_mh_anim": "Reduce motion",
+        "asst_mh_anim_on": "Restore motion",
         "asst_mh_talk_msg": "🤍 I'm here with you. Start with anything on your mind — even if it's unorganized. I'm listening.",
         "asst_mh_calm_msg": "🌿 Take a deep breath with me... watch the circle and breathe with it. Take your time, I'm here.",
         "asst_mh_feel_msg": "🧠 Take your time... when did this feeling appear? What came before it? Write whatever comes to mind, however small.",
@@ -13330,6 +13340,46 @@ def _assistant_services(text, lang):
     return []
 
 
+def _assistant_compact_response(answer, lang="ar", mode=""):
+    """Keep ordinary assistant replies short even if a provider ignores the prompt.
+
+    Emergency / crisis instructions are intentionally left untouched so safety
+    information and phone numbers are never truncated.
+    """
+    text = str(answer or "").strip()
+    if not text:
+        return text
+    low = text.lower()
+    safety_markers = ("997", "937", "emergency", "طوارئ", "انتحار", "إيذاء النفس", "self-harm", "suicide")
+    if any(marker in low for marker in safety_markers):
+        return text
+    max_words = 70 if mode == "mh" else 80
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+
+    # Prefer ending at a sentence boundary near the limit instead of cutting
+    # a sentence in the middle. If none exists, use a clean word limit.
+    import re as _re
+    sentences = _re.split(r'(?<=[.!?؟])\s+', text)
+    kept = []
+    count = 0
+    for sent in sentences:
+        sw = sent.split()
+        if kept and count + len(sw) > max_words:
+            break
+        if not kept and len(sw) > max_words:
+            break
+        kept.append(sent.strip())
+        count += len(sw)
+        if count >= max_words:
+            break
+    if kept:
+        compact = " ".join(x for x in kept if x).strip()
+        if compact:
+            return compact
+    return " ".join(words[:max_words]).rstrip("،,;:") + ("…" if lang == "ar" else "…")
+
 @app.route("/api/assistant", methods=["POST"])
 def api_assistant():
     lang = "ar"
@@ -13369,8 +13419,8 @@ def api_assistant():
         if mode == "mh":
             if lang == "en":
                 sys = (
-                    "You are the calm mental-wellbeing space inside SymptoSense. Answer in warm, gentle, short English "
-                    "(90 words max), using caring language. Never diagnose, judge, or push solutions. Your role is to listen, "
+                    "You are the calm mental-wellbeing space inside SymptoSense. Answer in warm, gentle, concise English. "
+                    "For a simple message, use 2-4 short sentences and at most 70 words; ask at most one gentle follow-up question. Never diagnose, judge, or push solutions. Your role is to listen, "
                     "validate, reassure, and suggest simple steps (slow breathing, resting, talking to someone close, or seeing a professional). "
                     "If the user expresses thoughts of self-harm or suicide: respond immediately with firm kindness that they should "
                     "contact the mental health support line 937 or emergency services 997 right now — never minimize it. "
@@ -13378,14 +13428,14 @@ def api_assistant():
                 )
             else:
                 sys = (
-                    "أنت مساحة هادئة للصحة النفسية داخل موقع SymptoSense. تحدث بالعربية بأسلوب سعودي ودود ودافئ، بجمل قصيرة ولطيفة (90 كلمة كحد أقصى). "
-                    "لا تشخّص ولا تحكم ولا تحاول حل المشكلة بقوة؛ مهمتك أن تسمع وتطمئن وتقترح خطوات بسيطة (تنفس عميق، أخذ قسط، التحدث مع شخص قريب، مراجعة مختص). "
+                    "أنت مساحة هادئة للصحة النفسية داخل موقع SymptoSense. تحدث بالعربية بأسلوب سعودي ودود ودافئ وباختصار. للرسالة البسيطة استخدم 2 إلى 4 جمل قصيرة وبحد أقصى 70 كلمة، واسأل سؤال متابعة واحدًا فقط عند الحاجة. "
+                    "لا تشخّص ولا تحكم ولا تحاول حل المشكلة بقوة؛ مهمتك أن تسمع وتطمئن وتقترح خطوة بسيطة مناسبة (تنفس هادئ، أخذ قسط، التحدث مع شخص قريب، مراجعة مختص). "
                     "إذا عبر المستخدم عن أفكار إيذاء النفس أو الانتحار: استجب فورًا وبحزم وحنان بأنه يجب التواصل مع خط مساندة الصحة النفسية 937 أو الطوارئ 997 الآن، "
                     "ولا تقلل من الأمر أبدًا. ذكّر أنه لا يستبدل المختص."
                 )
         elif lang == "en":
             sys = (
-                "You are SymptoSense's in-site assistant. Answer briefly in warm English (120 words max). "
+                "You are SymptoSense's in-site assistant. Answer the user's question directly and concisely in warm English. For a simple question, use 2-4 short sentences and at most 80 words. Do not repeat the question, add a long introduction, or list unrelated causes. Expand only when the user asks for more detail. "
                 "You help navigate the site: /chat symptom analysis, /blood CBC upload, /meds medication info & reminders, "
                 "/family Family Health Hub with per-person records, /search smart health search, /calculators health calculators (BMI, fluids, calories, blood sugar), "
                 "/emergency emergency numbers & nearest hospitals, "
@@ -13394,7 +13444,7 @@ def api_assistant():
             )
         else:
             sys = (
-                "أنت المساعد الداخلي لموقع SymptoSense. أجب بإيجاز وبالعربية بأسلوب سعودي ودود (120 كلمة كحد أقصى). "
+                "أنت المساعد الداخلي لموقع SymptoSense. أجب على سؤال المستخدم مباشرة وباختصار وبالعربية بأسلوب سعودي ودود. للسؤال البسيط استخدم 2 إلى 4 جمل قصيرة وبحد أقصى 80 كلمة. لا تكرر السؤال، ولا تبدأ بمقدمة طويلة، ولا تسرد أسبابًا كثيرة غير مطلوبة. توسع فقط إذا طلب المستخدم تفاصيل أكثر. "
                 "تساعد في التوجيه داخل الموقع: /chat فحص الأعراض، /blood رفع فحص الدم، /meds معلومات وتذكير الأدوية، "
                 "/family مركز صحة العائلة بسجلات منفصلة لكل فرد، /search البحث الصحي الذكي، /calculators الحاسبات الصحية (BMI والسوائل والسعرات والسكر)، /emergency أرقام الطوارئ وأقرب مستشفى، /checkin المتابعة اليومية. "
                 "إذا وصف المستخدم أعراضاً خطرة (ألم صدر، صعوبة تنفس، نزيف، تشوش، إغماء) حثه على الاتصال بالإسعاف 997 فوراً. "
@@ -13421,7 +13471,7 @@ def api_assistant():
                 model="llama-3.3-70b-versatile",
                 messages=msgs,
                 temperature=0.5,
-                max_tokens=400,
+                max_tokens=240,
                 timeout=12,
             )
             answer = r.choices[0].message.content.strip()
@@ -13459,6 +13509,7 @@ def api_assistant():
                           "تعذر الوصول إلى المساعد الكامل الآن. يمكن استخدام تحليل الأعراض، وإذا كانت الأعراض مستمرة أو تزداد سوءًا فاطلب تقييمًا طبيًا. هذه معلومات توعوية وليست تشخيصًا."
                           if lang == "ar" else
                           "The full assistant is temporarily unavailable. You can use Symptom Analysis, and if symptoms persist or worsen, seek medical evaluation. This is awareness information, not a diagnosis.")
+        answer = _assistant_compact_response(answer, lang, mode)
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services,
                         "medical_sources": assistant_sources})
     except Exception as e:
@@ -13472,6 +13523,7 @@ def api_assistant():
                       "تعذر الوصول إلى المساعد الكامل الآن. جرّب البحث الصحي أو تحليل الأعراض، واطلب تقييمًا طبيًا إذا استمرت الأعراض أو ساءت. هذه معلومات توعوية وليست تشخيصًا."
                       if lang == "ar" else
                       "The full assistant is temporarily unavailable. Try Health Search or Symptom Analysis, and seek medical review if symptoms persist or worsen. This is educational information, not a diagnosis.")
+        answer = _assistant_compact_response(answer, lang, mode)
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services, "medical_sources": [], "fallback": True})
 
 
