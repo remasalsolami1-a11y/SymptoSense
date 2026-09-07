@@ -3925,6 +3925,102 @@ html body .container{width:100%!important;max-width:none!important;margin:0!impo
 """
 
 
+def welcome_page():
+    next_target = _safe_next_url("/home")
+    body = """
+    <main class="first-lang" aria-labelledby="languageTitle">
+      <div class="first-lang-shell">
+        <div class="first-lang-trust" aria-label="Trusted health information">
+          <span dir="rtl">معلومات موثوقة لصحة أفضل</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.7-2.8 8.2-7 10-4.2-1.8-7-5.3-7-10V6l7-3Z"/><path d="M12 7v9M8.8 11.5h6.4"/></svg>
+        </div>
+
+        <div class="first-lang-logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <defs><linearGradient id="ssStethGrad" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse"><stop stop-color="#28C5D8"/><stop offset=".48" stop-color="#318AEF"/><stop offset="1" stop-color="#3555C8"/></linearGradient></defs>
+            <path d="M16 9v12c0 10 7.1 17.5 16 17.5S48 31 48 21V9" fill="none" stroke="url(#ssStethGrad)" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="16" cy="8" r="4" fill="#28C5D8"/><circle cx="48" cy="8" r="4" fill="#59BDF2"/>
+            <path d="M32 38.5v5.8c0 7.2 5.4 12.7 12.6 12.7h2.6" fill="none" stroke="url(#ssStethGrad)" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="52" cy="56" r="6.2" fill="#fff" stroke="#3A78E2" stroke-width="4"/><circle cx="52" cy="56" r="2" fill="#4FC0EF"/>
+          </svg>
+        </div>
+
+        <h1 class="first-lang-brand" lang="en">Sympto<span class="sense">Sense</span></h1>
+        <p class="first-lang-slogan" lang="en">Your Health, Smarter</p>
+
+        <p class="first-lang-headline-ar">افهم أعراضك.<br>اعرف خطوتك التالية.</p>
+        <p class="first-lang-headline-en" lang="en">Understand your symptoms.<br>Know your next step.</p>
+
+        <div class="first-lang-copy">
+          <p class="first-lang-desc-ar">مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة.</p>
+          <p class="first-lang-desc-en" lang="en">An AI-powered health assistant that helps you understand symptoms and assess risk in a simple way.</p>
+        </div>
+
+        <button type="button" class="first-lang-start" onclick="ssFocusLanguages()" aria-controls="languageOptions">
+          <span><strong>ابدأ الآن</strong><small lang="en">Get Started</small></span><span class="arrow" aria-hidden="true">›</span>
+        </button>
+
+        <p class="first-lang-select-title" id="languageTitle" tabindex="-1"><span>اختر اللغة / <span lang="en">Choose language</span></span></p>
+        <div class="first-lang-options" id="languageOptions" role="group" aria-labelledby="languageTitle">
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
+            <span class="first-lang-flag" aria-hidden="true">🇸🇦</span><span dir="rtl">العربية</span><span class="lang-arrow" aria-hidden="true">›</span>
+          </button>
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Continue in English">
+            <span class="first-lang-flag" aria-hidden="true">🇬🇧</span><span lang="en">English</span><span class="lang-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <section class="first-lang-benefits" aria-label="SymptoSense benefits">
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 26 7v7c0 6.5-3.8 11.4-10 14-6.2-2.6-10-7.5-10-14V7l10-4Z"/><path d="M16 9v11M11.8 14.5h8.4"/></svg>
+            <b>معلومات موثوقة</b><small lang="en">Trusted information</small>
+          </div>
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="9" r="4"/><path d="M8.5 25v-3.5c0-4 3.2-7.1 7.5-7.1s7.5 3.1 7.5 7.1V25M5.4 12a3 3 0 1 0 0-6M4 24v-2.6c0-2.6 1.5-4.6 3.8-5.4M26.6 12a3 3 0 1 1 0-6M28 24v-2.6c0-2.6-1.5-4.6-3.8-5.4"/></svg>
+            <b>سهل الاستخدام</b><small lang="en">Easy to use</small>
+          </div>
+          <div class="first-lang-benefit">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 27S5 20.4 5 12.5C5 8.5 7.7 6 11 6c2.2 0 4 1.2 5 3 1-1.8 2.8-3 5-3 3.3 0 6 2.5 6 6.5C27 20.4 16 27 16 27Z"/></svg>
+            <b>للتوعية فقط</b><small lang="en">For educational purposes only</small>
+          </div>
+        </section>
+
+        <div class="first-lang-source"><span class="dot">•</span><span dir="rtl">مدعومة بمصادر طبية موثوقة</span><span class="dot">—</span><span lang="en">Supported by trusted medical sources</span></div>
+        <div class="first-lang-leaf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </main>
+    <script>
+    var SS_NEXT_PAGE = __NEXT__;
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
+    window.addEventListener('pageshow', function(){
+      window.requestAnimationFrame(function(){ if (window.scrollY > 0) window.scrollTo(0,0); });
+    });
+    function ssFocusLanguages(){
+      var t=document.getElementById('languageTitle');
+      if(t){try{t.focus({preventScroll:true});}catch(e){}}
+      var o=document.getElementById('languageOptions');
+      if(o){
+        o.classList.remove('ss-attention');
+        void o.offsetWidth;
+        o.classList.add('ss-attention');
+        window.setTimeout(function(){o.classList.remove('ss-attention');},1200);
+      }
+    }
+    function ssChooseLanguage(code, button) {
+      var lang = code === 'en' ? 'en' : 'ar';
+      document.querySelectorAll('.first-lang-option').forEach(function(el){ el.classList.add('first-lang-loading'); el.disabled = true; });
+      if (button) { button.style.borderColor = '#248EF3'; button.setAttribute('aria-pressed','true'); }
+      document.cookie = 'lang=' + lang + ';path=/;max-age=31536000;SameSite=Lax';
+      try { localStorage.setItem('ss_lang', lang); } catch(e) {}
+      window.setTimeout(function(){ window.location.href = SS_NEXT_PAGE || '/home'; }, 180);
+    }
+    </script>
+    """
+    body = body.replace("__NEXT__", json.dumps(next_target))
+    html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
+    html = html.replace('<meta name="theme-color" content="#1976D2">', '<meta name="theme-color" content="#F8FCFF">')
+    return html.replace('<html lang="ar" dir="rtl">', '<html lang="en" dir="ltr">')
+
 def home_page():
     ar = _lang() == "ar"
     bi = lambda a, e: a if ar else e
