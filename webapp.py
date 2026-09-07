@@ -608,8 +608,8 @@ a.feature.serv:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(
 .footer .f-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 18px 0 22px; font-size: 13px; }
 .footer .f-links a { color: #EAF4FF; }
 .footer .f-links a:hover { color: #FFFFFF; text-decoration: underline; }
-.footer .f-love { color: #FFFFFF; font-size: 14.5px; font-weight: 700; letter-spacing: .2px; }
-.footer .f-love b { color: #90CAF9; font-weight: 800; }
+.footer .f-love { color: #FFFFFF; font-size: 12px; font-weight: 600; letter-spacing: .1px; margin-top: 10px; }
+.footer .f-love b { color: #90CAF9; font-weight: 700; }
 .footer .f-copy { color: #8CA7CC; margin-top: 8px; font-size: 12px; }
 .chat-wrap { max-width: 900px; margin: 0 auto; background: var(--bg-card); border-radius: 22px; box-shadow: var(--shadow-card); border: 1px solid var(--border-card); overflow: hidden; display: flex; flex-direction: column; height: 78vh; }
 .chat-head { background: linear-gradient(135deg, #1976D2, #1565C0); color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
@@ -2690,14 +2690,14 @@ L = {
         "footer_slogan": "مساعدك الصحي الذكي",
         "footer_synopsis_t": "عن المشروع",
         "footer_synopsis_d": "SymptoSense منصة صحية ذكية تهدف إلى تبسيط الوصول إلى المعلومات والأدوات الصحية ومساعدة المستخدم على فهم حالته بشكل أوضح.",
-        "footer_owner_t": "من نحن",
-        "footer_owner_name": "ريماس حميد السلمي 🤍",
-        "footer_owner_role": "طالبة علوم البيانات وتحليلها ومؤسسة SymptoSense",
+        "footer_owner_t": "صاحبة الفكرة",
+        "footer_owner_name": "ريماس حميد السلمي",
+        "footer_owner_role": "طالبة علوم البيانات وتحليلها، وصاحبة فكرة SymptoSense.",
         "footer_contact_t": "للتواصل",
         "footer_wa_btn": "💬 تواصل معي على تيليجرام",
         "footer_love": "Designed & Developed by",
         "footer_love_name": "Remas Alsolami — Data Science Project",
-        "footer_copy_full": "© 2026 SymptoSense — جميع الحقوق محفوظة",
+        "footer_copy_full": "© 2026 SymptoSense",
         "keywords": "تحليل الأعراض, فحص الأعراض, تقييم أولي, صحة, طب, مستشفيات السعودية, SymptoSense",
         "title_landing": "SymptoSense — تحليل الأعراض بالذكاء الاصطناعي",
         "title_chat": "SymptoSense — فحص الأعراض",
@@ -3059,14 +3059,14 @@ L = {
         "footer_slogan": "Your smart health assistant",
         "footer_synopsis_t": "About the project",
         "footer_synopsis_d": "SymptoSense is a smart health platform that simplifies access to reliable health information and tools, helping you understand your condition more clearly.",
-        "footer_owner_t": "About us",
-        "footer_owner_name": "Remas Hameed Alsolami 🤍",
-        "footer_owner_role": "Data Science and Analytics student and founder of SymptoSense",
+        "footer_owner_t": "Creator",
+        "footer_owner_name": "Remas Hameed Alsolami",
+        "footer_owner_role": "Data Science and Analytics student and creator of SymptoSense.",
         "footer_contact_t": "Contact",
         "footer_wa_btn": "💬 Chat with me on Telegram",
         "footer_love": "Designed & Developed by",
         "footer_love_name": "Remas Alsolami — Data Science Project",
-        "footer_copy_full": "© 2026 SymptoSense — All rights reserved",
+        "footer_copy_full": "© 2026 SymptoSense",
         "keywords": "symptom checker, symptoms analysis, preliminary assessment, health, medicine, Saudi hospitals, SymptoSense",
         "title_landing": "SymptoSense — AI Symptom Checker",
         "title_chat": "SymptoSense — Symptom Checker",
@@ -3524,7 +3524,7 @@ def _footer():
         '<a href="/site-info">%s</a>'
         '%s'
         '</div>'
-        '<p class="f-love">%s <b>%s</b></p>'
+        '<p class="f-love"><span>%s</span> <b>%s</b></p>'
         '<p class="f-copy">%s</p>'
         '</div>'
     ) % (_t("footer_slogan"),
@@ -3535,7 +3535,8 @@ def _footer():
          ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
          ("معلومات الموقع" if _lang() == "ar" else "Site information"),
          ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
-         _t("footer_love"), _t("footer_love_name"), _t("footer_copy_full"))
+         _t("footer_love"), _t("footer_love_name"),
+         _t("footer_copy_full"))
 
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -9605,7 +9606,6 @@ def site_info():
         <div><strong>__FINAL_H__</strong><p>__FINAL_P__</p></div>
         <a class="btn pri" href="/community-dashboard">__COMMUNITY__</a>
       </section>
-      <p class="si-credit">Designed &amp; Developed by Remas Alsolami — Data Science Project</p>
     </main>
     '''
     vals = {
@@ -9615,7 +9615,7 @@ def site_info():
         "__NAV_ABOUT__": bi("من نحن", "About"), "__NAV_METHOD__": bi("المنهجية", "Methodology"), "__NAV_PRIVACY__": bi("الخصوصية", "Privacy"), "__NAV_TERMS__": bi("الشروط", "Terms"), "__NAV_SOURCES__": bi("المصادر", "Sources"),
         "__ABOUT_H__": bi("عن المشروع", "About the project"), "__ABOUT_SUB__": bi("الفكرة والهدف ومن يقف خلف تطوير SymptoSense.", "The idea, purpose, and creator behind SymptoSense."),
         "__WHAT__": bi("مساعد صحي ذكي يساعد المستخدم على فهم الأعراض، تقييم مستوى الخطورة، والتعرّف على الخطوة التالية بطريقة مبسطة وتوعوية دون تقديم تشخيص طبي قطعي.", "An intelligent health assistant that helps users understand symptoms, assess risk level, and identify an appropriate next step through simple, educational guidance without providing a definitive medical diagnosis."),
-        "__CREATOR_H__": bi("المطوّرة", "Creator"), "__CREATOR_P__": bi("ريماس حميد السلمي — طالبة علوم البيانات وتحليلها ومطوّرة SymptoSense. يجمع المشروع بين علوم البيانات والذكاء الاصطناعي والصحة الرقمية.", "Remas Hameed Alsolami — Data Science and Analytics student and creator of SymptoSense. The project brings together data science, AI, and digital health."),
+        "__CREATOR_H__": bi("صاحبة الفكرة", "Creator"), "__CREATOR_P__": bi("ريماس حميد السلمي — طالبة علوم البيانات وتحليلها، وصاحبة فكرة SymptoSense. يجمع المشروع بين علوم البيانات والذكاء الاصطناعي والصحة الرقمية.", "Remas Hameed Alsolami — Data Science and Analytics student and creator of SymptoSense. The project brings together data science, AI, and digital health."),
         "__PURPOSE_H__": bi("الهدف", "Purpose"), "__PURPOSE_P__": bi("تحويل وصف الأعراض إلى تجربة واضحة تساعد المستخدم على فهم مستوى الخطورة وما الذي يمكن فعله بعد ذلك، مع إبراز علامات الخطر والمصادر الموثوقة.", "To turn symptom descriptions into a clear experience that helps users understand risk and what to do next, while surfacing red flags and trusted sources."),
         "__METHOD_H__": bi("كيف يعمل SymptoSense؟", "How SymptoSense works"), "__METHOD_SUB__": bi("منهجية منظمة تجمع السياق، التحليل، قواعد الأمان والمصادر الطبية.", "A structured methodology combining context, analysis, safety rules, and medical sources."),
         "__M1__": bi("جمع السياق", "Collect context"), "__M1P__": bi("الأعراض والعمر والجنس والمدة والشدة مع أسئلة متابعة تتكيف مع الإجابات.", "Symptoms, age, sex, duration, and severity, with follow-up questions that adapt to responses."),
