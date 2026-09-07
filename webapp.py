@@ -3922,6 +3922,132 @@ html body .container{width:100%!important;max-width:none!important;margin:0!impo
   .home-demo-caption{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.home-primary-cta,.home-secondary-cta{transition:none}}
+
+
+/* Home core services — explicit layout so legacy/dark-mode styles cannot break mobile cards */
+body .svc-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:14px!important;
+  align-items:stretch!important;
+  width:100%!important;
+}
+body .svc-card{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+  min-width:0!important;
+  min-height:220px!important;
+  padding:22px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  gap:0!important;
+  overflow:hidden!important;
+  background:#fff!important;
+  border:1px solid #dce8f0!important;
+  border-radius:20px!important;
+  color:#163b5c!important;
+  text-decoration:none!important;
+  box-shadow:0 8px 24px rgba(31,86,127,.06)!important;
+}
+body .svc-card .svc-ic{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:52px!important;
+  height:52px!important;
+  min-width:52px!important;
+  margin:0 0 16px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:15px!important;
+  background:#eef8ff!important;
+  border:1px solid #d5e8f5!important;
+  color:#287fc1!important;
+  font-size:25px!important;
+  line-height:1!important;
+}
+body .svc-card h3{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0 0 8px!important;
+  color:#163b5c!important;
+  font-size:19px!important;
+  line-height:1.45!important;
+  text-align:start!important;
+}
+body .svc-card p{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0 0 16px!important;
+  color:#61798d!important;
+  font-size:13px!important;
+  line-height:1.75!important;
+  text-align:start!important;
+}
+body .svc-card .svc-btn{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:auto!important;
+  min-height:auto!important;
+  margin-top:auto!important;
+  padding:7px 0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  background:transparent!important;
+  border:0!important;
+  color:#287fc1!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  line-height:1.3!important;
+  text-align:start!important;
+}
+
+@media(max-width:900px){
+  body .svc-grid[style],body .svc-grid{
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  body .svc-card{
+    min-height:0!important;
+    padding:16px!important;
+    display:grid!important;
+    grid-template-columns:56px minmax(0,1fr)!important;
+    grid-template-areas:"icon title" "icon desc" "icon action"!important;
+    column-gap:14px!important;
+    row-gap:2px!important;
+    align-items:start!important;
+  }
+  html[dir="rtl"] body .svc-card{grid-template-columns:56px minmax(0,1fr)!important}
+  body .svc-card .svc-ic{grid-area:icon!important;margin:0!important;width:52px!important;height:52px!important;min-width:52px!important}
+  body .svc-card h3{grid-area:title!important;font-size:17px!important;margin:1px 0 4px!important}
+  body .svc-card p{grid-area:desc!important;font-size:12.5px!important;line-height:1.65!important;margin:0 0 6px!important}
+  body .svc-card .svc-btn{grid-area:action!important;margin:0!important;padding:4px 0!important;font-size:12.5px!important}
+  body .v2-section-head{margin-top:30px!important;margin-bottom:12px!important}
+  body .v2-section-head h2{font-size:27px!important;line-height:1.3!important}
+  body .v2-section-head p{font-size:13px!important;line-height:1.6!important}
+  /* The home already has an explicit “Ask the AI assistant” CTA; avoid covering content on phones. */
+  body .asst-fab{display:none!important}
+}
+
+@media(max-width:430px){
+  body .svc-card{padding:14px!important;grid-template-columns:50px minmax(0,1fr)!important;column-gap:11px!important;border-radius:17px!important}
+  body .svc-card .svc-ic{width:46px!important;height:46px!important;min-width:46px!important;font-size:22px!important;border-radius:13px!important}
+  body .svc-card h3{font-size:16px!important}
+  body .svc-card p{font-size:12px!important}
+  body .v2-section-head h2{font-size:24px!important}
+}
 """
 
 
