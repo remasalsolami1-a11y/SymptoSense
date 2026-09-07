@@ -8385,7 +8385,7 @@ def search_page():
     let curExplain = '';
     const API_LANG = function() { return document.documentElement.lang === 'en' ? 'en' : 'ar'; };
     function loadSuggestions() {
-      fetch('/api/search?lang=' + API_LANG())
+      fetch('/api/search?lang=' + API_LANG() + '&_=' + Date.now(), {cache:'no-store'})
         .then(function(r) { return r.json(); })
         .then(function(d) {
           const box = document.getElementById('seaChips');
@@ -8402,7 +8402,7 @@ def search_page():
       const box = document.getElementById('seaRes');
       if (!q) { box.innerHTML = '<div class="sea-no">' + esc(sT('sea_ph')) + '</div>'; return; }
       box.innerHTML = '<div style="text-align:center;padding:24px;">... <span class="spin"></span></div>';
-      fetch('/api/search?q=' + encodeURIComponent(q) + '&lang=' + API_LANG())
+      fetch('/api/search?q=' + encodeURIComponent(q) + '&lang=' + API_LANG() + '&_=' + Date.now(), {cache:'no-store'})
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (!d.ok) { box.innerHTML = '<div class="warn">' + esc(d.error || sT('sea_err')) + '</div>'; return; }
@@ -8449,16 +8449,18 @@ def search_page():
     function renderResult(r) {
       const box = document.getElementById('seaRes');
       let h = '<div class="sea-result">';
-      h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(r.title) + '</div><span class="sr-cat">' + esc(catTxt(r.category)) + '</span></div></div>';
-      if (r.original_query) {
+      const displayTitle = (r.query_first && r.original_query) ? r.original_query : r.title;
+      const displayCat = r.query_first ? (API_LANG()==='ar'?'إجابة على سؤالك':'Answer to your question') : catTxt(r.category);
+      h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(displayTitle || '') + '</div><span class="sr-cat">' + esc(displayCat) + '</span></div></div>';
+      if (r.original_query && !r.query_first) {
         h += '<div class="sea-query-context"><b>' + (API_LANG()==='ar'?'بحثك: ':'Your search: ') + '</b>' + esc(r.original_query) + '</div>';
       }
       if (r.direct_answer) {
         h += '<div class="sea-direct-answer"><b>' + (API_LANG()==='ar'?'إجابة على سؤالك':'Answer to your question') + '</b>' + esc(r.direct_answer) + '</div>';
       }
-      if (r.what) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
+      if (r.what && !r.query_only) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
 
-      if (r.matched_topics && r.matched_topics.length) {
+      if (r.matched_topics && r.matched_topics.length && !r.query_only) {
         h += '<div class="sea-topic-grid">';
         r.matched_topics.forEach(function(t) { h += renderTopicCard(t); });
         h += '</div>';
@@ -8474,7 +8476,7 @@ def search_page():
       if (r.doctor) h += '<div class="sea-doctor">🩺 <b>' + esc(sT('sea_doctor')) + '</b><br>' + esc(r.doctor) + '</div>';
       h += renderSources(r.sources);
       h += '<div class="sea-actions">';
-      if (!r.matched_topics || r.matched_topics.length === 1) {
+      if (!r.query_only && (!r.matched_topics || r.matched_topics.length === 1)) {
         h += '<button class="btn" onclick="openExplainCurrent()">✨ ' + esc(sT('sea_explain')) + '</button>';
       }
       h += '<button class="btn pri sea-assist" onclick="askAboutTopic()">🤖 ' + esc(sT('sea_ask_assist')) + '</button>';
@@ -13049,15 +13051,16 @@ def _assistant_contextual_health_answer(text, lang):
     if not query:
         return None
     low = query.lower()
+    norm = _normalize_health_query_text(query)
     ar = lang != "en"
 
     # Menstrual-period nausea: answer the combined intent, not generic nausea.
-    period_ar = ("الدورة", "الدوره", "الحيض", "الطمث", "وقت الدورة", "اثناء الدورة", "أثناء الدورة", "قبل الدورة")
+    period_ar = ("الدوره", "الحيض", "الطمث")
     nausea_ar = ("غثيان", "لوعه", "لوعة", "ترجيع", "استفراغ", "قيء")
     period_en = ("period", "menstrual", "menstruation", "menses")
     nausea_en = ("nausea", "nauseous", "vomit", "vomiting", "sick")
-    has_period = any(k in low for k in (period_ar if ar else period_en))
-    has_nausea = any(k in low for k in (nausea_ar if ar else nausea_en))
+    has_period = (("دور" in norm) or any(_normalize_health_query_text(k) in norm for k in period_ar)) if ar else any(k in low for k in period_en)
+    has_nausea = (("غث" in norm) or any(_normalize_health_query_text(k) in norm for k in nausea_ar)) if ar else any(k in low for k in nausea_en)
     if has_period and has_nausea:
         if ar:
             return (
@@ -13610,6 +13613,97 @@ def api_feedback():
 
 
 
+def _normalize_health_query_text(value):
+    """Normalize Arabic/English health-search text for robust context matching."""
+    import re as _re
+    text = " ".join(str(value or "").strip().lower().split())
+    # Arabic diacritics/tatweel and common letter variants.
+    text = _re.sub(r"[\u064b-\u065f\u0670\u0640]", "", text)
+    text = text.translate(str.maketrans({"أ":"ا","إ":"ا","آ":"ا","ى":"ي","ؤ":"و","ئ":"ي","ة":"ه"}))
+    return text
+
+
+def _health_search_topic_meta(query, lang):
+    """Choose a neutral label/icon from the *whole* query, not one fuzzy symptom hit."""
+    q = _normalize_health_query_text(query)
+    ar = lang != "en"
+    groups = [
+        (("دواء", "ادويه", "حبوب", "جرعه", "باراسيتامول", "مضاد", "medication", "medicine", "drug", "dose"), "💊", "medication"),
+        (("تحليل", "فحص", "cbc", "wbc", "هيموغلوبين", "سكر تراكمي", "lab", "test", "blood", "cbc", "hba1c"), "🧪", "test"),
+        (("حمل", "حامل", "الدوره", "الحيض", "الطمث", "pregnan", "period", "menstrual"), "🌸", "question"),
+        (("نفسي", "قلق", "توتر", "مزاج", "اكتئاب", "نوم", "mental", "anxiety", "stress", "mood", "sleep"), "🧠", "question"),
+        (("غذاء", "اكل", "تغذيه", "فيتامين", "ماء", "وزن", "سعرات", "nutrition", "food", "vitamin", "weight", "calorie"), "🥗", "question"),
+        (("اسعاف", "جرح", "حرق", "نزيف", "اختناق", "first aid", "burn", "bleeding", "choking"), "🩹", "question"),
+    ]
+    for terms, emoji, category in groups:
+        if any(_normalize_health_query_text(t) in q for t in terms):
+            return emoji, category
+    return "🩺", "question"
+
+
+def _health_search_tokens(value, lang):
+    """Meaningful tokens used only to reject clearly unrelated fuzzy results."""
+    import re as _re
+    text = _normalize_health_query_text(value)
+    words = _re.findall(r"[a-z0-9\u0621-\u064a]+", text)
+    stop_ar = {"ما","هو","هي","هل","ليش","لماذا","كيف","متى","وش","ايش","ماذا","مع","بعد","قبل","في","من","على","عن","الى","عند","وقت","خلال","اثناء","او","و","انا","عندي","يجيني","يجي","يصير"}
+    stop_en = {"what","why","how","when","is","are","do","does","can","could","with","after","before","during","in","on","at","of","the","a","an","i","my","me"}
+    stop = stop_en if lang == "en" else stop_ar
+    out=[]
+    for w in words:
+        if w in stop or len(w) < 3:
+            continue
+        # Arabic definite article should not make two otherwise-identical words differ.
+        if lang != "en" and w.startswith("ال") and len(w) > 4:
+            w = w[2:]
+        out.append(w)
+    return out
+
+
+def _health_search_result_relevant(query, result, lang):
+    """Reject only *clearly unrelated* glossary hits; query-first answer still works without them."""
+    if not isinstance(result, dict):
+        return False
+    if result.get("contextual"):
+        return True
+    q_tokens = _health_search_tokens(query, lang)
+    if not q_tokens:
+        return True
+    parts = [result.get("title") or ""]
+    parts += [str(x) for x in (result.get("recognized_topics") or [])]
+    for t in (result.get("matched_topics") or []):
+        if isinstance(t, dict):
+            parts.append(t.get("title") or "")
+    r_tokens = _health_search_tokens(" ".join(parts), lang)
+    if not r_tokens:
+        return False
+    for q in q_tokens:
+        for r in r_tokens:
+            if q == r or (len(q) >= 4 and len(r) >= 4 and (q in r or r in q)):
+                return True
+    return False
+
+
+def _health_search_query_shell(query, lang):
+    """A neutral result container for any health topic the curated glossary does not cover."""
+    emoji, category = _health_search_topic_meta(query, lang)
+    return {
+        "key": "free_health_query",
+        "emoji": emoji,
+        "category": category,
+        "title": str(query or "").strip(),
+        "what": "",
+        "causes": [],
+        "worry": "",
+        "doctor": "",
+        "sources": [],
+        "recognized_topics": [],
+        "original_query": str(query or "").strip(),
+        "query_first": True,
+        "query_only": True,
+    }
+
+
 def _search_contextual_structured_result(query, lang):
     """Return a structured result for context-dependent health queries.
 
@@ -13623,15 +13717,19 @@ def _search_contextual_structured_result(query, lang):
     if not q:
         return None
     low = q.lower()
+    norm = _normalize_health_query_text(q)
     ar = lang != "en"
 
-    period_ar = ("الدورة", "الدوره", "الحيض", "الطمث", "وقت الدورة", "اثناء الدورة", "أثناء الدورة", "قبل الدورة", "مع الدورة")
-    nausea_ar = ("غثيان", "الغثيان", "لوعه", "لوعة", "قرفه", "ترجيع", "استفراغ", "قيء")
+    period_ar = ("الدوره", "الحيض", "الطمث")
+    nausea_ar = ("غثيان", "لوعه", "لوعة", "قرفه", "ترجيع", "استفراغ", "قيء")
     period_en = ("period", "menstrual", "menstruation", "menses")
     nausea_en = ("nausea", "nauseous", "vomit", "vomiting", "queasy", "sick to stomach")
 
-    has_period = any(k in low for k in (period_ar if ar else period_en))
-    has_nausea = any(k in low for k in (nausea_ar if ar else nausea_en))
+    # Stem checks intentionally catch spelling variants such as الدورة/الدوره
+    # and phrases like "الغثيان وقت الدورة" without relying on fuzzy glossary ranking.
+    has_period = (("دور" in norm and any(x in norm for x in ("مع", "وقت", "اثناء", "قبل", "بعد"))) or
+                  any(_normalize_health_query_text(k) in norm for k in period_ar)) if ar else any(k in low for k in period_en)
+    has_nausea = (("غث" in norm) or any(_normalize_health_query_text(k) in norm for k in nausea_ar)) if ar else any(k in low for k in nausea_en)
     if has_period and has_nausea:
         if ar:
             return {
@@ -13717,9 +13815,9 @@ def _health_search_question_answer(query, lang, search_result=None):
     low = q.lower()
     ar = lang != "en"
     question_words = ("هل", "ليش", "لماذا", "متى", "كيف", "وش", "ايش", "ما سبب", "هل طبيعي", "ماذا") if ar else ("why", "when", "how", "is ", "are ", "can ", "could ", "what", "should", "does", "do ")
-    looks_like_question = ("?" in q or "؟" in q or len(q.split()) >= 4 or any(low.startswith(x) for x in question_words))
-    if not looks_like_question:
-        return ""
+    # Treat *every* non-empty health search as a full query. A one- or two-word
+    # entry means "explain this health topic" rather than "pick a fuzzy card".
+    looks_like_question = True
 
     # First answer common question intents directly from the structured search
     # result.  This keeps the search useful even when no external model is used.
@@ -13765,11 +13863,15 @@ def _health_search_question_answer(query, lang, search_result=None):
         client = analysis_core._groq_client()
         prompt = (
             ("أنت مساعد بحث صحي توعوي داخل SymptoSense. أجب عن سؤال المستخدم كاملًا كما كُتب، ولا تختزل السؤال إلى اسم العرض فقط. "
-             "اعتبر كلمات التوقيت والمكان والسياق مثل: بعد الأكل، أثناء الدورة، في الحمل، عند الاستيقاظ، جهة الألم ومدته جزءًا أساسيًا من السؤال. "
-             "استخدم السياق الطبي المنظم المرفق إن كان مناسبًا، ولا تخترع تشخيصًا. أجب مباشرة في 2-4 جمل قصيرة، واذكر علامة خطر فقط إذا كانت مرتبطة بالسؤال.\n"
+             "اعتبر كل كلمات السياق جزءًا أساسيًا من السؤال: التوقيت، المكان، العمر، الحمل أو الدورة، الطعام، النوم، الأدوية، التحاليل، الأمراض المزمنة والمدة. "
+             "يمكن أن يكون السؤال عن عرض، مرض، دواء، تحليل، تغذية، نوم، صحة نفسية، حمل/دورة، إسعاف أو معلومة صحية عامة. "
+             "استخدم السياق الطبي المنظم فقط إذا كان مرتبطًا فعلًا بالسؤال، ولا تخترع تشخيصًا أو جرعة دوائية ولا تطلب إيقاف/بدء دواء موصوف. "
+             "أجب مباشرة في 2-4 جمل قصيرة، واذكر علامة خطر فقط إذا كانت مرتبطة بالسؤال.\n"
              if ar else
-             "You are SymptoSense's educational health-search assistant. Answer the user's complete question exactly as asked; do not reduce it to one symptom keyword. "
-             "Treat timing, body location, pregnancy/period context, after-food context, and duration as essential modifiers. Use the structured context when relevant and do not diagnose. Answer directly in 2-4 short sentences.\n")
+             "You are SymptoSense's educational health-search assistant. Answer the user's complete health query exactly as asked; never reduce it to one fuzzy symptom keyword. "
+             "Treat timing, location, age, pregnancy/period context, food, sleep, medicines, lab tests, chronic conditions, and duration as essential modifiers. "
+             "The query may concern a symptom, condition, medicine, lab test, nutrition, sleep, mental wellbeing, pregnancy/periods, first aid, or general health information. "
+             "Use structured context only when it is truly relevant; do not diagnose, prescribe doses, or advise starting/stopping prescribed medication. Answer directly in 2-4 short sentences.\n")
             + ("سؤال المستخدم: " if ar else "User question: ") + q + "\n"
             + ("سياق البحث المنظم: " if ar else "Structured search context: ") + context
         )
@@ -13809,12 +13911,16 @@ def api_search():
         if not q:
             return jsonify({"ok": True, "result": None, "suggestions": health_search.suggestion_terms(lang)})
 
-        # Context-dependent phrases must be resolved before the generic
-        # glossary matcher. This prevents a full question from being reduced
-        # to an unrelated symptom card.
+        # Query-first pipeline for ALL health topics:
+        # 1) exact contextual handlers when available,
+        # 2) curated glossary/KB only when it is genuinely related,
+        # 3) neutral shell so the full question can still be answered.
         result = _search_contextual_structured_result(q, lang)
         if result is None:
-            result = health_search.search_health(q, lang)
+            candidate = health_search.search_health(q, lang)
+            result = candidate if _health_search_result_relevant(q, candidate, lang) else None
+        if result is None:
+            result = _health_search_query_shell(q, lang)
 
         def _entity_sources(entity):
             sources = []
@@ -13900,11 +14006,21 @@ def api_search():
             if direct_answer:
                 result["direct_answer"] = direct_answer
 
-        return jsonify({
+            # The user's words are always the primary intent. Curated cards are
+            # supporting information only, never the title/meaning of the search.
+            result["query_first"] = True
+
+        payload = jsonify({
             "ok": True,
             "result": result,
             "suggestions": health_search.suggestion_terms(lang),
+            "search_version": "query-first-v4-general",
         })
+        payload.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        payload.headers["Pragma"] = "no-cache"
+        payload.headers["Expires"] = "0"
+        payload.headers["X-SymptoSense-Search-Version"] = "query-first-v4-general"
+        return payload
     except Exception as e:
         return _mk_error(e, 500)
 
