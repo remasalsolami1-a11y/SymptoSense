@@ -4131,6 +4131,48 @@ body.ss-home-page .asst-fab{display:none!important}
   .ss-hero-copy h1{font-size:24px!important}.ss-hero-lead{font-size:10.5px!important}.ss-hero-desc{font-size:8.8px!important}.ss-hero-primary,.ss-hero-secondary{font-size:9.8px!important;min-height:37px!important}
   .ss-hero-demo{height:308px!important;min-height:308px!important}.ss-result-card{width:145px!important}.ss-tech-card{width:54px!important;min-height:49px!important}.ss-tech-card .ic{font-size:14px!important}
 }
+
+/* Final responsive service cards: 2 + 1 on phones, readable type on every screen. */
+.ss-core-card h3{font-size:20px;line-height:1.35}
+.ss-core-card p{font-size:13.5px;line-height:1.7}
+.ss-core-open{font-size:13px}
+@media(max-width:900px) and (min-width:561px){
+  .ss-core-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .ss-core-card{min-height:235px;padding:21px 17px}
+  .ss-core-card.lab{grid-column:1/-1;max-width:none}
+  .ss-core-card h3{font-size:19px}
+  .ss-core-card p{font-size:13px}
+}
+@media(max-width:560px){
+  .ss-home-section{padding:18px 12px!important}
+  .ss-section-head{margin-bottom:14px!important}
+  .ss-section-head .eyebrow{font-size:12px!important}
+  .ss-section-head h2{font-size:28px!important;line-height:1.28!important}
+  .ss-core-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important}
+  .ss-core-card{display:flex!important;grid-template-columns:none!important;grid-template-rows:none!important;min-width:0!important;min-height:238px!important;padding:15px 10px 13px!important;border-radius:19px!important;text-align:center!important;align-items:center!important;justify-content:flex-start!important}
+  .ss-core-card.lab{grid-column:1/-1!important;min-height:178px!important;display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;column-gap:13px!important;text-align:right!important;padding:16px 18px!important}
+  .ss-core-icon{width:56px!important;height:56px!important;min-width:56px!important;font-size:27px!important;margin:0 0 10px!important;grid-row:auto!important;grid-column:auto!important}
+  .ss-core-card.lab .ss-core-icon{grid-column:1!important;grid-row:1/span 3!important;margin:0!important;width:64px!important;height:64px!important;font-size:30px!important;align-self:center!important}
+  .ss-core-card h3{font-size:16.8px!important;line-height:1.35!important;text-align:center!important;margin:0!important;grid-column:auto!important}
+  .ss-core-card p{font-size:11.7px!important;line-height:1.65!important;text-align:center!important;margin:7px 0 12px!important;max-width:22ch!important;grid-column:auto!important;color:#607a92!important}
+  .ss-core-open{width:100%!important;min-width:0!important;min-height:39px!important;padding:0 8px!important;font-size:12.2px!important;border-radius:11px!important;margin-top:auto!important;grid-column:auto!important}
+  .ss-core-card.lab h3,.ss-core-card.lab p,.ss-core-card.lab .ss-core-open{grid-column:2!important;text-align:right!important}
+  .ss-core-card.lab h3{font-size:18px!important;align-self:end!important}
+  .ss-core-card.lab p{font-size:12.2px!important;max-width:none!important;margin:4px 0 9px!important;align-self:center!important}
+  .ss-core-card.lab .ss-core-open{width:min(190px,100%)!important;justify-self:start!important;align-self:start!important;text-align:center!important}
+}
+@media(max-width:360px){
+  .ss-section-head h2{font-size:25px!important}
+  .ss-core-grid{gap:8px!important}
+  .ss-core-card{min-height:225px!important;padding:13px 8px 12px!important}
+  .ss-core-icon{width:50px!important;height:50px!important;min-width:50px!important;font-size:24px!important}
+  .ss-core-card h3{font-size:15.7px!important}
+  .ss-core-card p{font-size:10.8px!important;line-height:1.55!important}
+  .ss-core-open{font-size:11.5px!important;min-height:37px!important}
+  .ss-core-card.lab{min-height:166px!important;grid-template-columns:62px minmax(0,1fr)!important;padding:14px!important}
+  .ss-core-card.lab .ss-core-icon{width:56px!important;height:56px!important;font-size:27px!important}
+  .ss-core-card.lab h3{font-size:17px!important}.ss-core-card.lab p{font-size:11.3px!important}
+}
 """
 def welcome_page():
     next_target = _safe_next_url("/home")
