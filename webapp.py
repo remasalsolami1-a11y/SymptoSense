@@ -4052,363 +4052,28 @@ body .svc-card .svc-btn{
 
 
 HOME_CSS = """
-/* SymptoSense home showcase */
-.ss-home-page{overflow-x:hidden}
-.home-showcase{
-  position:relative;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);
-  align-items:center;gap:clamp(34px,5vw,76px);max-width:1240px;margin:0 auto 34px;
-  padding:clamp(34px,5vw,72px);background:linear-gradient(135deg,#fff 0%,#f9fcff 54%,#f2f9ff 100%);
-  border:1px solid #d8e8f5;border-radius:30px;overflow:hidden
-}
-.home-showcase::before{content:"";position:absolute;width:360px;height:360px;border-radius:50%;background:#eaf6ff;left:-145px;top:-165px;opacity:.72;pointer-events:none}
-.home-showcase::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:#eef8ff;right:34%;bottom:-105px;opacity:.7;pointer-events:none}
-.home-showcase-copy{position:relative;z-index:3;direction:rtl;text-align:right;min-width:0}
-html[dir="ltr"] .home-showcase-copy{direction:ltr;text-align:left}
-.home-showcase-kicker{display:inline-flex;gap:7px;align-items:center;font-size:14px;font-weight:800;color:#123b70;margin-bottom:10px}
-.home-showcase-kicker em{font-style:normal;color:#248ef3}
-.home-showcase-line{display:block;width:68px;height:4px;border-radius:999px;background:linear-gradient(90deg,#b9e2fb,#248ef3);margin:0 0 34px auto}
-html[dir="ltr"] .home-showcase-line{margin-left:0;margin-right:auto}
-.home-showcase-copy h1{margin:0;color:#0b3267;font-size:clamp(48px,5.35vw,78px);line-height:1.25;font-weight:900;letter-spacing:-1.2px}
-.home-showcase-copy h1 span{display:block}
-.home-showcase-sub{margin:26px 0 0;color:#3e5f82;font-size:clamp(19px,1.65vw,26px);line-height:1.85;font-weight:700;max-width:29ch;margin-inline-start:auto}
-html[dir="ltr"] .home-showcase-sub{margin-inline-start:0}
-.home-showcase-desc{margin:12px 0 0;color:#6a809a;font-size:15px;line-height:1.8;max-width:52ch;margin-inline-start:auto}
-html[dir="ltr"] .home-showcase-desc{margin-inline-start:0}
-.home-showcase-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px;justify-content:flex-start}
-.home-primary-cta,.home-secondary-cta{min-height:56px;border-radius:14px;padding:0 24px;display:inline-flex;align-items:center;justify-content:center;gap:12px;font-weight:900;font-size:16px;text-decoration:none;transition:.2s ease;cursor:pointer}
-.home-primary-cta{background:linear-gradient(135deg,#248ef3,#2d7fc7);color:#fff;border:1px solid #248ef3;box-shadow:0 10px 24px rgba(36,142,243,.18)}
-.home-primary-cta:hover{transform:translateY(-2px)}
-.home-secondary-cta{background:#fff;color:#0b3267;border:1.5px solid #74b8e8}
-.home-secondary-cta:hover{background:#f7fbff}
+/* ===== SymptoSense competition home — reference layout ===== */
+body.ss-home-page{background:#f7fbff;overflow-x:hidden;padding-bottom:24px}
+body.ss-home-page .asst-fab{display:none!important}
+.ss-home-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;display:grid;gap:24px}
+.ss-home-hero{display:grid;grid-template-columns:minmax(0,.95fr) minmax(390px,1.05fr);align-items:center;gap:clamp(28px,5vw,72px);padding:clamp(30px,5vw,64px);border:1px solid #d9e8f5;border-radius:30px;background:linear-gradient(135deg,#fff 0%,#f9fcff 55%,#eef8ff 100%);position:relative;overflow:hidden;min-height:560px}
+.ss-home-hero:before,.ss-home-hero:after{content:"";position:absolute;border-radius:50%;pointer-events:none}.ss-home-hero:before{width:420px;height:420px;right:-190px;top:-190px;background:#e9f5ff99}.ss-home-hero:after{width:170px;height:170px;left:42%;bottom:-95px;background:#edf7ff}
+.ss-hero-copy{position:relative;z-index:3;direction:rtl;text-align:right;min-width:0}.ss-hero-kicker{display:inline-flex;align-items:center;gap:7px;color:#0c3b78;font-size:14px;font-weight:850;margin-bottom:12px}.ss-hero-kicker b{color:#1689ed}.ss-hero-rule{width:68px;height:4px;background:linear-gradient(90deg,#b8def7,#198de9);border-radius:99px;margin:0 0 26px auto}.ss-hero-copy h1{margin:0;color:#0b3775;font-size:clamp(46px,5.15vw,74px);line-height:1.18;font-weight:950;letter-spacing:-1.2px}.ss-hero-copy h1 span{display:block}.ss-hero-lead{margin:26px 0 0;color:#455f7a;font-size:clamp(18px,1.7vw,24px);line-height:1.75;font-weight:700;max-width:34ch;margin-inline-start:auto}.ss-hero-desc{margin:9px 0 0;color:#70849a;font-size:14px;line-height:1.8;max-width:54ch;margin-inline-start:auto}.ss-hero-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-start;margin-top:26px}.ss-hero-primary,.ss-hero-secondary{min-height:56px;border-radius:14px;padding:0 24px;display:inline-flex;align-items:center;justify-content:center;gap:12px;font-family:inherit;font-weight:900;font-size:16px;text-decoration:none;cursor:pointer}.ss-hero-primary{background:linear-gradient(135deg,#168ff4,#287dc4);border:1px solid #168ff4;color:#fff;box-shadow:0 12px 24px rgba(22,143,244,.18)}.ss-hero-secondary{background:#fff;border:1.5px solid #73b9e9;color:#0b3775}.ss-trust-row{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:24px;color:#385a78;font-size:12px;font-weight:750}.ss-trust-item{display:inline-flex;align-items:center;gap:7px}.ss-trust-ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#eaf6ff;color:#1689ed}
 
-.home-showcase-demo{position:relative;z-index:2;min-height:600px;display:grid;grid-template-columns:112px minmax(270px,360px) 112px;grid-template-rows:auto auto auto;align-items:center;justify-content:center;column-gap:12px;row-gap:12px;direction:ltr}
-.home-demo-halo{position:absolute;inset:42px 60px 40px;border-radius:50%;background:radial-gradient(circle,#fff 0 34%,#eef8ff 35% 60%,transparent 61%);border:1px dashed #9bcff4;opacity:.75;z-index:-1}
-.home-result-preview{grid-column:2;grid-row:1 / span 3;width:100%;background:#fff;border:1px solid #c9e0f2;border-radius:24px;padding:16px;box-shadow:0 18px 38px rgba(29,87,134,.12);direction:rtl;color:#123b70}
-html[dir="ltr"] .home-result-preview{direction:ltr}
-.home-result-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:1px 2px 12px;font-size:15px}.home-result-doc{color:#2888d5}.home-result-back{width:34px;height:34px;border-radius:50%;background:#f3f9fd;display:grid;place-items:center;color:#2f7db9;font-size:23px}
-.home-risk-preview{display:flex;align-items:center;justify-content:space-between;gap:13px;background:#ecfbf2;border:1px solid #d7f3e2;border-radius:17px;padding:16px;margin-bottom:12px}.home-risk-preview>div{display:grid;gap:2px}.home-risk-preview small{font-weight:800;font-size:11px}.home-risk-preview b{font-size:27px;color:#159454;line-height:1.1}.home-risk-preview span:not(.home-risk-check){font-size:10px;color:#38a36b}.home-risk-check{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#42cf84;color:#fff;font-size:32px;font-weight:900;box-shadow:0 0 0 10px rgba(66,207,132,.12)}
-.home-preview-panel,.home-next-preview,.home-source-preview{border:1px solid #dbe8f2;border-radius:15px;background:#fff;margin-top:10px;overflow:hidden}.home-preview-panel h3,.home-next-preview h3,.home-source-preview h3{font-size:13px;margin:0;padding:11px 12px;color:#123b70}.home-condition-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;padding:10px 12px;border-top:1px solid #edf2f6}.home-dot{width:8px;height:8px;border-radius:50%;background:#2b8de0}.home-dot.d2{background:#7cc7f1}.home-dot.d3{background:#c6e5f8}.home-condition-row div{display:grid}.home-condition-row b{font-size:11px}.home-condition-row small{font-size:8.5px;color:#7890a7}.home-condition-row>span{color:#317fb7}.home-next-preview{background:#f7fbfe;padding:2px 0 8px}.home-next-preview p{font-size:10px;line-height:1.65;color:#627b94;padding:0 12px 5px;margin:0}.home-source-preview{padding-bottom:8px}.home-source-logos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:2px 8px 7px;text-align:center}.home-source-logos span{font-size:8px;color:#59728c;display:grid;gap:2px}.home-source-logos i{font-style:normal;font-size:18px}.home-source-preview>a{font-size:9px;color:#248ef3;text-decoration:none;font-weight:800}
-.home-tech-chip{width:112px;min-height:98px;background:#fff;border:1px solid #d8e8f5;border-radius:18px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 12px 26px rgba(29,87,134,.10);color:#123b70}.home-tech-icon{font-size:29px;line-height:1}.home-tech-chip b{font-size:11px;margin-top:7px}.home-tech-chip small{font-size:8px;color:#6f8499;margin-top:4px;line-height:1.35}.home-tech-data{grid-column:1;grid-row:1;transform:rotate(-4deg)}.home-tech-ai{grid-column:3;grid-row:1;transform:rotate(4deg)}.home-tech-health{grid-column:1;grid-row:3;transform:rotate(-3deg)}.home-demo-caption{grid-column:3;grid-row:3;align-self:end;text-align:center;color:#123b70;font-size:10px;font-weight:800}.home-demo-caption span{display:block;font-size:30px;line-height:1}
+.ss-hero-demo{position:relative;z-index:2;min-height:485px;display:grid;place-items:center;direction:ltr}.ss-demo-orbit{position:absolute;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,#fff 0 33%,#edf8ff 34% 61%,transparent 62%);border:1px dashed #9fd2f3;opacity:.82}.ss-result-card{position:relative;z-index:2;width:min(355px,84%);background:#fff;border:1px solid #cfe3f2;border-radius:25px;padding:16px;box-shadow:0 22px 45px rgba(27,87,135,.13);direction:rtl;color:#0c3b70;transform:rotate(-1.2deg)}.ss-result-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 13px}.ss-result-top strong{font-size:15px}.ss-result-back{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#f1f8fd;color:#2786c9;font-size:22px}.ss-result-risk{display:flex;align-items:center;justify-content:space-between;background:#eafaf1;border:1px solid #d4f0df;border-radius:17px;padding:15px;margin-bottom:12px}.ss-result-risk small{font-size:11px;font-weight:800}.ss-result-risk b{display:block;color:#0d9850;font-size:28px;line-height:1.12}.ss-result-risk em{display:block;color:#4aab74;font-style:normal;font-size:9px;margin-top:3px}.ss-risk-check{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#43cf82;color:#fff;font-size:32px;font-weight:900;box-shadow:0 0 0 10px rgba(67,207,130,.12)}.ss-mini-panel{border:1px solid #dce8f1;border-radius:15px;overflow:hidden;background:#fff;margin-top:10px}.ss-mini-panel h3{font-size:13px;margin:0;padding:10px 12px}.ss-mini-row{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid #edf2f6}.ss-mini-row i{width:7px;height:7px;border-radius:50%;background:#2790df}.ss-mini-row:nth-child(3) i{background:#79c7f0}.ss-mini-row:nth-child(4) i{background:#c9e7f8}.ss-mini-row b{font-size:10.5px}.ss-mini-row small{display:block;color:#7b8fa4;font-size:8.5px}.ss-mini-row span{color:#2e85c5}.ss-next-panel{background:#f7fbfe;padding-bottom:7px}.ss-next-panel p{margin:0;padding:0 12px 7px;font-size:9.5px;line-height:1.65;color:#637d95}.ss-source-panel{padding-bottom:8px;text-align:center}.ss-source-logos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:2px 8px 6px}.ss-source-logos span{font-size:8px;color:#58728c;display:grid;gap:2px}.ss-source-logos i{font-style:normal;font-size:18px}.ss-source-panel a{font-size:9px;color:#1689ed;text-decoration:none;font-weight:800}.ss-tech-card{position:absolute;z-index:3;width:112px;min-height:98px;border:1px solid #d6e8f4;background:#fff;border-radius:18px;box-shadow:0 12px 28px rgba(28,83,126,.11);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#0c3b70;padding:10px}.ss-tech-card .ic{font-size:28px}.ss-tech-card b{font-size:11px;margin-top:6px}.ss-tech-card small{font-size:8px;color:#6e8398;margin-top:3px}.ss-tech-data{left:3%;top:17%;transform:rotate(-5deg)}.ss-tech-ai{right:2%;top:14%;transform:rotate(5deg)}.ss-tech-health{left:4%;bottom:12%;transform:rotate(-4deg)}.ss-demo-note{position:absolute;right:1%;bottom:15%;width:110px;text-align:center;color:#0c3b70;font-size:10px;font-weight:850}.ss-demo-note:before{content:"↙";display:block;font-size:28px;color:#1a89dc;margin-bottom:2px}
 
-.explore-tools{margin-top:34px;background:#fff;border:1px solid #dce9f4;border-radius:22px;padding:22px}.explore-tools-head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:14px}.explore-tools-head h2{margin:0;color:#123b70}.explore-tools-head p{margin:4px 0 0;color:#70859b}.explore-tools-hint{font-size:12px;color:#2b84c9;font-weight:800}.explore-tools-scroll{display:flex;gap:14px;overflow:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.explore-tools-scroll::-webkit-scrollbar{display:none}.explore-tools-page{min-width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;scroll-snap-align:start}.explore-tool-card{min-height:116px;border:1px solid #e0ebf3;border-radius:17px;background:#fbfdff;text-decoration:none;color:#123b70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;text-align:center}.explore-tool-icon{font-size:28px}.explore-tool-card b{font-size:13px}.explore-tools-dots{display:none}
-.home-how{margin-top:34px;background:#f8fcff;border:1px solid #dce9f4;border-radius:22px;padding:24px}.home-how>h2{margin:0;color:#123b70}.home-how>p{margin:5px 0 18px;color:#70859b}.home-how-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.home-how-step{background:#fff;border:1px solid #dce9f4;border-radius:16px;padding:18px 14px;color:#123b70;font-weight:900;line-height:1.6}.home-how-step>span{display:block;font-size:22px;margin-bottom:5px}.home-how-step small{display:block;color:#72879b;font-size:11px;font-weight:500;margin-top:3px}
+.ss-home-section{background:#fff;border:1px solid #dce9f4;border-radius:26px;padding:clamp(22px,3.5vw,36px)}.ss-section-head{text-align:right;margin-bottom:18px;direction:rtl}.ss-section-head .eyebrow{display:inline-block;color:#1689ed;font-size:11px;font-weight:900;margin-bottom:4px}.ss-section-head h2{margin:0;color:#0b3775;font-size:clamp(27px,3vw,38px);line-height:1.3}.ss-section-head p{margin:5px 0 0;color:#74879a;font-size:14px}
+.ss-core-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.ss-core-card{min-width:0;border-radius:22px;padding:24px 20px;text-align:center;text-decoration:none;color:#0b3775;border:1px solid #d9e8f4;display:flex;flex-direction:column;align-items:center;min-height:275px;justify-content:flex-start;transition:transform .18s ease,box-shadow .18s ease}.ss-core-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(27,83,126,.10)}.ss-core-card.sym{background:linear-gradient(145deg,#f5fbff,#eaf6ff)}.ss-core-card.ai{background:linear-gradient(145deg,#fbf8ff,#f3ecff)}.ss-core-card.lab{background:linear-gradient(145deg,#f7fffb,#eafbf2)}.ss-core-icon{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:34px;margin-bottom:14px}.sym .ss-core-icon{background:#dff1ff}.ai .ss-core-icon{background:#eee1ff}.lab .ss-core-icon{background:#dff8eb}.ss-core-card h3{margin:0;font-size:22px}.ss-core-card p{margin:10px 0 18px;color:#637a92;line-height:1.75;font-size:14px;max-width:31ch}.ss-core-open{margin-top:auto;width:100%;min-height:45px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900}.sym .ss-core-open{background:#dff1ff;color:#1689ed}.ai .ss-core-open{background:#eee1ff;color:#7d46df}.lab .ss-core-open{background:#dff8eb;color:#139b67}
 
-@media(max-width:900px){
- .home-showcase{grid-template-columns:1fr;padding:28px 20px;gap:24px}.home-showcase-copy{grid-row:1;text-align:center!important}.home-showcase-line{margin-left:auto!important;margin-right:auto!important}.home-showcase-copy h1{font-size:clamp(38px,7.3vw,54px)}.home-showcase-sub,.home-showcase-desc{margin-inline:auto}.home-showcase-actions{justify-content:center}.home-showcase-demo{grid-row:2;min-height:auto;grid-template-columns:96px minmax(0,350px) 96px;grid-template-rows:auto auto auto}.home-demo-halo{inset:40px 70px}.home-tech-chip{width:96px}.svc-grid[style]{grid-template-columns:1fr!important}.home-how-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.explore-tools-page{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:560px){
- .home-showcase{padding:24px 14px 30px;border-radius:22px;gap:22px}.home-showcase-kicker{font-size:11.5px}.home-showcase-line{width:54px;height:3px;margin-bottom:20px!important}.home-showcase-copy h1{font-size:clamp(31px,9vw,39px)!important;line-height:1.32;letter-spacing:-.4px}.home-showcase-sub{font-size:15px;line-height:1.7;margin-top:16px;max-width:32ch}.home-showcase-desc{font-size:12.5px;line-height:1.7}.home-showcase-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:20px}.home-primary-cta,.home-secondary-cta{width:100%;min-height:52px;font-size:15px;padding:0 16px}.home-showcase-demo{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto;gap:9px;align-items:start}.home-demo-halo{display:none}.home-tech-chip{width:100%!important;min-height:76px!important;transform:none!important;border-radius:14px;padding:8px 4px}.home-tech-data{grid-column:1;grid-row:1}.home-tech-ai{grid-column:2;grid-row:1}.home-tech-health{grid-column:3;grid-row:1}.home-tech-icon{font-size:22px}.home-tech-chip b{font-size:9px;margin-top:4px}.home-tech-chip small{font-size:6.8px}.home-result-preview{grid-column:1 / -1;grid-row:2;padding:12px;border-radius:19px}.home-demo-caption{grid-column:1 / -1;grid-row:3;text-align:center;align-self:auto;font-size:9px}.home-demo-caption span{display:inline;font-size:16px;margin-inline-end:4px}.home-risk-check{width:50px;height:50px;font-size:26px}.home-risk-preview b{font-size:24px}.explore-tools{padding:17px 12px}.explore-tools-head{align-items:flex-start}.explore-tools-hint{font-size:10px}.explore-tools-page{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,1fr);gap:9px;min-width:100%}.explore-tool-card{min-height:94px;padding:9px}.explore-tool-icon{font-size:24px}.explore-tool-card b{font-size:11px}.explore-tools-dots{display:flex;justify-content:center;gap:6px;margin-top:12px}.explore-tools-dots span{width:6px;height:6px;border-radius:50%;background:#c9dceb}.explore-tools-dots span:first-child{background:#2b8cd7}.home-how{padding:18px 12px}.home-how-flow{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.home-how-step{padding:14px 10px;font-size:12px}.home-how-step small{font-size:9px}
-}
-@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}.home-showcase-copy h1{font-size:28px!important}.home-tech-chip b{font-size:8px}.home-tech-chip small{font-size:6px}}
-@media(prefers-reduced-motion:reduce){.home-primary-cta,.home-secondary-cta{transition:none}}
+.ss-tools-panel{background:linear-gradient(180deg,#fbfdff,#f5faff);border:1px solid #dbe9f4;border-radius:24px;padding:22px}.ss-tools-head{display:flex;align-items:end;justify-content:space-between;gap:16px;direction:rtl;margin-bottom:14px}.ss-tools-head h2{margin:0;color:#0b3775;font-size:26px}.ss-tools-head p{margin:4px 0 0;color:#74879a;font-size:13px}.ss-tools-all{color:#1689ed;font-size:12px;font-weight:900;text-decoration:none;white-space:nowrap}.ss-tools-scroll{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px}.ss-tools-scroll::-webkit-scrollbar{display:none}.ss-tool{flex:0 0 calc((100% - 60px)/6);min-width:145px;scroll-snap-align:start;border:1px solid #deebf4;background:#fff;border-radius:18px;padding:15px 10px;text-align:center;text-decoration:none;color:#0b3775;min-height:126px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}.ss-tool .ic{font-size:29px}.ss-tool b{font-size:12.5px}.ss-tool small{color:#7b8fa4;font-size:9.5px}.ss-tool:nth-child(2n){background:#fffaf3}.ss-tool:nth-child(3n){background:#f6fbff}.ss-tool:nth-child(4n){background:#fff7fa}.ss-tools-dots{display:flex;justify-content:center;gap:6px;margin-top:12px}.ss-tools-dots span{width:7px;height:7px;border-radius:50%;background:#c9d9e6}.ss-tools-dots span:first-child{background:#1689ed}
 
+.ss-how{background:#fff;border:1px solid #dce9f4;border-radius:24px;padding:24px}.ss-how-head{text-align:right;direction:rtl;margin-bottom:18px}.ss-how-head h2{margin:0;color:#0b3775;font-size:27px}.ss-how-head p{margin:4px 0 0;color:#74879a}.ss-how-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;direction:rtl}.ss-how-step{position:relative;text-align:center;color:#0b3775;padding:6px 12px}.ss-how-step:not(:last-child):after{content:"‹";position:absolute;left:-13px;top:36px;color:#1689ed;font-size:34px;font-weight:300}.ss-how-num{position:absolute;right:calc(50% - 38px);top:-2px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#1689ed;color:#fff;font-size:10px;font-weight:900}.ss-how-icon{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px;font-size:28px;background:#eaf6ff}.ss-how-step:nth-child(2) .ss-how-icon{background:#f1e9ff}.ss-how-step:nth-child(3) .ss-how-icon{background:#eaf5ff}.ss-how-step:nth-child(4) .ss-how-icon{background:#e8f9f0}.ss-how-step b{display:block;font-size:14px}.ss-how-step small{display:block;color:#74879a;font-size:10.5px;line-height:1.6;margin-top:5px}
+.ss-sources-strip{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(0,1.5fr);align-items:center;gap:22px;background:linear-gradient(90deg,#f2fbf7,#f8fcff);border:1px solid #d9e9e1;border-radius:20px;padding:18px 22px;direction:rtl}.ss-sources-copy h3{margin:0;color:#0b3775;font-size:20px}.ss-sources-copy p{margin:4px 0 0;color:#6f8497;font-size:12px}.ss-sources-logos{display:flex;align-items:center;justify-content:space-around;gap:12px;flex-wrap:wrap;direction:ltr}.ss-source-badge{display:flex;align-items:center;gap:6px;color:#0b3775;font-size:11px;font-weight:800}.ss-source-badge i{font-style:normal;font-size:22px}.ss-source-more{display:inline-flex;margin-top:9px;color:#1689ed;text-decoration:none;font-size:11px;font-weight:900}
 
-/* FINAL HOME MOBILE LAYOUT — keep this at the end of HOME_CSS so legacy service styles cannot win */
-.ss-home-page .svc-grid,
-.ss-home-page .svc-grid[style]{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:14px!important;
-  width:100%!important;
-  margin:0!important;
-  padding:0!important;
-  align-items:stretch!important;
-}
-.ss-home-page .svc-card{
-  position:relative!important;
-  inset:auto!important;
-  left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
-  transform:none!important;
-  float:none!important;
-  width:auto!important;
-  min-width:0!important;
-  max-width:none!important;
-  min-height:210px!important;
-  margin:0!important;
-  padding:20px!important;
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:flex-start!important;
-  justify-content:flex-start!important;
-  gap:0!important;
-  overflow:hidden!important;
-  background:#fff!important;
-  border:1px solid #d8e7f2!important;
-  border-radius:20px!important;
-  box-shadow:0 8px 24px rgba(31,86,127,.06)!important;
-  color:#163b5c!important;
-  text-decoration:none!important;
-  opacity:1!important;
-}
-.ss-home-page .svc-card .svc-ic{
-  position:static!important;inset:auto!important;transform:none!important;float:none!important;
-  width:50px!important;height:50px!important;min-width:50px!important;
-  margin:0 0 14px!important;padding:0!important;
-  display:grid!important;place-items:center!important;
-  background:#eef8ff!important;border:1px solid #d7eaf6!important;border-radius:15px!important;
-  color:#287fc1!important;font-size:24px!important;line-height:1!important;
-}
-.ss-home-page .svc-card h3,
-.ss-home-page .svc-card p,
-.ss-home-page .svc-card .svc-btn{
-  position:static!important;inset:auto!important;transform:none!important;float:none!important;
-  width:auto!important;max-width:100%!important;text-align:start!important;
-}
-.ss-home-page .svc-card h3{
-  margin:0 0 7px!important;color:#163b5c!important;font-size:18px!important;line-height:1.45!important;
-}
-.ss-home-page .svc-card p{
-  margin:0 0 14px!important;color:#60788b!important;font-size:13px!important;line-height:1.72!important;
-}
-.ss-home-page .svc-card .svc-btn{
-  margin-top:auto!important;min-height:0!important;padding:7px 12px!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  background:#eef7fd!important;border:1px solid #d3e8f6!important;border-radius:999px!important;
-  color:#287fc1!important;font-size:12.5px!important;font-weight:900!important;line-height:1.2!important;
-  box-shadow:none!important;
-}
-.ss-home-page .v2-section-head{margin-top:32px!important;margin-bottom:14px!important}
-.ss-home-page .v2-section-head h2{color:#163b5c!important}
-
-@media(max-width:700px){
-  body.ss-home-page{overflow-x:hidden!important}
-  .ss-home-page .container{overflow-x:hidden!important}
-  .ss-home-page .home-showcase{
-    display:flex!important;flex-direction:column!important;
-    width:100%!important;max-width:100%!important;margin:0 auto 24px!important;
-    padding:24px 16px 28px!important;gap:22px!important;border-radius:24px!important;overflow:hidden!important;
-  }
-  .ss-home-page .home-showcase-copy{order:1!important;width:100%!important;text-align:center!important;direction:rtl!important}
-  html[dir="ltr"] .ss-home-page .home-showcase-copy{direction:ltr!important}
-  .ss-home-page .home-showcase-kicker{justify-content:center!important;font-size:11.5px!important;margin-bottom:8px!important}
-  .ss-home-page .home-showcase-line{width:54px!important;height:3px!important;margin:0 auto 18px!important}
-  .ss-home-page .home-showcase-copy h1{
-    font-size:clamp(32px,9.3vw,40px)!important;line-height:1.28!important;letter-spacing:-.35px!important;
-    text-align:center!important;max-width:10.5ch!important;margin:0 auto!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-copy h1{max-width:15ch!important;font-size:clamp(29px,8vw,36px)!important}
-  .ss-home-page .home-showcase-sub{font-size:15px!important;line-height:1.75!important;margin:18px auto 0!important;max-width:31ch!important;text-align:center!important}
-  .ss-home-page .home-showcase-desc{font-size:12.5px!important;line-height:1.7!important;margin:9px auto 0!important;max-width:36ch!important;text-align:center!important}
-  .ss-home-page .home-showcase-actions{
-    display:grid!important;grid-template-columns:1fr!important;gap:10px!important;
-    width:100%!important;margin:20px 0 0!important;justify-items:stretch!important;
-  }
-  .ss-home-page .home-primary-cta,.ss-home-page .home-secondary-cta{
-    width:100%!important;min-width:0!important;min-height:52px!important;padding:0 16px!important;
-    border-radius:15px!important;font-size:15px!important;white-space:normal!important;text-align:center!important;
-  }
-  .ss-home-page .home-showcase-demo{
-    order:2!important;width:100%!important;min-height:0!important;margin:0!important;
-    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    grid-template-rows:auto auto auto!important;gap:10px!important;align-items:start!important;justify-content:stretch!important;
-  }
-  .ss-home-page .home-demo-halo{display:none!important}
-  .ss-home-page .home-tech-chip{
-    position:static!important;transform:none!important;width:100%!important;min-width:0!important;min-height:82px!important;
-    padding:9px 5px!important;border-radius:15px!important;box-shadow:0 6px 18px rgba(31,86,127,.07)!important;
-  }
-  .ss-home-page .home-tech-data{grid-column:1!important;grid-row:1!important}
-  .ss-home-page .home-tech-ai{grid-column:2!important;grid-row:1!important}
-  .ss-home-page .home-tech-health{grid-column:3!important;grid-row:1!important}
-  .ss-home-page .home-tech-icon{font-size:23px!important}
-  .ss-home-page .home-tech-chip b{font-size:10px!important;margin-top:4px!important;line-height:1.2!important}
-  .ss-home-page .home-tech-chip small{font-size:7px!important;line-height:1.25!important;margin-top:3px!important}
-  .ss-home-page .home-result-preview{
-    grid-column:1/-1!important;grid-row:2!important;width:100%!important;min-width:0!important;
-    padding:13px!important;border-radius:20px!important;box-shadow:0 10px 24px rgba(29,87,134,.08)!important;
-  }
-  .ss-home-page .home-result-head{font-size:14px!important}
-  .ss-home-page .home-risk-preview{padding:14px!important;gap:10px!important}
-  .ss-home-page .home-risk-preview b{font-size:25px!important}
-  .ss-home-page .home-risk-check{width:50px!important;height:50px!important;font-size:27px!important;box-shadow:0 0 0 7px rgba(66,207,132,.10)!important}
-  .ss-home-page .home-preview-panel h3,.ss-home-page .home-next-preview h3,.ss-home-page .home-source-preview h3{font-size:12.5px!important}
-  .ss-home-page .home-condition-row{padding:10px!important}
-  .ss-home-page .home-condition-row b{font-size:11px!important}.ss-home-page .home-condition-row small{font-size:8.5px!important}
-  .ss-home-page .home-next-preview p{font-size:9.5px!important;line-height:1.6!important}
-  .ss-home-page .home-demo-caption{grid-column:1/-1!important;grid-row:3!important;margin-top:2px!important;text-align:center!important;font-size:10px!important}
-  .ss-home-page .home-demo-caption span{display:inline!important;font-size:16px!important;margin-inline-end:4px!important}
-
-  .ss-home-page .v2-section-head{margin:28px 0 12px!important;text-align:start!important}
-  .ss-home-page .v2-section-head h2{font-size:25px!important;line-height:1.35!important;margin:0!important}
-  .ss-home-page .v2-section-head p{font-size:13px!important;line-height:1.65!important;margin-top:4px!important}
-  .ss-home-page .svc-grid,.ss-home-page .svc-grid[style]{grid-template-columns:1fr!important;gap:11px!important}
-  .ss-home-page .svc-card{
-    min-height:0!important;padding:15px!important;border-radius:18px!important;
-    display:grid!important;grid-template-columns:54px minmax(0,1fr)!important;
-    grid-template-areas:"icon title" "icon desc" "icon action"!important;
-    column-gap:13px!important;row-gap:2px!important;align-items:start!important;
-  }
-  .ss-home-page .svc-card .svc-ic{grid-area:icon!important;width:50px!important;height:50px!important;min-width:50px!important;margin:0!important;font-size:23px!important}
-  .ss-home-page .svc-card h3{grid-area:title!important;font-size:17px!important;margin:1px 0 4px!important}
-  .ss-home-page .svc-card p{grid-area:desc!important;font-size:12.5px!important;line-height:1.62!important;margin:0 0 7px!important}
-  .ss-home-page .svc-card .svc-btn{grid-area:action!important;margin:0!important;justify-self:start!important;padding:6px 11px!important;font-size:12px!important}
-
-  .ss-home-page .explore-tools{margin-top:26px!important;padding:18px 13px!important;border-radius:20px!important;overflow:hidden!important}
-  .ss-home-page .explore-tools-head{display:block!important;margin-bottom:12px!important}
-  .ss-home-page .explore-tools-head h2{font-size:24px!important;line-height:1.35!important;margin:0!important}
-  .ss-home-page .explore-tools-head p{font-size:13px!important;line-height:1.65!important;margin:5px 0 0!important}
-  .ss-home-page .explore-tools-hint{display:inline-block!important;margin-top:7px!important;font-size:10.5px!important}
-  .ss-home-page .explore-tools-scroll{width:100%!important;max-width:100%!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;touch-action:pan-x!important;-webkit-overflow-scrolling:touch!important}
-  .ss-home-page .explore-tools-page{flex:0 0 100%!important;min-width:100%!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,1fr)!important;gap:9px!important}
-  .ss-home-page .explore-tool-card{min-width:0!important;min-height:96px!important;padding:10px 6px!important;border-radius:15px!important}
-  .ss-home-page .explore-tool-icon{font-size:24px!important}.ss-home-page .explore-tool-card b{font-size:11px!important;line-height:1.35!important}
-  .ss-home-page .explore-tools-dots{display:flex!important;justify-content:center!important;gap:6px!important;margin-top:11px!important}
-  .ss-home-page .explore-tools-dots span{width:6px!important;height:6px!important;border-radius:50%!important;background:#c9dceb!important}.ss-home-page .explore-tools-dots span:first-child{background:#2b8cd7!important}
-
-  .ss-home-page .asst-fab{display:none!important}
-}
-
-@media(max-width:360px){
-  .ss-home-page .home-showcase{padding:21px 12px 25px!important}
-  .ss-home-page .home-showcase-copy h1{font-size:30px!important}
-  .ss-home-page .home-showcase-sub{font-size:14px!important}
-  .ss-home-page .home-tech-chip{min-height:74px!important;padding:7px 3px!important}
-  .ss-home-page .home-tech-chip b{font-size:9px!important}.ss-home-page .home-tech-chip small{font-size:6.4px!important}
-  .ss-home-page .svc-card{grid-template-columns:48px minmax(0,1fr)!important;column-gap:10px!important;padding:13px!important}
-  .ss-home-page .svc-card .svc-ic{width:45px!important;height:45px!important;min-width:45px!important;font-size:21px!important}
-  .ss-home-page .svc-card h3{font-size:16px!important}.ss-home-page .svc-card p{font-size:12px!important}
-}
-
-/* MOBILE SPLIT HERO — keep the desktop composition side-by-side on phones */
-@media(max-width:700px){
-  .ss-home-page .home-showcase{
-    display:grid!important;
-    grid-template-columns:minmax(0,.46fr) minmax(0,.54fr)!important;
-    grid-template-areas:"demo copy"!important;
-    align-items:center!important;
-    column-gap:9px!important;
-    row-gap:0!important;
-    width:100%!important;
-    max-width:100%!important;
-    margin:0 auto 22px!important;
-    padding:18px 10px 22px!important;
-    border-radius:22px!important;
-    overflow:hidden!important;
-    direction:ltr!important;
-  }
-  .ss-home-page .home-showcase-copy{
-    grid-area:copy!important;
-    order:initial!important;
-    width:100%!important;
-    min-width:0!important;
-    direction:rtl!important;
-    text-align:right!important;
-    align-self:center!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-copy{direction:ltr!important;text-align:left!important}
-  .ss-home-page .home-showcase-kicker{
-    display:flex!important;justify-content:flex-start!important;gap:4px!important;
-    margin:0 0 5px!important;font-size:8.8px!important;line-height:1.35!important;white-space:normal!important;
-  }
-  .ss-home-page .home-showcase-line{
-    width:38px!important;height:3px!important;margin:0 0 11px auto!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-line{margin-left:0!important;margin-right:auto!important}
-  .ss-home-page .home-showcase-copy h1{
-    max-width:none!important;margin:0!important;text-align:right!important;
-    font-size:clamp(27px,7.8vw,32px)!important;line-height:1.28!important;letter-spacing:-.2px!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-copy h1{
-    max-width:none!important;text-align:left!important;font-size:clamp(22px,6.5vw,28px)!important;line-height:1.2!important;
-  }
-  .ss-home-page .home-showcase-copy h1 span{display:block!important}
-  .ss-home-page .home-showcase-sub{
-    max-width:none!important;margin:14px 0 0!important;text-align:right!important;
-    font-size:11px!important;line-height:1.65!important;font-weight:800!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-sub{text-align:left!important}
-  .ss-home-page .home-showcase-desc{
-    max-width:none!important;margin:6px 0 0!important;text-align:right!important;
-    font-size:8.8px!important;line-height:1.55!important;
-  }
-  html[dir="ltr"] .ss-home-page .home-showcase-desc{text-align:left!important}
-  .ss-home-page .home-showcase-actions{
-    display:grid!important;grid-template-columns:1fr!important;gap:7px!important;
-    width:100%!important;margin:13px 0 0!important;justify-items:stretch!important;
-  }
-  .ss-home-page .home-primary-cta,.ss-home-page .home-secondary-cta{
-    width:100%!important;min-width:0!important;min-height:40px!important;
-    padding:0 8px!important;border-radius:11px!important;font-size:10.5px!important;line-height:1.25!important;gap:6px!important;
-    white-space:normal!important;text-align:center!important;
-  }
-  .ss-home-page .home-primary-cta b{font-size:12px!important}
-
-  .ss-home-page .home-showcase-demo{
-    grid-area:demo!important;
-    order:initial!important;
-    position:relative!important;
-    display:block!important;
-    width:100%!important;
-    min-width:0!important;
-    min-height:390px!important;
-    margin:0!important;
-    align-self:center!important;
-    direction:ltr!important;
-  }
-  .ss-home-page .home-demo-halo{
-    display:block!important;position:absolute!important;inset:55px 8px 44px!important;
-    border-radius:50%!important;opacity:.48!important;
-  }
-  .ss-home-page .home-result-preview{
-    position:absolute!important;
-    left:50%!important;top:48%!important;
-    transform:translate(-50%,-50%)!important;
-    width:min(148px,88%)!important;max-width:none!important;min-width:0!important;
-    margin:0!important;padding:8px!important;border-radius:15px!important;
-    box-shadow:0 10px 24px rgba(29,87,134,.10)!important;
-    z-index:2!important;
-  }
-  .ss-home-page .home-result-head{padding:0 0 7px!important;font-size:8.8px!important;gap:4px!important}
-  .ss-home-page .home-result-back{width:22px!important;height:22px!important;font-size:14px!important}
-  .ss-home-page .home-result-doc{font-size:9px!important}
-  .ss-home-page .home-risk-preview{padding:8px!important;gap:6px!important;border-radius:10px!important;margin-bottom:6px!important}
-  .ss-home-page .home-risk-preview small{font-size:7px!important}.ss-home-page .home-risk-preview b{font-size:17px!important}.ss-home-page .home-risk-preview span:not(.home-risk-check){font-size:6.4px!important}
-  .ss-home-page .home-risk-check{width:34px!important;height:34px!important;font-size:19px!important;box-shadow:0 0 0 5px rgba(66,207,132,.10)!important}
-  .ss-home-page .home-preview-panel,.ss-home-page .home-next-preview,.ss-home-page .home-source-preview{margin-top:6px!important;border-radius:9px!important}
-  .ss-home-page .home-preview-panel h3,.ss-home-page .home-next-preview h3,.ss-home-page .home-source-preview h3{font-size:7.8px!important;padding:6px 7px!important}
-  .ss-home-page .home-condition-row{padding:6px 7px!important;gap:5px!important}
-  .ss-home-page .home-condition-row b{font-size:7.2px!important}.ss-home-page .home-condition-row small{font-size:5.8px!important}.ss-home-page .home-condition-row>span{font-size:10px!important}
-  .ss-home-page .home-dot{width:5px!important;height:5px!important}
-  .ss-home-page .home-next-preview p{font-size:6.3px!important;line-height:1.45!important;padding:0 7px 7px!important}
-  .ss-home-page .home-source-logos{padding:0 5px 5px!important;gap:3px!important}.ss-home-page .home-source-logos span{font-size:5.4px!important}.ss-home-page .home-source-logos i{font-size:10px!important}
-  .ss-home-page .home-source-preview a{font-size:5.9px!important;padding:0 6px 6px!important}
-
-  .ss-home-page .home-tech-chip{
-    position:absolute!important;transform:none!important;z-index:4!important;
-    width:66px!important;min-width:0!important;min-height:60px!important;
-    padding:6px 3px!important;border-radius:12px!important;
-    box-shadow:0 6px 16px rgba(31,86,127,.10)!important;
-  }
-  .ss-home-page .home-tech-data{left:0!important;right:auto!important;top:67px!important}
-  .ss-home-page .home-tech-ai{right:0!important;left:auto!important;top:48px!important}
-  .ss-home-page .home-tech-health{left:0!important;right:auto!important;bottom:42px!important}
-  .ss-home-page .home-tech-icon{font-size:18px!important;line-height:1!important}
-  .ss-home-page .home-tech-chip b{font-size:7.2px!important;line-height:1.1!important;margin-top:3px!important}
-  .ss-home-page .home-tech-chip small{font-size:5.2px!important;line-height:1.15!important;margin-top:2px!important}
-  .ss-home-page .home-demo-caption{
-    position:absolute!important;left:0!important;right:0!important;bottom:4px!important;
-    margin:0!important;text-align:center!important;font-size:6.8px!important;line-height:1.25!important;z-index:3!important;
-  }
-  .ss-home-page .home-demo-caption span{font-size:12px!important;margin-inline-end:2px!important}
-}
-
-@media(max-width:360px){
-  .ss-home-page .home-showcase{grid-template-columns:minmax(0,.44fr) minmax(0,.56fr)!important;column-gap:7px!important;padding:16px 8px 20px!important}
-  .ss-home-page .home-showcase-copy h1{font-size:25px!important;line-height:1.25!important}
-  html[dir="ltr"] .ss-home-page .home-showcase-copy h1{font-size:21px!important}
-  .ss-home-page .home-showcase-sub{font-size:9.8px!important;line-height:1.55!important;margin-top:11px!important}
-  .ss-home-page .home-showcase-desc{font-size:7.9px!important}
-  .ss-home-page .home-primary-cta,.ss-home-page .home-secondary-cta{min-height:38px!important;font-size:9.4px!important;padding:0 6px!important}
-  .ss-home-page .home-showcase-demo{min-height:360px!important}
-  .ss-home-page .home-result-preview{width:min(132px,90%)!important;padding:7px!important}
-  .ss-home-page .home-tech-chip{width:56px!important;min-height:54px!important;padding:5px 2px!important}
-  .ss-home-page .home-tech-chip b{font-size:6.4px!important}.ss-home-page .home-tech-chip small{font-size:4.7px!important}.ss-home-page .home-tech-icon{font-size:16px!important}
-  .ss-home-page .home-tech-data{top:64px!important}.ss-home-page .home-tech-ai{top:48px!important}.ss-home-page .home-tech-health{bottom:40px!important}
-}
-
+@media(max-width:900px){.ss-home-shell{width:min(100% - 20px,760px)}.ss-home-hero{grid-template-columns:1fr;padding:28px 20px;gap:24px}.ss-hero-copy{text-align:center}.ss-hero-rule{margin-left:auto;margin-right:auto}.ss-hero-lead,.ss-hero-desc{margin-inline:auto}.ss-hero-actions{justify-content:center}.ss-trust-row{justify-content:center}.ss-hero-demo{min-height:455px}.ss-core-grid{grid-template-columns:1fr}.ss-core-card{min-height:210px}.ss-how-flow{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:24px}.ss-how-step:after{display:none}.ss-sources-strip{grid-template-columns:1fr;text-align:center}.ss-tools-head{align-items:flex-start}.ss-tool{flex-basis:calc((100% - 36px)/4);min-width:142px}}
+@media(max-width:560px){body.ss-home-page{padding-bottom:88px}.ss-home-shell{width:calc(100% - 16px);gap:14px}.ss-home-hero{border-radius:22px;padding:22px 14px 24px;gap:18px}.ss-hero-kicker{font-size:11px}.ss-hero-rule{height:3px;width:52px;margin-bottom:18px}.ss-hero-copy h1{font-size:clamp(32px,10vw,43px);line-height:1.22;letter-spacing:-.4px}.ss-hero-lead{font-size:15px;line-height:1.7;margin-top:16px}.ss-hero-desc{font-size:12px}.ss-hero-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:18px}.ss-hero-primary,.ss-hero-secondary{width:100%;min-height:50px;font-size:14px;padding:0 14px}.ss-trust-row{gap:10px;margin-top:16px;font-size:10px}.ss-trust-ic{width:25px;height:25px}.ss-hero-demo{min-height:400px}.ss-demo-orbit{width:350px;height:350px}.ss-result-card{width:min(310px,78%);padding:12px;border-radius:20px}.ss-result-risk b{font-size:23px}.ss-risk-check{width:50px;height:50px;font-size:27px}.ss-tech-card{width:88px;min-height:76px;border-radius:14px;padding:7px 4px}.ss-tech-card .ic{font-size:21px}.ss-tech-card b{font-size:8px}.ss-tech-card small{font-size:6px}.ss-tech-data{left:0;top:13%}.ss-tech-ai{right:0;top:12%}.ss-tech-health{left:0;bottom:10%}.ss-demo-note{display:none}.ss-home-section,.ss-tools-panel,.ss-how{border-radius:20px;padding:18px 14px}.ss-section-head{text-align:center}.ss-section-head h2{font-size:26px}.ss-core-grid{gap:11px}.ss-core-card{display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto auto;column-gap:12px;text-align:right;align-items:center;min-height:0;padding:16px}.ss-core-icon{grid-row:1/span 3;grid-column:1;width:60px;height:60px;font-size:28px;margin:0}.ss-core-card h3{grid-column:2;font-size:19px;text-align:right}.ss-core-card p{grid-column:2;margin:3px 0 9px;font-size:12px;text-align:right;max-width:none}.ss-core-open{grid-column:2;width:max-content;min-width:125px;min-height:38px;padding:0 15px;font-size:12px}.ss-tools-head{display:block;text-align:right}.ss-tools-all{display:inline-block;margin-top:7px}.ss-tool{flex:0 0 calc((100% - 12px)/2);min-width:0;min-height:112px}.ss-tools-scroll{gap:12px}.ss-how-flow{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 8px}.ss-how-step{padding:4px}.ss-how-icon{width:56px;height:56px}.ss-how-step b{font-size:12px}.ss-how-step small{font-size:9px}.ss-sources-strip{padding:16px 12px;border-radius:18px}.ss-sources-copy h3{font-size:18px}.ss-sources-logos{gap:8px}.ss-source-badge{font-size:9px}.ss-source-badge i{font-size:19px}}
+@media(max-width:350px){.ss-result-card{width:76%}.ss-tech-card{width:76px}.ss-tech-card b{font-size:7px}.ss-core-card{grid-template-columns:55px 1fr}.ss-core-icon{width:52px;height:52px}.ss-tool{flex-basis:100%}.ss-how-flow{grid-template-columns:1fr}}
 """
-
-
 def welcome_page():
     next_target = _safe_next_url("/home")
     body = """
@@ -4510,166 +4175,106 @@ def home_page():
     bi = lambda a, e: a if ar else e
     body = """
     <script>document.body.classList.add('ss-home-page');</script>
-    <section class="home-showcase" aria-labelledby="homeTitle">
-      <div class="home-showcase-demo" aria-label="__DEMO_ARIA__">
-        <div class="home-demo-halo" aria-hidden="true"></div>
-
-        <div class="home-tech-chip home-tech-data" aria-hidden="true">
-          <span class="home-tech-icon">📊</span><b>Data Science</b><small>__DATA_CHIP__</small>
+    <main class="ss-home-shell">
+      <section class="ss-home-hero" aria-labelledby="homeTitle">
+        <div class="ss-hero-copy">
+          <div class="ss-hero-kicker">SymptoSense · <b>__KICKER__</b></div>
+          <div class="ss-hero-rule" aria-hidden="true"></div>
+          <h1 id="homeTitle"><span>__TITLE1__</span><span>__TITLE2__</span></h1>
+          <p class="ss-hero-lead">__LEAD__</p>
+          <p class="ss-hero-desc">__DESC__</p>
+          <div class="ss-hero-actions">
+            <a class="ss-hero-primary" href="/chat"><span>__START__</span><b aria-hidden="true">←</b></a>
+            <button class="ss-hero-secondary" type="button" onclick="asstToggle()"><span aria-hidden="true">💬</span><span>__ASK__</span></button>
+          </div>
+          <div class="ss-trust-row" aria-label="__TRUST_ARIA__">
+            <span class="ss-trust-item"><i class="ss-trust-ic">▤</i>__TRUST_INFO__</span>
+            <span class="ss-trust-item"><i class="ss-trust-ic">🔒</i>__TRUST_PRIV__</span>
+            <span class="ss-trust-item"><i class="ss-trust-ic">🛡</i>__TRUST_NODIAG__</span>
+          </div>
         </div>
-        <div class="home-tech-chip home-tech-ai" aria-hidden="true">
-          <span class="home-tech-icon">🧠</span><b>AI</b><small>__AI_CHIP__</small>
-        </div>
-        <div class="home-tech-chip home-tech-health" aria-hidden="true">
-          <span class="home-tech-icon">🩺</span><b>Digital Health</b><small>__HEALTH_CHIP__</small>
-        </div>
 
-        <div class="home-result-preview">
-          <div class="home-result-head">
-            <span class="home-result-doc" aria-hidden="true">▤</span>
-            <strong>__DEMO_TITLE__</strong>
-            <span class="home-result-back" aria-hidden="true">‹</span>
-          </div>
-
-          <div class="home-risk-preview">
-            <span class="home-risk-check" aria-hidden="true">✓</span>
-            <div><small>__RISK_LABEL__</small><b>__RISK_LOW__</b><span>__RISK_NOTE__</span></div>
-          </div>
-
-          <div class="home-preview-panel">
-            <h3>__POSSIBLE_TITLE__</h3>
-            <div class="home-condition-row"><i class="home-dot d1"></i><div><b>__COND1__</b><small>__COND1S__</small></div><span>‹</span></div>
-            <div class="home-condition-row"><i class="home-dot d2"></i><div><b>__COND2__</b><small>__COND2S__</small></div><span>‹</span></div>
-            <div class="home-condition-row"><i class="home-dot d3"></i><div><b>__COND3__</b><small>__COND3S__</small></div><span>‹</span></div>
-          </div>
-
-          <div class="home-next-preview">
-            <h3>__NEXT_TITLE__ <span aria-hidden="true">💡</span></h3>
-            <p>__NEXT_COPY__</p>
-          </div>
-
-          <div class="home-source-preview">
-            <h3>__SOURCES_PREVIEW__ <span aria-hidden="true">📖</span></h3>
-            <div class="home-source-logos">
-              <span><i>🇸🇦</i>__MOH__</span><span><i>🌐</i>WHO</span><span><i>♡</i>Mayo Clinic</span>
+        <div class="ss-hero-demo" aria-label="__DEMO_ARIA__">
+          <div class="ss-demo-orbit" aria-hidden="true"></div>
+          <div class="ss-tech-card ss-tech-data" aria-hidden="true"><span class="ic">📊</span><b>Data Science</b><small>__DATA__</small></div>
+          <div class="ss-tech-card ss-tech-ai" aria-hidden="true"><span class="ic">🧠</span><b>AI</b><small>__AI__</small></div>
+          <div class="ss-tech-card ss-tech-health" aria-hidden="true"><span class="ic">🩺</span><b>Digital Health</b><small>__DIGITAL__</small></div>
+          <article class="ss-result-card">
+            <div class="ss-result-top"><span style="color:#2786c9">▤</span><strong>__RESULT_TITLE__</strong><span class="ss-result-back">‹</span></div>
+            <div class="ss-result-risk"><span class="ss-risk-check">✓</span><div><small>__RISK_LABEL__</small><b>__LOW__</b><em>__LOW_NOTE__</em></div></div>
+            <div class="ss-mini-panel"><h3>__POSSIBLE__</h3>
+              <div class="ss-mini-row"><i></i><div><b>__C1__</b><small>__C1S__</small></div><span>‹</span></div>
+              <div class="ss-mini-row"><i></i><div><b>__C2__</b><small>__C2S__</small></div><span>‹</span></div>
+              <div class="ss-mini-row"><i></i><div><b>__C3__</b><small>__C3S__</small></div><span>‹</span></div>
             </div>
-            <a href="/sources">__ALL_SOURCES__</a>
-          </div>
+            <div class="ss-mini-panel ss-next-panel"><h3>__NOW__ 💡</h3><p>__NOW_TEXT__</p></div>
+            <div class="ss-mini-panel ss-source-panel"><h3>__TRUSTED_SOURCES__ 📖</h3><div class="ss-source-logos"><span><i>🇸🇦</i>__MOH__</span><span><i>🌐</i>WHO</span><span><i>♡</i>Mayo Clinic</span></div><a href="/sources">__ALL_SOURCES__ ←</a></div>
+          </article>
+          <div class="ss-demo-note">__DEMO_NOTE__</div>
         </div>
+      </section>
 
-        <div class="home-demo-caption" aria-hidden="true"><span>↗</span> __DEMO_CAPTION__</div>
-      </div>
-
-      <div class="home-showcase-copy">
-        <span class="home-showcase-kicker">SymptoSense · <em>__TRUSTED_LABEL__</em></span>
-        <span class="home-showcase-line" aria-hidden="true"></span>
-        <h1 id="homeTitle"><span>__TITLE1__</span><span>__TITLE2__</span></h1>
-        <p class="home-showcase-sub">__SUB__</p>
-        <p class="home-showcase-desc">__DESC__</p>
-        <div class="home-showcase-actions">
-          <a class="home-primary-cta" href="/chat"><span>__START__</span><b aria-hidden="true">←</b></a>
-          <button class="home-secondary-cta" type="button" onclick="asstToggle()"><span aria-hidden="true">💬</span> __ASK__</button>
+      <section class="ss-home-section" id="services" aria-labelledby="coreTitle">
+        <div class="ss-section-head"><span class="eyebrow">__CORE_EYE__</span><h2 id="coreTitle">__CORE_H__</h2></div>
+        <div class="ss-core-grid">
+          <a class="ss-core-card sym" href="/chat"><span class="ss-core-icon">🩺</span><h3>__SYM_H__</h3><p>__SYM_P__</p><span class="ss-core-open">__OPEN__ ←</span></a>
+          <a class="ss-core-card ai" href="/home?assistant=general" onclick="openAsstGeneral();return false;"><span class="ss-core-icon">🤖</span><h3>__AI_H__</h3><p>__AI_P__</p><span class="ss-core-open">__OPEN__ ←</span></a>
+          <a class="ss-core-card lab" href="/blood"><span class="ss-core-icon">🧪</span><h3>__LAB_H__</h3><p>__LAB_P__</p><span class="ss-core-open">__OPEN__ ←</span></a>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <div class="v2-section-head" id="services"><div><h2>__CORE_H__</h2><p class="muted">__CORE_P__</p></div></div>
-    <div class="svc-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
-      <a class="svc-card" href="/chat"><span class="svc-ic">🩺</span><h3>__SYM_H__</h3><p>__SYM_P__</p><span class="svc-btn">__OPEN__</span></a>
-      <a class="svc-card" href="/home?assistant=general" onclick="openAsstGeneral();return false;"><span class="svc-ic">🤖</span><h3>__AI_H__</h3><p>__AI_P__</p><span class="svc-btn">__OPEN__</span></a>
-      <a class="svc-card" href="/blood"><span class="svc-ic">🧪</span><h3>__LAB_H__</h3><p>__LAB_P__</p><span class="svc-btn">__OPEN__</span></a>
-    </div>
+      <section class="ss-tools-panel" aria-labelledby="toolsTitle">
+        <div class="ss-tools-head"><div><h2 id="toolsTitle">__TOOLS_TITLE__</h2><p>__TOOLS_SUB__</p></div><span class="ss-tools-all" aria-hidden="true">__ALL_TOOLS__ ←</span></div>
+        <div class="ss-tools-scroll" role="region" aria-label="__TOOLS_TITLE__" tabindex="0">
+          <a class="ss-tool" href="/search"><span class="ic">🔎</span><b>__SEARCH__</b><small>__SEARCH_S__</small></a>
+          <a class="ss-tool" href="/family"><span class="ic">👨‍👩‍👧</span><b>__FAMILY__</b><small>__FAMILY_S__</small></a>
+          <a class="ss-tool" href="/calculators"><span class="ic">🧮</span><b>__CALC__</b><small>__CALC_S__</small></a>
+          <a class="ss-tool" href="/meds"><span class="ic">💊</span><b>__MEDS__</b><small>__MEDS_S__</small></a>
+          <a class="ss-tool" href="/checkin"><span class="ic">📋</span><b>__CHECK__</b><small>__CHECK_S__</small></a>
+          <a class="ss-tool" href="/home?assistant=mh" onclick="openAsstMH();return false;"><span class="ic">🧠</span><b>__MENTAL__</b><small>__MENTAL_S__</small></a>
+          <a class="ss-tool" href="/firstaid"><span class="ic">🩹</span><b>__FIRSTAID__</b><small>__FIRSTAID_S__</small></a>
+          <a class="ss-tool" href="/emergency"><span class="ic">🚑</span><b>__EMERGENCY__</b><small>__EMERGENCY_S__</small></a>
+        </div>
+        <div class="ss-tools-dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      </section>
 
-    <section class="explore-tools" aria-labelledby="exploreToolsTitle">
-      <div class="explore-tools-head">
-        <div>
-          <h2 id="exploreToolsTitle">__TOOLS_TITLE__</h2>
-          <p>__TOOLS_SUB__</p>
+      <section class="ss-how" aria-labelledby="howTitle">
+        <div class="ss-how-head"><h2 id="howTitle">__HOW_TITLE__</h2><p>__HOW_SUB__</p></div>
+        <div class="ss-how-flow">
+          <div class="ss-how-step"><span class="ss-how-num">1</span><span class="ss-how-icon">🔎</span><b>__HOW1__</b><small>__HOW1S__</small></div>
+          <div class="ss-how-step"><span class="ss-how-num">2</span><span class="ss-how-icon">🧠</span><b>__HOW2__</b><small>__HOW2S__</small></div>
+          <div class="ss-how-step"><span class="ss-how-num">3</span><span class="ss-how-icon">📄</span><b>__HOW3__</b><small>__HOW3S__</small></div>
+          <div class="ss-how-step"><span class="ss-how-num">4</span><span class="ss-how-icon">🛡️</span><b>__HOW4__</b><small>__HOW4S__</small></div>
         </div>
-        <span class="explore-tools-hint" aria-hidden="true">__TOOLS_HINT__</span>
-      </div>
+      </section>
 
-      <div class="explore-tools-scroll" role="region" aria-label="__TOOLS_TITLE__" tabindex="0">
-        <div class="explore-tools-page">
-          <a class="explore-tool-card" href="/meds"><span class="explore-tool-icon">💊</span><b>__MEDS__</b></a>
-          <a class="explore-tool-card" href="/calculators"><span class="explore-tool-icon">🧮</span><b>__CALC__</b></a>
-          <a class="explore-tool-card" href="/family"><span class="explore-tool-icon">👨‍👩‍👧</span><b>__FAMILY__</b></a>
-          <a class="explore-tool-card" href="/search"><span class="explore-tool-icon">🔎</span><b>__SEARCH__</b></a>
-        </div>
-        <div class="explore-tools-page">
-          <a class="explore-tool-card" href="/sources"><span class="explore-tool-icon">📚</span><b>__SOURCES__</b></a>
-          <a class="explore-tool-card" href="/home?assistant=mh" onclick="openAsstMH();return false;"><span class="explore-tool-icon">🧠</span><b>__MENTAL__</b></a>
-          <a class="explore-tool-card" href="/relax"><span class="explore-tool-icon">🌿</span><b>__RELAX__</b></a>
-          <a class="explore-tool-card" href="/checkin"><span class="explore-tool-icon">📋</span><b>__CHECK__</b></a>
-        </div>
-        <div class="explore-tools-page">
-          <a class="explore-tool-card" href="/tips"><span class="explore-tool-icon">💡</span><b>__TIPS__</b></a>
-          <a class="explore-tool-card" href="/firstaid"><span class="explore-tool-icon">🩹</span><b>__FIRSTAID__</b></a>
-          <a class="explore-tool-card" href="/emergency"><span class="explore-tool-icon">🚑</span><b>__EMERGENCY__</b></a>
-          <a class="explore-tool-card" href="/about-us"><span class="explore-tool-icon">ℹ️</span><b>__ABOUT__</b></a>
-        </div>
-      </div>
-      <div class="explore-tools-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-    </section>
-
-    <section class="home-how" aria-labelledby="homeHowTitle"><h2 id="homeHowTitle">__HOW_TITLE__</h2><p>__HOW_SUB__</p><div class="home-how-flow"><div class="home-how-step"><span>1️⃣</span>__HOW1__<small>__HOW1S__</small></div><div class="home-how-step"><span>2️⃣</span>__HOW2__<small>__HOW2S__</small></div><div class="home-how-step"><span>3️⃣</span>__HOW3__<small>__HOW3S__</small></div><div class="home-how-step"><span>4️⃣</span>__HOW4__<small>__HOW4S__</small></div></div></section>
+      <section class="ss-sources-strip" aria-labelledby="sourcesTitle">
+        <div class="ss-sources-copy"><h3 id="sourcesTitle">__SRC_H__</h3><p>__SRC_P__</p><a class="ss-source-more" href="/sources">__ALL_SOURCES__ ←</a></div>
+        <div class="ss-sources-logos" aria-label="__SRC_H__"><span class="ss-source-badge"><i>🇸🇦</i>وزارة الصحة</span><span class="ss-source-badge"><i>🌐</i>WHO</span><span class="ss-source-badge"><i>▣</i>NHS</span><span class="ss-source-badge"><i>▣</i>CDC</span><span class="ss-source-badge"><i>♡</i>Mayo Clinic</span></div>
+      </section>
+    </main>
     """
-    replacements = {
-        "__TITLE1__": bi("افهم أعراضك.", "Understand your symptoms."),
-        "__TITLE2__": bi("اعرف خطوتك التالية.", "Know your next step."),
-        "__TRUSTED_LABEL__": bi("مساعدك لفهم الأعراض", "Your guide to understanding symptoms"),
-        "__TRUST_COPY__": bi("معلومات صحية مدعومة بمصادر طبية موثوقة", "Health information supported by trusted medical sources"),
-        "__TRUST_SOURCE__": bi("مصادر طبية موثوقة", "Trusted medical sources"),
-        "__TRUST_PRIVACY__": bi("خصوصية واضحة", "Clear privacy"),
-        "__TRUST_LANG__": bi("عربي / English", "Arabic / English"),
-        "__TRUST_NODIAG__": bi("ليس تشخيصًا طبيًا", "Not a medical diagnosis"),
-        "__VIEW_SOURCES__": bi("عرض المصادر الطبية ←", "View medical sources →"),
-        "__SUB__": bi("حلّل أعراضك بطريقة ذكية، وتعرّف على مستوى الخطورة والخطوة المناسبة لك.", "Analyze your symptoms intelligently and understand your risk level and the right next step."),
-        "__DESC__": bi("معلومات صحية موثوقة تساعدك على فهم الأعراض واتخاذ قرار أفضل، دون تشخيص طبي.", "Trusted health information to help you understand symptoms and make a better-informed decision, without a medical diagnosis."),
-        "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد الذكي", "Ask the AI assistant"),
-        "__DEMO_ARIA__": bi("مثال توضيحي لنتيجة تحليل الأعراض", "Illustrative symptom analysis result"),
-        "__DATA_CHIP__": bi("تحليل ذكي للبيانات", "Smart data analysis"),
-        "__AI_CHIP__": bi("مساعد ذكي", "AI assistant"),
-        "__HEALTH_CHIP__": bi("صحة رقمية أفضل", "Better digital health"),
-        "__DEMO_TITLE__": bi("نتيجة تحليل الأعراض", "Symptom analysis result"),
-        "__RISK_LABEL__": bi("مستوى الخطورة", "Risk level"),
-        "__RISK_LOW__": bi("منخفض", "Low"),
-        "__RISK_NOTE__": bi("لا تظهر علامات مقلقة حاليًا", "No concerning warning signs currently"),
-        "__POSSIBLE_TITLE__": bi("الاحتمالات المحتملة", "Possible explanations"),
-        "__COND1__": bi("إجهاد عام", "General fatigue"), "__COND1S__": bi("احتمال مرتفع", "Higher likelihood"),
-        "__COND2__": bi("صداع توتري", "Tension headache"), "__COND2S__": bi("احتمال متوسط", "Moderate likelihood"),
-        "__COND3__": bi("نقص النوم", "Sleep deprivation"), "__COND3S__": bi("احتمال ممكن", "Possible"),
-        "__NEXT_TITLE__": bi("ماذا أفعل الآن؟", "What should I do now?"),
-        "__NEXT_COPY__": bi("احرص على الراحة وشرب السوائل ومراقبة الأعراض. إذا استمرت أو ازدادت، استشر مختصًا.", "Rest, stay hydrated, and monitor your symptoms. If they persist or worsen, consult a professional."),
-        "__SOURCES_PREVIEW__": bi("مصادر طبية موثوقة", "Trusted medical sources"),
-        "__MOH__": bi("وزارة الصحة", "Saudi MOH"),
-        "__ALL_SOURCES__": bi("عرض جميع المصادر ←", "View all sources →"),
-        "__DEMO_CAPTION__": bi("مثال على نتيجة التحليل", "Example analysis result"),
-        "__CORE_H__": bi("الخدمات الرئيسية", "Core services"), "__CORE_P__": bi("ثلاثة مسارات واضحة لما تحتاجه غالبًا.", "Three clear paths for the things you need most."),
-        "__SYM_H__": bi("تحليل الأعراض", "Symptom analysis"), "__SYM_P__": bi("تحليل الأعراض وتقييم مستوى الخطورة بخطوات واضحة.", "Review symptoms and assess risk through clear steps."),
-        "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("أسئلة صحية، صحة نفسية، أدوية وتحاليل في تجربة تفاعلية.", "Interactive support for health questions, mental wellbeing, medicines, and labs."),
-        "__LAB_H__": bi("تحليل التحاليل", "Lab analysis"), "__LAB_P__": bi("مساعدة مبسطة وتثقيفية لفهم نتائج التحاليل.", "Simple, educational help understanding laboratory results."),
-        "__OPEN__": bi("فتح الخدمة", "Open service"), "__MORE__": bi("الخدمات الأخرى", "More services"),
-        "__TOOLS_TITLE__": bi("استكشف أدوات SymptoSense", "Explore SymptoSense tools"),
-        "__TOOLS_SUB__": bi("كل ما تحتاجه لفهم صحتك ومتابعتها في مكان واحد.", "Everything you need to understand and track your health in one place."),
-        "__TOOLS_HINT__": bi("اسحب للمزيد ←", "Swipe for more →"),
-        "__HOW_TITLE__": bi("كيف يعمل SymptoSense؟", "How does SymptoSense work?"),
-        "__HOW_SUB__": bi("مسار واضح من أول عرض إلى الخطوة التالية.", "A clear path from the first symptom to the next step."),
-        "__HOW1__": bi("أدخل الأعراض", "Enter symptoms"), "__HOW1S__": bi("صف ما تشعر به والبيانات الأساسية.", "Describe what you feel and basic context."),
-        "__HOW2__": bi("أسئلة متابعة", "Follow-up questions"), "__HOW2S__": bi("أسئلة تتكيف مع إجاباتك.", "Questions adapt to your answers."),
-        "__HOW3__": bi("نقيّم الخطورة", "Assess risk"), "__HOW3S__": bi("تحديد مستوى الخطورة وعلامات التنبيه.", "Identify risk level and warning signs."),
-        "__HOW4__": bi("نوضح الخطوة التالية", "Explain the next step"), "__HOW4S__": bi("توجيه واضح مع المصادر الطبية.", "Clear guidance with medical sources."),
-        "__MEDS__": bi("معلومات الأدوية", "Medicine information"), "__CALC__": bi("الحاسبات الصحية", "Health calculators"),
-        "__FAMILY__": bi("ملفات العائلة", "Family profiles"), "__SEARCH__": bi("البحث الصحي", "Health search"),
-        "__SOURCES__": bi("المصادر الطبية", "Medical sources"), "__MENTAL__": bi("الصحة النفسية", "Mental wellbeing"),
-        "__RELAX__": bi("تمارين الاسترخاء", "Relaxation"), "__CHECK__": bi("تسجيل المزاج", "Mood check-in"),
-        "__TIPS__": bi("نصائح صحية", "Health tips"), "__FIRSTAID__": bi("الإسعافات الأولية", "First aid"),
-        "__EMERGENCY__": bi("الطوارئ", "Emergency"), "__ABOUT__": bi("عن SymptoSense", "About SymptoSense"),
+    repl = {
+      "__KICKER__": bi("مساعدك لفهم الأعراض", "Your guide to understanding symptoms"),
+      "__TITLE1__": bi("افهم أعراضك.", "Understand your symptoms."),
+      "__TITLE2__": bi("اعرف خطوتك التالية.", "Know your next step."),
+      "__LEAD__": bi("مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة وآمنة.", "A smart health assistant that helps you understand symptoms and assess risk in a simple, safe way."),
+      "__DESC__": bi("معلومات صحية موثوقة تساعدك على اتخاذ قرار أوضح، دون تشخيص طبي.", "Trusted health information to support clearer decisions, without a medical diagnosis."),
+      "__START__": bi("ابدأ تحليل الأعراض", "Start symptom analysis"), "__ASK__": bi("اسأل المساعد الذكي", "Ask the AI assistant"),
+      "__TRUST_ARIA__": bi("عناصر الثقة", "Trust features"), "__TRUST_INFO__": bi("معلومات موثوقة", "Trusted information"), "__TRUST_PRIV__": bi("خصوصيتك أولًا", "Privacy first"), "__TRUST_NODIAG__": bi("بدون تشخيص طبي", "No medical diagnosis"),
+      "__DEMO_ARIA__": bi("مثال توضيحي لنتيجة تحليل الأعراض", "Illustrative symptom analysis result"), "__DATA__": bi("تحليل ذكي للبيانات", "Smart data analysis"), "__AI__": bi("مساعد ذكي", "AI assistant"), "__DIGITAL__": bi("صحة رقمية أفضل", "Better digital health"),
+      "__RESULT_TITLE__": bi("نتيجة تحليل الأعراض", "Symptom analysis result"), "__RISK_LABEL__": bi("مستوى الخطورة", "Risk level"), "__LOW__": bi("منخفض", "Low"), "__LOW_NOTE__": bi("لا تظهر علامات مقلقة حاليًا", "No concerning warning signs currently"),
+      "__POSSIBLE__": bi("الاحتمالات المحتملة", "Possible explanations"), "__C1__": bi("نزلة برد", "Common cold"), "__C1S__": bi("احتمال مرتفع", "Higher likelihood"), "__C2__": bi("التهاب الحلق الفيروسي", "Viral sore throat"), "__C2S__": bi("احتمال متوسط", "Moderate likelihood"), "__C3__": bi("حساسية موسمية", "Seasonal allergy"), "__C3S__": bi("احتمال بسيط", "Lower likelihood"),
+      "__NOW__": bi("ماذا أفعل الآن؟", "What should I do now?"), "__NOW_TEXT__": bi("الراحة، شرب السوائل، ومراقبة الأعراض. إذا استمرت أو ازدادت، استشر مختصًا.", "Rest, hydrate, and monitor symptoms. Seek medical review if they persist or worsen."), "__TRUSTED_SOURCES__": bi("مصادر طبية موثوقة", "Trusted medical sources"), "__MOH__": bi("وزارة الصحة", "Saudi MOH"), "__ALL_SOURCES__": bi("عرض جميع المصادر", "View all sources"), "__DEMO_NOTE__": bi("معلومات مبسطة لخطوات أوضح", "Simple information for clearer next steps"),
+      "__CORE_EYE__": bi("ابدأ من هنا", "Start here"), "__CORE_H__": bi("الخدمات الرئيسية", "Core services"),
+      "__SYM_H__": bi("تحليل الأعراض", "Symptom analysis"), "__SYM_P__": bi("تحليل الأعراض وتقييم مستوى الخطورة بخطوات واضحة.", "Analyze symptoms and assess risk through clear steps."), "__AI_H__": bi("المساعد الذكي", "AI assistant"), "__AI_P__": bi("محادثة صحية تفاعلية تساعدك على فهم المعلومات وطرح أسئلة متابعة بطريقة مبسطة.", "An interactive health conversation that helps explain information and answer follow-up questions simply."), "__LAB_H__": bi("تحليل التحاليل", "Lab analysis"), "__LAB_P__": bi("مساعدة مبسطة وتثقيفية لفهم نتائج التحاليل الطبية.", "Simple educational help understanding lab results."), "__OPEN__": bi("فتح الخدمة", "Open service"),
+      "__TOOLS_TITLE__": bi("استكشف أدوات SymptoSense", "Explore SymptoSense tools"), "__TOOLS_SUB__": bi("كل ما تحتاجه لفهم صحتك ومتابعتها في مكان واحد.", "Everything you need to understand and track your health in one place."), "__ALL_TOOLS__": bi("اسحب للمزيد", "Swipe for more"),
+      "__SEARCH__": bi("البحث الصحي", "Health search"), "__SEARCH_S__": bi("معلومات موثوقة", "Trusted information"), "__FAMILY__": bi("ملفات العائلة", "Family profiles"), "__FAMILY_S__": bi("إدارة صحة العائلة", "Family health"), "__CALC__": bi("الحاسبات الصحية", "Health calculators"), "__CALC_S__": bi("حسابات دقيقة", "Useful calculations"), "__MEDS__": bi("معلومات الأدوية", "Medicine information"), "__MEDS_S__": bi("استخدام آمن", "Safer use"), "__CHECK__": bi("متابعة الحالة اليومية", "Daily check-in"), "__CHECK_S__": bi("سجل وتابع تقدمك", "Track your progress"), "__MENTAL__": bi("الصحة النفسية", "Mental wellbeing"), "__MENTAL_S__": bi("دعم وتوعية", "Support & awareness"), "__FIRSTAID__": bi("الإسعافات الأولية", "First aid"), "__FIRSTAID_S__": bi("خطوات أولية", "First steps"), "__EMERGENCY__": bi("الطوارئ", "Emergency"), "__EMERGENCY_S__": bi("أرقام وموقع", "Numbers & location"),
+      "__HOW_TITLE__": bi("كيف يعمل SymptoSense؟", "How does SymptoSense work?"), "__HOW_SUB__": bi("من الأعراض إلى خطوة تالية واضحة في أربع مراحل.", "From symptoms to a clear next step in four stages."), "__HOW1__": bi("أدخل الأعراض", "Enter symptoms"), "__HOW1S__": bi("صف ما تشعر به والمعلومات الأساسية.", "Describe what you feel and the basics."), "__HOW2__": bi("تحليل ذكي", "Smart analysis"), "__HOW2S__": bi("نستخدم أسئلة متابعة وقواعد سلامة.", "Follow-up questions and safety rules."), "__HOW3__": bi("احصل على النتائج", "Get results"), "__HOW3S__": bi("تعرف على مستوى الخطورة والاحتمالات.", "See risk level and possibilities."), "__HOW4__": bi("اتخذ الخطوة المناسبة", "Take the next step"), "__HOW4S__": bi("إرشادات واضحة مدعومة بمصادر موثوقة.", "Clear guidance supported by trusted sources."),
+      "__SRC_H__": bi("مصادر طبية موثوقة", "Trusted medical sources"), "__SRC_P__": bi("معلوماتنا مبنية على جهات ومراجع طبية عالمية موثوقة.", "Our information is supported by reputable medical organizations and references."),
     }
-    for key, value in replacements.items():
-        body = body.replace(key, value)
+    for k,v in repl.items(): body = body.replace(k,v)
     return _page(_t("title_landing"), body, extra_css=HOME_CSS)
-
 
 def _tools_html(t):
     return """
@@ -6055,7 +5660,7 @@ def chat_page():
           {label:TT('clar_no'), fn:function(){
             add(TT('clar_no'),'user');
             differentialNegatives.push(d.symptom_slug);
-            state.notes += (state.notes?' ':'') + d.question + ' -> ' + (LANG==='ar'?'لا':'No');
+            state.notes += (state.notes?' ':'') + (LANG==='ar'?'تم نفي عرض متابعة.':'A follow-up symptom was denied.');
             startDifferentialQuestions();
           }}
         ]);
@@ -6097,7 +5702,7 @@ def chat_page():
           }},
           {label:TT('clar_no'), fn:()=>{
             add(TT('clar_no'),'user');
-            state.notes += (state.notes ? ' ' : '') + q + ' -> ' + (LANG==='en' ? 'No' : 'لا');
+            state.notes += (state.notes ? ' ' : '') + (LANG==='en' ? 'A follow-up symptom was denied.' : 'تم نفي عرض متابعة.');
             walkClarNode(node.no || null);
           }}
         ]);
@@ -7026,17 +6631,27 @@ def chat_page():
     async function findHospitals() {
       clearOpts();
       add(TT('locating'), 'bot');
+      const mapsFallback = 'https://www.google.com/maps/search/hospitals+near+me';
+      if (!window.isSecureContext || !navigator.geolocation) {
+        addHtml(esc(G(TT('loc_err_f'), TT('loc_err_m'))) + '<br><a class="btn ghost small" href="'+mapsFallback+'" target="_blank" rel="noopener noreferrer">'+esc(TT('map'))+'</a>', 'bot');
+        return;
+      }
       navigator.geolocation.getCurrentPosition(async pos => {
-        const r = await fetch('/api/hospitals', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({lat:pos.coords.latitude, lng:pos.coords.longitude})
-        });
-        const d = await r.json();
-        if (!d.hospitals || !d.hospitals.length) { add(TT('no_hosp'), 'bot'); return; }
-        let h = '<div class="sec-title">' + TT('hosp_title') + '</div>';
-        d.hospitals.forEach(x => h += '<div class="rec-item"><b>' + esc(x.name) + '</b> — ' + x.distance_km + TT('km') + '<br><a href="' + esc(x.maps_url) + '" target="_blank">' + TT('map') + '</a></div>');
-        addHtml(h, 'result');
-      }, () => { add(G(TT('loc_err_f'), TT('loc_err_m')), 'bot'); });
+        try {
+          const r = await fetch('/api/hospitals', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:pos.coords.latitude,lng:pos.coords.longitude})});
+          const d = await r.json();
+          if (!d.ok || !d.hospitals || !d.hospitals.length) throw new Error('no_hospitals');
+          let h = '<div class="sec-title">' + TT('hosp_title') + '</div>';
+          d.hospitals.forEach(function(x){
+            const dist = (x.distance_km===null || x.distance_km===undefined || x.distance_km==='') ? '' : (' — ' + esc(x.distance_km) + TT('km'));
+            h += '<div class="rec-item"><b>' + esc(x.name) + '</b>' + dist + '<br><a href="' + esc(x.maps_url) + '" target="_blank" rel="noopener noreferrer">' + TT('map') + '</a></div>';
+          });
+          addHtml(h,'result');
+        } catch(e) { addHtml(esc(TT('no_hosp'))+'<br><a class="btn ghost small" href="'+mapsFallback+'" target="_blank" rel="noopener noreferrer">'+esc(TT('map'))+'</a>','bot'); }
+      }, function(err) {
+        const reason = err && err.code===1 ? (LANG==='ar'?'لم يتم السماح بالوصول للموقع. فعّل إذن الموقع من إعدادات Safari ثم حاول مرة أخرى.':'Location permission is off. Enable it in Safari settings and try again.') : G(TT('loc_err_f'), TT('loc_err_m'));
+        addHtml(esc(reason)+'<br><a class="btn ghost small" href="'+mapsFallback+'" target="_blank" rel="noopener noreferrer">'+esc(TT('map'))+'</a>','bot');
+      }, {enableHighAccuracy:false, timeout:20000, maximumAge:300000});
     }
     function restart() {
       Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null;
@@ -8727,6 +8342,7 @@ SEARCH_CSS = """
 .sea-doctor { background: #EAF4FF; border: 1px solid #DCEBFA; color: #123B70; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
 .sea-query-context { background:#F8FBFF; border:1px solid #DCEBFA; border-radius:14px; padding:10px 12px; margin:0 0 14px; color:#40566F; font-size:13px; line-height:1.7; }
 .sea-query-context b { color:#123B70; }
+.sea-direct-answer{background:linear-gradient(135deg,#F4FAFF,#EEF8FF);border:1px solid #CFE6F7;border-radius:16px;padding:15px 16px;margin:0 0 14px;color:#234B70;font-size:14.5px;line-height:1.9}.sea-direct-answer b{display:block;color:#123B70;margin-bottom:5px;font-size:15px}
 .sea-topic-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
 .sea-topic-card { border:1px solid #DCEBFA; border-radius:16px; padding:16px; background:#FBFDFF; min-width:0; }
 .sea-topic-head { display:flex; align-items:center; gap:9px; margin-bottom:10px; }
@@ -8836,6 +8452,9 @@ def search_page():
       h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(r.title) + '</div><span class="sr-cat">' + esc(catTxt(r.category)) + '</span></div></div>';
       if (r.original_query) {
         h += '<div class="sea-query-context"><b>' + (API_LANG()==='ar'?'بحثك: ':'Your search: ') + '</b>' + esc(r.original_query) + '</div>';
+      }
+      if (r.direct_answer) {
+        h += '<div class="sea-direct-answer"><b>' + (API_LANG()==='ar'?'إجابة على سؤالك':'Answer to your question') + '</b>' + esc(r.direct_answer) + '</div>';
       }
       if (r.what) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
 
@@ -9524,12 +9143,14 @@ def emergency_page():
     <div class="warn em-safety">__EMSAFETY__</div>
     <script>
     const EM = __PT__;
+    function escHtmlGeo(value){return String(value==null?'':value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
     async function nearMe() {
       const msg = document.getElementById('geoMsg');
       const list = document.getElementById('geoList');
       msg.textContent = EM.em_geo_searching;
       list.innerHTML = '';
-      if (!navigator.geolocation) { msg.textContent = EM.em_geo_err; return; }
+      const mapsFallback = 'https://www.google.com/maps/search/hospitals+near+me';
+      if (!window.isSecureContext || !navigator.geolocation) { msg.innerHTML = escHtmlGeo(EM.em_geo_err) + '<br><a class="btn ghost small" target="_blank" rel="noopener noreferrer" href="'+mapsFallback+'">🗺️ '+escHtmlGeo(EM.em_geo_btn)+'</a>'; return; }
       navigator.geolocation.getCurrentPosition(async function(pos) {
         try {
           const r = await fetch('/api/hospitals', {method:'POST', headers:{'Content-Type':'application/json'},
@@ -9542,7 +9163,7 @@ def emergency_page():
           let html = '<h3 style="margin-bottom:8px;">' + escHtml(EM.em_nearby) + '</h3>';
           d.hospitals.forEach(function(h) {
             const name = escHtml(h.name || '?');
-            const distance = Number.isFinite(Number(h.distance_km)) ? Number(h.distance_km).toFixed(1) : '';
+            const distance = (h.distance_km === null || h.distance_km === undefined || h.distance_km === '') ? '' : (Number.isFinite(Number(h.distance_km)) ? Number(h.distance_km).toFixed(1) : '');
             const mapsUrl = String(h.maps_url || '');
             let safeMap = '';
             try {
@@ -9552,13 +9173,16 @@ def emergency_page():
               if (parsed.protocol === 'https:' && allowedHost) safeMap = parsed.href;
             } catch (_) {}
             html += '<div class="hist-card"><div class="hist-head"><b>🏥 ' + name + '</b></div>' +
-              '<p class="muted">📍 ' + escHtml(distance) + ' km</p>' +
+              (distance ? '<p class="muted">📍 ' + escHtml(distance) + ' km</p>' : '') +
               (safeMap ? '<a class="btn ghost small" href="' + escHtml(safeMap) + '" target="_blank" rel="noopener noreferrer">🗺️ ' + escHtml(EM.em_geo_btn) + '</a>' : '') +
               '</div>';
           });
           list.innerHTML = html;
-        } catch(e) { msg.textContent = EM.em_geo_err; }
-      }, function() { msg.textContent = EM.em_geo_err; }, {timeout: 15000});
+        } catch(e) { msg.innerHTML = escHtmlGeo(EM.em_geo_err) + '<br><a class="btn ghost small" href="'+mapsFallback+'" target="_blank" rel="noopener noreferrer">🗺️ '+escHtmlGeo(EM.em_geo_btn)+'</a>'; }
+      }, function(err) {
+        const reason = err && err.code===1 ? (document.documentElement.lang==='en'?'Location permission is off. Enable it in browser settings and try again.':'إذن الموقع غير مفعّل. فعّله من إعدادات المتصفح ثم حاول مرة أخرى.') : EM.em_geo_err;
+        msg.innerHTML = escHtmlGeo(reason) + '<br><a class="btn ghost small" href="'+mapsFallback+'" target="_blank" rel="noopener noreferrer">🗺️ '+escHtmlGeo(EM.em_geo_btn)+'</a>';
+      }, {enableHighAccuracy:false,timeout:20000,maximumAge:300000});
     }
     </script>
     """
@@ -12780,6 +12404,27 @@ def api_analyze_data_quality():
         return _mk_error(exc, 500)
 
 
+def _sanitize_analysis_notes_for_safety(value):
+    """Remove negated follow-up question text before deterministic triage.
+
+    The chat used to store the full question followed by ``-> لا/No``.  That
+    meant phrases such as "blood in vomit" or "shortness of breath" remained
+    inside ``notes`` even when the user explicitly answered NO, causing false
+    red-flag matches.  Keep positive answers and free text, but strip only the
+    negated question fragments.
+    """
+    text = " ".join(str(value or "").split())[:2000]
+    if not text:
+        return ""
+    pattern = re.compile(r'[^؟?!]{0,420}[؟?]\s*->\s*(?:لا|no)\b', re.IGNORECASE)
+    previous = None
+    while previous != text:
+        previous = text
+        text = pattern.sub(' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text[:2000]
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     try:
@@ -12823,7 +12468,7 @@ def api_analyze():
             "conditions": data.get("conditions", ""),
             "medications": data.get("medications", ""),
             "allergies": data.get("allergies", ""),
-            "notes": str(data.get("notes") or "")[:2000],
+            "notes": _sanitize_analysis_notes_for_safety(data.get("notes")),
             "location": str(data.get("location") or "")[:200],
             "history_answered": bool(data.get("history_answered")),
             "member_id": member_id,
@@ -13964,6 +13609,107 @@ def api_feedback():
         return _mk_error(e, 500)
 
 
+def _health_search_question_answer(query, lang, search_result=None):
+    """Answer the user's *full* health-search question, preserving modifiers.
+
+    The structured glossary result is still returned below for sources and
+    topic details; this short answer prevents a natural-language question from
+    being reduced to a single symptom keyword.
+    """
+    q = " ".join(str(query or "").split())[:600]
+    if not q:
+        return ""
+    contextual = _assistant_contextual_health_answer(q, lang)
+    if contextual:
+        return _assistant_compact_response(contextual, lang, "search")
+
+    low = q.lower()
+    ar = lang != "en"
+    question_words = ("هل", "ليش", "لماذا", "متى", "كيف", "وش", "ايش", "ما سبب", "هل طبيعي", "ماذا") if ar else ("why", "when", "how", "is ", "are ", "can ", "could ", "what", "should", "does", "do ")
+    looks_like_question = ("?" in q or "؟" in q or len(q.split()) >= 4 or any(low.startswith(x) for x in question_words))
+    if not looks_like_question:
+        return ""
+
+    # First answer common question intents directly from the structured search
+    # result.  This keeps the search useful even when no external model is used.
+    if isinstance(search_result, dict):
+        causes = [str(x).strip() for x in (search_result.get("causes") or []) if str(x).strip()][:5]
+        worry = str(search_result.get("worry") or "").strip()
+        doctor = str(search_result.get("doctor") or "").strip()
+        what = str(search_result.get("what") or "").strip()
+        if ar and any(x in low for x in ("ليش", "لماذا", "ما سبب", "وش سبب", "ايش سبب")) and causes:
+            return "من الأسباب المحتملة المرتبطة بسؤالك: " + "، ".join(causes) + ". السبب الدقيق يعتمد على السياق الذي ذكرته ولا يمكن تأكيده من البحث وحده."
+        if (ar and any(x in low for x in ("متى أراجع", "متى اروح", "متى أروح", "متى يحتاج"))) or ((not ar) and any(x in low for x in ("when should", "when do i", "when to see"))):
+            detail = worry or doctor
+            if detail:
+                return detail
+        if (ar and any(x in low for x in ("وش اسوي", "وش أسوي", "ماذا أفعل", "ايش اسوي", "كيف اتصرف"))) or ((not ar) and any(x in low for x in ("what should i do", "what can i do", "how should i"))):
+            detail = doctor or what
+            if detail:
+                return detail
+        if (ar and any(x in low for x in ("هل طبيعي", "طبيعي؟", "هل هذا طبيعي"))) or ((not ar) and any(x in low for x in ("is this normal", "is it normal"))):
+            detail = what
+            if detail:
+                return detail + ((" راجع مختصًا إذا استمر العرض أو ساء." if ar else " Seek medical review if it persists or worsens."))
+
+    context = ""
+    if isinstance(search_result, dict):
+        safe = {
+            "title": search_result.get("title"),
+            "what": search_result.get("what"),
+            "causes": (search_result.get("causes") or [])[:5],
+            "worry": search_result.get("worry"),
+            "doctor": search_result.get("doctor"),
+            "matched_topics": [
+                {"title": t.get("title"), "what": t.get("what"), "causes": (t.get("causes") or [])[:4], "worry": t.get("worry")}
+                for t in (search_result.get("matched_topics") or [])[:3] if isinstance(t, dict)
+            ],
+        }
+        context = json.dumps(safe, ensure_ascii=False)[:5000]
+    try:
+        # Only send the exact free-text question to the external assistant when
+        # the user has already allowed service processing.
+        if not _service_consent_ok():
+            raise RuntimeError("service_consent_required_for_external_search_answer")
+        client = analysis_core._groq_client()
+        prompt = (
+            ("أنت مساعد بحث صحي توعوي داخل SymptoSense. أجب عن سؤال المستخدم كاملًا كما كُتب، ولا تختزل السؤال إلى اسم العرض فقط. "
+             "اعتبر كلمات التوقيت والمكان والسياق مثل: بعد الأكل، أثناء الدورة، في الحمل، عند الاستيقاظ، جهة الألم ومدته جزءًا أساسيًا من السؤال. "
+             "استخدم السياق الطبي المنظم المرفق إن كان مناسبًا، ولا تخترع تشخيصًا. أجب مباشرة في 2-4 جمل قصيرة، واذكر علامة خطر فقط إذا كانت مرتبطة بالسؤال.\n"
+             if ar else
+             "You are SymptoSense's educational health-search assistant. Answer the user's complete question exactly as asked; do not reduce it to one symptom keyword. "
+             "Treat timing, body location, pregnancy/period context, after-food context, and duration as essential modifiers. Use the structured context when relevant and do not diagnose. Answer directly in 2-4 short sentences.\n")
+            + ("سؤال المستخدم: " if ar else "User question: ") + q + "\n"
+            + ("سياق البحث المنظم: " if ar else "Structured search context: ") + context
+        )
+        r = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role":"user","content":prompt}],
+            temperature=0.25,
+            max_tokens=220,
+            timeout=8,
+        )
+        answer = str(r.choices[0].message.content or "").strip()
+        if answer:
+            return _assistant_compact_response(answer, lang, "search")
+    except Exception:
+        pass
+
+    # Useful local fallback: answer from the already-matched structured topic(s)
+    # while retaining the original query at the top of the UI.
+    if isinstance(search_result, dict):
+        topics = search_result.get("matched_topics") or []
+        if topics:
+            names = [str(t.get("title") or "").strip() for t in topics[:2] if str(t.get("title") or "").strip()]
+            if names:
+                return (("سؤالك يجمع بين " + " و".join(names) + ". المعلومات أدناه تشرح كل جزء، لكن العلاقة بينهما تعتمد على التوقيت والشدة والسياق الذي ذكرته.") if ar else
+                        ("Your question combines " + " and ".join(names) + ". The information below explains each part, while the connection depends on the timing, severity, and context you described."))
+        what = str(search_result.get("what") or "").strip()
+        if what:
+            return what
+    return ""
+
+
 @app.route("/api/search")
 def api_search():
     try:
@@ -14051,6 +13797,12 @@ def api_search():
                         "recognized_topics": [entity.get("name_en") if lang == "en" else entity.get("name_ar")],
                         "original_query": q,
                     }
+
+        if result:
+            result["original_query"] = q
+            direct_answer = _health_search_question_answer(q, lang, result)
+            if direct_answer:
+                result["direct_answer"] = direct_answer
 
         return jsonify({
             "ok": True,
@@ -14167,10 +13919,19 @@ def api_hospitals():
     except (TypeError, ValueError):
         return jsonify({"ok": False, "error": "إحداثيات غير صالحة." if _lang()=="ar" else "Invalid coordinates.", "error_code": "invalid_coordinates"}), 400
     try:
-        hospitals = geo_hospitals.find_nearby_hospitals(lat, lng)
-        return jsonify({"ok": True, "hospitals": hospitals})
-    except Exception as e:
-        return _mk_error(e, 502)
+        hospitals = geo_hospitals.find_nearby_hospitals(lat, lng) or []
+        if hospitals:
+            return jsonify({"ok": True, "hospitals": hospitals, "fallback": False})
+        # Overpass can be rate-limited or temporarily unavailable.  Keep the
+        # location feature useful by returning a map search centered on the
+        # coordinates the user explicitly shared for this request.
+        maps_url = f"https://www.google.com/maps/search/hospitals/@{lat:.6f},{lng:.6f},14z"
+        name = "فتح المستشفيات القريبة على الخريطة" if _lang()=="ar" else "Open nearby hospitals on the map"
+        return jsonify({"ok": True, "hospitals": [{"name": name, "distance_km": None, "maps_url": maps_url, "map_fallback": True}], "fallback": True})
+    except Exception:
+        maps_url = f"https://www.google.com/maps/search/hospitals/@{lat:.6f},{lng:.6f},14z"
+        name = "فتح المستشفيات القريبة على الخريطة" if _lang()=="ar" else "Open nearby hospitals on the map"
+        return jsonify({"ok": True, "hospitals": [{"name": name, "distance_km": None, "maps_url": maps_url, "map_fallback": True}], "fallback": True})
 
 
 @app.route("/api/meds", methods=["POST"])
