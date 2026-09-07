@@ -9151,6 +9151,23 @@ def checkin_page():
     return _page(_t("title_checkin"), body)
 
 # ---------------------------------------------------------------- routes
+@app.route("/health", methods=["GET"])
+def healthcheck():
+    """Lightweight Railway healthcheck endpoint.
+
+    Keep this route independent from the database, AI providers, background
+    workers, and user sessions so Railway can verify that the web process is
+    listening and ready to receive HTTP traffic.
+    """
+    return jsonify({"ok": True, "service": "SymptoSense", "status": "healthy"}), 200
+
+
+@app.route("/healthz", methods=["GET"])
+def healthcheck_alias():
+    """Compatibility alias for platforms/tools that use /healthz."""
+    return jsonify({"ok": True, "service": "SymptoSense", "status": "healthy"}), 200
+
+
 @app.route("/")
 def index():
     """Always keep the public root as the language-selection landing page.
