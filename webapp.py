@@ -13992,6 +13992,195 @@ def _health_search_relation_result(query, lang):
         "query_only": False,
     }
 
+
+def _health_search_context_relation_result(query, lang):
+    """Build a context-aware result for symptom + circumstance queries.
+
+    Examples: "الدوخة مع الحر", "صداع بعد الرياضة", "دوخة مع الصيام".
+    This runs before the fuzzy glossary so the modifier can never be silently
+    discarded.  Known contexts get a local safe explanation; unknown relation
+    phrases stay query-first and are handed to the AI/fallback as a whole.
+    """
+    import re as _re
+    q = " ".join(str(query or "").strip().split())[:600]
+    if not q:
+        return None
+    ar = lang != "en"
+    low = q.lower()
+    norm = _normalize_health_query_text(q)
+
+    # Only treat the text as a relation query when there is a meaningful
+    # modifier/link.  This prevents a simple topic such as "دوخة" from being
+    # unnecessarily wrapped in the relation pipeline.
+    relation_terms_ar = (" مع ", " بعد ", " قبل ", " وقت ", " اثناء ", " أثناء ", " عند ", " بسبب ", " من ")
+    relation_terms_en = (" with ", " after ", " before ", " during ", " when ", " from ", " because of ")
+    has_relation = any(x in (" " + low + " ") for x in (relation_terms_ar if ar else relation_terms_en))
+    if not has_relation:
+        return None
+
+    # Get the most likely symptom/topic only as supporting context.  The full
+    # query remains the primary intent/title.
+    try:
+        candidate = health_search.search_health(q, lang)
+    except Exception:
+        candidate = None
+    if not isinstance(candidate, dict) or candidate.get("category") != "symptom":
+        candidate = None
+
+    title = str((candidate or {}).get("title") or ("العرض" if ar else "the symptom")).strip()
+    worry = str((candidate or {}).get("worry") or "").strip()
+    doctor = str((candidate or {}).get("doctor") or "").strip()
+
+    # Heat / hot weather / sun exposure.  This is intentionally generic enough
+    # to work with dizziness, headache, nausea, weakness, etc., while still
+    # answering the *relationship* the user asked about.
+    heat_terms_ar = ("الحر", "حر", "الجو الحار", "الشمس", "حراره الجو", "حرارة الجو", "الحراره", "الحرارة")
+    heat_terms_en = ("heat", "hot weather", "hot day", "sun", "sun exposure")
+    has_heat = any(_normalize_health_query_text(x) in norm for x in heat_terms_ar) if ar else any(x in low for x in heat_terms_en)
+    if has_heat:
+        dizziness = (("دوخ" in norm) or ("دوار" in norm)) if ar else any(x in low for x in ("dizzy", "dizziness", "lightheaded", "vertigo"))
+        if ar:
+            if dizziness:
+                what = (
+                    "الدوخة مع الحر قد تكون مرتبطة بالجفاف أو الإجهاد الحراري؛ فالحر يزيد فقدان السوائل وقد يوسّع الأوعية الدموية، "
+                    "وهذا قد يسبب خفة الرأس أو عدم الاتزان خصوصًا مع الوقوف أو المجهود. انتقل لمكان أبرد، ارتح، واشرب سوائل على دفعات إذا لم يكن لديك مانع طبي من ذلك."
+                )
+                causes = [
+                    "الجفاف أو قلة شرب السوائل",
+                    "الإجهاد الحراري أو التعرض الطويل للجو الحار",
+                    "انخفاض الضغط مع الحر أو الوقوف المفاجئ",
+                    "قلة الأكل أو المجهود مع الحرارة",
+                ]
+                worry_text = (
+                    "اطلب مساعدة عاجلة إذا صاحبت الدوخة حالة إغماء أو تشوش، صعوبة في الكلام أو التنفس، ضعف شديد، قيء متكرر، "
+                    "جلد شديد السخونة مع تدهور الوعي، أو إذا لم تتحسن بعد التبريد والراحة والسوائل."
+                )
+                doctor_text = (
+                    "إذا كانت الدوخة تتكرر كلما تعرضت للحر، أو استمرت رغم التبريد وشرب السوائل، أو لديك أدوية للضغط/السكر أو مرض مزمن، فالأفضل مراجعة مختص."
+                )
+            else:
+                what = (
+                    f"سؤالك عن علاقة {title} بالحر. التعرض للجو الحار قد يزيد بعض الأعراض بسبب الجفاف والإجهاد الحراري وتغيّر ضغط الدم، "
+                    "لذلك المهم هو التوقيت: هل يبدأ العرض أثناء الحر أو المجهود ويتحسن بعد التبريد والراحة والسوائل؟"
+                )
+                causes = ["الجفاف", "الإجهاد الحراري", "المجهود مع الحرارة", "تغيّر ضغط الدم مع الحر"]
+                worry_text = worry or "اطلب تقييمًا عاجلًا إذا ظهر إغماء، تشوش، صعوبة تنفس، ضعف شديد أو تدهور سريع."
+                doctor_text = doctor or "راجع مختصًا إذا تكرر العرض مع الحر أو لم يتحسن بعد التبريد والراحة والسوائل."
+            return {
+                "key": "heat_context_relation",
+                "emoji": "☀️",
+                "category": "symptom",
+                "title": q,
+                "what": what,
+                "causes_label": "💡 لماذا قد يحدث مع الحر؟",
+                "causes": causes,
+                "worry": worry_text,
+                "doctor": doctor_text,
+                "sources": [],
+                "recognized_topics": [x for x in (title, "الحر") if x],
+                "original_query": q,
+                "contextual": True,
+                "relation_query": True,
+                "query_only": False,
+            }
+        else:
+            if dizziness:
+                what = (
+                    "Dizziness in hot weather can be related to dehydration or heat exhaustion. Heat increases fluid loss and can lower blood pressure, "
+                    "which may cause lightheadedness, especially with standing or exertion. Move somewhere cooler, rest, and sip fluids if you do not have a medical reason to restrict them."
+                )
+                causes = ["Dehydration", "Heat exhaustion", "Lower blood pressure in heat or on standing", "Exertion or not eating enough in hot weather"]
+                worry_text = (
+                    "Seek urgent help for fainting, confusion, trouble speaking or breathing, severe weakness, repeated vomiting, very hot skin with altered awareness, "
+                    "or symptoms that do not improve after cooling, rest, and fluids."
+                )
+                doctor_text = "If this keeps happening in heat, persists despite cooling/hydration, or you take blood-pressure/diabetes medicines or have a chronic condition, seek medical review."
+            else:
+                what = (
+                    f"Your question is about {title} in hot weather. Heat can worsen some symptoms through dehydration, heat strain, and blood-pressure changes; "
+                    "the timing and whether it improves with cooling/rest/fluids are useful clues."
+                )
+                causes = ["Dehydration", "Heat strain", "Exertion in hot weather", "Blood-pressure changes"]
+                worry_text = worry or "Seek urgent care for fainting, confusion, breathing difficulty, severe weakness, or rapid deterioration."
+                doctor_text = doctor or "Seek medical review if it repeatedly happens in heat or does not improve with cooling, rest, and fluids."
+            return {
+                "key": "heat_context_relation", "emoji": "☀️", "category": "symptom", "title": q,
+                "what": what, "causes_label": "💡 Why it can happen in heat", "causes": causes,
+                "worry": worry_text, "doctor": doctor_text, "sources": [],
+                "recognized_topics": [x for x in (title, "heat") if x], "original_query": q,
+                "contextual": True, "relation_query": True, "query_only": False,
+            }
+
+    # Exercise / exertion context.
+    exercise_terms_ar = ("رياضه", "رياضة", "تمرين", "التمرين", "مجهود", "المشي", "الجري")
+    exercise_terms_en = ("exercise", "workout", "running", "run", "walking", "exertion")
+    has_exercise = any(_normalize_health_query_text(x) in norm for x in exercise_terms_ar) if ar else any(x in low for x in exercise_terms_en)
+    if has_exercise:
+        if ar:
+            return {
+                "key": "exercise_context_relation", "emoji": "🏃", "category": "symptom", "title": q,
+                "what": f"سؤالك عن {title} مع أو بعد المجهود. قد يرتبط ذلك بالجفاف، شدة التمرين، قلة الأكل، أو تغيّر الضغط/السكر أثناء النشاط؛ التوقيت وشدة المجهود والأعراض المصاحبة مهمة.",
+                "causes_label": "💡 عوامل مرتبطة بالمجهود", "causes": ["الجفاف", "مجهود أعلى من المعتاد", "قلة الأكل أو انخفاض السكر", "تغيّر الضغط أثناء أو بعد التمرين"],
+                "worry": worry or "اطلب رعاية عاجلة إذا صاحب العرض ألم صدر، ضيق تنفس شديد، إغماء، ضعف مفاجئ أو خفقان شديد مستمر.",
+                "doctor": doctor or "راجع مختصًا إذا تكرر العرض مع التمرين أو أجبرك على إيقاف نشاطك باستمرار.",
+                "sources": [], "recognized_topics": [title, "المجهود"], "original_query": q,
+                "contextual": True, "relation_query": True, "query_only": False,
+            }
+        return {
+            "key": "exercise_context_relation", "emoji": "🏃", "category": "symptom", "title": q,
+            "what": f"Your question is about {title} with or after exertion. Dehydration, exercise intensity, not eating enough, or blood-pressure/glucose changes can contribute; timing and accompanying symptoms matter.",
+            "causes_label": "💡 Exertion-related factors", "causes": ["Dehydration", "Higher-than-usual exertion", "Not eating enough or low glucose", "Blood-pressure changes during/after exercise"],
+            "worry": worry or "Seek urgent care for chest pain, severe shortness of breath, fainting, sudden weakness, or persistent severe palpitations.",
+            "doctor": doctor or "Seek medical review if it repeatedly occurs with exercise or regularly forces you to stop activity.",
+            "sources": [], "recognized_topics": [title, "exercise"], "original_query": q,
+            "contextual": True, "relation_query": True, "query_only": False,
+        }
+
+    # Fasting / not eating context.
+    fasting_terms_ar = ("صيام", "صايم", "صائم", "جوع", "بدون اكل", "بدون أكل")
+    fasting_terms_en = ("fasting", "fasted", "not eating", "hungry")
+    has_fasting = any(_normalize_health_query_text(x) in norm for x in fasting_terms_ar) if ar else any(x in low for x in fasting_terms_en)
+    if has_fasting:
+        if ar:
+            return {
+                "key": "fasting_context_relation", "emoji": "🥤", "category": "symptom", "title": q,
+                "what": f"سؤالك عن {title} أثناء الصيام أو مع قلة الأكل. قد يرتبط ذلك بنقص السوائل، انخفاض السكر، قلة النوم أو الكافيين، ويعتمد التقييم على شدته والأدوية والأمراض المزمنة.",
+                "causes_label": "💡 عوامل محتملة أثناء الصيام", "causes": ["قلة السوائل", "انخفاض السكر أو تأخر الوجبات", "قلة النوم", "تغيّر تناول الكافيين"],
+                "worry": worry or "اطلب مساعدة عاجلة إذا حدث إغماء، تشوش، ضعف شديد أو أعراض انخفاض سكر شديد.",
+                "doctor": doctor or "إذا كان لديك سكري أو أدوية للسكر/الضغط أو يتكرر العرض أثناء الصيام، ناقش الأمر مع طبيبك.",
+                "sources": [], "recognized_topics": [title, "الصيام"], "original_query": q,
+                "contextual": True, "relation_query": True, "query_only": False,
+            }
+        return {
+            "key": "fasting_context_relation", "emoji": "🥤", "category": "symptom", "title": q,
+            "what": f"Your question is about {title} while fasting or not eating enough. Reduced fluids, low glucose, sleep changes, or caffeine changes may contribute; severity, medicines, and chronic conditions matter.",
+            "causes_label": "💡 Possible fasting-related factors", "causes": ["Low fluid intake", "Low glucose or delayed meals", "Sleep changes", "Caffeine changes"],
+            "worry": worry or "Seek urgent help for fainting, confusion, severe weakness, or severe low-blood-sugar symptoms.",
+            "doctor": doctor or "If you have diabetes, take glucose/blood-pressure medicines, or this repeatedly happens while fasting, discuss it with your clinician.",
+            "sources": [], "recognized_topics": [title, "fasting"], "original_query": q,
+            "contextual": True, "relation_query": True, "query_only": False,
+        }
+
+    # Unknown multi-part relationship: preserve the complete relationship and
+    # never substitute the standalone glossary card.  The AI answer (when
+    # permitted) will handle the relation; the local fallback remains honest.
+    return {
+        "key": "generic_context_relation",
+        "emoji": (candidate or {}).get("emoji") or "🩺",
+        "category": (candidate or {}).get("category") or "question",
+        "title": q,
+        "what": "",
+        "causes": [],
+        "worry": worry,
+        "doctor": doctor,
+        "sources": [],
+        "recognized_topics": [title] if title and title not in ("العرض", "the symptom") else [],
+        "original_query": q,
+        "contextual": True,
+        "relation_query": True,
+        "query_only": True,
+    }
+
 def _search_contextual_structured_result(query, lang):
     """Return a structured result for context-dependent health queries.
 
@@ -14013,6 +14202,10 @@ def _search_contextual_structured_result(query, lang):
     relation = _health_search_relation_result(q, lang)
     if relation is not None:
         return relation
+
+    context_relation = _health_search_context_relation_result(q, lang)
+    if context_relation is not None and context_relation.get("key") != "generic_context_relation":
+        return context_relation
 
     period_ar = ("الدوره", "الحيض", "الطمث")
     nausea_ar = ("غثيان", "لوعه", "لوعة", "قرفه", "ترجيع", "استفراغ", "قيء")
@@ -14089,6 +14282,8 @@ def _search_contextual_structured_result(query, lang):
             "contextual": True,
         }
 
+    if context_relation is not None:
+        return context_relation
     return None
 
 
@@ -14350,12 +14545,12 @@ def api_search():
             "ok": True,
             "result": result,
             "suggestions": health_search.suggestion_terms(lang),
-            "search_version": "query-first-v7-universal-answer",
+            "search_version": "query-first-v8-context-relations",
         })
         payload.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         payload.headers["Pragma"] = "no-cache"
         payload.headers["Expires"] = "0"
-        payload.headers["X-SymptoSense-Search-Version"] = "query-first-v7-universal-answer"
+        payload.headers["X-SymptoSense-Search-Version"] = "query-first-v8-context-relations"
         return payload
     except Exception as e:
         return _mk_error(e, 500)
