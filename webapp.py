@@ -8450,7 +8450,7 @@ def search_page():
       const box = document.getElementById('seaRes');
       let h = '<div class="sea-result">';
       const displayTitle = (r.query_first && r.original_query) ? r.original_query : r.title;
-      const displayCat = r.query_first ? (API_LANG()==='ar'?'إجابة على سؤالك':'Answer to your question') : catTxt(r.category);
+      const displayCat = r.query_first ? (API_LANG()==='ar'?'نتيجة مخصصة لسؤالك':'Tailored answer') : catTxt(r.category);
       h += '<div class="sr-head"><span class="sr-emoji">' + esc(r.emoji || '🩺') + '</span><div><div class="sr-title">' + esc(displayTitle || '') + '</div><span class="sr-cat">' + esc(displayCat) + '</span></div></div>';
       if (r.original_query && !r.query_first) {
         h += '<div class="sea-query-context"><b>' + (API_LANG()==='ar'?'بحثك: ':'Your search: ') + '</b>' + esc(r.original_query) + '</div>';
@@ -8458,7 +8458,7 @@ def search_page():
       if (r.direct_answer) {
         h += '<div class="sea-direct-answer"><b>' + (API_LANG()==='ar'?'إجابة على سؤالك':'Answer to your question') + '</b>' + esc(r.direct_answer) + '</div>';
       }
-      if (r.what && !r.query_only) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
+      if (r.what && !r.query_only && !r.direct_answer) h += '<div class="sr-sec"><b>' + esc(sT('sea_what')) + '</b>' + esc(r.what) + '</div>';
 
       if (r.matched_topics && r.matched_topics.length && !r.query_only) {
         h += '<div class="sea-topic-grid">';
@@ -13628,7 +13628,7 @@ def _health_search_topic_meta(query, lang):
     q = _normalize_health_query_text(query)
     ar = lang != "en"
     groups = [
-        (("دواء", "ادويه", "حبوب", "جرعه", "باراسيتامول", "مضاد", "medication", "medicine", "drug", "dose"), "💊", "medication"),
+        (("دواء", "ادويه", "حبوب", "جرعه", "باراسيتامول", "مضاد", "منجارو", "مونجارو", "تيرزيباتيد", "mounjaro", "tirzepatide", "medication", "medicine", "drug", "dose"), "💊", "medication"),
         (("تحليل", "فحص", "cbc", "wbc", "هيموغلوبين", "سكر تراكمي", "lab", "test", "blood", "cbc", "hba1c"), "🧪", "test"),
         (("حمل", "حامل", "الدوره", "الحيض", "الطمث", "pregnan", "period", "menstrual"), "🌸", "question"),
         (("نفسي", "قلق", "توتر", "مزاج", "اكتئاب", "نوم", "mental", "anxiety", "stress", "mood", "sleep"), "🧠", "question"),
@@ -13704,6 +13704,294 @@ def _health_search_query_shell(query, lang):
     }
 
 
+
+def _health_search_medication_context(query, lang):
+    """Find a medicine mentioned anywhere in the user's full search query.
+
+    The medication page normally searches an exact drug name. Health search is
+    different: users write relationships such as "دوخة مع مونجارو". This helper
+    extracts the medicine without discarding the rest of the question.
+    """
+    import re as _re
+    q = " ".join(str(query or "").strip().split())[:600]
+    if not q:
+        return None
+    norm = _normalize_health_query_text(q)
+    ar = lang != "en"
+
+    # A small high-confidence bridge for tirzepatide/Mounjaro. This is kept here
+    # because older production medication tables may not yet contain the brand.
+    mounjaro_aliases = (
+        "منجارو", "المنجارو", "مونجارو", "المونجارو", "تيرزيباتيد", "تيرزيباتايد",
+        "mounjaro", "tirzepatide",
+    )
+    if any(_normalize_health_query_text(a) in norm for a in mounjaro_aliases):
+        return {
+            "slug": "mounjaro_tirzepatide",
+            "name_ar": "مونجارو (تيرزيباتيد)",
+            "name_en": "Mounjaro (tirzepatide)",
+            "uses_ar": "دواء يُستخدم لتحسين التحكم بسكر الدم لدى بعض البالغين المصابين بالسكري من النوع الثاني وفق الوصفة الطبية.",
+            "uses_en": "A prescription medicine used to improve blood sugar control in some adults with type 2 diabetes.",
+            "warning_ar": "قد يسبب أعراضًا هضمية مثل الغثيان أو القيء أو الإسهال، وقد يؤدي فقدان السوائل إلى الجفاف. يزداد خطر انخفاض السكر عند استخدامه مع الإنسولين أو أدوية تحفّز إفراز الإنسولين.",
+            "warning_en": "It can cause gastrointestinal effects such as nausea, vomiting, or diarrhea, which may lead to dehydration. The risk of low blood sugar is higher when used with insulin or insulin secretagogues.",
+            "interact_ar": "يزداد خطر انخفاض السكر عند الجمع مع الإنسولين أو أدوية مثل السلفونيل يوريا؛ أي تعديل للجرعات يكون بواسطة الطبيب.",
+            "interact_en": "Low-blood-sugar risk is higher with insulin or medicines such as sulfonylureas; dose changes should be made by the prescriber.",
+            "sources": [
+                {"name": "FDA — Mounjaro Prescribing Information", "organization": "U.S. FDA", "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/215866s009lbl.pdf"},
+                {"name": "Mounjaro Prescribing Information", "organization": "Eli Lilly", "url": "https://pi.lilly.com/us/mounjaro-uspi.pdf"},
+            ],
+        }
+
+    # Reuse medicines already curated in the production database. Try short
+    # n-grams so "دوخة بعد المتفورمين" can still locate "متفورمين".
+    tokens = _re.findall(r"[A-Za-z0-9\u0621-\u064a]+", q)
+    candidates = []
+    for width in (3, 2, 1):
+        for i in range(0, max(0, len(tokens)-width+1)):
+            piece = " ".join(tokens[i:i+width]).strip()
+            if len(piece) >= 3:
+                candidates.append(piece)
+    seen = set()
+    for piece in candidates:
+        key = _normalize_health_query_text(piece)
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            d = medication_warnings.lookup_drug(piece)
+        except Exception:
+            d = None
+        if d:
+            return {
+                "slug": "local_medication",
+                "name_ar": d.get("name_ar") or piece,
+                "name_en": d.get("name_en") or piece,
+                "uses_ar": d.get("uses_ar") or "",
+                "uses_en": d.get("uses_en") or "",
+                "warning_ar": d.get("warning_ar") or "",
+                "warning_en": d.get("warning_en") or "",
+                "interact_ar": d.get("interact_ar") or "",
+                "interact_en": d.get("interact_en") or "",
+                "sources": [],
+            }
+    return None
+
+
+
+def _health_search_symptom_for_relation(query, lang, medication=None):
+    """Extract a symptom/health topic from a relationship query without losing the modifier.
+
+    The old implementation searched the whole phrase once.  A fuzzy matcher can
+    then choose one token and silently discard the medicine/context.  Here we
+    first try the full query, then a residual query with the recognized medicine
+    removed.  Only a real symptom result is accepted.
+    """
+    import re as _re
+    q = " ".join(str(query or "").strip().split())[:600]
+    if not q:
+        return None
+
+    probes = [q]
+    residual = q
+    med = medication or {}
+    names = [
+        med.get("name_ar"), med.get("name_en"),
+        "منجارو", "المنجارو", "مونجارو", "المونجارو", "تيرزيباتيد", "تيرزيباتايد",
+        "mounjaro", "tirzepatide",
+    ]
+    for name in names:
+        if not name:
+            continue
+        residual = _re.sub(_re.escape(str(name)), " ", residual, flags=_re.IGNORECASE)
+    # Remove only relationship glue; keep the symptom words and useful timing.
+    glue = (
+        r"\b(?:مع|بسبب|من|بعد|قبل|اثناء|أثناء|وقت|عند|هل|ليش|لماذا|وش|ايش|ماذا)\b"
+        if lang != "en" else
+        r"\b(?:with|from|because|after|before|during|while|when|is|does|can|why|what)\b"
+    )
+    residual = _re.sub(glue, " ", residual, flags=_re.IGNORECASE)
+    residual = " ".join(residual.split()).strip(" -–—؟?")
+    if residual and residual != q:
+        probes.append(residual)
+
+    seen = set()
+    for probe in probes:
+        key = _normalize_health_query_text(probe)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        try:
+            candidate = health_search.search_health(probe, lang)
+        except Exception:
+            candidate = None
+        if isinstance(candidate, dict) and candidate.get("category") == "symptom":
+            return candidate
+    return None
+
+
+def _strip_search_answer_heading(value, lang):
+    """Remove accidental duplicated labels such as 'إجابة على سؤالك'."""
+    import re as _re
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if lang == "en":
+        patterns = [r"^\s*(?:answer to your question|answer|summary)\s*[:\-–—]*\s*"]
+    else:
+        patterns = [r"^\s*(?:إجابة\s+على\s+سؤالك|الاجابة\s+على\s+سؤالك|الإجابة\s+على\s+سؤالك|الخلاصة)\s*[:\-–—]*\s*"]
+    for pat in patterns:
+        text = _re.sub(pat, "", text, count=1, flags=_re.IGNORECASE).strip()
+    return text
+
+def _health_search_relation_result(query, lang):
+    """Build a relationship-first result for medicine + symptom queries.
+
+    If a medicine is present, the search must never fall back to a standalone
+    symptom card.  The relationship itself becomes the primary result.
+    """
+    q = " ".join(str(query or "").strip().split())[:600]
+    if not q:
+        return None
+    ar = lang != "en"
+    med = _health_search_medication_context(q, lang)
+    if not med:
+        return None
+
+    symptom = _health_search_symptom_for_relation(q, lang, med)
+    med_name = str((med.get("name_ar") if ar else med.get("name_en")) or ("الدواء" if ar else "the medicine")).strip()
+    med_slug = med.get("slug") or ""
+    norm = _normalize_health_query_text(q)
+
+    # If no symptom was identified, still preserve the medicine context and
+    # answer the complete query rather than allowing a fuzzy unrelated card.
+    if not isinstance(symptom, dict):
+        return {
+            "key": "medicine_context_query",
+            "emoji": "💊",
+            "category": "medication",
+            "title": q,
+            "what": (
+                f"سؤالك يتعلق بـ {med_name}. سأتعامل مع العبارة كاملة، وليس كبحث عن كلمة واحدة."
+                if ar else
+                f"Your question concerns {med_name}. The full phrase is treated as the intent, not a single-keyword lookup."
+            ),
+            "causes_label": "💡 معلومات مرتبطة بالسؤال" if ar else "💡 Relevant information",
+            "causes": [],
+            "worry": "",
+            "doctor": "",
+            "sources": med.get("sources") or [],
+            "recognized_topics": [med_name],
+            "original_query": q,
+            "contextual": True,
+            "relation_query": True,
+            "query_only": False,
+        }
+
+    symptom_title = str(symptom.get("title") or ("العرض" if ar else "the symptom")).strip()
+
+    # High-confidence Mounjaro/tirzepatide + dizziness relationship.
+    dizziness = ("دوخ" in norm) if ar else any(x in q.lower() for x in ("dizzy", "dizziness", "lightheaded"))
+    if med_slug == "mounjaro_tirzepatide" and dizziness:
+        if ar:
+            return {
+                "key": "mounjaro_dizziness_relation",
+                "emoji": "💊",
+                "category": "medication",
+                "title": "الدوخة مع مونجارو (تيرزيباتيد)",
+                "what": (
+                    "الدوخة قد تظهر مع استخدام مونجارو عند بعض الأشخاص، وغالبًا يكون السبب غير مباشر مثل قلة الأكل أو السوائل، "
+                    "الجفاف بسبب الغثيان/القيء/الإسهال، أو انخفاض سكر الدم خصوصًا عند استخدام الإنسولين أو أدوية أخرى تخفّض السكر معه."
+                ),
+                "causes_label": "💡 ما الذي قد يفسّر الدوخة مع مونجارو؟",
+                "causes": [
+                    "الجفاف أو نقص السوائل، خصوصًا مع الغثيان أو القيء أو الإسهال",
+                    "قلة الأكل أثناء بدء العلاج أو بعد زيادة الجرعة",
+                    "انخفاض سكر الدم إذا كان مونجارو مستخدمًا مع الإنسولين أو أدوية محفّزة لإفراز الإنسولين",
+                ],
+                "worry": (
+                    "اطلب مساعدة عاجلة إذا حدث إغماء أو تشوش شديد، صعوبة في التنفس أو البلع، تورم بالوجه/اللسان، "
+                    "أو دوخة شديدة مع أعراض انخفاض سكر لا تتحسن وفق خطة علاجك."
+                ),
+                "doctor": (
+                    "إذا بدأت الدوخة بعد بدء مونجارو أو بعد رفع الجرعة، أو تكررت أو أثرت على نشاطك، تواصل مع الطبيب أو الصيدلي "
+                    "لمراجعة الجرعة والأدوية الأخرى والسوائل وقراءات السكر. لا توقف أو تغيّر الجرعة الموصوفة من نفسك."
+                ),
+                "sources": med.get("sources") or [],
+                "recognized_topics": [symptom_title, med_name],
+                "original_query": q,
+                "contextual": True,
+                "relation_query": True,
+                "query_only": False,
+            }
+        return {
+            "key": "mounjaro_dizziness_relation",
+            "emoji": "💊",
+            "category": "medication",
+            "title": "Dizziness with Mounjaro (tirzepatide)",
+            "what": (
+                "Dizziness can occur while using Mounjaro in some people, often indirectly because of reduced food/fluid intake, "
+                "dehydration from nausea/vomiting/diarrhea, or low blood sugar especially when insulin or another glucose-lowering medicine is also used."
+            ),
+            "causes_label": "💡 What may explain dizziness with Mounjaro?",
+            "causes": [
+                "Dehydration or reduced fluid intake, especially with nausea, vomiting, or diarrhea",
+                "Eating less around treatment initiation or dose escalation",
+                "Low blood sugar when Mounjaro is used with insulin or an insulin secretagogue",
+            ],
+            "worry": (
+                "Seek urgent help for fainting, severe confusion, trouble breathing or swallowing, facial/tongue swelling, "
+                "or severe dizziness with low-blood-sugar symptoms that do not improve according to your treatment plan."
+            ),
+            "doctor": (
+                "If dizziness began after starting Mounjaro or increasing the dose, keeps recurring, or affects normal activity, contact your prescriber or pharmacist "
+                "to review the dose, other medicines, hydration, and glucose. Do not stop or change a prescribed dose on your own."
+            ),
+            "sources": med.get("sources") or [],
+            "recognized_topics": [symptom_title, med_name],
+            "original_query": q,
+            "contextual": True,
+            "relation_query": True,
+            "query_only": False,
+        }
+
+    warn = str((med.get("warning_ar") if ar else med.get("warning_en")) or "").strip()
+    interact = str((med.get("interact_ar") if ar else med.get("interact_en")) or "").strip()
+    if ar:
+        what = (
+            f"سؤالك عن علاقة {symptom_title} بـ {med_name}. لا ينبغي اختزال السؤال إلى شرح {symptom_title} وحده. "
+            + (("من التنبيهات المتاحة عن الدواء: " + warn) if warn else "المعلومات المحلية لا تكفي لتأكيد أن الدواء هو السبب مباشرة.")
+        )
+        doctor = (
+            "إذا بدأ العرض بعد بدء الدواء أو بعد تغيير الجرعة، أو تكرر أو ازداد، تواصل مع الطبيب أو الصيدلي مع ذكر توقيت الجرعة وبقية الأدوية. "
+            "لا توقف أو تغيّر دواءً موصوفًا من نفسك."
+        )
+    else:
+        what = (
+            f"Your question is about the relationship between {symptom_title} and {med_name}; it should not be reduced to a generic {symptom_title} explanation. "
+            + (("Available medicine cautions include: " + warn) if warn else "The local record is not enough to prove the medicine is the direct cause.")
+        )
+        doctor = (
+            "If the symptom began after starting the medicine or after a dose change, or keeps recurring/worsening, contact your prescriber or pharmacist with the timing and your other medicines. "
+            "Do not stop or change a prescribed medicine on your own."
+        )
+    return {
+        "key": "medication_symptom_relation",
+        "emoji": "💊",
+        "category": "medication",
+        "title": f"{symptom_title} مع {med_name}" if ar else f"{symptom_title} with {med_name}",
+        "what": what,
+        "causes_label": "💡 معلومات مرتبطة بالسؤال" if ar else "💡 Relevant information",
+        "causes": [interact] if interact else [],
+        "worry": str(symptom.get("worry") or "").strip(),
+        "doctor": doctor,
+        "sources": med.get("sources") or [],
+        "recognized_topics": [symptom_title, med_name],
+        "original_query": q,
+        "contextual": True,
+        "relation_query": True,
+        "query_only": False,
+    }
+
 def _search_contextual_structured_result(query, lang):
     """Return a structured result for context-dependent health queries.
 
@@ -13719,6 +14007,12 @@ def _search_contextual_structured_result(query, lang):
     low = q.lower()
     norm = _normalize_health_query_text(q)
     ar = lang != "en"
+
+    # Relationship queries (for example: symptom + medicine) must be resolved
+    # before generic symptom matching so the second entity is never discarded.
+    relation = _health_search_relation_result(q, lang)
+    if relation is not None:
+        return relation
 
     period_ar = ("الدوره", "الحيض", "الطمث")
     nausea_ar = ("غثيان", "لوعه", "لوعة", "قرفه", "ترجيع", "استفراغ", "قيء")
@@ -13808,9 +14102,15 @@ def _health_search_question_answer(query, lang, search_result=None):
     q = " ".join(str(query or "").split())[:600]
     if not q:
         return ""
+    # Relationship results always win over standalone symptom handlers.
+    if isinstance(search_result, dict) and search_result.get("relation_query"):
+        relation_text = str(search_result.get("what") or "").strip()
+        if relation_text:
+            return _strip_search_answer_heading(_assistant_compact_response(relation_text, lang, "search"), lang)
+
     contextual = _assistant_contextual_health_answer(q, lang)
     if contextual:
-        return _assistant_compact_response(contextual, lang, "search")
+        return _strip_search_answer_heading(_assistant_compact_response(contextual, lang, "search"), lang)
 
     low = q.lower()
     ar = lang != "en"
@@ -13866,12 +14166,14 @@ def _health_search_question_answer(query, lang, search_result=None):
              "اعتبر كل كلمات السياق جزءًا أساسيًا من السؤال: التوقيت، المكان، العمر، الحمل أو الدورة، الطعام، النوم، الأدوية، التحاليل، الأمراض المزمنة والمدة. "
              "يمكن أن يكون السؤال عن عرض، مرض، دواء، تحليل، تغذية، نوم، صحة نفسية، حمل/دورة، إسعاف أو معلومة صحية عامة. "
              "استخدم السياق الطبي المنظم فقط إذا كان مرتبطًا فعلًا بالسؤال، ولا تخترع تشخيصًا أو جرعة دوائية ولا تطلب إيقاف/بدء دواء موصوف. "
+             "إذا لم تعرف المصطلح أو لم تكن المعلومات كافية، قل ذلك بوضوح ثم أعطِ أقرب إرشاد آمن متعلق بالسؤال نفسه؛ لا تُرجع إجابة فارغة ولا تستبدل الموضوع بموضوع مختلف. "
              "أجب مباشرة في 2-4 جمل قصيرة، واذكر علامة خطر فقط إذا كانت مرتبطة بالسؤال.\n"
              if ar else
              "You are SymptoSense's educational health-search assistant. Answer the user's complete health query exactly as asked; never reduce it to one fuzzy symptom keyword. "
              "Treat timing, location, age, pregnancy/period context, food, sleep, medicines, lab tests, chronic conditions, and duration as essential modifiers. "
              "The query may concern a symptom, condition, medicine, lab test, nutrition, sleep, mental wellbeing, pregnancy/periods, first aid, or general health information. "
-             "Use structured context only when it is truly relevant; do not diagnose, prescribe doses, or advise starting/stopping prescribed medication. Answer directly in 2-4 short sentences.\n")
+             "Use structured context only when it is truly relevant; do not diagnose, prescribe doses, or advise starting/stopping prescribed medication. "
+             "If the term is unknown or information is insufficient, say so clearly and give the closest safe guidance that still addresses the same query; never return a blank answer or substitute an unrelated topic. Answer directly in 2-4 short sentences.\n")
             + ("سؤال المستخدم: " if ar else "User question: ") + q + "\n"
             + ("سياق البحث المنظم: " if ar else "Structured search context: ") + context
         )
@@ -13884,23 +14186,45 @@ def _health_search_question_answer(query, lang, search_result=None):
         )
         answer = str(r.choices[0].message.content or "").strip()
         if answer:
-            return _assistant_compact_response(answer, lang, "search")
+            return _strip_search_answer_heading(_assistant_compact_response(answer, lang, "search"), lang)
     except Exception:
         pass
 
-    # Useful local fallback: answer from the already-matched structured topic(s)
-    # while retaining the original query at the top of the UI.
+    # Local fallback: a non-empty health search must always return a useful,
+    # honest result even when the external AI service is unavailable. Never
+    # substitute an unrelated fuzzy topic merely to avoid an empty response.
     if isinstance(search_result, dict):
         topics = search_result.get("matched_topics") or []
         if topics:
             names = [str(t.get("title") or "").strip() for t in topics[:2] if str(t.get("title") or "").strip()]
             if names:
-                return (("سؤالك يجمع بين " + " و".join(names) + ". المعلومات أدناه تشرح كل جزء، لكن العلاقة بينهما تعتمد على التوقيت والشدة والسياق الذي ذكرته.") if ar else
-                        ("Your question combines " + " and ".join(names) + ". The information below explains each part, while the connection depends on the timing, severity, and context you described."))
+                return (("سؤالك يجمع بين " + " و".join(names) + ". المعلومات أدناه تشرح الأجزاء المرتبطة، لكن لا يمكن تأكيد العلاقة بينها من البحث وحده. إذا ذكرت التوقيت والمدة والأدوية أو النتائج المرتبطة يمكن تضييق الإجابة أكثر.") if ar else
+                        ("Your question combines " + " and ".join(names) + ". The information below explains the related parts, but the relationship cannot be confirmed from search alone. Adding timing, duration, medicines, or related results can make the answer more specific."))
         what = str(search_result.get("what") or "").strip()
         if what:
             return what
-    return ""
+
+    # Universal safe fallback for queries that are not covered by the local
+    # knowledge base. This intentionally preserves the exact query instead of
+    # guessing a different symptom/condition.
+    emoji, category = _health_search_topic_meta(q, lang)
+    if ar:
+        if category == "medication":
+            return (f"بحثك هو: «{q}». لم أجد في قاعدة المعرفة المحلية معلومة موثوقة كافية عن هذا الدواء أو العلاقة المذكورة، لذلك لن أستبدلها بمعلومة عن دواء آخر. "
+                    "اكتب اسم الدواء كما يظهر على العبوة مع العرض أو السؤال الذي تريد معرفته، وإذا كانت خدمة المساعد الذكي مفعّلة فسيجيب عن العلاقة كاملة.")
+        if category == "test":
+            return (f"بحثك هو: «{q}». لا توجد لدي حاليًا بيانات محلية كافية لتفسير هذه النتيجة بدقة من الاسم وحده. "
+                    "أضف اسم الفحص والقيمة والوحدة والمدى المرجعي إن وُجد، وسأتعامل معها كسؤال واحد بدل تخمين نتيجة غير مرتبطة.")
+        return (f"بحثك هو: «{q}». لم أجد تطابقًا موثوقًا كافيًا في قاعدة المعرفة المحلية، لذلك لن أعرض موضوعًا مختلفًا لمجرد أنه قريب في الاسم. "
+                "إذا كانت خدمة المساعد الذكي مفعّلة فسيجيب عن السؤال كاملًا؛ ويمكنك أيضًا إضافة العمر، المدة، التوقيت، الأدوية أو الأعراض المصاحبة للحصول على إجابة أدق.")
+    if category == "medication":
+        return (f"Your search is: “{q}”. I do not have enough trusted local information about this medicine or the relationship you mentioned, so I will not substitute an unrelated medicine. "
+                "Enter the medicine name as shown on the package together with the symptom or question; when the AI assistant is enabled it can answer the full relationship.")
+    if category == "test":
+        return (f"Your search is: “{q}”. I do not have enough local information to interpret this result accurately from the name alone. "
+                "Add the test name, value, unit, and reference range when available so the whole question can be interpreted together.")
+    return (f"Your search is: “{q}”. I could not find a sufficiently reliable local match, so I will not show an unrelated topic just because its wording is similar. "
+            "When the AI assistant is enabled it can answer the full question; adding age, duration, timing, medicines, or accompanying symptoms can also make the answer more specific.")
 
 
 @app.route("/api/search")
@@ -13916,6 +14240,13 @@ def api_search():
         # 2) curated glossary/KB only when it is genuinely related,
         # 3) neutral shell so the full question can still be answered.
         result = _search_contextual_structured_result(q, lang)
+        if result is None:
+            # A medicine mentioned in a multi-part query must never be discarded
+            # by the fuzzy glossary matcher. Re-run the relationship resolver
+            # explicitly before accepting a standalone topic card.
+            med_context = _health_search_medication_context(q, lang)
+            if med_context:
+                result = _health_search_relation_result(q, lang)
         if result is None:
             candidate = health_search.search_health(q, lang)
             result = candidate if _health_search_result_relevant(q, candidate, lang) else None
@@ -14005,6 +14336,11 @@ def api_search():
             direct_answer = _health_search_question_answer(q, lang, result)
             if direct_answer:
                 result["direct_answer"] = direct_answer
+            else:
+                # Defensive guarantee: never send a non-empty search back with
+                # an empty answer card. Preserve the query rather than guessing.
+                result["direct_answer"] = (("بحثك هو: «" + q + "». لم تتوفر معلومات موثوقة كافية للإجابة بدقة الآن، لذلك لم أعرض نتيجة غير مرتبطة. جرّب إضافة تفاصيل أكثر أو استخدم المساعد الذكي.") if lang != "en" else
+                                           ("Your search is: “" + q + "”. There is not enough reliable information to answer accurately right now, so no unrelated result was substituted. Add more detail or use the AI assistant."))
 
             # The user's words are always the primary intent. Curated cards are
             # supporting information only, never the title/meaning of the search.
@@ -14014,12 +14350,12 @@ def api_search():
             "ok": True,
             "result": result,
             "suggestions": health_search.suggestion_terms(lang),
-            "search_version": "query-first-v4-general",
+            "search_version": "query-first-v7-universal-answer",
         })
         payload.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         payload.headers["Pragma"] = "no-cache"
         payload.headers["Expires"] = "0"
-        payload.headers["X-SymptoSense-Search-Version"] = "query-first-v4-general"
+        payload.headers["X-SymptoSense-Search-Version"] = "query-first-v7-universal-answer"
         return payload
     except Exception as e:
         return _mk_error(e, 500)
