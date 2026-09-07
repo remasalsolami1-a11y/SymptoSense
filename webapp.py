@@ -13609,6 +13609,97 @@ def api_feedback():
         return _mk_error(e, 500)
 
 
+
+def _search_contextual_structured_result(query, lang):
+    """Return a structured result for context-dependent health queries.
+
+    This runs *before* the generic glossary matcher so a phrase such as
+    "الغثيان مع الدورة" cannot be reduced to an unrelated standalone topic.
+    The helper is intentionally conservative: it only handles combinations
+    where the context materially changes the answer.
+    """
+    import re as _re
+    q = " ".join(str(query or "").strip().split())[:600]
+    if not q:
+        return None
+    low = q.lower()
+    ar = lang != "en"
+
+    period_ar = ("الدورة", "الدوره", "الحيض", "الطمث", "وقت الدورة", "اثناء الدورة", "أثناء الدورة", "قبل الدورة", "مع الدورة")
+    nausea_ar = ("غثيان", "الغثيان", "لوعه", "لوعة", "قرفه", "ترجيع", "استفراغ", "قيء")
+    period_en = ("period", "menstrual", "menstruation", "menses")
+    nausea_en = ("nausea", "nauseous", "vomit", "vomiting", "queasy", "sick to stomach")
+
+    has_period = any(k in low for k in (period_ar if ar else period_en))
+    has_nausea = any(k in low for k in (nausea_ar if ar else nausea_en))
+    if has_period and has_nausea:
+        if ar:
+            return {
+                "key": "period_nausea",
+                "emoji": "🤢",
+                "category": "symptom",
+                "title": "الغثيان مع الدورة الشهرية",
+                "what": (
+                    "قد يحدث الغثيان قبل الدورة أو أثناءها لدى بعض الأشخاص بسبب التغيّرات الهرمونية "
+                    "وزيادة مواد مثل البروستاغلاندينات التي ترتبط بتقلصات الدورة. وجود الغثيان مع الدورة "
+                    "لا يعني وحده وجود مشكلة خطيرة، لكن شدة الأعراض وتكرارها مهمان."
+                ),
+                "causes": [
+                    "التغيّرات الهرمونية المصاحبة للدورة",
+                    "تقلصات الدورة وارتفاع البروستاغلاندينات",
+                    "الألم أو الصداع المصاحب للدورة",
+                    "قلة الأكل أو الجفاف أثناء أيام الدورة",
+                    "حساسية المعدة أو أعراض هضمية تتزامن مع الدورة",
+                ],
+                "causes_label": "💡 لماذا قد يحدث؟",
+                "worry": (
+                    "اطلب رعاية عاجلة إذا كان القيء متكررًا لدرجة عدم القدرة على الاحتفاظ بالسوائل، "
+                    "أو حدث إغماء، أو ألم شديد وغير معتاد، أو نزيف شديد جدًا، أو ظهرت علامات جفاف واضحة."
+                ),
+                "doctor": (
+                    "راجع مختصًا إذا تكرر الغثيان مع كل دورة وأثر في حياتك اليومية، أو أصبح أشد من المعتاد، "
+                    "أو صاحبه ألم شديد أو أعراض جديدة."
+                ),
+                "sources": [],
+                "recognized_topics": ["الغثيان", "الدورة الشهرية"],
+                "original_query": q,
+                "contextual": True,
+            }
+        return {
+            "key": "period_nausea",
+            "emoji": "🤢",
+            "category": "symptom",
+            "title": "Nausea around your period",
+            "what": (
+                "Nausea can occur before or during a period for some people because of hormonal changes "
+                "and prostaglandins associated with menstrual cramps. The symptom alone does not mean "
+                "there is a serious problem; severity and recurrence matter."
+            ),
+            "causes": [
+                "Hormonal changes around menstruation",
+                "Menstrual cramps and prostaglandins",
+                "Period-related pain or headache",
+                "Eating less or becoming mildly dehydrated",
+                "Digestive sensitivity that coincides with the period",
+            ],
+            "causes_label": "💡 Why it can happen",
+            "worry": (
+                "Seek urgent care if vomiting is repeated and you cannot keep fluids down, you faint, "
+                "pain is severe or unusual, bleeding is extremely heavy, or you develop clear signs of dehydration."
+            ),
+            "doctor": (
+                "See a clinician if nausea happens with most periods and disrupts daily life, becomes more severe, "
+                "or is accompanied by severe pain or new symptoms."
+            ),
+            "sources": [],
+            "recognized_topics": ["nausea", "menstruation"],
+            "original_query": q,
+            "contextual": True,
+        }
+
+    return None
+
+
 def _health_search_question_answer(query, lang, search_result=None):
     """Answer the user's *full* health-search question, preserving modifiers.
 
@@ -13718,7 +13809,12 @@ def api_search():
         if not q:
             return jsonify({"ok": True, "result": None, "suggestions": health_search.suggestion_terms(lang)})
 
-        result = health_search.search_health(q, lang)
+        # Context-dependent phrases must be resolved before the generic
+        # glossary matcher. This prevents a full question from being reduced
+        # to an unrelated symptom card.
+        result = _search_contextual_structured_result(q, lang)
+        if result is None:
+            result = health_search.search_health(q, lang)
 
         def _entity_sources(entity):
             sources = []
