@@ -621,6 +621,42 @@ body.ss-home-page .ss-home-shell{max-width:100%}
 """
 
 
+PREMIUM_POLISH_CSS += """
+/* ===== Final symptom-chat viewport + audio UX fix 2026-09-08 ===== */
+/* Keep the questionnaire complete and scrollable instead of clipping it to 100dvh. */
+body.ss-chat-page{overflow-x:hidden!important}
+@media (max-width:900px){
+  body.ss-chat-page{height:auto!important;min-height:100svh!important;overflow-y:auto!important;overscroll-behavior-y:auto!important;background:#F7FAFC!important}
+  body.ss-chat-page .container{height:auto!important;min-height:calc(100svh - var(--bnav-h) - var(--safe-bottom))!important;overflow:visible!important;padding:8px 8px calc(var(--bnav-h) + var(--safe-bottom) + 18px)!important}
+  body.ss-chat-page .chat-wrap{height:auto!important;min-height:calc(100svh - var(--bnav-h) - var(--safe-bottom) - 18px)!important;max-height:none!important;overflow:hidden!important;margin:0 auto!important;display:flex!important;flex-direction:column!important}
+  body.ss-chat-page .chat-body{flex:0 0 auto!important;min-height:96px!important;max-height:none!important;overflow:visible!important;padding:10px!important}
+  body.ss-chat-page .chat-body.result-mode{flex:0 0 auto!important;max-height:none!important;overflow:visible!important}
+  body.ss-chat-page .chat-options{flex:0 0 auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-content:start!important}
+  body.ss-chat-page .chat-options.symptom-picker{max-height:min(42svh,390px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  body.ss-chat-page .chat-input{position:relative!important;inset:auto!important;flex:0 0 auto!important;padding-bottom:10px!important}
+  body.ss-chat-page #chatSafetyNote{margin:10px 8px calc(var(--bnav-h) + var(--safe-bottom) + 8px)!important}
+  body.ss-chat-page .step-focus-card{scroll-margin-top:10px!important}
+}
+@media (max-width:420px){
+  body.ss-chat-page .chat-head{padding:9px 10px!important}
+  body.ss-chat-page .chat-head-toggles{gap:7px!important}
+  body.ss-chat-page .chat-head .chat-audio-btn{width:44px!important;height:44px!important;min-width:44px!important}
+  body.ss-chat-page .chat-options:not(.symptom-picker){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  body.ss-chat-page .chat-options:not(.symptom-picker) .opt{min-height:54px!important;font-size:14px!important}
+  body.ss-chat-page .chat-input input{font-size:16px!important}
+}
+@media (max-width:340px){
+  body.ss-chat-page .chat-options:not(.symptom-picker){grid-template-columns:1fr!important}
+}
+@media (min-width:901px){
+  body.ss-chat-page{min-height:100vh!important;overflow-y:auto!important}
+  body.ss-chat-page .chat-wrap{height:clamp(560px,76vh,760px)!important;min-height:560px!important;max-height:760px!important}
+  body.ss-chat-page .chat-body{overflow-y:auto!important}
+  body.ss-chat-page .chat-options{max-height:38%!important;overflow-y:auto!important}
+}
+"""
+
+
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
@@ -5738,16 +5774,34 @@ def chat_page():
       b.title = label;
       b.classList.toggle('is-on', autoSpeak);
     }
+    function currentSpeakableText() {
+      const focused = bodyEl && bodyEl.querySelector('.step-focus-question');
+      if (focused && focused.textContent.trim()) return focused.textContent.trim();
+      const bubbles = bodyEl ? bodyEl.querySelectorAll('.bubble.q,.bubble.bot') : [];
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const text = (bubbles[i].innerText || bubbles[i].textContent || '').trim();
+        if (text) return text;
+      }
+      return LANG === 'ar' ? 'تم تفعيل القراءة بصوت عالٍ.' : 'Read aloud enabled.';
+    }
     function toggleSpeak() {
+      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+        setAudioStatus(LANG === 'ar' ? 'القراءة الصوتية غير مدعومة في هذا المتصفح.' : 'Read aloud is not supported in this browser.');
+        add(TT('no_speech'), 'bot');
+        return;
+      }
       autoSpeak = !autoSpeak;
-      if (!autoSpeak && 'speechSynthesis' in window) speechSynthesis.cancel();
+      if (!autoSpeak) speechSynthesis.cancel();
       syncSpeakerButton();
       setAudioStatus(autoSpeak
         ? (LANG === 'ar' ? 'تم تفعيل القراءة بصوت عالٍ.' : 'Read aloud enabled.')
         : (LANG === 'ar' ? 'تم إيقاف القراءة بصوت عالٍ.' : 'Read aloud disabled.'));
+      // iOS Safari requires speech to be initiated from the user's tap.
+      // Read the current question immediately so the control gives instant feedback.
+      if (autoSpeak) speakText(currentSpeakableText());
     }
     function speakText(txt) {
-      if (!('speechSynthesis' in window)) return;
+      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
       const clean = s => String(s || '').replace(/\\s{2,}/g, ' ').trim();
       const t = clean(txt);
       if (!t) return;
@@ -5758,7 +5812,14 @@ def chat_page():
       const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().indexOf(pre) === 0);
       if (v) uu.voice = v;
       uu.rate = 0.95;
+      try { speechSynthesis.resume(); } catch(e) {}
       speechSynthesis.speak(uu);
+    }
+    if ('speechSynthesis' in window) {
+      try { speechSynthesis.getVoices(); } catch(e) {}
+      if ('onvoiceschanged' in speechSynthesis) {
+        speechSynthesis.onvoiceschanged = function(){ try { speechSynthesis.getVoices(); } catch(e) {} };
+      }
     }
     function addHtml(html, cls) {
       const d = document.createElement('div');
@@ -5917,12 +5978,18 @@ def chat_page():
     }
 
     // ---------------- On-demand microphone ----------------
-    // The microphone is OFF by default. It starts only after a user tap and
-    // stops after a second tap or when the browser ends the utterance.
-    // Only the recognized transcript is processed; no background listening.
+    // The microphone is OFF by default and starts only after a user tap.
+    // Chrome/Android can use SpeechRecognition directly; Safari/iPhone falls
+    // back to MediaRecorder and a short server-side transcription. Audio is
+    // processed for the request only and is not stored by SymptoSense.
     let quickMicRec = null;
     let quickMicActive = false;
     let quickMicTranscript = '';
+    let quickMicMode = '';
+    let quickMediaRecorder = null;
+    let quickMediaStream = null;
+    let quickMediaChunks = [];
+
     function syncMicButton(active) {
       quickMicActive = !!active;
       const b = document.getElementById('micBtn');
@@ -5935,17 +6002,98 @@ def chat_page():
       b.title = label;
       b.classList.toggle('is-recording', quickMicActive);
       setAudioStatus(quickMicActive
-        ? (LANG === 'ar' ? 'بدأ تسجيل إجابتك.' : 'Recording started.')
+        ? (LANG === 'ar' ? 'جاري تسجيل إجابتك… اضغط مرة أخرى للإيقاف.' : 'Recording your answer… press again to stop.')
         : (LANG === 'ar' ? 'الميكروفون متوقف.' : 'Microphone stopped.'));
     }
-    function toggleQuickMic() {
-      if (quickMicActive && quickMicRec) {
-        try { quickMicRec.stop(); } catch(e) {}
+
+    function closeQuickMediaStream() {
+      if (quickMediaStream) {
+        try { quickMediaStream.getTracks().forEach(function(t){ t.stop(); }); } catch(e) {}
+      }
+      quickMediaStream = null;
+    }
+
+    function recordedFileName(mime) {
+      const m = String(mime || '').toLowerCase();
+      if (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1) return 'symptosense-voice.m4a';
+      if (m.indexOf('ogg') !== -1) return 'symptosense-voice.ogg';
+      if (m.indexOf('wav') !== -1) return 'symptosense-voice.wav';
+      return 'symptosense-voice.webm';
+    }
+
+    async function sendRecordedAudio(blob) {
+      if (!blob || !blob.size) {
+        add(LANG === 'ar' ? 'لم يتم التقاط صوت. حاول مرة أخرى أو اكتب إجابتك.' : 'No audio was captured. Try again or type your answer.', 'bot');
         return;
       }
+      setAudioStatus(LANG === 'ar' ? 'جاري تحويل الصوت إلى نص…' : 'Converting speech to text…');
+      const fd = new FormData();
+      fd.append('audio', blob, recordedFileName(blob.type));
+      fd.append('lang', LANG);
+      try {
+        const r = await fetch('/api/voice', {method:'POST', body:fd});
+        const d = await r.json().catch(function(){ return {}; });
+        if (d.consent_required && d.consent_url) { location.href = d.consent_url; return; }
+        if (!r.ok || !d.ok || !String(d.text || '').trim()) throw new Error(d.error || 'transcription_failed');
+        setAudioStatus(LANG === 'ar' ? 'تم فهم التسجيل.' : 'Recording understood.');
+        await submitVoiceText(String(d.text).trim());
+      } catch(e) {
+        add(LANG === 'ar' ? 'تعذّر فهم التسجيل الآن. يمكنك المحاولة مرة أخرى أو الاستمرار بالكتابة.' : 'Unable to understand the recording right now. Try again or continue by typing.', 'bot');
+        setAudioStatus(LANG === 'ar' ? 'تعذّر تحويل الصوت.' : 'Voice transcription failed.');
+      }
+    }
+
+    async function startMediaRecorderFallback() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+        add(TT('no_mic'), 'bot');
+        return false;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        quickMediaStream = stream;
+        quickMediaChunks = [];
+        let mime = '';
+        const choices = ['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/webm;codecs=opus','audio/webm'];
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+          for (const choice of choices) { if (MediaRecorder.isTypeSupported(choice)) { mime = choice; break; } }
+        }
+        quickMediaRecorder = mime ? new MediaRecorder(stream, {mimeType:mime}) : new MediaRecorder(stream);
+        quickMicMode = 'media';
+        quickMediaRecorder.ondataavailable = function(ev){ if (ev.data && ev.data.size) quickMediaChunks.push(ev.data); };
+        quickMediaRecorder.onerror = function(){
+          syncMicButton(false);
+          closeQuickMediaStream();
+          quickMediaRecorder = null; quickMicMode = ''; quickMediaChunks = [];
+          add(LANG === 'ar' ? 'تعذر تشغيل الميكروفون. تحقق من الإذن ثم حاول مرة أخرى.' : 'Unable to use the microphone. Check permission and try again.', 'bot');
+        };
+        quickMediaRecorder.onstop = async function(){
+          const type = quickMediaRecorder && quickMediaRecorder.mimeType ? quickMediaRecorder.mimeType : (quickMediaChunks[0] ? quickMediaChunks[0].type : 'audio/webm');
+          const blob = new Blob(quickMediaChunks, {type:type || 'audio/webm'});
+          syncMicButton(false);
+          closeQuickMediaStream();
+          quickMediaRecorder = null; quickMicMode = ''; quickMediaChunks = [];
+          await sendRecordedAudio(blob);
+        };
+        quickMediaRecorder.start();
+        syncMicButton(true);
+        return true;
+      } catch(e) {
+        syncMicButton(false);
+        closeQuickMediaStream();
+        quickMediaRecorder = null; quickMicMode = '';
+        const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+        add(denied
+          ? (LANG === 'ar' ? 'لم يتم منح إذن الميكروفون. فعّل الإذن من إعدادات المتصفح ثم حاول مرة أخرى.' : 'Microphone permission was not granted. Enable it in browser settings and try again.')
+          : TT('no_mic'), 'bot');
+        return false;
+      }
+    }
+
+    function startSpeechRecognition() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { add(TT('no_mic'), 'bot'); return; }
+      if (!SR) return false;
       quickMicTranscript = '';
+      quickMicMode = 'speech';
       quickMicRec = new SR();
       quickMicRec.lang = LANG === 'en' ? 'en-GB' : 'ar-SA';
       quickMicRec.continuous = false;
@@ -5963,22 +6111,37 @@ def chat_page():
       quickMicRec.onerror = function(ev){
         const code = (ev && ev.error) || '';
         syncMicButton(false);
-        quickMicRec = null;
+        quickMicRec = null; quickMicMode = '';
         if (code === 'aborted' || code === 'no-speech') return;
-        const msg = code === 'not-allowed'
-          ? (LANG === 'ar' ? 'لم يتم منح إذن الميكروفون. يمكنك الاستمرار بالكتابة.' : 'Microphone permission was not granted. You can continue by typing.')
-          : TT('no_mic');
-        add(msg, 'bot');
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          add(LANG === 'ar' ? 'لم يتم منح إذن الميكروفون. يمكنك الاستمرار بالكتابة.' : 'Microphone permission was not granted. You can continue by typing.', 'bot');
+          return;
+        }
+        // If native recognition is unavailable at runtime, use real recording
+        // instead (important on Safari/iPhone and some embedded browsers).
+        startMediaRecorderFallback();
       };
       quickMicRec.onend = function(){
+        if (quickMicMode !== 'speech') return;
         const text = String(quickMicTranscript || '').trim();
         syncMicButton(false);
-        quickMicRec = null;
-        quickMicTranscript = '';
+        quickMicRec = null; quickMicMode = ''; quickMicTranscript = '';
         if (text) submitVoiceText(text);
       };
-      try { quickMicRec.start(); }
-      catch(e) { syncMicButton(false); quickMicRec = null; add(TT('no_mic'), 'bot'); }
+      try { quickMicRec.start(); return true; }
+      catch(e) { quickMicRec = null; quickMicMode = ''; return false; }
+    }
+
+    async function toggleQuickMic() {
+      if (quickMicActive) {
+        if (quickMicMode === 'speech' && quickMicRec) { try { quickMicRec.stop(); } catch(e) {} return; }
+        if (quickMicMode === 'media' && quickMediaRecorder) {
+          try { if (quickMediaRecorder.state !== 'inactive') quickMediaRecorder.stop(); } catch(e) {}
+          return;
+        }
+      }
+      const nativeStarted = startSpeechRecognition();
+      if (!nativeStarted) await startMediaRecorderFallback();
     }
 
     async function submitVoiceText(text) {
@@ -12537,9 +12700,46 @@ def api_voice_parse():
 
 @app.route("/api/voice", methods=["POST"])
 def api_voice():
-    # Raw audio upload is intentionally disabled: voice input uses the browser's
-    # speech-recognition capability and only the resulting text is sent here.
-    return jsonify({"ok":False,"error":"raw_audio_upload_disabled_use_client_speech_recognition","audio_stored":False}),410
+    """Transcribe a short, user-initiated voice answer when browser speech recognition is unavailable.
+
+    The audio is handled in memory for this request and is not stored by SymptoSense.
+    External transcription is used only when the user has already granted service consent.
+    """
+    if not _service_consent_ok():
+        return jsonify({"ok":False,"error":"consent_required","consent_required":True,"consent_url":"/consent?next=/chat","audio_stored":False}),403
+    f = request.files.get("audio")
+    if not f:
+        return jsonify({"ok":False,"error":"missing_audio","audio_stored":False}),400
+    raw = f.read(8 * 1024 * 1024 + 1)
+    if not raw:
+        return jsonify({"ok":False,"error":"empty_audio","audio_stored":False}),400
+    if len(raw) > 8 * 1024 * 1024:
+        return jsonify({"ok":False,"error":"audio_too_large","audio_stored":False}),413
+    lang = "en" if request.form.get("lang") == "en" else "ar"
+    filename = (f.filename or "symptosense-voice.webm").strip() or "symptosense-voice.webm"
+    filename = re.sub(r"[^A-Za-z0-9._-]+", "-", filename)[-120:]
+    try:
+        client = analysis_core._groq_client()
+        tr = client.audio.transcriptions.create(
+            file=(filename, raw),
+            model=os.environ.get("VOICE_STT_MODEL", "whisper-large-v3-turbo"),
+            language="en" if lang == "en" else "ar",
+            response_format="json",
+            temperature=0.0,
+        )
+        text = str(getattr(tr, "text", "") or (tr.get("text") if isinstance(tr, dict) else "")).strip()[:1200]
+        if not text:
+            return jsonify({"ok":False,"error":"empty_transcript","audio_stored":False}),422
+        return jsonify({"ok":True,"text":text,"parsed":_voice_parse(text,lang),"audio_stored":False})
+    except Exception as e:
+        request_id = getattr(g, "request_id", "")
+        app.logger.warning("Voice transcription unavailable; request_id=%s error_type=%s", request_id, type(e).__name__)
+        return jsonify({
+            "ok":False,
+            "error":"تعذر تحويل الصوت إلى نص حاليًا. حاول مرة أخرى أو استخدم الكتابة." if lang=="ar" else "Unable to transcribe audio right now. Try again or use typing.",
+            "request_id":request_id,
+            "audio_stored":False,
+        }),503
 
 
 @app.route("/api/blood/history", methods=["GET"])
