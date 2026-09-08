@@ -4647,6 +4647,125 @@ def welcome_page():
     next_target = _safe_next_url("/home")
     body = """
     <script>document.body.classList.add('ss-welcome-page');</script>
+    <style id="ss-welcome-layout-v4">
+    /* Final landing override: deliberately compact and balanced on real phones. */
+    body.ss-welcome-page .first-lang-shell{box-sizing:border-box;}
+    @media (max-width:600px){
+      body.ss-welcome-page .first-lang{
+        min-height:100svh!important;
+        background:linear-gradient(180deg,#F8FCFF 0%,#FFFFFF 72%,#F6FBFF 100%)!important;
+        overflow-x:hidden!important;
+      }
+      body.ss-welcome-page .first-lang-shell{
+        width:min(100%,440px)!important;
+        min-height:100svh!important;
+        margin:0 auto!important;
+        padding:max(10px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom))!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+      }
+      body.ss-welcome-page .first-lang-trust{
+        position:absolute!important;
+        top:max(10px,env(safe-area-inset-top))!important;
+        right:20px!important;
+        min-height:29px!important;
+        margin:0!important;
+        padding:5px 10px!important;
+        font-size:10px!important;
+        gap:6px!important;
+        z-index:5!important;
+      }
+      body.ss-welcome-page .first-lang-trust svg{width:17px!important;height:17px!important;}
+      body.ss-welcome-page .first-lang-logo-mark{
+        width:50px!important;height:50px!important;
+        margin:48px auto 0!important;
+      }
+      body.ss-welcome-page .first-lang-brand{
+        font-size:29px!important;line-height:1!important;
+        margin:2px 0 0!important;letter-spacing:-1px!important;
+      }
+      body.ss-welcome-page .first-lang-slogan{
+        margin:4px 0 13px!important;font-size:9.4px!important;letter-spacing:.16em!important;
+      }
+      body.ss-welcome-page .first-lang-headline-ar{
+        font-size:clamp(30px,8.5vw,34px)!important;
+        line-height:1.16!important;
+        max-width:360px!important;
+        margin:0 auto!important;
+      }
+      body.ss-welcome-page .first-lang-headline-en{
+        font-size:clamp(17px,4.8vw,19px)!important;
+        line-height:1.24!important;
+        max-width:390px!important;
+        margin:5px auto 0!important;
+      }
+      body.ss-welcome-page .first-lang-copy{
+        width:100%!important;max-width:390px!important;
+        margin:14px auto 0!important;
+      }
+      body.ss-welcome-page .first-lang-desc-ar{
+        font-size:12.4px!important;line-height:1.58!important;
+        max-width:37ch!important;margin:0 auto!important;
+      }
+      body.ss-welcome-page .first-lang-desc-en{
+        font-size:10px!important;line-height:1.42!important;
+        max-width:45ch!important;margin:3px auto 0!important;
+      }
+      body.ss-welcome-page .first-lang-select-title{
+        width:100%!important;max-width:400px!important;
+        margin:14px auto 8px!important;
+        gap:8px!important;font-size:11.5px!important;line-height:1.2!important;
+      }
+      body.ss-welcome-page .first-lang-options{
+        width:100%!important;max-width:400px!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:9px!important;
+      }
+      body.ss-welcome-page .first-lang-option{
+        min-height:64px!important;
+        padding:8px 9px!important;
+        gap:7px!important;
+        border-radius:17px!important;
+        font-size:15px!important;
+        box-shadow:0 5px 14px rgba(41,111,173,.055)!important;
+      }
+      body.ss-welcome-page .first-lang-flag{
+        width:36px!important;height:36px!important;flex:0 0 36px!important;font-size:21px!important;
+      }
+      body.ss-welcome-page .first-lang-option .lang-arrow{font-size:21px!important;}
+      body.ss-welcome-page .first-lang-benefits{
+        width:100%!important;max-width:400px!important;
+        min-height:88px!important;
+        margin:14px auto 0!important;
+        padding:9px 3px!important;
+        border-radius:18px!important;
+      }
+      body.ss-welcome-page .first-lang-benefit{padding:0 4px!important;}
+      body.ss-welcome-page .first-lang-benefit svg{width:23px!important;height:23px!important;margin-bottom:4px!important;}
+      body.ss-welcome-page .first-lang-benefit b{font-size:9.8px!important;line-height:1.22!important;white-space:normal!important;}
+      body.ss-welcome-page .first-lang-benefit small{font-size:8px!important;line-height:1.18!important;white-space:normal!important;max-width:88px!important;}
+      body.ss-welcome-page .first-lang-leaf{opacity:.22!important;bottom:-12px!important;transform:scale(.48) rotate(-4deg)!important;}
+      body.ss-welcome-page .first-lang::before{height:10%!important;bottom:-4%!important;opacity:.55!important;}
+      body.ss-welcome-page .first-lang::after{height:7%!important;bottom:-3%!important;opacity:.38!important;}
+    }
+    @media (max-width:360px){
+      body.ss-welcome-page .first-lang-shell{padding-inline:13px!important;}
+      body.ss-welcome-page .first-lang-trust{right:13px!important;}
+      body.ss-welcome-page .first-lang-logo-mark{margin-top:44px!important;width:46px!important;height:46px!important;}
+      body.ss-welcome-page .first-lang-brand{font-size:26px!important;}
+      body.ss-welcome-page .first-lang-headline-ar{font-size:28px!important;}
+      body.ss-welcome-page .first-lang-headline-en{font-size:16px!important;}
+      body.ss-welcome-page .first-lang-option{font-size:13.5px!important;min-height:60px!important;}
+      body.ss-welcome-page .first-lang-benefit b{font-size:9px!important;}
+      body.ss-welcome-page .first-lang-benefit small{font-size:7.4px!important;}
+    }
+    @media (min-width:601px) and (max-width:900px){
+      body.ss-welcome-page .first-lang-shell{width:min(640px,100%)!important;padding-top:24px!important;}
+      body.ss-welcome-page .first-lang-options,body.ss-welcome-page .first-lang-benefits{width:min(500px,100%)!important;}
+    }
+    </style>
     <main class="first-lang" aria-labelledby="languageTitle">
       <div class="first-lang-shell">
         <div class="first-lang-trust" aria-label="Trusted health information">
