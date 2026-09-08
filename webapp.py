@@ -339,6 +339,262 @@ body.ss-chat-page .smart-next{background:#FBFDFE!important}
 }
 @media(prefers-reduced-motion:reduce){.svc-card,.quick-card,.hp-quick-link,.btn,.auth-btn,input,select,textarea{transition:none!important}.svc-card:hover,.quick-card:hover,.hp-quick-link:hover{transform:none!important}}
 """
+PREMIUM_POLISH_CSS += """
+/* ===== SymptoSense — ALL DEVICE RESPONSIVE AUDIT 2026-09 ===== */
+/* This is a presentation-only override layer. It intentionally comes last. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:76px}
+body{overflow-x:clip}
+main,section,article,header,footer,nav,.container,.card,.chat-wrap,.ss-home-shell{max-width:100%}
+img,svg,video,canvas,iframe{max-width:100%;height:auto}
+input,select,textarea,button{font-family:inherit}
+.ss-modal,.expl-modal,.asst-modal{max-height:min(86dvh,760px);overflow:auto;overscroll-behavior:contain}
+.tbl-wrap,.table-wrap,.admin-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Desktop / laptop: keep the full navigation and remove mobile chrome. */
+@media (min-width:1181px){
+  .nav{display:flex!important;flex-wrap:nowrap!important;min-height:68px!important;padding-inline:clamp(18px,3vw,34px)!important}
+  .nav .links{flex-wrap:nowrap!important;min-width:0!important}
+  .nav .links a{font-size:clamp(13px,1vw,15px)!important;padding-inline:clamp(8px,1vw,14px)!important;white-space:nowrap!important}
+  .ss-mobile-head,.ss-bnav{display:none!important}
+  .container{width:min(100%,1180px)!important;padding-inline:clamp(20px,3vw,30px)!important;padding-bottom:clamp(44px,6vw,72px)!important}
+  .asst-fab{bottom:22px!important}
+  .asst-panel{width:min(420px,calc(100vw - 32px))!important;right:18px!important;left:auto!important;bottom:88px!important;height:min(650px,76dvh)!important}
+  [dir="rtl"] .asst-panel{right:auto!important;left:18px!important}
+}
+
+/* Large desktop: a little more breathing room, never stretch text too wide. */
+@media (min-width:1600px){
+  .container{max-width:1240px!important}
+  .ss-home-shell{width:min(1240px,calc(100% - 56px))!important}
+  .footer-inner{max-width:1240px!important;margin-inline:auto!important}
+}
+
+/* iPad / tablet / narrow laptop */
+@media (min-width:768px) and (max-width:1180px){
+  .nav{display:none!important}
+  .ss-mobile-head{display:flex!important;min-height:64px!important;padding-inline:clamp(16px,3vw,26px)!important}
+  .ss-bnav{display:flex!important;justify-content:space-evenly!important;align-items:center!important}
+  .ss-bnav a{flex:1 1 0!important;max-width:180px!important;min-height:52px!important;font-size:11px!important}
+  .container{width:min(100%,1000px)!important;padding:22px clamp(18px,3vw,30px) calc(var(--bnav-h) + var(--safe-bottom) + 34px)!important}
+  .grid2,.ss-grid2{gap:14px!important}
+  .hp-overview{grid-template-columns:1fr!important}
+  .hp-stats,.hp-quick-links,.dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .auth-card{max-width:520px!important}
+  .footer{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 28px)!important}
+  .asst-panel{left:18px!important;right:18px!important;width:auto!important;height:min(68dvh,620px)!important;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 78px)!important}
+}
+
+/* Phones */
+@media (max-width:767px){
+  :root{--bnav-h:62px}
+  body{font-size:14px!important;line-height:1.7!important}
+  .nav{display:none!important}
+  .ss-mobile-head{display:flex!important;min-height:60px!important;padding:calc(8px + var(--safe-top)) 11px 8px!important;gap:8px!important}
+  .ss-mobile-logo{font-size:17px!important;min-width:0!important}
+  .ss-mobile-actions{gap:6px!important}
+  .ss-mobile-lang,.ss-mobile-account{min-height:42px!important}
+  .ss-mobile-account{max-width:118px!important}
+  .ss-bnav{display:flex!important;justify-content:space-evenly!important;align-items:center!important;padding-bottom:calc(5px + var(--safe-bottom))!important}
+  .ss-bnav a{flex:1 1 0!important;min-width:0!important;min-height:50px!important;padding:6px 2px!important;font-size:9.5px!important}
+  .ss-bnav a .bn-icon{font-size:20px!important}
+  .container{width:100%!important;padding:14px 12px calc(var(--bnav-h) + var(--safe-bottom) + 24px)!important}
+  .card,.ss-profile-card,.fam-form,.hp-panel,.manage-card,.memory-card{border-radius:16px!important;padding:16px!important}
+  input,select,textarea,input.inp,select.inp,textarea.inp,.card input,.card select,.auth-card input{font-size:16px!important;min-height:48px!important}
+  button,.btn,.ss-btn-primary,.ss-btn-danger,.auth-btn{min-height:44px}
+  .ss-btn-row{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .ss-btn-row>*{width:100%!important;justify-content:center!important}
+  .hp-stats,.hp-quick-links,.dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .hp-stat{padding:13px 8px!important}
+  .hp-stat-value{font-size:20px!important}
+  table.tbl,table.admin-table{display:block!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;white-space:nowrap!important}
+  .footer{padding-inline:14px!important;padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 22px)!important;text-align:center!important}
+  .footer-inner,.footer-links{justify-content:center!important}
+  .asst-fab{width:50px!important;height:50px!important;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 10px)!important}
+  .asst-panel{left:10px!important;right:10px!important;width:auto!important;height:min(70dvh,590px)!important;bottom:calc(var(--bnav-h) + var(--safe-bottom) + 70px)!important;border-radius:18px!important}
+  .ss-modal-overlay,.expl-bg,.asst-modal-bg{padding:10px!important}
+  .ss-modal,.expl-modal,.asst-modal{width:100%!important;max-width:520px!important;padding:18px 15px!important;border-radius:18px!important}
+}
+
+@media (max-width:330px){
+  .container{padding-inline:9px!important}
+  .ss-mobile-account span:last-child{display:none!important}
+  .ss-mobile-account{width:42px!important;padding-inline:7px!important}
+  .hp-stats,.hp-quick-links,.dash-stats{grid-template-columns:1fr!important}
+  .ss-bnav a{font-size:8.5px!important}
+}
+
+/* Stable chat sizing across iOS Safari, Android Chrome and tablets. */
+@media (max-width:900px){
+  body.ss-chat-page{height:100dvh!important;min-height:100svh!important;overflow:hidden!important;overscroll-behavior:none!important}
+  body.ss-chat-page .container{height:calc(100dvh - 60px - var(--safe-top) - var(--bnav-h) - var(--safe-bottom))!important;min-height:0!important;overflow:hidden!important;padding:6px 8px!important}
+  body.ss-chat-page .chat-wrap{height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;border-radius:16px!important;display:flex!important;flex-direction:column!important}
+  body.ss-chat-page .chat-body{min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  body.ss-chat-page .chat-options{flex:0 0 auto!important;max-height:40%!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  body.ss-chat-page .chat-input{flex:0 0 auto!important;padding-bottom:max(8px,var(--safe-bottom))!important}
+  .bubble{max-width:94%!important;font-size:14px!important;overflow-wrap:anywhere!important}
+}
+
+@media (orientation:landscape) and (max-height:560px) and (max-width:1180px){
+  .ss-mobile-head{min-height:50px!important;padding-block:5px!important}
+  body.ss-chat-page .container{height:calc(100dvh - var(--bnav-h) - var(--safe-bottom))!important;padding-block:4px!important}
+  body.ss-chat-page .chat-head{padding-block:6px!important}
+  body.ss-chat-page .chat-options{max-height:32dvh!important}
+  body.ss-chat-page .chat-input{padding-block:5px!important}
+}
+
+/* ===== Home page: device-specific composition ===== */
+body.ss-home-page .ss-home-shell{max-width:100%}
+
+@media (min-width:1181px){
+  body.ss-home-page .ss-home-shell{width:min(1180px,calc(100% - 44px))!important;gap:24px!important}
+  body.ss-home-page .ss-home-hero{grid-template-columns:minmax(390px,.95fr) minmax(460px,1.05fr)!important;gap:clamp(34px,5vw,72px)!important}
+  body.ss-home-page .ss-core-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  body.ss-home-page .ss-how-flow{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+
+/* iPad/tablet: keep the premium split hero, but scale it instead of stacking too early. */
+@media (min-width:768px) and (max-width:1180px){
+  body.ss-home-page .ss-home-shell{width:min(100% - 28px,1040px)!important;gap:18px!important}
+  body.ss-home-page .ss-home-hero{grid-template-columns:minmax(300px,.9fr) minmax(340px,1.1fr)!important;gap:22px!important;padding:30px 26px!important;min-height:500px!important}
+  body.ss-home-page .ss-hero-copy{text-align:right!important}
+  body.ss-home-page .ss-hero-rule{margin-inline-start:auto!important;margin-inline-end:0!important}
+  body.ss-home-page .ss-hero-lead,body.ss-home-page .ss-hero-desc{margin-inline-start:auto!important;margin-inline-end:0!important}
+  body.ss-home-page .ss-hero-actions{justify-content:flex-start!important}
+  body.ss-home-page .ss-trust-row{justify-content:flex-start!important}
+  body.ss-home-page .ss-hero-copy h1{font-size:clamp(38px,5vw,56px)!important}
+  body.ss-home-page .ss-hero-lead{font-size:16px!important}
+  body.ss-home-page .ss-hero-demo{min-height:410px!important}
+  body.ss-home-page .ss-demo-orbit{width:360px!important;height:360px!important}
+  body.ss-home-page .ss-result-card{width:min(315px,80%)!important}
+  body.ss-home-page .ss-core-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+  body.ss-home-page .ss-core-card.lab{grid-column:1/-1!important}
+  body.ss-home-page .ss-tools-scroll{gap:12px!important}
+  body.ss-home-page .ss-tool{flex:0 0 calc((100% - 36px)/4)!important;min-width:150px!important}
+  body.ss-home-page .ss-how-flow{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+  body.ss-home-page .ss-how-step{padding-inline:5px!important}
+  body.ss-home-page .ss-how-step b{font-size:13px!important}
+  body.ss-home-page .ss-how-step small{font-size:10px!important}
+}
+
+/* Normal phones: preserve the requested side-by-side hero, but simplify the preview so text stays legible. */
+@media (min-width:390px) and (max-width:767px){
+  body.ss-home-page{padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + 18px)!important}
+  body.ss-home-page .ss-home-shell{width:calc(100% - 14px)!important;gap:14px!important}
+  body.ss-home-page .ss-home-hero{direction:rtl!important;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)!important;align-items:center!important;gap:8px!important;padding:20px 10px 22px!important;min-height:440px!important;border-radius:22px!important;overflow:hidden!important}
+  body.ss-home-page .ss-hero-copy{grid-column:1!important;text-align:right!important;padding:0 2px!important}
+  body.ss-home-page .ss-hero-kicker{font-size:10px!important;line-height:1.4!important;margin-bottom:7px!important}
+  body.ss-home-page .ss-hero-rule{width:42px!important;height:3px!important;margin:0 0 11px auto!important}
+  body.ss-home-page .ss-hero-copy h1{font-size:clamp(26px,7vw,31px)!important;line-height:1.17!important;letter-spacing:-.2px!important}
+  body.ss-home-page .ss-hero-lead{font-size:12.5px!important;line-height:1.58!important;margin:12px 0 0!important;font-weight:750!important;max-width:none!important}
+  body.ss-home-page .ss-hero-desc{font-size:11px!important;line-height:1.55!important;margin:6px 0 0!important;max-width:none!important}
+  body.ss-home-page .ss-hero-actions{display:grid!important;grid-template-columns:1fr!important;gap:7px!important;margin-top:13px!important}
+  body.ss-home-page .ss-hero-primary,body.ss-home-page .ss-hero-secondary{width:100%!important;min-height:42px!important;border-radius:11px!important;padding:0 8px!important;font-size:11.5px!important;gap:5px!important}
+  body.ss-home-page .ss-trust-row{display:grid!important;grid-template-columns:1fr!important;gap:4px!important;margin-top:10px!important;font-size:8.8px!important}
+  body.ss-home-page .ss-trust-ic{width:20px!important;height:20px!important;flex:0 0 20px!important}
+  body.ss-home-page .ss-hero-demo{grid-column:2!important;min-height:340px!important;height:340px!important;overflow:visible!important}
+  body.ss-home-page .ss-demo-orbit{width:210px!important;height:210px!important}
+  body.ss-home-page .ss-result-card{width:165px!important;padding:8px!important;border-radius:15px!important;transform:rotate(-1deg)!important}
+  body.ss-home-page .ss-result-top strong{font-size:8.5px!important}
+  body.ss-home-page .ss-result-back{width:19px!important;height:19px!important;font-size:12px!important}
+  body.ss-home-page .ss-result-risk{padding:8px!important;border-radius:10px!important;margin-bottom:6px!important}
+  body.ss-home-page .ss-result-risk small{font-size:6.5px!important}
+  body.ss-home-page .ss-result-risk b{font-size:17px!important}
+  body.ss-home-page .ss-result-risk em{font-size:5.4px!important}
+  body.ss-home-page .ss-risk-check{width:32px!important;height:32px!important;font-size:18px!important;box-shadow:0 0 0 5px rgba(67,207,130,.12)!important}
+  body.ss-home-page .ss-mini-panel{border-radius:9px!important;margin-top:6px!important}
+  body.ss-home-page .ss-mini-panel h3{font-size:7.4px!important;padding:6px!important}
+  body.ss-home-page .ss-mini-row{padding:5px 6px!important;gap:4px!important}
+  body.ss-home-page .ss-mini-row b{font-size:6.5px!important}
+  body.ss-home-page .ss-mini-row small{font-size:5px!important}
+  body.ss-home-page .ss-mini-row:nth-child(4){display:none!important}
+  body.ss-home-page .ss-next-panel,body.ss-home-page .ss-source-panel{display:none!important}
+  body.ss-home-page .ss-tech-card{width:60px!important;min-height:54px!important;border-radius:10px!important;padding:4px 2px!important}
+  body.ss-home-page .ss-tech-card .ic{font-size:15px!important}
+  body.ss-home-page .ss-tech-card b{font-size:6px!important;margin-top:2px!important}
+  body.ss-home-page .ss-tech-card small{display:none!important}
+  body.ss-home-page .ss-tech-data{left:-3px!important;top:19%!important}
+  body.ss-home-page .ss-tech-ai{right:-2px!important;top:16%!important}
+  body.ss-home-page .ss-tech-health{left:-2px!important;bottom:12%!important}
+  body.ss-home-page .ss-demo-note{display:none!important}
+}
+
+/* Small phones / iPhone SE: stack only here so nothing becomes microscopic. */
+@media (max-width:389px){
+  body.ss-home-page .ss-home-shell{width:calc(100% - 12px)!important;gap:12px!important}
+  body.ss-home-page .ss-home-hero{grid-template-columns:1fr!important;gap:14px!important;padding:20px 12px 22px!important;min-height:0!important;border-radius:20px!important}
+  body.ss-home-page .ss-hero-copy{grid-column:1!important;text-align:center!important}
+  body.ss-home-page .ss-hero-rule{margin-inline:auto!important}
+  body.ss-home-page .ss-hero-copy h1{font-size:30px!important;line-height:1.2!important}
+  body.ss-home-page .ss-hero-lead{font-size:13.5px!important;margin-inline:auto!important}
+  body.ss-home-page .ss-hero-desc{font-size:11.5px!important;margin-inline:auto!important}
+  body.ss-home-page .ss-hero-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  body.ss-home-page .ss-hero-primary,body.ss-home-page .ss-hero-secondary{width:100%!important;min-height:46px!important;font-size:13px!important}
+  body.ss-home-page .ss-trust-row{justify-content:center!important;font-size:9.5px!important}
+  body.ss-home-page .ss-hero-demo{grid-column:1!important;min-height:300px!important;height:300px!important}
+  body.ss-home-page .ss-demo-orbit{width:260px!important;height:260px!important}
+  body.ss-home-page .ss-result-card{width:205px!important;padding:10px!important}
+  body.ss-home-page .ss-tech-card{width:64px!important;min-height:58px!important}
+  body.ss-home-page .ss-next-panel,body.ss-home-page .ss-source-panel{display:none!important}
+}
+
+/* Main services: 2 cards + one full-width card on phones, 3 across on desktop. */
+@media (max-width:767px){
+  body.ss-home-page .ss-home-section{padding:18px 12px!important;border-radius:20px!important}
+  body.ss-home-page .ss-section-head{margin-bottom:14px!important;text-align:center!important}
+  body.ss-home-page .ss-section-head .eyebrow{font-size:12px!important}
+  body.ss-home-page .ss-section-head h2{font-size:clamp(25px,7vw,29px)!important;line-height:1.3!important}
+  body.ss-home-page .ss-core-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  body.ss-home-page .ss-core-card{display:flex!important;min-width:0!important;min-height:235px!important;padding:15px 10px 13px!important;border-radius:18px!important;text-align:center!important;align-items:center!important;justify-content:flex-start!important}
+  body.ss-home-page .ss-core-card.lab{grid-column:1/-1!important;min-height:170px!important;display:grid!important;grid-template-columns:68px minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;column-gap:12px!important;text-align:right!important;padding:16px!important}
+  body.ss-home-page .ss-core-icon{width:55px!important;height:55px!important;min-width:55px!important;font-size:26px!important;margin:0 0 9px!important}
+  body.ss-home-page .ss-core-card.lab .ss-core-icon{grid-column:1!important;grid-row:1/span 3!important;margin:0!important;width:62px!important;height:62px!important;font-size:29px!important;align-self:center!important}
+  body.ss-home-page .ss-core-card h3{font-size:16.5px!important;line-height:1.35!important;text-align:center!important;margin:0!important}
+  body.ss-home-page .ss-core-card p{font-size:11.7px!important;line-height:1.65!important;text-align:center!important;margin:7px 0 11px!important;max-width:23ch!important;color:#607A92!important}
+  body.ss-home-page .ss-core-open{width:100%!important;min-height:39px!important;padding:0 7px!important;font-size:12px!important;border-radius:11px!important;margin-top:auto!important}
+  body.ss-home-page .ss-core-card.lab h3,body.ss-home-page .ss-core-card.lab p,body.ss-home-page .ss-core-card.lab .ss-core-open{grid-column:2!important;text-align:right!important}
+  body.ss-home-page .ss-core-card.lab h3{font-size:18px!important}
+  body.ss-home-page .ss-core-card.lab p{font-size:12px!important;max-width:none!important;margin:4px 0 8px!important}
+  body.ss-home-page .ss-core-card.lab .ss-core-open{width:min(190px,100%)!important;justify-self:start!important}
+}
+
+/* Tools: exactly four visible on phones (2 x 2), horizontal scrolling stays inside the section. */
+@media (max-width:767px){
+  body.ss-home-page .ss-tools-panel{padding:18px 12px!important;border-radius:20px!important;overflow:hidden!important}
+  body.ss-home-page .ss-tools-head{display:block!important;text-align:right!important;margin-bottom:12px!important}
+  body.ss-home-page .ss-tools-head h2{font-size:24px!important;line-height:1.35!important}
+  body.ss-home-page .ss-tools-head p{font-size:12.5px!important;line-height:1.65!important;margin-top:4px!important}
+  body.ss-home-page .ss-tools-all{display:inline-block!important;margin-top:6px!important;font-size:11px!important}
+  body.ss-home-page .ss-tools-scroll{display:grid!important;grid-template-rows:repeat(2,112px)!important;grid-auto-flow:column!important;grid-auto-columns:calc((100% - 10px)/2)!important;gap:10px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x mandatory!important;overscroll-behavior-inline:contain!important;touch-action:pan-x pan-y!important;padding:2px 1px 5px!important}
+  body.ss-home-page .ss-tool{width:auto!important;min-width:0!important;min-height:0!important;flex:none!important;scroll-snap-align:start!important;padding:12px 8px!important;border-radius:16px!important;gap:6px!important}
+  body.ss-home-page .ss-tool .ic{font-size:26px!important}
+  body.ss-home-page .ss-tool b{font-size:12px!important;line-height:1.35!important}
+  body.ss-home-page .ss-tool small{font-size:9px!important;line-height:1.35!important}
+}
+
+/* How-it-works and sources stay readable without horizontal page scrolling. */
+@media (max-width:767px){
+  body.ss-home-page .ss-how{padding:18px 12px!important;border-radius:20px!important}
+  body.ss-home-page .ss-how-head{text-align:center!important;margin-bottom:15px!important}
+  body.ss-home-page .ss-how-head h2{font-size:24px!important}
+  body.ss-home-page .ss-how-head p{font-size:12px!important}
+  body.ss-home-page .ss-how-flow{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px 8px!important}
+  body.ss-home-page .ss-how-step{padding:4px!important}
+  body.ss-home-page .ss-how-step:after{display:none!important}
+  body.ss-home-page .ss-how-icon{width:55px!important;height:55px!important;font-size:25px!important}
+  body.ss-home-page .ss-how-step b{font-size:12px!important}
+  body.ss-home-page .ss-how-step small{font-size:9px!important;line-height:1.55!important}
+  body.ss-home-page .ss-sources-strip{grid-template-columns:1fr!important;gap:12px!important;padding:16px 12px!important;text-align:center!important;border-radius:18px!important}
+  body.ss-home-page .ss-sources-logos{justify-content:center!important;gap:9px 13px!important}
+  body.ss-home-page .ss-source-badge{font-size:9.5px!important}
+}
+
+/* Avoid accidental dark-mode repainting of the competition home cards. */
+@media (prefers-color-scheme:dark){
+  body.ss-home-page{background:#F7FBFF!important;color:#40566F!important}
+  body.ss-home-page .ss-home-hero,body.ss-home-page .ss-home-section,body.ss-home-page .ss-tools-panel,body.ss-home-page .ss-how,body.ss-home-page .ss-core-card,body.ss-home-page .ss-tool,body.ss-home-page .ss-result-card{color:#0B3775!important}
+}
+"""
+
 
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
