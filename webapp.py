@@ -442,6 +442,31 @@ input,select,textarea,button{font-family:inherit}
   body.ss-chat-page .chat-input{padding-block:5px!important}
 }
 
+/* ===== Focused questionnaire UX: one clear question + previous answer ===== */
+body.ss-chat-page .step-focus-card{
+  width:100%;max-width:760px;margin:0 auto;padding:14px 15px;border:1px solid #D7E7F1;
+  border-radius:16px;background:#FFFFFF;box-shadow:0 4px 14px rgba(22,59,92,.06);text-align:start;
+}
+body.ss-chat-page .step-focus-kicker{font-size:11px;font-weight:800;color:#287FC1;margin-bottom:5px}
+body.ss-chat-page .step-focus-question{font-size:17px;font-weight:850;line-height:1.55;color:#173C63}
+body.ss-chat-page .step-focus-answer{margin-top:10px;padding:9px 11px;border-radius:11px;background:#EFF7FC;border:1px solid #D9EAF4;color:#36556D;font-size:12.5px;line-height:1.55}
+body.ss-chat-page .step-focus-answer b{color:#173C63}
+@media (max-width:900px){
+  body.ss-chat-page .chat-body:not(.result-mode){flex:0 0 auto!important;min-height:108px!important;max-height:29dvh!important;overflow-y:auto!important;padding:9px!important;background:#F7FAFC!important}
+  body.ss-chat-page .chat-options{flex:1 1 auto!important;min-height:0!important;max-height:none!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-content:start!important;padding:9px!important;gap:8px!important}
+  body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.ss-chat-page .chat-options .opt{min-height:48px!important;font-size:13.5px!important;font-weight:700!important;padding:10px 9px!important}
+  body.ss-chat-page .chat-input{flex:0 0 auto!important}
+  body.ss-chat-page .step-focus-card{padding:12px 13px;border-radius:14px}
+  body.ss-chat-page .step-focus-question{font-size:16px!important;line-height:1.5!important}
+  body.ss-chat-page .step-focus-answer{font-size:12px!important;margin-top:8px!important;padding:8px 10px!important}
+}
+@media (max-width:360px){
+  body.ss-chat-page .chat-options,body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:1fr!important}
+  body.ss-chat-page .chat-body:not(.result-mode){max-height:31dvh!important}
+  body.ss-chat-page .step-focus-question{font-size:15px!important}
+}
+
 /* ===== Home page: device-specific composition ===== */
 body.ss-home-page .ss-home-shell{max-width:100%}
 
@@ -5682,7 +5707,9 @@ def chat_page():
       state.age = null; state.gender = null;
     }
 
+    let lastUserAnswerText = '';
     function add(msg, cls) {
+      if (cls === 'user') lastUserAnswerText = String(msg || '').trim();
       const d = document.createElement('div');
       d.className = 'bubble ' + cls;
       d.textContent = msg;
@@ -5749,6 +5776,35 @@ def chat_page():
       bodyEl.scrollTop = bodyEl.scrollHeight;
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
+    }
+    function focusStepQuestion(msg, answerOverride) {
+      const compact = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+      if (!compact || bodyEl.classList.contains('result-mode')) return addQ(msg);
+      bodyEl.innerHTML = '';
+      const card = document.createElement('section');
+      card.className = 'step-focus-card';
+      const kicker = document.createElement('div');
+      kicker.className = 'step-focus-kicker';
+      kicker.textContent = LANG === 'ar' ? 'السؤال الحالي' : 'Current question';
+      const q = document.createElement('div');
+      q.className = 'step-focus-question';
+      q.textContent = msg;
+      card.appendChild(kicker);
+      card.appendChild(q);
+      const answer = answerOverride === undefined ? lastUserAnswerText : String(answerOverride || '').trim();
+      if (answer) {
+        const a = document.createElement('div');
+        a.className = 'step-focus-answer';
+        const b = document.createElement('b');
+        b.textContent = LANG === 'ar' ? 'إجابتك السابقة: ' : 'Previous answer: ';
+        a.appendChild(b);
+        a.appendChild(document.createTextNode(answer));
+        card.appendChild(a);
+      }
+      bodyEl.appendChild(card);
+      bodyEl.scrollTop = 0;
+      if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
+      return card;
     }
     function clearOpts() { optsEl.innerHTML = ''; optsEl.classList.remove('symptom-picker'); }
     function showOpts(items) {
@@ -5835,7 +5891,8 @@ def chat_page():
           add(m.name + (m.age ? ' — ' + m.age + ' ' + TT('yrs') : ''), 'user');
           askAge();
         }}));
-        addQ('👥 ' + TT('for_whom'));
+        focusStepQuestion('👥 ' + TT('for_whom'));
+        hideText();
         showOpts(items);
       }).catch(function() { state.member = null; askAge(); });
     }
@@ -6039,7 +6096,7 @@ def chat_page():
       }
       if (node.options) {
         const prompt=node.prompt?(LANG==='en'?node.prompt[1]:node.prompt[0]):(LANG==='ar'?'أين تشعر بالتنميل أو الخدر؟ اختر الوصف الأقرب.':'Where do you feel the numbness or tingling? Choose the closest description.');
-        addQ('📍 ' + prompt);
+        focusStepQuestion('📍 ' + prompt);
         showOpts(node.options.map(function(opt){
           const label=LANG==='en'?opt.label[1]:opt.label[0];
           return {label:label,fn:function(){
@@ -6056,7 +6113,7 @@ def chat_page():
         const q = LANG === 'en' ? node.q[1] : node.q[0];
         adaptiveQuestionNo += 1;
         addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'السؤال ':'Question ')+adaptiveQuestionNo+(LANG==='ar'?' · يتكيف حسب إجاباتك':' · adapts to your answers'))+'</div>','bot');
-        addQ('🧩 ' + q);
+        focusStepQuestion('🧩 ' + q);
         showOpts([
           {label:TT('clar_yes'), fn:()=>{
             add(TT('clar_yes'),'user');
@@ -6077,14 +6134,15 @@ def chat_page():
       if (state.age) { askGender(); return; }
       state.step = 'age';
       updateFlow(state.step);
-      addQ(TT('age'));
+      focusStepQuestion(TT('age'));
       showText(TT('age_ph'));
     }
     function askGender() {
       if (state.gender) { askSymptoms(); return; }
       state.step = 'gender';
       updateFlow(state.step);
-      addQ(TT('gender'));
+      focusStepQuestion(TT('gender'));
+      hideText();
       showOpts([
         {label:TT('male'), fn:()=>{ state.gender='m'; add(TT('male'),'user'); if(qualityReturnKey==='gender'){qualityReturnKey=null;showDataQualityGate();}else askSymptoms(); }},
         {label:TT('female'), fn:()=>{ state.gender='f'; add(TT('female'),'user'); if(qualityReturnKey==='gender'){qualityReturnKey=null;showDataQualityGate();}else askSymptoms(); }}
@@ -6119,20 +6177,25 @@ def chat_page():
       }
     }
     function showSmartSymptomInput() {
-      if (state.smart_prompt_shown) return;
       state.smart_prompt_shown=true;
+      const compact = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+      if (compact) {
+        showText(LANG==='ar'?'اكتب عرضًا أو اختر من الخيارات أدناه…':'Type a symptom or choose from the options below…', true);
+        return;
+      }
+      if (bodyEl.querySelector('.smart-input-card')) return;
       addHtml('<div class="smart-input-card"><b>🗣️ '+esc(LANG==='ar'?'اكتب اللي تحس فيه':'Describe what you are experiencing')+'</b><p class="muted">'+esc(LANG==='ar'?'مثال: من أمس عندي صداع قوي وأحس بغثيان.':'Example: Since yesterday I have a strong headache and feel nauseous.')+'</p><textarea id="smartSymptomText" class="field" rows="3" placeholder="'+esc(LANG==='ar'?'صف الأعراض بطريقتك…':'Describe your symptoms in your own words…')+'"></textarea><button class="ss-btn-primary" style="margin-top:8px" onclick="extractSmartSymptoms(document.getElementById(&quot;smartSymptomText&quot;).value)">'+esc(LANG==='ar'?'فهم الأعراض':'Find symptoms')+'</button></div>','q');
     }
     function askSymptoms() {
       trackJourney('symptoms');
       state.step = 'symptoms';
       updateFlow(state.step);
+      const selectedSummary = state.symptoms.length
+        ? (TT('chosen') + ' ' + state.symptoms.join(LANG === 'en' ? ', ' : '، '))
+        : undefined;
+      focusStepQuestion('🩺 ' + (state.symptoms.length ? TT('syms_more') : TT('syms_q')), selectedSummary);
       if (!state.symptoms.length) showSmartSymptomInput();
-      if (state.symptoms.length) {
-        addHtml('➕ ' + esc(TT('syms_more')) + '<div class="sel-sum">' + esc(TT('chosen')) + ' ' + esc(state.symptoms.join(LANG === 'en' ? ', ' : '، ')) + '</div>', 'q');
-      } else {
-        addQ('🩺 ' + TT('syms_q'));
-      }
+      else hideText();
       const items = SYMS.map((s,i)=>({
         label:s,
         sel: state.symptoms.includes(s),
@@ -6188,21 +6251,24 @@ def chat_page():
       if (state.duration) { askSeverity(); return; }
       state.step = 'duration';
       updateFlow(state.step);
-      addQ(TT('duration'));
+      focusStepQuestion(TT('duration'));
+      hideText();
       showOpts(DURS.map(d=>({label:d, fn:()=>{ state.duration=d; add(d,'user'); if(qualityReturnKey==='duration'){qualityReturnKey=null;showDataQualityGate();}else askSeverity(); }})));
     }
     function askSeverity() {
       if (state.severity) { askNotes(); return; }
       state.step = 'severity';
       updateFlow(state.step);
-      addQ(TT('severity'));
+      focusStepQuestion(TT('severity'));
+      hideText();
       showOpts(SEVS.map(([v,l])=>({label:l, fn:()=>{ state.severity=v; add(l,'user'); if(qualityReturnKey==='severity'){qualityReturnKey=null;showDataQualityGate();}else askNotes(); }})));
     }
     function askConditions() {
       if (state.conditions && state.member && state.member.conditions) { askMeds(); return; }
       state.step = 'conditions';
       updateFlow(state.step);
-      addQ(G(TT('conditions_f'), TT('conditions_m')));
+      focusStepQuestion(G(TT('conditions_f'), TT('conditions_m')));
+      hideText();
       const items = CONDS.map(c=>({label:c, fn:()=>{ state.conditions=c; state.history_answered=true; add(c,'user'); if(qualityReturnKey==='relevant_history'){qualityReturnKey=null;showDataQualityGate();}else askMeds(); }}));
       items.push({label:TT('other_diseases'), fn:()=>{ addQ(G(TT('other_diseases_f'), TT('other_diseases_m'))); showText(TT('cond_ph')); }});
       showOpts(items);
@@ -6212,20 +6278,20 @@ def chat_page():
       if (state.medications && state.member && state.member.medications) { askAllergies(); return; }
       state.step = 'medications';
       updateFlow(state.step);
-      addQ(G(TT('meds_f'), TT('meds_m')));
+      focusStepQuestion(G(TT('meds_f'), TT('meds_m')));
       showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.medications=''; askAllergies(); }}]);
       showText(TT('meds_ph'), true);
     }
     function askAllergies() {
       state.step = 'allergies'; updateFlow(state.step);
-      addQ(LANG === 'ar' ? 'هل لديك أي حساسية معروفة؟ اذكرها أو اضغط تخطي.' : 'Do you have any known allergies? Add them or skip.');
+      focusStepQuestion(LANG === 'ar' ? 'هل لديك أي حساسية معروفة؟ اذكرها أو اضغط تخطي.' : 'Do you have any known allergies? Add them or skip.');
       showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.allergies=''; startClarify(); }}]);
       showText(LANG === 'ar' ? 'مثال: حساسية البنسلين' : 'Example: penicillin allergy', true);
     }
     function askNotes() {
       state.step = 'notes';
       updateFlow(state.step);
-      addQ(G(TT('notes_f'), TT('notes_m')));
+      focusStepQuestion(G(TT('notes_f'), TT('notes_m')));
       showOpts([{label:TT('skip'), fn:()=>{ add(TT('skip'),'user'); state.notes=''; askConditions(); }}]);
       showText(TT('notes_ph'), true);
     }
@@ -7017,7 +7083,7 @@ def chat_page():
       }, {enableHighAccuracy:false, timeout:20000, maximumAge:300000});
     }
     function restart() {
-      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null;
+      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null; lastUserAnswerText='';
       bodyEl.innerHTML = '';
       bodyEl.classList.remove('result-mode');
       bodyEl.scrollTop = 0;
@@ -8892,6 +8958,8 @@ CALC_CSS = """
 .calc-sub { max-width: 720px; }
 .calc-pane { display: none; }
 .calc-pane.open { display: block; animation: fadeIn .35s ease both; }
+#calcPaneArea { scroll-margin-top: 96px; }
+.calc-pane { scroll-margin-top: 112px; }
 .calc-back { margin-bottom: 12px; }
 .calc-form .cf-row { margin-bottom: 14px; }
 .calc-sug-hint { display: flex; gap: 10px; align-items: flex-start; background: #EAF4FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.8; color: #123B70; margin-bottom: 14px; }
@@ -9089,16 +9157,26 @@ def calculators_page():
     function showCalc(k) {
       asstCalcKind = k;
       if (typeof asstSetCtx === 'function') asstSetCtx(k);
-      document.getElementById('calcPaneArea').style.display = '';
+      const paneArea = document.getElementById('calcPaneArea');
+      const pane = document.getElementById('pane-' + k);
+      paneArea.style.display = '';
       document.getElementById('paneTitle').textContent = CTT(PANE_TITLES[k]);
       document.querySelectorAll('.calc-pane').forEach(function(p) { p.classList.remove('open'); });
-      document.getElementById('pane-' + k).classList.add('open');
+      pane.classList.add('open');
       if (k === 'dose') initIv();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Keep the user's place: after choosing a calculator, move directly to
+      // the opened calculator instead of jumping to the top of the page.
+      window.requestAnimationFrame(function() {
+        window.requestAnimationFrame(function() {
+          paneArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
     }
     function backToGrid() {
-      document.getElementById('calcPaneArea').style.display = 'none';
-      document.getElementById('calcPaneArea').scrollIntoView({ behavior: 'smooth' });
+      const paneArea = document.getElementById('calcPaneArea');
+      paneArea.style.display = 'none';
+      const grid = document.querySelector('.calc-grid');
+      if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function initIv() {
       const sel = document.getElementById('dIv');
