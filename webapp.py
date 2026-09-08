@@ -4093,7 +4093,7 @@ body.ss-welcome-page .container{padding-bottom:0!important;}
 .first-lang{
   position:relative;
   min-height:100vh;min-height:100dvh;min-height:100svh;
-  overflow:hidden;
+  overflow-x:hidden;overflow-y:auto;
   isolation:isolate;
   background:
     radial-gradient(circle at 10% 18%,rgba(157,211,255,.23) 0 12%,transparent 30%),
@@ -4145,7 +4145,9 @@ body.ss-welcome-page .container{padding-bottom:0!important;}
 .first-lang-start strong{display:block;font-size:18px;line-height:1.05;font-weight:900;}
 .first-lang-start small{display:block;margin-top:4px;font-family:'Poppins','Cairo',sans-serif;font-size:13px;letter-spacing:.08em;font-weight:500;}
 .first-lang-start .arrow{position:absolute;right:22px;top:50%;transform:translateY(-50%);font:300 37px/1 'Segoe UI',sans-serif;color:#fff;}
-.first-lang-select-title{width:min(430px,100%);display:flex;align-items:center;gap:13px;margin:0 auto 13px;color:#3C6089;font-size:14px;font-weight:900;}
+.first-lang-select-title{width:min(430px,100%);display:flex;align-items:center;gap:13px;margin:28px auto 13px;color:#3C6089;font-size:14px;font-weight:900;}
+/* Competition landing: language choice is the primary action; no redundant Get Started CTA. */
+body.ss-welcome-page .first-lang-start{display:none!important;}
 .first-lang-select-title::before,.first-lang-select-title::after{content:'';height:1px;flex:1;background:#C9DFF2;}
 .first-lang-options{width:min(430px,100%);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .first-lang-option{
@@ -4209,13 +4211,13 @@ body.ss-welcome-page .container{padding-bottom:0!important;}
   .first-lang-start strong{font-size:16.5px;line-height:1.05;}
   .first-lang-start small{font-size:11px;margin-top:2px;letter-spacing:.075em;}
   .first-lang-start .arrow{right:17px;font-size:29px;}
-  .first-lang-select-title{font-size:11.5px;gap:9px;margin-bottom:8px;}
+  .first-lang-select-title{font-size:11.5px;gap:9px;margin:18px auto 8px;}
   .first-lang-options{gap:8px;}
   .first-lang-option{min-height:64px;border-radius:16px;padding:8px 8px;gap:7px;font-size:15px;box-shadow:0 5px 16px rgba(41,111,173,.055);}
   .first-lang-flag{width:36px;height:36px;flex-basis:36px;font-size:21px;}
   .first-lang-option .lang-arrow{font-size:23px;}
   .first-lang-options.ss-attention .first-lang-option{border-color:#8DC7F3;box-shadow:0 0 0 3px rgba(36,142,243,.08),0 7px 18px rgba(41,111,173,.08);}
-  .first-lang-benefits{min-height:88px;margin-top:12px;padding:9px 2px;border-radius:18px;}
+  .first-lang-benefits{min-height:94px;margin-top:16px;padding:10px 2px;border-radius:18px;}
   .first-lang-benefit{padding-inline:4px;}
   .first-lang-benefit svg{width:24px;height:24px;margin-bottom:5px;}
   .first-lang-benefit b{font-size:10px;line-height:1.28;white-space:normal;}
@@ -4223,10 +4225,28 @@ body.ss-welcome-page .container{padding-bottom:0!important;}
   .first-lang-source{margin-top:auto;padding-top:10px;padding-bottom:1px;font-size:9.8px;line-height:1.35;}
   .first-lang-source span[lang="en"]{font-size:8.9px;line-height:1.35;margin-top:1px;}
   .first-lang-source .dot{font-size:13px;margin:0 3px;}
-  .first-lang-leaf{left:3px;bottom:25px;transform:scale(.66) rotate(-4deg);transform-origin:bottom left;opacity:.56;}
+  .first-lang-leaf{left:3px;bottom:8px;transform:scale(.66) rotate(-4deg);transform-origin:bottom left;opacity:.50;}
   .first-lang::before{height:21%;bottom:-8%;opacity:.82;}
   .first-lang::after{height:17%;bottom:-7%;opacity:.74;}
 }
+@media(max-width:480px) and (max-height:760px){
+  .first-lang-shell{padding-top:max(7px,env(safe-area-inset-top));padding-bottom:max(10px,env(safe-area-inset-bottom));}
+  .first-lang-trust{margin-bottom:5px;}
+  .first-lang-logo-mark{width:40px;height:40px;}
+  .first-lang-slogan{margin-bottom:7px;}
+  .first-lang-headline-ar{font-size:27px;}
+  .first-lang-headline-en{font-size:16.5px;}
+  .first-lang-copy{margin-top:9px;}
+  .first-lang-select-title{margin-top:13px;}
+  .first-lang-option{min-height:60px;}
+  .first-lang-benefits{margin-top:10px;min-height:82px;}
+}
+@media(min-width:481px) and (max-width:900px){
+  .first-lang-shell{width:min(620px,100%);padding-inline:32px;}
+  .first-lang-select-title{margin-top:30px;}
+  .first-lang-options,.first-lang-benefits{width:min(500px,100%);}
+}
+
 @media(max-width:380px){
   .home-showcase{padding:20px 10px 27px;gap:19px}
   .home-showcase-copy h1{font-size:clamp(29px,8.5vw,33px)!important}
@@ -4529,10 +4549,6 @@ def welcome_page():
           <p class="first-lang-desc-en" lang="en">An AI-powered health assistant that helps you understand symptoms and assess risk in a simple way.</p>
         </div>
 
-        <button type="button" class="first-lang-start" onclick="ssFocusLanguages()" aria-controls="languageOptions">
-          <span><strong>ابدأ الآن</strong><small lang="en">Get Started</small></span><span class="arrow" aria-hidden="true">›</span>
-        </button>
-
         <p class="first-lang-select-title" id="languageTitle" tabindex="-1"><span>اختر اللغة / <span lang="en">Choose language</span></span></p>
         <div class="first-lang-options" id="languageOptions" role="group" aria-labelledby="languageTitle">
           <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
@@ -4558,7 +4574,6 @@ def welcome_page():
           </div>
         </section>
 
-        <div class="first-lang-source"><span class="dot">•</span><span dir="rtl">مدعومة بمصادر طبية موثوقة</span><span class="dot">—</span><span lang="en">Supported by trusted medical sources</span></div>
         <div class="first-lang-leaf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       </div>
     </main>
@@ -4568,17 +4583,6 @@ def welcome_page():
     window.addEventListener('pageshow', function(){
       window.requestAnimationFrame(function(){ if (window.scrollY > 0) window.scrollTo(0,0); });
     });
-    function ssFocusLanguages(){
-      var t=document.getElementById('languageTitle');
-      if(t){try{t.focus({preventScroll:true});}catch(e){}}
-      var o=document.getElementById('languageOptions');
-      if(o){
-        o.classList.remove('ss-attention');
-        void o.offsetWidth;
-        o.classList.add('ss-attention');
-        window.setTimeout(function(){o.classList.remove('ss-attention');},1200);
-      }
-    }
     function ssChooseLanguage(code, button) {
       var lang = code === 'en' ? 'en' : 'ar';
       document.querySelectorAll('.first-lang-option').forEach(function(el){ el.classList.add('first-lang-loading'); el.disabled = true; });
