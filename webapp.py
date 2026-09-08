@@ -5798,7 +5798,11 @@ def _related_map(ar):
             "🤢 غثيان": ["😖 ألم في البطن", "💫 دوار", "🤕 صداع"],
             "😴 تعب وإرهاق": ["🤒 حمى", "💫 دوار", "🫁 ضيق التنفس", "🦴 ألم المفاصل"],
             "🫁 ضيق التنفس": ["🫀 ألم في الصدر", "💫 دوار", "😷 سعال"],
-            "💫 دوار": ["🤕 صداع", "🤢 غثيان", "🫀 ألم في الصدر", "😴 تعب وإرهاق"],
+            "💫 دوار": ["🤕 صداع", "🤢 غثيان", "😵 إغماء أو فقدان وعي", "💓 خفقان القلب", "😴 تعب وإرهاق"],
+            "😵 إغماء أو فقدان وعي": ["💫 دوار", "💓 خفقان القلب", "🫀 ألم في الصدر", "🫁 ضيق التنفس"],
+            "💓 خفقان القلب": ["💫 دوار", "😵 إغماء أو فقدان وعي", "🫀 ألم في الصدر", "🫁 ضيق التنفس"],
+            "🤮 قيء": ["🤢 غثيان", "🚽 إسهال", "😖 ألم في البطن", "💫 دوار"],
+            "🚽 إسهال": ["🤮 قيء", "🤢 غثيان", "😖 ألم في البطن", "💫 دوار"],
             "🦴 ألم المفاصل": ["😴 تعب وإرهاق", "🤒 حمى"],
             "😖 ألم في البطن": ["🤢 غثيان", "🤒 حمى"],
             "🥶 قشعريرة": ["🤒 حمى", "😴 تعب وإرهاق"],
@@ -5815,7 +5819,11 @@ def _related_map(ar):
         "🤢 Nausea": ["😖 Stomach pain", "💫 Dizziness", "🤕 Headache"],
         "😴 Fatigue": ["🤒 Fever", "💫 Dizziness", "🫁 Shortness of breath", "🦴 Joint pain"],
         "🫁 Shortness of breath": ["🫀 Chest pain", "💫 Dizziness", "😷 Cough"],
-        "💫 Dizziness": ["🤕 Headache", "🤢 Nausea", "🫀 Chest pain", "😴 Fatigue"],
+        "💫 Dizziness": ["🤕 Headache", "🤢 Nausea", "😵 Fainting or loss of consciousness", "💓 Heart palpitations", "😴 Fatigue"],
+        "😵 Fainting or loss of consciousness": ["💫 Dizziness", "💓 Heart palpitations", "🫀 Chest pain", "🫁 Shortness of breath"],
+        "💓 Heart palpitations": ["💫 Dizziness", "😵 Fainting or loss of consciousness", "🫀 Chest pain", "🫁 Shortness of breath"],
+        "🤮 Vomiting": ["🤢 Nausea", "🚽 Diarrhea", "😖 Stomach pain", "💫 Dizziness"],
+        "🚽 Diarrhea": ["🤮 Vomiting", "🤢 Nausea", "😖 Stomach pain", "💫 Dizziness"],
         "🦴 Joint pain": ["😴 Fatigue", "🤒 Fever"],
         "😖 Stomach pain": ["🤢 Nausea", "🤒 Fever"],
         "🥶 Chills": ["🤒 Fever", "😴 Fatigue"],
@@ -5831,8 +5839,9 @@ def chat_page():
     if ar:
         syms = [
             "🤕 صداع", "🤒 حمى", "😷 سعال", "🫀 ألم في الصدر", "🤢 غثيان", "😴 تعب وإرهاق",
-            "🫁 ضيق التنفس", "💫 دوار", "🦴 ألم المفاصل", "😖 ألم في البطن", "🥶 قشعريرة", "👁️ احمرار العيون",
-            "🦵 ألم في الرجل", "😣 ألم الحلق", "🖐️ حكة", "🖐️ تنميل أو خدر",
+            "🫁 ضيق التنفس", "💫 دوار", "😵 إغماء أو فقدان وعي", "💓 خفقان القلب", "🦴 ألم المفاصل", "😖 ألم في البطن",
+            "🤮 قيء", "🚽 إسهال", "🥶 قشعريرة", "👁️ احمرار العيون", "🩹 طفح جلدي", "🔥 حرقة أو ألم عند التبول",
+            "🦵 ألم في الرجل", "😣 ألم الحلق", "🖐️ حكة", "🖐️ تنميل أو خدر", "🧠 تشوش أو ارتباك", "⚡ نوبة تشنج",
         ]
         durs = ["⏰ أقل من 24 ساعة", "📅 1-3 أيام", "📅 4-7 أيام", "🗓️ 1-2 أسبوع", "🗓️ أكثر من أسبوعين", "📆 أكثر من شهر"]
         sevs = [("1", "1️⃣ خفيف جداً"), ("2", "2️⃣ معتدل"), ("3", "3️⃣ متوسط"), ("4", "4️⃣ شديد"), ("5", "5️⃣ حرج جداً")]
@@ -5840,8 +5849,9 @@ def chat_page():
     else:
         syms = [
             "🤕 Headache", "🤒 Fever", "😷 Cough", "🫀 Chest pain", "🤢 Nausea", "😴 Fatigue",
-            "🫁 Shortness of breath", "💫 Dizziness", "🦴 Joint pain", "😖 Stomach pain", "🥶 Chills", "👁️ Eye redness",
-            "🦵 Leg pain", "😣 Sore throat", "🖐️ Itching", "🖐️ Numbness or tingling",
+            "🫁 Shortness of breath", "💫 Dizziness", "😵 Fainting or loss of consciousness", "💓 Heart palpitations", "🦴 Joint pain", "😖 Stomach pain",
+            "🤮 Vomiting", "🚽 Diarrhea", "🥶 Chills", "👁️ Eye redness", "🩹 Skin rash", "🔥 Pain or burning when urinating",
+            "🦵 Leg pain", "😣 Sore throat", "🖐️ Itching", "🖐️ Numbness or tingling", "🧠 Confusion", "⚡ Seizure",
         ]
         durs = ["⏰ Less than 24 hours", "📅 1-3 days", "📅 4-7 days", "🗓️ 1-2 weeks", "🗓️ More than 2 weeks", "📆 More than a month"]
         sevs = [("1", "1️⃣ Very mild"), ("2", "2️⃣ Mild"), ("3", "3️⃣ Moderate"), ("4", "4️⃣ Severe"), ("5", "5️⃣ Critical")]
@@ -5913,6 +5923,48 @@ def chat_page():
            {label:['في أكثر من مكان أو في الجهتين','Several areas or both sides'],add:['تنميل في أكثر من مكان','Numbness in multiple areas']},
            {label:['في مكان آخر — سأكتبه','Another area — I will type it'],custom:true}
          ]}}},
+      {syms:['😵 إغماء أو فقدان وعي','😵 Fainting or loss of consciousness','إغماء','اغماء','فقدان الوعي','غشيان','Fainting','Syncope','Loss of consciousness'],
+       node:{prompt:['لما تقول إغماء، أي وصف أقرب لما حدث؟','When you say fainting, which description is closer to what happened?'],options:[
+         {label:['فقدت الوعي فعلًا ولو لثوانٍ','I actually lost consciousness, even briefly'],location:false,
+          add:['إغماء مع فقدان وعي','Fainting with loss of consciousness'],note:['حدث فقدان وعي فعلي.','Actual loss of consciousness occurred.'],
+          next:{q:['هل استعدت وعيك بالكامل خلال أقل من دقيقة؟','Did you fully regain consciousness within about a minute?'],
+            yes:{q:['هل صاحب الإغماء ألم صدر، خفقان قوي أو غير منتظم، ضيق تنفس، صعوبة في الكلام أو الحركة، تشنج، أو إصابة شديدة؟','Was the faint accompanied by chest pain, strong or irregular palpitations, shortness of breath, trouble speaking or moving, a seizure, or a serious injury?'],
+              yes:{safety:['إغماء مع علامة خطر مصاحبة — يحتاج تقييماً عاجلاً','Fainting with an associated red flag — needs urgent assessment']},
+              no:{q:['هل حدث الإغماء أثناء الرياضة أو وأنت مستلقٍ؟','Did the fainting happen during exercise or while you were lying down?'],
+                yes:{safety:['إغماء أثناء المجهود أو أثناء الاستلقاء — يحتاج تقييماً عاجلاً','Fainting during exertion or while lying down — needs urgent assessment']},
+                no:{end:true}}},
+            no:{safety:['عدم استعادة الوعي سريعًا بعد الإغماء — يحتاج مساعدة عاجلة','Not regaining consciousness quickly after fainting — needs urgent help']}
+          }
+         },
+         {label:['شعرت أني سأُغمى علي لكن لم أفقد الوعي','I felt like I might faint but did not lose consciousness'],location:false,
+          remove:['😵 إغماء أو فقدان وعي','😵 Fainting or loss of consciousness','إغماء','اغماء','فقدان الوعي','غشيان','Fainting','Syncope','Loss of consciousness'],
+          add:['قرب الإغماء أو خفة شديدة بالرأس','Near-fainting or severe lightheadedness'],note:['شعور بقرب الإغماء دون فقدان وعي.','Near-fainting without loss of consciousness.'],
+          next:{q:['هل يصاحب ذلك ألم صدر، ضيق تنفس، خفقان مستمر، ضعف أو خدر مفاجئ، تشوش شديد، أو صداع مفاجئ شديد؟','Does it come with chest pain, shortness of breath, persistent palpitations, sudden weakness or numbness, severe confusion, or a sudden severe headache?'],
+            yes:{safety:['قرب الإغماء مع علامة خطر مصاحبة — يحتاج تقييماً عاجلاً','Near-fainting with an associated red flag — needs urgent assessment']},
+            no:{end:true}}
+         }
+       ]}},
+      {syms:['💓 خفقان القلب','💓 Heart palpitations','خفقان','خفقان القلب','تسارع دقات القلب','Heart palpitations','Palpitations','Racing heart'],
+       node:{q:['هل الخفقان موجود الآن ولا يختفي، أو يصاحبه ألم صدر أو ضيق تنفس أو إغماء؟','Are the palpitations happening now and not settling, or accompanied by chest pain, shortness of breath, or fainting?'],
+         yes:{safety:['خفقان مستمر مع علامة خطر مصاحبة','Persistent palpitations with an associated red flag']},
+         no:{q:['هل يتكرر الخفقان كثيرًا أو يستمر أكثر من عدة دقائق؟','Do the palpitations keep recurring or last more than a few minutes?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🤮 قيء','🤮 Vomiting','قيء','استفراغ','تقيؤ','ترجيع','Vomiting'],
+       node:{q:['هل يوجد دم في القيء، أو لون أخضر واضح، أو ألم بطن مفاجئ وشديد جدًا؟','Is there blood in the vomit, clearly green vomit, or sudden very severe abdominal pain?'],
+         yes:{safety:['قيء مع علامة خطر تحتاج تقييماً عاجلاً','Vomiting with a red flag requiring urgent assessment']},
+         no:{q:['هل يتكرر القيء لدرجة أنك لا تستطيع الاحتفاظ بالسوائل؟','Is the vomiting repeated enough that you cannot keep fluids down?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🚽 إسهال','🚽 Diarrhea','إسهال','اسهال','Diarrhea','Diarrhoea'],
+       node:{q:['هل يوجد دم واضح أو براز أسود، أو ألم شديد جدًا في البطن، أو علامات جفاف شديدة؟','Is there visible blood or black stool, very severe abdominal pain, or severe dehydration?'],
+         yes:{q:['هل يوجد أيضًا إغماء أو تشوش شديد أو صعوبة في التنفس؟','Is there also fainting, severe confusion, or breathing difficulty?'],yes:{safety:['إسهال مع علامات خطر شديدة','Diarrhea with severe red flags']},no:{end:true}},no:{end:true}}},
+      {syms:['🩹 طفح جلدي','🩹 Skin rash','طفح جلدي','طفح','Rash','Skin rash'],
+       node:{q:['هل يصاحب الطفح صعوبة تنفس أو تورم في الشفاه أو اللسان أو الحلق؟','Does the rash come with trouble breathing or swelling of the lips, tongue, or throat?'],
+         yes:{safety:['طفح مع صعوبة تنفس أو تورم بالفم أو الحلق','Rash with breathing difficulty or mouth/throat swelling']},
+         no:{q:['هل الطفح أرجواني أو أحمر داكن ولا يبهت عند الضغط عليه، خصوصًا مع حرارة أو شعور شديد بالمرض؟','Is the rash purple or dark red and does not fade when pressed, especially with fever or feeling very unwell?'],yes:{safety:['طفح لا يبهت بالضغط مع أعراض مقلقة','Non-blanching rash with concerning symptoms']},no:{end:true}}}},
+      {syms:['🔥 حرقة أو ألم عند التبول','🔥 Pain or burning when urinating','حرقة البول','حرقة بول','حرقان البول','حرقان بول','ألم عند التبول','Painful urination','Burning urination','Dysuria'],
+       node:{q:['هل توجد حرارة أو قشعريرة أو ألم في الخاصرة أو الظهر تحت الأضلاع؟','Do you have fever, chills, or pain in the side/back under the ribs?'],yes:{end:true},no:{q:['هل يوجد دم في البول أو صعوبة شديدة في التبول؟','Is there blood in the urine or major difficulty passing urine?'],yes:{end:true},no:{end:true}}}},
+      {syms:['🧠 تشوش أو ارتباك','🧠 Confusion','تشوش','ارتباك','تغير الوعي','Confusion','Disorientation'],
+       node:{q:['هل التشوش جديد وبدأ فجأة أو يزداد بسرعة؟','Is the confusion new, sudden, or rapidly worsening?'],yes:{safety:['تشوش أو تغير وعي مفاجئ — يحتاج تقييماً عاجلاً','Sudden confusion or altered awareness — needs urgent assessment']},no:{end:true}}},
+      {syms:['⚡ نوبة تشنج','⚡ Seizure','نوبة تشنج','تشنج','اختلاج','Seizure','Convulsion'],
+       node:{q:['هل النوبة مستمرة الآن، تكررت دون استعادة الوعي بالكامل، أو لم تستعد وعيك طبيعيًا بعدها؟','Is the seizure ongoing, repeating without full recovery, or have you not returned to normal awareness afterward?'],yes:{safety:['نوبة تشنج مستمرة أو دون تعافٍ كامل — تحتاج مساعدة عاجلة','Ongoing/repeated seizure or incomplete recovery — needs urgent help']},no:{end:true}}},
       {syms:['🫀 ألم في الصدر','🫀 Chest pain','ألم الصدر','Chest pain'],
        node:{q:['هل بدأ ألم الصدر فجأة أو هو شديد الآن؟','Did the chest pain start suddenly, or is it severe now?'],
          yes:{safety:['ألم صدر مفاجئ أو شديد — يحتاج تقييماً عاجلاً','Sudden or severe chest pain — needs urgent assessment']},
@@ -6502,6 +6554,69 @@ def chat_page():
       {label:['البطن أو الجهاز الهضمي','Abdomen or digestion']},{label:['الذراعان أو الساقان','Arms or legs']},
       {label:['أكثر من مكان','More than one area']},{label:['سأكتب المكان بالتفصيل','I will type the location'],custom:true}
     ]};
+    const GENERIC_CONTEXT_CLAR={q:['هل بدأ هذا العرض فجأة أو أصبح أسوأ بسرعة؟','Did this symptom start suddenly or worsen quickly?'],
+      yes:{q:['هل يصاحبه إغماء، تشوش شديد، ألم صدر، صعوبة تنفس، ضعف مفاجئ، نزيف شديد، أو صداع مفاجئ شديد؟','Does it come with fainting, severe confusion, chest pain, breathing difficulty, sudden weakness, heavy bleeding, or a sudden severe headache?'],
+        yes:{safety:['عرض مفاجئ مع علامة خطر مصاحبة','Sudden symptom with an associated red flag']},no:{end:true}},no:{end:true}};
+    const GENERIC_NEURO_CLAR={q:['هل بدأ العرض العصبي فجأة أو في جهة واحدة من الجسم؟','Did the neurological symptom start suddenly or affect one side of the body?'],
+      yes:{q:['هل يوجد ضعف بالوجه أو الذراع أو الساق، صعوبة بالكلام، فقدان مفاجئ للرؤية، تشوش شديد، أو صداع مفاجئ شديد؟','Is there facial/arm/leg weakness, trouble speaking, sudden vision loss, severe confusion, or a sudden severe headache?'],
+        yes:{safety:['عرض عصبي مفاجئ مع علامة خطر — يحتاج تقييماً عاجلاً','Sudden neurological symptom with a red flag — needs urgent assessment']},no:{end:true}},
+      no:{q:['هل العرض مستمر أو يتكرر ويؤثر في المشي أو التوازن أو النشاط المعتاد؟','Is it persistent or recurring and affecting walking, balance, or usual activity?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_CARDIO_RESP_CLAR={q:['هل يوجد الآن ألم أو ضغط شديد في الصدر، صعوبة شديدة في التنفس، ازرقاق الشفاه، أو إغماء؟','Is there severe chest pain/pressure, severe breathing difficulty, blue lips, or fainting right now?'],
+      yes:{safety:['أعراض صدر أو تنفس مع علامة خطر — تحتاج تقييماً عاجلاً','Chest or breathing symptoms with a red flag — need urgent assessment']},
+      no:{q:['هل يظهر العرض مع المجهود أو يوقظك من النوم أو يزداد عند الاستلقاء؟','Does it happen with exertion, wake you from sleep, or worsen when lying down?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_GI_CLAR={q:['هل يوجد ألم بطن شديد جدًا أو مفاجئ، دم في القيء، براز أسود أو دموي، أو عدم القدرة على الاحتفاظ بالسوائل؟','Is there sudden/very severe abdominal pain, blood in vomit, black/bloody stool, or inability to keep fluids down?'],
+      yes:{safety:['أعراض هضمية مع علامة خطر — تحتاج تقييماً عاجلاً','Digestive symptoms with a red flag — need urgent assessment']},
+      no:{q:['هل يرتبط العرض بالأكل أو دواء جديد، أو يتكرر بعد نوع معين من الطعام؟','Is it related to meals, a new medicine, or a particular food?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_URINARY_CLAR={q:['هل يوجد مع العرض حرارة أو قشعريرة أو ألم في الخاصرة/الظهر تحت الأضلاع؟','Is there fever, chills, or pain in the side/back under the ribs?'],
+      yes:{end:true},no:{q:['هل يوجد دم في البول أو صعوبة شديدة أو عدم قدرة على التبول؟','Is there blood in the urine or major difficulty/inability to urinate?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_SKIN_CLAR={q:['هل يصاحب العرض الجلدي صعوبة تنفس أو تورم في الشفاه أو اللسان أو الحلق؟','Does the skin symptom come with breathing difficulty or swelling of the lips, tongue, or throat?'],
+      yes:{safety:['علامة تحسس شديد محتملة — تحتاج مساعدة عاجلة','Possible severe allergic reaction — urgent help is needed']},
+      no:{q:['هل ينتشر بسرعة، أو يصاحبه حمى شديدة، أو ألم شديد، أو تقرحات في الفم/العين؟','Is it spreading quickly or accompanied by high fever, severe pain, or sores in the mouth/eyes?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_EYE_CLAR={q:['هل حدث فقدان مفاجئ للنظر أو ألم شديد في العين أو إصابة كيميائية/جسم غريب؟','Was there sudden vision loss, severe eye pain, or a chemical/foreign-body injury?'],
+      yes:{safety:['عرض عيني مع علامة خطر — يحتاج تقييماً عاجلاً','Eye symptom with a red flag — needs urgent assessment']},
+      no:{q:['هل يوجد احمرار أو إفرازات أو حساسية شديدة للضوء؟','Is there redness, discharge, or marked sensitivity to light?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_ENT_CLAR={q:['هل توجد صعوبة في التنفس أو البلع، سيلان لعاب لعدم القدرة على البلع، أو تورم سريع في الوجه/الرقبة؟','Is there breathing or swallowing difficulty, drooling because you cannot swallow, or rapidly increasing face/neck swelling?'],
+      yes:{safety:['عرض في الحلق أو الوجه مع علامة خطر — يحتاج مساعدة عاجلة','Throat/face symptom with a red flag — urgent help is needed']},
+      no:{q:['هل توجد حرارة، إفرازات، فقدان سمع مفاجئ، أو ألم شديد مستمر؟','Is there fever, discharge, sudden hearing loss, or persistent severe pain?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_REPRODUCTIVE_CLAR={q:['هل يوجد احتمال حمل أو حمل مؤكد مع نزيف أو ألم في الحوض/البطن؟','Is pregnancy possible or confirmed with bleeding or pelvic/abdominal pain?'],
+      yes:{q:['هل النزيف غزير، الألم شديد أو في جهة واحدة، أو يوجد دوخة شديدة أو إغماء؟','Is bleeding heavy, pain severe or one-sided, or is there severe dizziness/fainting?'],yes:{safety:['نزيف أو ألم مع احتمال حمل وعلامة خطر — يحتاج تقييماً عاجلاً','Bleeding/pain with possible pregnancy and a red flag — needs urgent assessment']},no:{end:true}},
+      no:{q:['هل يوجد نزيف غير معتاد جدًا، ألم شديد، حرارة، أو إفرازات ذات رائحة غير معتادة؟','Is there very unusual bleeding, severe pain, fever, or unusual-smelling discharge?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_MSK_CLAR={q:['هل بدأ الألم أو التورم بعد إصابة، سقوط، التواء، أو مجهود واضح؟','Did the pain or swelling start after an injury, fall, twist, or clear exertion?'],
+      yes:{q:['هل يوجد تشوه واضح، نزيف شديد، خدر/ضعف جديد، أو عدم القدرة على استخدام الطرف؟','Is there obvious deformity, heavy bleeding, new numbness/weakness, or inability to use the limb?'],yes:{safety:['إصابة مع علامة خطر — تحتاج تقييماً عاجلاً','Injury with a red flag — needs urgent assessment']},no:{end:true}},
+      no:{q:['هل المنطقة حمراء أو ساخنة أو متورمة جدًا أو يصاحبها حمى؟','Is the area red, hot, very swollen, or accompanied by fever?'],yes:{end:true},no:{end:true}}};
+    const GENERIC_METABOLIC_CLAR={q:['هل يوجد عطش شديد مع تبول كثير، قيء، نعاس أو تشوش، أو تنفس سريع/عميق؟','Is there marked thirst with frequent urination, vomiting, drowsiness/confusion, or fast/deep breathing?'],
+      yes:{q:['هل لديك سكري معروف أو قراءة سكر مرتفعة جدًا/منخفضة جدًا؟','Do you have known diabetes or a very high/very low glucose reading?'],yes:{safety:['أعراض عامة/سكر مع علامة خطر — تحتاج تقييماً عاجلاً','General/glucose-related symptoms with a red flag — need urgent assessment']},no:{end:true}},no:{end:true}};
+    const GENERIC_SLEEP_MOOD_CLAR={q:['هل هذا التغير مستمر ويؤثر بوضوح على النوم أو الدراسة/العمل أو نشاطك اليومي؟','Is this change persistent and clearly affecting sleep, study/work, or daily activity?'],
+      yes:{q:['هل تشعر أنك غير آمن على نفسك أو لديك أفكار بإيذاء نفسك؟','Do you feel unsafe with yourself or have thoughts of self-harm?'],yes:{safety:['أفكار إيذاء النفس تحتاج دعماً عاجلاً الآن','Thoughts of self-harm need urgent support now']},no:{end:true}},no:{end:true}};
+    function genericClarForSymptom(symptom){
+      const x=String(symptom||'').toLowerCase();
+      const neuro=/إغماء|اغماء|فقدان الوعي|غشي|دوخ|دوار|تنميل|خدر|ضعف|تشنج|اختلاج|ارتباك|تشوش|توازن|ذاكر|كلام|رؤي|نظر|faint|syncope|dizz|numb|tingl|weak|seizure|convuls|confus|balance|memory|speech|vision/i;
+      const cardioResp=/صدر|خفقان|نبض|تنفس|نفس|صفير|أزيز|ازيز|زرقة|ازرقاق|سعال دم|بلغم دم|chest|palpitat|heartbeat|breath|wheez|cyanosis|coughing blood|blood in phlegm/i;
+      const gi=/بطن|معد|حموض|ارتجاع|غثيان|قيء|استفراغ|اسهال|إسهال|امساك|إمساك|براز|غازات|انتفاخ البطن|بلع|abdom|stomach|heartburn|reflux|nause|vomit|diarr|constipat|stool|bloat|gas|swallow|dysphagia/i;
+      const urinary=/بول|تبول|خاصر|كلو|كلى|urine|urinat|dysuria|flank|kidney/i;
+      const reproductive=/دور[هة]|حيض|طمث|مهبل|حوض|حمل|خصي|period|menstrual|vaginal|pelvic|pregnan|testic/i;
+      const skin=/جلد|طفح|حكة|حساسي|شرى|ارتكار|كتلة|جرح|حرق|skin|rash|itch|hives|urticaria|lump|wound|burn/i;
+      const eye=/عين|عيون|نظر|رؤية|زغلل|eye|vision|blurred/i;
+      const ent=/أذن|اذن|سمع|طنين|حلق|بلع|صوت|اسنان|أسنان|فم|ear|hearing|tinnitus|throat|swallow|hoarse|tooth|mouth/i;
+      const msk=/ظهر|رقب|مفصل|عضل|كتف|ذراع|ركب|كاحل|قدم|رجل|ساق|اصاب|إصاب|كدم|التواء|سقوط|back|neck|joint|muscle|shoulder|arm|knee|ankle|foot|leg|injury|bruise|sprain|fall/i;
+      const metabolic=/عطش|تعرق|وزن|شهية|سكر|رجفة|رعشة|thirst|sweat|weight|appetite|glucose|tremor|shak/i;
+      const sleepMood=/أرق|نوم|نعاس|قلق|هلع|توتر|حزن|مزاج|insomnia|sleep|sleepiness|anxiety|panic|mood|depress/i;
+      const nonLocal=/إغماء|اغماء|فقدان الوعي|غشي|دوخ|غثيان|قيء|استفراغ|اسهال|إسهال|امساك|إمساك|حمى|حرارة|تعب|ارهاق|إرهاق|خفقان|تشنج|اختلاج|ارتباك|تشوش|فقدان الشهية|نقص وزن|تعرق|رجفة|faint|syncope|dizz|nause|vomit|diarr|constipat|fever|fatigue|palpitat|seizure|convuls|confus|appetite|weight loss|sweat|tremor/i;
+      const locationUseful=/ألم|الم|وجع|حكة|طفح|تورم|تنميل|خدر|جرح|كتلة|حرقان|حرقة|pain|ache|itch|rash|swelling|numb|tingl|wound|lump|burning/i;
+      if(reproductive.test(x)) return GENERIC_REPRODUCTIVE_CLAR;
+      if(eye.test(x)) return GENERIC_EYE_CLAR;
+      if(cardioResp.test(x)) return GENERIC_CARDIO_RESP_CLAR;
+      if(neuro.test(x)) return GENERIC_NEURO_CLAR;
+      if(urinary.test(x)) return GENERIC_URINARY_CLAR;
+      if(gi.test(x)) return GENERIC_GI_CLAR;
+      if(skin.test(x)) return GENERIC_SKIN_CLAR;
+      if(ent.test(x)) return GENERIC_ENT_CLAR;
+      if(msk.test(x)) return GENERIC_MSK_CLAR;
+      if(metabolic.test(x)) return GENERIC_METABOLIC_CLAR;
+      if(sleepMood.test(x)) return GENERIC_SLEEP_MOOD_CLAR;
+      if(nonLocal.test(x)) return GENERIC_CONTEXT_CLAR;
+      return locationUseful.test(x) ? GENERIC_CLAR : GENERIC_CONTEXT_CLAR;
+    }
     // ---------------- Missing-symptom clarification ----------------
     let clarQueue = [], clarIndex = 0, clarCustomNext = null;
     let differentialAsked = [], differentialNegatives = [], differentialCount = 0, differentialCandidates = [];
@@ -6515,7 +6630,7 @@ def chat_page():
         for (var i = 0; i < CLAR.length; i++) {
           if (CLAR[i].syms.indexOf(s) !== -1) { clarQueue.push(CLAR[i].node); matched=true; break; }
         }
-        if(!matched) clarQueue.push(GENERIC_CLAR);
+        if(!matched) clarQueue.push(genericClarForSymptom(s));
       });
       nextClarNode();
     }
@@ -6572,9 +6687,11 @@ def chat_page():
           const label=LANG==='en'?opt.label[1]:opt.label[0];
           return {label:label,fn:function(){
             add(label,'user');
+            if(opt.remove){const rm=(Array.isArray(opt.remove)?opt.remove:[]);state.symptoms=state.symptoms.filter(function(x){return rm.indexOf(x)===-1;});}
             if(opt.add){const symptom=LANG==='en'?opt.add[1]:opt.add[0];if(state.symptoms.indexOf(symptom)===-1)state.symptoms.push(symptom);}
-            state.location=label;
-            if(opt.custom){state.step='clarification';clarCustomNext=opt.next||null;showText(LANG==='ar'?'اكتب مكان التنميل، مثال: حول الفم أو أعلى الفخذ':'Type the location, e.g. around the mouth or upper thigh');return;}
+            if(opt.note){const note=LANG==='en'?opt.note[1]:opt.note[0];state.notes += (state.notes?' ':'') + note;}
+            if(opt.location !== false) state.location=label;
+            if(opt.custom){state.step='clarification';clarCustomNext=opt.next||null;showText(LANG==='ar'?'اكتب المكان أو التفصيل الذي تقصده':'Type the location or detail you mean');return;}
             walkClarNode(opt.next||null);
           }};
         }));
@@ -12163,11 +12280,136 @@ def api_user_info():
     })
 
 
+_LOCAL_SYMPTOM_CATALOG = [
+    {"slug":"syncope","name_ar":"😵 إغماء أو فقدان وعي","name_en":"😵 Fainting or loss of consciousness","aliases":["إغماء","اغماء","أغمى علي","اغمى علي","فقدت الوعي","فقدان الوعي","غشيان","غشي","syncope","fainting","fainted","passed out","loss of consciousness","blackout"]},
+    {"slug":"palpitations","name_ar":"💓 خفقان القلب","name_en":"💓 Heart palpitations","aliases":["خفقان","خفقان القلب","دقات قلبي سريعة","نبضي سريع","تسارع دقات القلب","تسارع النبض","palpitations","heart palpitations","racing heart","pounding heartbeat"]},
+    {"slug":"vomiting","name_ar":"🤮 قيء","name_en":"🤮 Vomiting","aliases":["قيء","تقيؤ","استفراغ","ترجيع","ارجع","أرجع","vomiting","vomit","throwing up","being sick"]},
+    {"slug":"diarrhea","name_ar":"🚽 إسهال","name_en":"🚽 Diarrhea","aliases":["إسهال","اسهال","براز مائي","diarrhea","diarrhoea","watery stool","loose stool"]},
+    {"slug":"constipation","name_ar":"🚻 إمساك","name_en":"🚻 Constipation","aliases":["إمساك","امساك","صعوبة التبرز","constipation","hard stool"]},
+    {"slug":"rash","name_ar":"🩹 طفح جلدي","name_en":"🩹 Skin rash","aliases":["طفح","طفح جلدي","حبوب منتشرة","rash","skin rash"]},
+    {"slug":"dysuria","name_ar":"🔥 حرقة أو ألم عند التبول","name_en":"🔥 Pain or burning when urinating","aliases":["حرقة البول","حرقة بول","حرقان البول","حرقان بول","حرقان عند التبول","ألم عند التبول","الم عند التبول","dysuria","painful urination","burning when urinating","burning urination"]},
+    {"slug":"frequency","name_ar":"🚻 كثرة التبول","name_en":"🚻 Frequent urination","aliases":["كثرة التبول","اتبول كثير","أدخل الحمام كثير","frequent urination","peeing often","urinating often"]},
+    {"slug":"hematuria","name_ar":"🩸 دم في البول","name_en":"🩸 Blood in urine","aliases":["دم في البول","بول دم","البول أحمر","البول احمر","blood in urine","bloody urine","hematuria"]},
+    {"slug":"blood_stool","name_ar":"🩸 دم في البراز","name_en":"🩸 Blood in stool","aliases":["دم في البراز","براز دموي","براز اسود","براز أسود","blood in stool","bloody stool","black stool","melena"]},
+    {"slug":"swelling","name_ar":"🫧 تورم","name_en":"🫧 Swelling","aliases":["تورم","انتفاخ الأطراف","انتفاخ الرجل","swelling","edema","oedema"]},
+    {"slug":"confusion","name_ar":"🧠 تشوش أو ارتباك","name_en":"🧠 Confusion","aliases":["تشوش","ارتباك","لخبطة بالوعي","تغير الوعي","confusion","disorientation","altered mental status"]},
+    {"slug":"seizure","name_ar":"⚡ نوبة تشنج","name_en":"⚡ Seizure","aliases":["نوبة تشنج","اختلاج","تشنجات مع فقدان وعي","seizure","convulsion","fit"]},
+    {"slug":"vision_change","name_ar":"👀 تغير أو تشوش في الرؤية","name_en":"👀 Vision change or blurred vision","aliases":["تشوش النظر","زغللة","زغلله","ضبابية الرؤية","فقدان النظر","blurred vision","vision change","vision loss"]},
+    {"slug":"back_pain","name_ar":"🦴 ألم الظهر","name_en":"🦴 Back pain","aliases":["ألم الظهر","الم الظهر","وجع الظهر","back pain","backache"]},
+    {"slug":"neck_pain","name_ar":"🧍 ألم الرقبة","name_en":"🧍 Neck pain","aliases":["ألم الرقبة","الم الرقبة","وجع الرقبة","neck pain"]},
+    {"slug":"ear_pain","name_ar":"👂 ألم الأذن","name_en":"👂 Ear pain","aliases":["ألم الأذن","الم الاذن","وجع الاذن","ear pain","earache"]},
+    {"slug":"tinnitus","name_ar":"🔊 طنين الأذن","name_en":"🔊 Tinnitus","aliases":["طنين","صفير الاذن","صفير الأذن","tinnitus","ringing in ears"]},
+    {"slug":"appetite_loss","name_ar":"🍽️ فقدان الشهية","name_en":"🍽️ Loss of appetite","aliases":["فقدان الشهية","ما لي نفس للاكل","مالي نفس للأكل","loss of appetite","poor appetite"]},
+    {"slug":"weight_loss","name_ar":"⚖️ فقدان وزن غير مقصود","name_en":"⚖️ Unintentional weight loss","aliases":["فقدان وزن","نقص وزن بدون سبب","نحفت بدون سبب","unintentional weight loss","unexplained weight loss"]},
+    {"slug":"tremor","name_ar":"🫨 رجفة أو رعشة","name_en":"🫨 Tremor or shaking","aliases":["رجفة","رعشة","ارتجاف","tremor","shaking"]},
+]
+
+# Broad local recognition layer.  This intentionally focuses on symptom concepts
+# and common everyday wording rather than disease diagnosis.  Anything that is
+# still unknown is kept verbatim and handled by the universal domain clarifier
+# in the chat UI, so the flow never depends on a finite symptom list.
+_LOCAL_SYMPTOM_CATALOG.extend([
+    {"slug":"wheezing","name_ar":"🫁 صفير أو أزيز في التنفس","name_en":"🫁 Wheezing","aliases":["صفير التنفس","صفير في الصدر","ازيز","أزيز","wheezing","wheeze"]},
+    {"slug":"nasal_congestion","name_ar":"👃 احتقان أو انسداد الأنف","name_en":"👃 Nasal congestion","aliases":["احتقان الانف","احتقان الأنف","انسداد الانف","انسداد الأنف","خشمي مسدود","stuffy nose","blocked nose","nasal congestion"]},
+    {"slug":"runny_nose","name_ar":"🤧 سيلان الأنف","name_en":"🤧 Runny nose","aliases":["سيلان الانف","سيلان الأنف","رشح","runny nose","nasal discharge"]},
+    {"slug":"sneezing","name_ar":"🤧 عطاس","name_en":"🤧 Sneezing","aliases":["عطاس","اعطس","أعطس","sneezing","sneeze"]},
+    {"slug":"coughing_blood","name_ar":"🩸 دم مع السعال","name_en":"🩸 Coughing up blood","aliases":["دم مع السعال","كحة دم","سعال دموي","دم في البلغم","coughing blood","coughing up blood","blood in phlegm","hemoptysis"]},
+    {"slug":"blue_lips","name_ar":"🔵 ازرقاق الشفاه أو الجلد","name_en":"🔵 Blue or grey lips/skin","aliases":["ازرقاق الشفاه","زرقة الشفاه","شفايف زرقاء","ازرقاق الجلد","blue lips","blue skin","cyanosis"]},
+    {"slug":"chest_pressure","name_ar":"🫀 ضغط أو ثقل في الصدر","name_en":"🫀 Chest pressure or tightness","aliases":["ضغط في الصدر","ثقل في الصدر","شد في الصدر","ضيق الصدر","chest pressure","chest tightness","chest heaviness"]},
+    {"slug":"weakness","name_ar":"🧠 ضعف مفاجئ أو عام","name_en":"🧠 Weakness","aliases":["ضعف مفاجئ","ضعف عام","ضعف في اليد","ضعف في الرجل","ما اقدر احرك","weakness","weak arm","weak leg"]},
+    {"slug":"speech_problem","name_ar":"🗣️ صعوبة أو ثقل في الكلام","name_en":"🗣️ Speech difficulty","aliases":["ثقل الكلام","صعوبة الكلام","تلخبط الكلام","ما اقدر اتكلم","speech difficulty","slurred speech","trouble speaking"]},
+    {"slug":"balance_problem","name_ar":"⚖️ عدم اتزان","name_en":"⚖️ Balance problem","aliases":["عدم اتزان","اختلال التوازن","امشي واتمايل","عدم توازن","loss of balance","balance problem","unsteady"]},
+    {"slug":"memory_problem","name_ar":"🧠 مشكلة أو فقدان في الذاكرة","name_en":"🧠 Memory problem","aliases":["نسيان شديد","فقدان الذاكرة","ضعف الذاكرة","memory loss","amnesia","memory problem"]},
+    {"slug":"heartburn","name_ar":"🔥 حرقة المعدة أو الحموضة","name_en":"🔥 Heartburn or acid reflux","aliases":["حرقة المعدة","حرقان المعدة","حموضة","ارتجاع","ارتجاع المريء","heartburn","acid reflux","reflux"]},
+    {"slug":"bloating","name_ar":"🎈 انتفاخ البطن","name_en":"🎈 Bloating","aliases":["انتفاخ البطن","نفخة","غازات بالبطن","bloating","bloated"]},
+    {"slug":"gas","name_ar":"💨 غازات","name_en":"💨 Gas","aliases":["غازات","تجشؤ","تكريع","gas","belching","burping","flatulence"]},
+    {"slug":"swallowing_problem","name_ar":"🥤 صعوبة البلع","name_en":"🥤 Difficulty swallowing","aliases":["صعوبة البلع","ما اقدر ابلع","ألم عند البلع","الم عند البلع","dysphagia","difficulty swallowing","trouble swallowing"]},
+    {"slug":"rectal_bleeding","name_ar":"🩸 نزيف أو دم من الشرج","name_en":"🩸 Rectal bleeding","aliases":["نزيف من الشرج","دم من الشرج","نزيف شرجي","rectal bleeding","bleeding from bottom"]},
+    {"slug":"urinary_urgency","name_ar":"🚻 إلحاح مفاجئ للتبول","name_en":"🚻 Urinary urgency","aliases":["الحاح البول","إلحاح البول","احتاج الحمام فجأة","urinary urgency","urgent urination"]},
+    {"slug":"urine_retention","name_ar":"🚫 صعوبة أو عدم القدرة على التبول","name_en":"🚫 Difficulty or inability to urinate","aliases":["ما اقدر اتبول","صعوبة التبول","احتباس البول","عدم التبول","urinary retention","cannot urinate","difficulty urinating"]},
+    {"slug":"flank_pain","name_ar":"🫘 ألم الخاصرة","name_en":"🫘 Flank pain","aliases":["ألم الخاصرة","الم الخاصرة","وجع الخاصرة","ألم الجنب تحت الاضلاع","flank pain","kidney pain"]},
+    {"slug":"pelvic_pain","name_ar":"🌸 ألم الحوض","name_en":"🌸 Pelvic pain","aliases":["ألم الحوض","الم الحوض","وجع الحوض","pelvic pain"]},
+    {"slug":"period_pain","name_ar":"🌸 ألم أو مغص الدورة","name_en":"🌸 Period pain/cramps","aliases":["الم الدورة","ألم الدورة","مغص الدورة","تقلصات الدورة","period pain","period cramps","menstrual cramps","dysmenorrhea"]},
+    {"slug":"irregular_period","name_ar":"📅 عدم انتظام الدورة","name_en":"📅 Irregular periods","aliases":["الدورة غير منتظمة","عدم انتظام الدورة","تلخبط الدورة","irregular period","irregular periods"]},
+    {"slug":"missed_period","name_ar":"📅 تأخر أو غياب الدورة","name_en":"📅 Missed or late period","aliases":["تأخر الدورة","الدورة متأخرة","غياب الدورة","ما جاتني الدورة","missed period","late period","amenorrhea"]},
+    {"slug":"heavy_period","name_ar":"🩸 غزارة الدورة أو نزيف مهبلي شديد","name_en":"🩸 Heavy periods or vaginal bleeding","aliases":["غزارة الدورة","دورة غزيرة","نزيف الدورة","نزيف مهبلي","heavy period","heavy periods","heavy menstrual bleeding","vaginal bleeding"]},
+    {"slug":"vaginal_discharge","name_ar":"🌸 إفرازات مهبلية غير معتادة","name_en":"🌸 Unusual vaginal discharge","aliases":["افرازات مهبلية","إفرازات مهبلية","إفرازات غريبة","vaginal discharge","unusual discharge"]},
+    {"slug":"testicular_pain","name_ar":"♂️ ألم الخصية","name_en":"♂️ Testicular pain","aliases":["ألم الخصية","الم الخصية","وجع الخصية","testicular pain","testicle pain"]},
+    {"slug":"testicular_swelling","name_ar":"♂️ تورم الخصية","name_en":"♂️ Testicular swelling","aliases":["تورم الخصية","انتفاخ الخصية","testicular swelling","swollen testicle"]},
+    {"slug":"muscle_pain","name_ar":"💪 ألم العضلات","name_en":"💪 Muscle pain","aliases":["ألم العضلات","الم العضلات","وجع العضلات","شد عضلي","muscle pain","muscle ache","myalgia"]},
+    {"slug":"shoulder_pain","name_ar":"💪 ألم الكتف","name_en":"💪 Shoulder pain","aliases":["ألم الكتف","الم الكتف","وجع الكتف","shoulder pain"]},
+    {"slug":"arm_pain","name_ar":"💪 ألم الذراع","name_en":"💪 Arm pain","aliases":["ألم الذراع","الم الذراع","وجع اليد","وجع الذراع","arm pain"]},
+    {"slug":"knee_pain","name_ar":"🦵 ألم الركبة","name_en":"🦵 Knee pain","aliases":["ألم الركبة","الم الركبة","وجع الركبة","knee pain"]},
+    {"slug":"ankle_pain","name_ar":"🦶 ألم الكاحل","name_en":"🦶 Ankle pain","aliases":["ألم الكاحل","الم الكاحل","وجع الكاحل","ankle pain"]},
+    {"slug":"foot_pain","name_ar":"🦶 ألم القدم","name_en":"🦶 Foot pain","aliases":["ألم القدم","الم القدم","وجع القدم","foot pain"]},
+    {"slug":"injury","name_ar":"🩹 إصابة أو رضّة","name_en":"🩹 Injury or bruise","aliases":["إصابة","اصابة","رضة","كدمة","طيحة","سقوط","injury","bruise","fall"]},
+    {"slug":"wound","name_ar":"🩹 جرح","name_en":"🩹 Wound","aliases":["جرح","جرح مفتوح","wound","cut"]},
+    {"slug":"burn","name_ar":"🔥 حرق","name_en":"🔥 Burn","aliases":["حرق","حروق","انحرقت","burn","burns","scald"]},
+    {"slug":"hives","name_ar":"🩹 شرى أو أرتكاريا","name_en":"🩹 Hives","aliases":["شرى","ارتكاريا","أرتكاريا","حساسية جلد","hives","urticaria"]},
+    {"slug":"skin_lump","name_ar":"🟠 كتلة أو تورم موضعي","name_en":"🟠 Lump or localized swelling","aliases":["كتلة","ورم موضعي","حبة كبيرة","lump","mass","localized swelling"]},
+    {"slug":"eye_pain","name_ar":"👁️ ألم العين","name_en":"👁️ Eye pain","aliases":["ألم العين","الم العين","وجع العين","eye pain"]},
+    {"slug":"vision_loss","name_ar":"👁️ فقدان أو نقص مفاجئ في النظر","name_en":"👁️ Sudden vision loss","aliases":["فقدان النظر","فقدت النظر","نقص مفاجئ بالنظر","ما اشوف فجأة","vision loss","sudden loss of vision"]},
+    {"slug":"hearing_loss","name_ar":"👂 ضعف أو فقدان السمع","name_en":"👂 Hearing loss","aliases":["ضعف السمع","فقدان السمع","ما اسمع","hearing loss","reduced hearing"]},
+    {"slug":"hoarseness","name_ar":"🗣️ بحة الصوت","name_en":"🗣️ Hoarse voice","aliases":["بحة الصوت","صوتي مبحوح","بحه","hoarse voice","hoarseness"]},
+    {"slug":"toothache","name_ar":"🦷 ألم الأسنان","name_en":"🦷 Toothache","aliases":["ألم الاسنان","ألم الأسنان","الم الاسنان","وجع السن","وجع الأسنان","toothache","tooth pain"]},
+    {"slug":"mouth_ulcer","name_ar":"👄 قرحة أو تقرحات الفم","name_en":"👄 Mouth ulcer","aliases":["قرحة الفم","تقرحات الفم","حمو الفم","mouth ulcer","mouth sore"]},
+    {"slug":"swollen_glands","name_ar":"🫧 تضخم أو تورم الغدد","name_en":"🫧 Swollen glands","aliases":["تورم الغدد","تضخم الغدد","غدد منتفخة","swollen glands","swollen lymph nodes"]},
+    {"slug":"night_sweats","name_ar":"🌙 تعرق ليلي","name_en":"🌙 Night sweats","aliases":["تعرق ليلي","عرق بالليل","اصحى متعرق","night sweats"]},
+    {"slug":"excessive_sweating","name_ar":"💦 تعرق زائد","name_en":"💦 Excessive sweating","aliases":["تعرق زائد","عرق كثير","تعرق شديد","excessive sweating","hyperhidrosis"]},
+    {"slug":"excessive_thirst","name_ar":"🥤 عطش شديد أو زائد","name_en":"🥤 Excessive thirst","aliases":["عطش شديد","عطشان دايم","اشرب كثير","excessive thirst","very thirsty","polydipsia"]},
+    {"slug":"weight_gain","name_ar":"⚖️ زيادة وزن غير مفسرة","name_en":"⚖️ Unexplained weight gain","aliases":["زيادة وزن بدون سبب","زاد وزني بدون سبب","unexplained weight gain","unexpected weight gain"]},
+    {"slug":"insomnia","name_ar":"🌙 أرق أو صعوبة النوم","name_en":"🌙 Insomnia","aliases":["أرق","ارق","ما اقدر انام","صعوبة النوم","insomnia","trouble sleeping","can't sleep"]},
+    {"slug":"sleepiness","name_ar":"😴 نعاس زائد","name_en":"😴 Excessive sleepiness","aliases":["نعاس زائد","نعسان طول الوقت","نوم كثير","excessive sleepiness","daytime sleepiness","hypersomnia"]},
+    {"slug":"anxiety","name_ar":"😟 قلق أو نوبة هلع","name_en":"😟 Anxiety or panic","aliases":["قلق","توتر شديد","هلع","نوبة هلع","خوف مفاجئ","anxiety","panic","panic attack"]},
+    {"slug":"low_mood","name_ar":"🧠 مزاج منخفض أو حزن مستمر","name_en":"🧠 Low mood","aliases":["حزن مستمر","مزاجي سيء","اكتئاب","كآبة","low mood","depressed mood","sad all the time"]},
+    {"slug":"easy_bruising","name_ar":"🟣 كدمات متكررة أو سهلة","name_en":"🟣 Easy bruising","aliases":["كدمات بدون سبب","اكدم بسهولة","كدمات كثيرة","easy bruising","bruising easily"]},
+    {"slug":"nosebleed","name_ar":"🩸 نزيف الأنف","name_en":"🩸 Nosebleed","aliases":["نزيف الانف","نزيف الأنف","رعاف","nosebleed","nose bleed","epistaxis"]},
+])
+
+
+def _normalize_symptom_search_text(value):
+    text = str(value or "").strip().lower()
+    text = text.translate(str.maketrans({"أ":"ا","إ":"ا","آ":"ا","ى":"ي","ؤ":"و","ئ":"ي","ة":"ه"}))
+    text = re.sub(r"[ًٌٍَُِّْـ]", "", text)
+    text = re.sub(r"[^\w\u0600-\u06FF]+", " ", text, flags=re.UNICODE)
+    return " ".join(text.split())
+
+
+def _local_symptom_hits(text):
+    hay = _normalize_symptom_search_text(text)
+    if not hay:
+        return []
+    out = []
+    for item in _LOCAL_SYMPTOM_CATALOG:
+        aliases = item.get("aliases") or []
+        if any(_normalize_symptom_search_text(alias) in hay for alias in aliases if _normalize_symptom_search_text(alias)):
+            out.append({"slug":item["slug"],"name_ar":item["name_ar"],"name_en":item["name_en"],"source":"local_clinical_alias"})
+    return out[:12]
+
+
 @app.route("/api/symptoms/extract", methods=["POST"])
 def api_symptoms_extract():
     data=request.get_json(silent=True) or {}
     lang="en" if data.get("lang")=="en" else "ar"
-    return jsonify({"ok": True, **advanced_features.smart_extract_symptoms(data.get("text", ""), lang)})
+    text=data.get("text", "")
+    try:
+        result=advanced_features.smart_extract_symptoms(text, lang) or {}
+    except Exception:
+        result={}
+    found=list(result.get("found") or [])
+    seen=set()
+    for item in found:
+        key=str(item.get("slug") or item.get("name_ar") or item.get("name_en") or "").strip().lower()
+        if key: seen.add(key)
+    for item in _local_symptom_hits(text):
+        key=item["slug"].lower()
+        if key not in seen:
+            found.append(item); seen.add(key)
+    result["found"]=found[:24]
+    # Keep unknown free-text symptoms instead of forcing a wrong match.  The
+    # client then routes them through a body-system/context clarifier.
+    result["lexicon_version"]="symptom-universal-context-v3"
+    return jsonify({"ok": True, **result})
 
 
 @app.route("/api/user/preferences", methods=["GET", "POST"])
@@ -13375,6 +13617,73 @@ def _sanitize_analysis_notes_for_safety(value):
     return text[:2000]
 
 
+_CURATED_ANALYSIS_SOURCES = {
+    "general": [
+        {"source_name":"وزارة الصحة السعودية","organization":"Saudi Ministry of Health","source_type":"government","reference_title_ar":"المحتوى التثقيفي الصحي","reference_title_en":"Health educational content","reference_url":"https://www.moh.gov.sa/healthawareness/educationalcontent/pages/default.aspx","last_verified":"2026-09-09"},
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"دليل الأعراض من A إلى Z","reference_title_en":"Symptoms A to Z","reference_url":"https://www.nhs.uk/symptoms/","last_verified":"2026-09-09"},
+        {"source_name":"MedlinePlus","organization":"U.S. National Library of Medicine","source_type":"government","reference_title_ar":"دليل الأعراض والمواضيع الصحية","reference_title_en":"Symptoms and health topics","reference_url":"https://medlineplus.gov/symptoms.html","last_verified":"2026-09-09"},
+        {"source_name":"CDC","organization":"Centers for Disease Control and Prevention","source_type":"government","reference_title_ar":"المواضيع الصحية A-Z","reference_title_en":"Health Topics A-Z","reference_url":"https://www.cdc.gov/health-topics.html","last_verified":"2026-09-09"},
+        {"source_name":"WHO","organization":"World Health Organization","source_type":"international_health_organization","reference_title_ar":"المواضيع الصحية","reference_title_en":"Health topics","reference_url":"https://www.who.int/health-topics","last_verified":"2026-09-09"},
+    ],
+    "syncope": [
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"الإغماء (Fainting)","reference_title_en":"Fainting","reference_url":"https://www.nhs.uk/symptoms/fainting/","last_verified":"2026-09-09"},
+        {"source_name":"MedlinePlus","organization":"U.S. National Library of Medicine","source_type":"government","reference_title_ar":"الإغماء / الغشي","reference_title_en":"Syncope / Fainting","reference_url":"https://medlineplus.gov/fainting.html","last_verified":"2026-09-09"},
+        {"source_name":"American Heart Association","organization":"American Heart Association","source_type":"other_trusted_source","reference_title_ar":"الغشي (الإغماء)","reference_title_en":"Syncope (Fainting)","reference_url":"https://www.heart.org/en/health-topics/arrhythmia/symptoms-diagnosis--monitoring-of-arrhythmia/syncope-fainting","last_verified":"2026-09-09"},
+        {"source_name":"Mayo Clinic","organization":"Mayo Clinic","source_type":"academic_medical_institution","reference_title_ar":"الإغماء: الإسعافات الأولية","reference_title_en":"Fainting: First aid","reference_url":"https://www.mayoclinic.org/first-aid/first-aid-fainting/basics/art-20056606","last_verified":"2026-09-09"},
+    ],
+    "palpitations": [
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"خفقان القلب","reference_title_en":"Heart palpitations","reference_url":"https://www.nhs.uk/symptoms/heart-palpitations/","last_verified":"2026-09-09"},
+        {"source_name":"MedlinePlus","organization":"U.S. National Library of Medicine","source_type":"government","reference_title_ar":"خفقان القلب","reference_title_en":"Heart palpitations","reference_url":"https://medlineplus.gov/ency/article/003081.htm","last_verified":"2026-09-09"},
+    ],
+    "gastro": [
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"الإسهال والقيء","reference_title_en":"Diarrhoea and vomiting","reference_url":"https://www.nhs.uk/conditions/diarrhoea-and-vomiting/","last_verified":"2026-09-09"},
+        {"source_name":"MedlinePlus","organization":"U.S. National Library of Medicine","source_type":"government","reference_title_ar":"الغثيان والقيء لدى البالغين","reference_title_en":"Nausea and vomiting – adults","reference_url":"https://medlineplus.gov/ency/article/003117.htm","last_verified":"2026-09-09"},
+        {"source_name":"MedlinePlus","organization":"U.S. National Library of Medicine","source_type":"government","reference_title_ar":"الإسهال","reference_title_en":"Diarrhea","reference_url":"https://medlineplus.gov/diarrhea.html","last_verified":"2026-09-09"},
+    ],
+    "urinary": [
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"التهابات المسالك البولية","reference_title_en":"Urinary tract infections (UTIs)","reference_url":"https://www.nhs.uk/conditions/urinary-tract-infections-utis/","last_verified":"2026-09-09"},
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"وجود دم في البول","reference_title_en":"Blood in urine","reference_url":"https://www.nhs.uk/symptoms/blood-in-urine/","last_verified":"2026-09-09"},
+    ],
+    "breathing": [
+        {"source_name":"NHS","organization":"NHS","source_type":"national_health_service","reference_title_ar":"ضيق التنفس","reference_title_en":"Shortness of breath","reference_url":"https://www.nhs.uk/symptoms/shortness-of-breath/","last_verified":"2026-09-09"},
+    ],
+}
+
+
+def _analysis_source_groups(symptoms):
+    text=_normalize_symptom_search_text(" ".join(str(x) for x in (symptoms or [])))
+    groups=["general"]
+    def has(*terms):
+        return any(_normalize_symptom_search_text(t) in text for t in terms)
+    if has("اغماء","فقدان الوعي","غشي","fainting","syncope","loss of consciousness","near-fainting"):
+        groups.append("syncope")
+    if has("خفقان","تسارع دقات القلب","palpitations","racing heart"):
+        groups.append("palpitations")
+    if has("قيء","استفراغ","اسهال","إسهال","vomiting","diarrhea","diarrhoea"):
+        groups.append("gastro")
+    if has("حرقة البول","حرقان البول","الم عند التبول","دم في البول","كثره التبول","dysuria","burning urination","blood in urine","frequent urination"):
+        groups.append("urinary")
+    if has("ضيق التنفس","shortness of breath","breathlessness"):
+        groups.append("breathing")
+    return groups
+
+
+def _augment_analysis_sources(result, symptoms):
+    result=result or {}
+    sources=list(result.get("medical_sources") or [])
+    seen=set()
+    for src in sources:
+        url=str(src.get("reference_url") or src.get("official_url") or "").strip()
+        if url: seen.add(url.rstrip("/"))
+    for group in _analysis_source_groups(symptoms):
+        for src in _CURATED_ANALYSIS_SOURCES.get(group, []):
+            key=src["reference_url"].rstrip("/")
+            if key not in seen:
+                sources.append(dict(src)); seen.add(key)
+    result["medical_sources"]=sources[:12]
+    return result
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     try:
@@ -13488,6 +13797,7 @@ def api_analyze():
             except Exception:
                 pass
         result = analysis_core.run_analysis(patient, lang=lang)
+        result = _augment_analysis_sources(result, patient.get("symptoms") or [])
         if result.get("record_id"):
             try:
                 privacy_features.set_record_analytics_eligibility(int(result["record_id"]), _analytics_consent_ok())
