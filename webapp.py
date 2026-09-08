@@ -4023,6 +4023,11 @@ body{font-family:'Cairo','Poppins','Segoe UI',sans-serif;overflow-x:hidden;}
 /* Bare landing must escape the site's normal 1180px content container on every device. */
 html body .container{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-height:100vh!important;min-height:100dvh!important;min-height:100svh!important;}
 .ss-bnav,.asst-fab,.asst-panel,.expl-bg,.asst-modal-bg,.ss-modal-overlay,.pwa-install{display:none!important;}
+/* Welcome/language page: never show the in-app mobile bottom navigation.
+   More specific than later global responsive rules, so iPhone/iPad Safari cannot re-enable it. */
+body.ss-welcome-page .ss-bnav,body.ss-welcome-page #ssBnav{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+body.ss-welcome-page{padding-bottom:0!important;}
+body.ss-welcome-page .container{padding-bottom:0!important;}
 
 .first-lang{
   position:relative;
@@ -4434,6 +4439,7 @@ body.ss-home-page .asst-fab{display:none!important}
 def welcome_page():
     next_target = _safe_next_url("/home")
     body = """
+    <script>document.body.classList.add('ss-welcome-page');</script>
     <main class="first-lang" aria-labelledby="languageTitle">
       <div class="first-lang-shell">
         <div class="first-lang-trust" aria-label="Trusted health information">
