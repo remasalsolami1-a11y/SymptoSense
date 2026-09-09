@@ -15,12 +15,19 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL)
 
 # Project-owner Admin identity is deployment configuration, never source code.
-# Fail closed when it is not configured: no ordinary account is silently
-# promoted to Admin. Set SYMPTOSENSE_ADMIN_EMAIL in Railway/production.
-OWNER_ADMIN_EMAIL = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "").strip().lower()
+# The environment variable is used for owner bootstrap/recovery, but a persisted
+# role=admin remains authoritative so a temporary Railway variable mistake can
+# never silently demote the existing Admin account. Legacy variable names are
+# accepted only as deployment compatibility aliases.
+OWNER_ADMIN_EMAIL = (
+    os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "")
+    or os.environ.get("ADMIN_EMAIL", "")
+    or os.environ.get("OWNER_ADMIN_EMAIL", "")
+).strip().lower()
 if not OWNER_ADMIN_EMAIL:
     logging.getLogger("SymptoSense").warning(
-        "SYMPTOSENSE_ADMIN_EMAIL is not configured; owner-only Admin access is disabled."
+        "Admin owner email is not configured; existing persisted Admin access is preserved, "
+        "but automatic owner promotion/recovery is unavailable until SYMPTOSENSE_ADMIN_EMAIL is set."
     )
 
 PH = "%s" if USE_POSTGRES else "?"
@@ -498,8 +505,10 @@ def _init_db_uncached():
     # the canonical lowercase value ``admin`` only for the configured owner.
     try:
         owner_state = ensure_owner_admin_by_email()
-        if not owner_state.get("found"):
-            _logger.warning("Admin owner account not found in ss_users; no account was created")
+        if owner_state.get("reason") == "owner_not_configured":
+            _logger.info("Admin bootstrap skipped; persisted Admin role remains authoritative")
+        elif not owner_state.get("found"):
+            _logger.warning("Configured Admin owner account not found in ss_users; no account was created")
         elif owner_state.get("reason") == "owner_inactive":
             _logger.warning("Admin owner account exists but is inactive; Admin access remains denied")
         elif owner_state.get("promoted"):
@@ -723,15 +732,26 @@ def _migrate_ss_columns(conn, c):
             ("email_otp_all_accounts_v1", datetime.now(timezone.utc).isoformat()),
         )
 
-    c.execute(
-        "UPDATE ss_users SET role='user' WHERE lower(email)<>%s "
-        "AND lower(COALESCE(role,'user'))<>'user'" % PH,
-        (OWNER_ADMIN_EMAIL,),
-    )
-    c.execute(
-        "UPDATE ss_users SET role='user' WHERE lower(email)<>%s AND role<>'user'" % PH,
-        (OWNER_ADMIN_EMAIL,),
-    )
+    # Normalize role spelling without destroying a valid persisted Admin when
+    # Railway temporarily lacks SYMPTOSENSE_ADMIN_EMAIL. If an owner email is
+    # configured we can safely demote any stale Admin row that does not belong
+    # to that owner; otherwise the already-persisted Admin remains authoritative.
+    c.execute("UPDATE ss_users SET role=lower(COALESCE(role,'user'))")
+    if OWNER_ADMIN_EMAIL:
+        c.execute(
+            "UPDATE ss_users SET role='user' WHERE role='admin' AND lower(email)<>%s" % PH,
+            (OWNER_ADMIN_EMAIL,),
+        )
+    else:
+        # Keep one historical Admin if a legacy database somehow contains more
+        # than one. The oldest Admin row is retained; no ordinary user is promoted.
+        c.execute("SELECT id FROM ss_users WHERE role='admin' ORDER BY id")
+        admin_rows = [row[0] for row in c.fetchall()]
+        if len(admin_rows) > 1:
+            keep_id = int(admin_rows[0])
+            c.execute("UPDATE ss_users SET role='user' WHERE role='admin' AND id<>%s" % PH, (keep_id,))
+            _logger.warning("Multiple persisted Admin rows found; preserved the oldest Admin row only")
+
     # Database-level second line of defence: at most one canonical admin role.
     c.execute("DROP INDEX IF EXISTS idx_ss_single_active_admin")
     c.execute("DROP INDEX IF EXISTS idx_ss_single_admin")
@@ -2633,7 +2653,7 @@ def get_ss_user(user_id):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if str(row[3] or "user").strip().lower() == "admin" else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "created_at": row[4], "last_login": row[5], "status": row[6] or "active", "email_verified": bool(row[7]), "email_verified_at": row[8]}
     finally:
         conn.close()
@@ -2649,7 +2669,7 @@ def get_ss_user_by_email(email):
         row = c.fetchone()
         if not row:
             return None
-        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if str(row[3] or "user").strip().lower() == "admin" else "user"
         return {"id": row[0], "email": row[1], "name": row[2], "role": role, "status": row[4] or "active", "email_verified": bool(row[5]), "email_verified_at": row[6]}
     finally:
         conn.close()
@@ -2666,7 +2686,7 @@ def list_ss_admin_users():
         conn.close()
     out = []
     for row in rows:
-        role = "admin" if (str(row[3] or "user").strip().lower() == "admin" and (row[1] or "").strip().lower() == OWNER_ADMIN_EMAIL) else "user"
+        role = "admin" if str(row[3] or "user").strip().lower() == "admin" else "user"
         out.append({"id": row[0], "email": row[1], "name": row[2], "role": role,
                     "created_at": row[4], "last_login": row[5]})
     return out
@@ -2711,7 +2731,13 @@ def update_unverified_email(user_id, new_email, current_password):
         conn.close()
 
 def is_owner_admin_email(email):
-    """Return True only for the configured project-owner email."""
+    """Return True only for the configured project-owner email.
+
+    A missing environment variable never makes an arbitrary email an owner.
+    Persisted Admin authorization is handled by ``ss_users.role`` instead.
+    """
+    if not OWNER_ADMIN_EMAIL:
+        return False
     return (email or "").strip().lower() == OWNER_ADMIN_EMAIL
 
 
@@ -2739,11 +2765,13 @@ def promote_existing_owner_admin(user_id):
 
 
 def ensure_owner_admin_by_email(email=None):
-    """Repair the role for the existing owner account without creating one.
+    """Repair the role for the configured existing owner without creating one.
 
-    This helper is safe for migrations/diagnostics: if the owner email does not
-    exist it returns ``found=False`` and makes no database changes.
+    When no owner email is configured this helper makes no database changes;
+    any already-persisted Admin role remains valid.
     """
+    if not OWNER_ADMIN_EMAIL:
+        return {"found": False, "promoted": False, "reason": "owner_not_configured"}
     target = (email or OWNER_ADMIN_EMAIL).strip().lower()
     if target != OWNER_ADMIN_EMAIL:
         return {"found": False, "promoted": False, "reason": "not_owner_email"}
@@ -2769,8 +2797,9 @@ def ensure_owner_admin_by_email(email=None):
 def set_ss_user_role(user_id, role):
     """Persist a role for internal server-side use only.
 
-    Only the configured owner can ever be assigned ``admin``. This function is
-    not exposed as a public/Admin API.
+    New Admin promotion requires a configured owner email. Existing persisted
+    Admin authorization does not depend on the environment variable. This
+    function is not exposed as a public/Admin API.
     """
     role = (role or "").strip()
     if role not in _ADMIN_ROLES | {"user"}:
@@ -2783,8 +2812,11 @@ def set_ss_user_role(user_id, role):
         if not row:
             return False
         owner = is_owner_admin_email(row[0])
-        if role == "admin" and not owner:
-            raise PermissionError("admin_role_reserved_for_owner")
+        if role == "admin":
+            if not OWNER_ADMIN_EMAIL:
+                raise PermissionError("admin_owner_not_configured")
+            if not owner:
+                raise PermissionError("admin_role_reserved_for_owner")
         if role != "admin" and owner:
             raise PermissionError("owner_admin_role_is_fixed")
         c.execute("UPDATE ss_users SET role=%s WHERE id=%s" % (PH, PH), (role, int(user_id)))
@@ -2795,11 +2827,11 @@ def set_ss_user_role(user_id, role):
 
 
 def admin_count():
-    """Return 1 only when the configured owner is the persisted Admin."""
+    """Return the number of persisted Admin accounts (schema limits this to one)."""
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM ss_users WHERE role='admin' AND lower(email)=%s" % PH, (OWNER_ADMIN_EMAIL,))
+        c.execute("SELECT COUNT(*) FROM ss_users WHERE lower(COALESCE(role,'user'))='admin'")
         return int(c.fetchone()[0] or 0)
     finally:
         conn.close()

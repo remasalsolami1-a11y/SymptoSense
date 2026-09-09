@@ -578,14 +578,19 @@ def _source_rows_for_disease(c, disease_id):
     return [dict(zip(keys,r)) for r in c.fetchall()]
 
 
-def match_diseases(canonical, lang="ar", limit=5):
+def match_diseases(canonical, lang="ar", limit=5, negatives=None):
     init_schema()
     ids = {int(x["symptom_id"]):x for x in canonical or []}
     if not ids:
         return []
+    negative_slugs = {str(x).strip() for x in (negatives or []) if str(x).strip()}
     conn = db._conn()
     try:
         c = conn.cursor()
+        neg_ids = set()
+        if negative_slugs:
+            c.execute("SELECT id,slug FROM mk_symptoms WHERE status='active'")
+            neg_ids = {int(row[0]) for row in c.fetchall() if str(row[1]) in negative_slugs}
         c.execute("SELECT id,slug,name_ar,name_en,description_ar,description_en,severity,red_flags_ar,red_flags_en,recommended_next_step_ar,recommended_next_step_en,last_updated FROM mk_diseases WHERE status='active'")
         diseases = c.fetchall()
         out=[]
@@ -601,10 +606,29 @@ def match_diseases(canonical, lang="ar", limit=5):
             max_weight=max((float(r[1] or 0) for r in rels), default=0) or 1
             avg_matched_weight=sum(float(r[1] or 0) for r in matched)/max(len(matched),1)
             specificity=min(avg_matched_weight/max_weight,1.0)
-            score=.75*coverage+.25*specificity
+            base_score=.75*coverage+.25*specificity
+
+            # Explicitly denied follow-up symptoms are negative evidence.  This is
+            # especially important for broad digestive conditions: nausea alone
+            # should not keep food poisoning high after vomiting/diarrhea were
+            # denied.  Penalty is proportional to both the total denied disease
+            # weight and whether a hallmark (high-weight) symptom was denied.
+            neg_rels=[r for r in rels if int(r[0]) in neg_ids]
+            neg_weight=sum(float(r[1] or 0) for r in neg_rels)
+            neg_ratio=min(neg_weight/total,1.0)
+            max_neg=max((float(r[1] or 0) for r in neg_rels), default=0.0)
+            hallmark_neg=min(max_neg/max_weight,1.0) if max_weight else 0.0
+            score=max(0.0, base_score - (0.85*neg_ratio) - (0.22*hallmark_neg))
+
+            # Do not surface extremely weak residual matches merely because one
+            # nonspecific symptom overlaps.
+            if score < .16:
+                continue
             if score>=.63 and len(matched)>=2:
                 level="strong"
-            elif score>=.34:
+            elif score>=.34 and len(matched)>=2:
+                level="moderate"
+            elif score>=.46:
                 level="moderate"
             else:
                 level="weak"
@@ -615,7 +639,7 @@ def match_diseases(canonical, lang="ar", limit=5):
             sources=_source_rows_for_disease(c,did)
             if not sources:
                 continue
-            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"match_level":level,"matched_symptoms":matched_symptoms,"sources":sources,"_score":score})
+            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":sorted(negative_slugs),"sources":sources,"_score":score})
         out.sort(key=lambda x:(x["_score"],len(x["matched_symptoms"])),reverse=True)
         for item in out:
             item.pop("_score",None)
@@ -759,11 +783,11 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
     return {"level":level,"label":labels["en" if lang=="en" else "ar"][level],"reasons":hits,"emergency":level=="urgent"}
 
 
-def knowledge_bundle(raw_symptoms, severity=1, age=None, notes="", lang="ar"):
+def knowledge_bundle(raw_symptoms, severity=1, age=None, notes="", lang="ar", negatives=None):
     lang="en" if lang=="en" else "ar"
     norm=normalize_symptoms(raw_symptoms,lang)
     risk=evaluate_risk(norm["canonical"],raw_symptoms,notes,severity,age,lang)
-    matches=[] if risk["level"]=="urgent" else match_diseases(norm["canonical"],lang)
+    matches=[] if risk["level"]=="urgent" else match_diseases(norm["canonical"],lang,negatives=negatives)
     sources=[]; seen=set(); dates=[]
     # Safety sources are included even when urgent risk intentionally suppresses
     # disease matching. This keeps every emergency warning source-grounded.

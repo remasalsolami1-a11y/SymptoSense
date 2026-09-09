@@ -723,6 +723,63 @@ PREMIUM_POLISH_CSS += """
 """
 
 
+PREMIUM_POLISH_CSS += """
+/* ===== Live-review questionnaire stability fix 2026-09-09 ===== */
+/* One scroll surface, no page jump, no tall empty stage on phones/tablets. */
+@media (max-width:900px){
+  body.ss-chat-page{
+    height:100svh!important;min-height:100svh!important;max-height:100svh!important;
+    overflow:hidden!important;overscroll-behavior:none!important;background:#F7FAFC!important;
+  }
+  body.ss-chat-page .container{
+    height:calc(100svh - var(--bnav-h) - var(--safe-bottom))!important;
+    min-height:0!important;max-height:none!important;overflow:hidden!important;
+    padding:8px 8px 6px!important;display:flex!important;align-items:flex-start!important;
+  }
+  body.ss-chat-page .chat-wrap{
+    width:100%!important;height:auto!important;max-height:100%!important;min-height:0!important;
+    display:block!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+    margin:0!important;border-radius:18px!important;scrollbar-gutter:stable both-edges;
+  }
+  body.ss-chat-page .chat-head{
+    position:sticky!important;top:0!important;z-index:22!important;
+    margin:0!important;box-shadow:0 5px 14px rgba(22,59,92,.10)!important;
+  }
+  body.ss-chat-page .ss-flow{position:relative!important;inset:auto!important;z-index:5!important}
+  body.ss-chat-page .chat-body,
+  body.ss-chat-page .chat-body:not(.result-mode),
+  body.ss-chat-page .chat-body.result-mode{
+    display:block!important;flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;
+    overflow:visible!important;padding:12px 12px 0!important;background:#F7FAFC!important;
+  }
+  body.ss-chat-page .step-focus-card{
+    width:100%!important;max-width:none!important;margin:0!important;padding:13px 14px 11px!important;
+    border:1px solid #D7E7F1!important;border-bottom:0!important;border-radius:15px 15px 0 0!important;
+    background:#fff!important;box-shadow:none!important;
+  }
+  body.ss-chat-page .step-answer-summary{margin:7px 0 0!important;border-radius:12px!important}
+  body.ss-chat-page .chat-options,
+  body.ss-chat-page .chat-options.symptom-picker{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+    margin:0 12px 12px!important;padding:10px!important;gap:9px!important;align-content:start!important;
+    background:#fff!important;border:1px solid #D7E7F1!important;border-top:0!important;border-radius:0 0 15px 15px!important;
+  }
+  body.ss-chat-page .chat-options .opt{min-height:52px!important}
+  body.ss-chat-page .chat-input{
+    display:flex;flex:none!important;position:relative!important;inset:auto!important;
+    margin:0 12px 12px!important;padding:8px!important;border:1px solid #D7E7F1!important;border-radius:14px!important;
+  }
+  body.ss-chat-page .chat-input[style*="display:none"]{display:none!important}
+  body.ss-chat-page #chatSafetyNote{margin:8px 12px 12px!important}
+}
+@media (max-width:360px){
+  body.ss-chat-page .chat-options,body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:1fr!important}
+}
+"""
+
+
 BASE_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
@@ -6292,6 +6349,10 @@ def chat_page():
     }
     function focusStepQuestion(msg, answerOverride) {
       if (bodyEl.classList.contains('result-mode')) return addQ(msg);
+      // Every new questionnaire step starts with a clean input state.
+      // This prevents an old placeholder (for example allergies/medications)
+      // from remaining visible during adaptive yes/no questions.
+      hideText();
       currentStepQuestionText = String(msg || '').trim();
       bodyEl.innerHTML = '';
       const card = document.createElement('section');
@@ -6354,7 +6415,10 @@ def chat_page():
       textInp.value = '';
       textInp.inputMode = state.step === 'age' ? 'numeric' : 'text';
       textInp.setAttribute('dir', state.step === 'age' ? 'ltr' : (LANG === 'ar' ? 'rtl' : 'ltr'));
-      if (window.matchMedia('(hover:hover) and (pointer:fine)').matches) textInp.focus();
+      if (window.matchMedia('(hover:hover) and (pointer:fine)').matches) {
+        try { textInp.focus({ preventScroll: true }); }
+        catch (e) { /* Avoid legacy focus fallback because it can jump the analysis page. */ }
+      }
     }
     function hideText() { inpEl.style.display = 'none'; }
     function send() {
@@ -6752,7 +6816,7 @@ def chat_page():
       else startDifferentialQuestions();
     }
     async function startDifferentialQuestions() {
-      if (differentialCount >= 5) { showDataQualityGate(); return; }
+      if (differentialCount >= 3) { showDataQualityGate(); return; }
       state.step = 'clarification';
       updateFlow('notes');
       clearOpts();
@@ -7186,6 +7250,10 @@ def chat_page():
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
+        // Keep explicit negative evidence from adaptive questions.  The final
+        // ranking uses these canonical symptom slugs to reduce conditions whose
+        // hallmark symptoms the user has denied.
+        payload.negative_symptoms = Array.from(new Set(differentialNegatives || []));
         lastAnalysisInput = JSON.parse(JSON.stringify(payload));
         if (state.previous_record_id) payload.previous_record_id = state.previous_record_id;
         try { const b = localStorage.getItem('symptosense_blood_id'); if (b) payload.blood_id = parseInt(b) || null; } catch (e) {}
@@ -8131,7 +8199,7 @@ CT = {
         "em_red": "الهلال الأحمر (إسعاف)", "em_unified": "الطوارئ الموحد",
         "em_937": "وزارة الصحة",
         "em_red_desc": "الإسعاف والطوارئ الطبية",
-        "em_unified_desc": "الرقم الموحد للطوارئ في جميع المناطق",
+        "em_unified_desc": "الرقم الموحد للطوارئ",
         "em_937_desc": "استشارات صحية مجانية على مدار الساعة",
         "em_call": "اتصل الآن",
         "em_police": "الشرطة", "em_civil": "الدفاع المدني",
@@ -8598,7 +8666,7 @@ CT = {
         "em_red": "Red Crescent (Ambulance)", "em_unified": "Unified Emergency",
         "em_937": "Ministry of Health",
         "em_red_desc": "Ambulance & medical emergencies",
-        "em_unified_desc": "Unified emergency number across all regions",
+        "em_unified_desc": "Unified Emergency Number",
         "em_937_desc": "Free health consultations around the clock",
         "em_call": "Call now",
         "em_police": "Police", "em_civil": "Civil Defense",
@@ -9097,6 +9165,26 @@ def manifest_file():
     return response
 
 
+@app.route("/static/images/symptosense-social-preview.png")
+def social_preview_image():
+    """Serve the social preview even when a deployment flattens asset folders.
+
+    Competition uploads have occasionally reached Railway with root files but
+    without nested folders. Prefer the normal static asset, then fall back to a
+    root-level copy bundled with the release.
+    """
+    candidates = [
+        os.path.join(BASE_DIR, "static", "images", "symptosense-social-preview.png"),
+        os.path.join(BASE_DIR, "symptosense-social-preview.png"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            response = send_file(path, mimetype="image/png", conditional=True)
+            response.headers["Cache-Control"] = "public, max-age=86400"
+            return response
+    abort(404)
+
+
 @app.route("/brand-icon.svg")
 def brand_icon():
     svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="SymptoSense">
@@ -9110,7 +9198,17 @@ def brand_icon():
 
 @app.route("/icons/<path:filename>")
 def pwa_icon_file(filename):
-    response = send_from_directory(os.path.join(BASE_DIR,"icons"),filename)
+    # Normal package layout first; root-level duplicates make the release
+    # resilient if a manual GitHub/Railway upload accidentally flattens folders.
+    safe_name = os.path.basename(str(filename or ""))
+    if safe_name != filename or safe_name not in {"icon-192.png", "icon-512.png", "apple-touch-icon.png", "icon.svg", "about-us-phone.webp"}:
+        abort(404)
+    nested = os.path.join(BASE_DIR, "icons", safe_name)
+    root_copy = os.path.join(BASE_DIR, safe_name)
+    path = nested if os.path.isfile(nested) else root_copy
+    if not os.path.isfile(path):
+        abort(404)
+    response = send_file(path, conditional=True)
     response.headers["Cache-Control"] = "public, max-age=604800"
     return response
 
@@ -13889,6 +13987,7 @@ def api_analyze():
             "notes": _sanitize_analysis_notes_for_safety(data.get("notes")),
             "location": str(data.get("location") or "")[:200],
             "history_answered": bool(data.get("history_answered")),
+            "negative_symptoms": [str(x).strip() for x in (data.get("negative_symptoms") or data.get("negatives") or []) if str(x).strip()][:20],
             "member_id": member_id,
         }
         if member:
@@ -14347,28 +14446,23 @@ def api_export_current_pdf():
         return _mk_error(exc, 500)
 
 
-def _groq_chat_completion_with_retry(messages, *, max_tokens=240, temperature=0.4, timeout=10):
-    """Best-effort assistant provider call with one short retry.
+def _groq_chat_completion_with_retry(messages, *, max_tokens=240, temperature=0.4, timeout=6):
+    """Single bounded provider attempt for competition-safe responsiveness.
 
-    The retry is intentionally bounded so a competition demo does not hang.
-    Local fallbacks still handle the final failure.
+    If the external provider is unavailable or slow, fail fast so the curated
+    local fallback can answer instead of making the user wait through retries.
     """
-    last_error = None
-    for attempt in range(2):
-        try:
-            client = analysis_core._groq_client()
-            return client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=timeout,
-            )
-        except Exception as exc:
-            last_error = exc
-            if attempt == 0:
-                time.sleep(0.25)
-    raise last_error or RuntimeError("assistant_provider_unavailable")
+    try:
+        client = analysis_core._groq_client()
+        return client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=min(float(timeout or 6), 6.0),
+        )
+    except Exception as exc:
+        raise exc
 
 
 def _followup_local_answer(question, context, lang):
@@ -14465,7 +14559,7 @@ def api_followup():
             )
         r = _groq_chat_completion_with_retry(
             [{"role": "user", "content": prompt}],
-            temperature=0.5, max_tokens=500, timeout=10,
+            temperature=0.5, max_tokens=500, timeout=6,
         )
         answer = r.choices[0].message.content.strip()
         if not answer:
@@ -14927,7 +15021,7 @@ def api_assistant():
         msgs = [{"role": "system", "content": sys}] + hist
         try:
             r = _groq_chat_completion_with_retry(
-                msgs, temperature=0.5, max_tokens=240, timeout=10,
+                msgs, temperature=0.5, max_tokens=240, timeout=6,
             )
             answer = r.choices[0].message.content.strip()
             # Defensive mode guard: a mental-wellbeing request must not surface

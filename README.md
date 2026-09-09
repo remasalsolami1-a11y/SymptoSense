@@ -105,7 +105,7 @@ Then open `http://localhost:5000` or the port shown by Flask.
 | `SESSION_COOKIE_SECURE=1` | HTTPS-only session cookie in production |
 | `SITE_URL` | Public base URL used in email and metadata links |
 | `GROQ_API_KEY` | AI explanation service; local curated fallback remains available if unavailable |
-| `SYMPTOSENSE_ADMIN_EMAIL` | Owner/Admin account email; never hard-code it in source |
+| `SYMPTOSENSE_ADMIN_EMAIL` | Owner bootstrap/recovery email. Existing persisted `role=admin` remains valid if this variable is temporarily missing. |
 | `BREVO_API_KEY` | Authentication email delivery |
 | `BREVO_FROM_EMAIL` | Verified Brevo sender address |
 | `BREVO_FROM_NAME` | Displayed sender name |

@@ -1050,6 +1050,7 @@ def run_analysis(patient, lang="ar"):
         bundle = medical_knowledge.knowledge_bundle(
             d.get("symptoms", []), d.get("severity", 1), d.get("age"),
             d.get("notes", ""), lang,
+            negatives=d.get("negative_symptoms") or d.get("negatives") or [],
         )
     except Exception:
         bundle = {"normalization": {"canonical": [], "unmatched": d.get("symptoms", [])},

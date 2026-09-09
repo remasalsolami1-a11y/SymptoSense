@@ -8,7 +8,7 @@ The only account eligible for Admin is the existing user whose email is:
 
 `<OWNER_ADMIN_EMAIL>`
 
-Set `SYMPTOSENSE_ADMIN_EMAIL=<OWNER_ADMIN_EMAIL>` in the production environment. The source code does not contain the owner email, and Admin access fails closed if the variable is missing.
+Set `SYMPTOSENSE_ADMIN_EMAIL=<OWNER_ADMIN_EMAIL>` in the production environment. The source code does not contain the owner email. The variable is used to bootstrap or repair the existing owner account. If the variable is temporarily missing, an already-persisted `role=admin` remains valid and is not silently demoted.
 
 ## How assignment works
 
@@ -25,6 +25,10 @@ No `ADMIN_CLAIM_TOKEN` is needed anymore.
 The code does **not** create a replacement owner/Admin account. Registration using the reserved owner email is refused with `owner_account_must_exist`, and `/admin` remains unavailable until that existing production account is present.
 
 The project ZIP does not contain the Railway production database, so existence of the real production row must be verified after deployment against the preserved Railway database.
+
+## If the Admin suddenly appears as a normal user
+
+This can happen after deploying an older build that started without `SYMPTOSENSE_ADMIN_EMAIL` and incorrectly canonicalized the role. Set the variable to the owner account email and redeploy once. Startup will repair that existing account back to `role=admin`. The corrected build will then preserve the persisted Admin role even if the variable is temporarily unavailable later.
 
 ## Verification
 
@@ -44,8 +48,9 @@ For an ordinary user:
 ## Security behavior
 
 - New ordinary accounts always receive `role = user`.
-- Non-owner accounts are always canonicalized to `role = user`; a database index allows only one canonical `admin` row.
-- Only the configured owner email can have an effective Admin role.
+- A database index allows only one canonical `admin` row.
+- Existing persisted `role=admin` is authoritative for authorization and survives a missing deployment variable.
+- New Admin promotion/recovery requires `SYMPTOSENSE_ADMIN_EMAIL` to match the existing owner account; ordinary users cannot self-promote.
 - Admin write APIs require authenticated Admin role plus a session CSRF token.
 - Admin Excel downloads also require the session CSRF token and never include emails, passwords, tokens, secrets, or chat content.
 - The Admin idle timeout defaults to 30 minutes and can be adjusted with `ADMIN_SESSION_TIMEOUT_MINUTES` (5–240 minutes).
