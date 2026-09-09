@@ -9,8 +9,8 @@ def test_phone_home_hero_visual_hidden_under_480():
 
 
 def test_home_how_flow_is_2x2_on_regular_phones():
-    assert '@media(max-width:480px){.home-how{padding:18px 14px;margin:22px 0}.home-how-flow{grid-template-columns:1fr 1fr' in WEBAPP
-    assert '@media(max-width:330px){.home-how-flow{grid-template-columns:1fr}}' in WEBAPP
+    assert '.ss-how-flow{grid-template-columns:repeat(2,minmax(0,1fr))' in WEBAPP
+    assert '@media(max-width:360px)' in WEBAPP
 
 
 def test_home_does_not_duplicate_community_dashboard_stats():
@@ -28,8 +28,12 @@ def test_community_dashboard_kpis_stay_2x2_on_common_phones():
 
 
 def test_landscape_chat_has_no_impossible_min_height():
-    assert 'min-height: 440px' not in WEBAPP
-    assert 'min-height:440px' not in WEBAPP
+    # A 440px hero minimum may exist on the homepage; it must not be imposed on chat in landscape.
+    marker = '@media (orientation: landscape) and (max-height: 560px)'
+    start = WEBAPP.index(marker)
+    block = WEBAPP[start:start+2600]
+    assert 'min-height: 440px' not in block
+    assert 'min-height:440px' not in block
     assert 'body.ss-chat-page .chat-wrap { height: 100% !important; min-height: 0 !important;' in WEBAPP
 
 

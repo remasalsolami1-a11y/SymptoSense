@@ -32,7 +32,7 @@ def test_pwa_uses_product_name_and_png_icons():
 
 
 def test_service_worker_cache_was_bumped_for_pwa_changes():
-    assert 'symptosense-shell-v7-production-cleanup' in SW
+    assert 'symptosense-shell-v8-competition-ready' in SW
 
 
 def test_optional_analytics_is_explicitly_gated():

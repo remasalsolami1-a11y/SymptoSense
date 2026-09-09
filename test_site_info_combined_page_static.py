@@ -19,7 +19,9 @@ def test_site_info_combines_requested_information():
     for section in ('id="about"', 'id="method"', 'id="privacy"', 'id="terms"', 'id="sources"'):
         assert section in WEB
     assert 'AI + Data Science + Digital Health' in WEB
-    assert 'Designed &amp; Developed by Remas Alsolami — Data Science Project' in WEB
+    assert 'Remas Hameed Alsolami — Data Science and Analytics student and creator of SymptoSense' in WEB
+    assert 'Designed & Developed by' in WEB
+    assert 'Remas Alsolami — Data Science Project' in WEB
 
 
 def test_site_info_mobile_layout_is_responsive():
