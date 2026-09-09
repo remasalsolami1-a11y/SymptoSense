@@ -5172,7 +5172,7 @@ def home_page():
 
       <section class="ss-sources-strip" aria-labelledby="sourcesTitle">
         <div class="ss-sources-copy"><h3 id="sourcesTitle">__SRC_H__</h3><p>__SRC_P__</p><a class="ss-source-more" href="/sources">__ALL_SOURCES__ ←</a></div>
-        <div class="ss-sources-logos" aria-label="__SRC_H__"><span class="ss-source-badge"><i>🇸🇦</i>وزارة الصحة</span><span class="ss-source-badge"><i>🌐</i>WHO</span><span class="ss-source-badge"><i>▣</i>NHS</span><span class="ss-source-badge"><i>▣</i>CDC</span><span class="ss-source-badge"><i>♡</i>Mayo Clinic</span></div>
+        <div class="ss-sources-logos" aria-label="__SRC_H__"><span class="ss-source-badge"><i>🇸🇦</i>__MOH__</span><span class="ss-source-badge"><i>🌐</i>WHO</span><span class="ss-source-badge"><i>▣</i>NHS</span><span class="ss-source-badge"><i>▣</i>CDC</span><span class="ss-source-badge"><i>♡</i>Mayo Clinic</span></div>
       </section>
     </main>
     """
