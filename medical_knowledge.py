@@ -512,9 +512,10 @@ def _normalize_text(value):
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _fetch_symptoms(active_only=True):
+def _fetch_symptoms(active_only=True, conn=None):
     init_schema()
-    conn = db._conn()
+    owns_conn = conn is None
+    conn = conn or db._conn()
     try:
         c = conn.cursor()
         sql = "SELECT id,slug,name_ar,name_en,description_ar,description_en,category_id,severity_min,severity_max,aliases_ar,aliases_en,red_flags_ar,red_flags_en,status,version,created_at,updated_at FROM mk_symptoms"
@@ -523,7 +524,8 @@ def _fetch_symptoms(active_only=True):
         c.execute(sql + " ORDER BY name_en")
         rows = c.fetchall()
     finally:
-        conn.close()
+        if owns_conn:
+            conn.close()
     keys = ["id","slug","name_ar","name_en","description_ar","description_en","category_id","severity_min","severity_max","aliases_ar","aliases_en","red_flags_ar","red_flags_en","status","version","created_at","updated_at"]
     out = []
     for row in rows:
@@ -531,8 +533,8 @@ def _fetch_symptoms(active_only=True):
     return out
 
 
-def normalize_symptoms(raw_symptoms, lang="ar"):
-    symptoms = _fetch_symptoms(True)
+def normalize_symptoms(raw_symptoms, lang="ar", conn=None):
+    symptoms = _fetch_symptoms(True, conn=conn)
     candidates = []
     for item in symptoms:
         aliases = [item["name_ar"], item["name_en"], item["slug"].replace("-", " ")] + item["aliases_ar"] + item["aliases_en"]
@@ -578,13 +580,14 @@ def _source_rows_for_disease(c, disease_id):
     return [dict(zip(keys,r)) for r in c.fetchall()]
 
 
-def match_diseases(canonical, lang="ar", limit=5, negatives=None):
+def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None):
     init_schema()
     ids = {int(x["symptom_id"]):x for x in canonical or []}
     if not ids:
         return []
     negative_slugs = {str(x).strip() for x in (negatives or []) if str(x).strip()}
-    conn = db._conn()
+    owns_conn = conn is None
+    conn = conn or db._conn()
     try:
         c = conn.cursor()
         neg_ids = set()
@@ -645,7 +648,8 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None):
             item.pop("_score",None)
         return out[:max(1,min(int(limit),10))]
     finally:
-        conn.close()
+        if owns_conn:
+            conn.close()
 
 
 def differential_question(raw_symptoms, asked=None, negatives=None, lang="ar"):
@@ -741,7 +745,7 @@ def differential_question(raw_symptoms, asked=None, negatives=None, lang="ar"):
     }
 
 
-def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, lang="ar"):
+def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, lang="ar", conn=None):
     init_schema()
     slugs={x["slug"] for x in canonical or []}
     text=_normalize_text(" ".join(str(x) for x in (raw_symptoms or []))+" "+str(notes or ""))
@@ -749,7 +753,8 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
     except Exception: severity=1
     try: age=int(age) if age not in (None,"") else None
     except Exception: age=None
-    conn=db._conn()
+    owns_conn = conn is None
+    conn = conn or db._conn()
     try:
         c=conn.cursor(); c.execute("""SELECT rf.id,rf.slug,rf.name_ar,rf.name_en,rf.required_symptoms,rf.match_mode,rf.keywords_ar,rf.keywords_en,
                                       rf.min_severity,rf.risk_level,rf.message_ar,rf.message_en,rf.description_ar,rf.description_en,
@@ -758,7 +763,9 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
                                FROM mk_red_flags rf LEFT JOIN mk_sources s ON s.id=rf.source_id
                                WHERE rf.status='active'""")
         rows=c.fetchall()
-    finally: conn.close()
+    finally:
+        if owns_conn:
+            conn.close()
     hits=[]
     for r in rows:
         req=set(_json(r[4],[])); mode=r[5] or "all"; kws=_json(r[6] if lang=="ar" else r[7],[]); min_sev=int(r[8] or 1)
@@ -785,9 +792,17 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
 
 def knowledge_bundle(raw_symptoms, severity=1, age=None, notes="", lang="ar", negatives=None):
     lang="en" if lang=="en" else "ar"
-    norm=normalize_symptoms(raw_symptoms,lang)
-    risk=evaluate_risk(norm["canonical"],raw_symptoms,notes,severity,age,lang)
-    matches=[] if risk["level"]=="urgent" else match_diseases(norm["canonical"],lang,negatives=negatives)
+    # PERFORMANCE: use one database connection for normalization, red-flag rules,
+    # condition ranking, and source lookup. Hosted PostgreSQL connection setup can
+    # dominate request time when each stage opens a fresh connection.
+    init_schema()
+    conn = db._conn()
+    try:
+        norm=normalize_symptoms(raw_symptoms,lang,conn=conn)
+        risk=evaluate_risk(norm["canonical"],raw_symptoms,notes,severity,age,lang,conn=conn)
+        matches=[] if risk["level"]=="urgent" else match_diseases(norm["canonical"],lang,negatives=negatives,conn=conn)
+    finally:
+        conn.close()
     sources=[]; seen=set(); dates=[]
     # Safety sources are included even when urgent risk intentionally suppresses
     # disease matching. This keeps every emergency warning source-grounded.

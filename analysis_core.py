@@ -527,6 +527,48 @@ def _render_possible_conditions(matches, lang):
     return "\n".join(lines)
 
 
+def _has_trusted_medical_source(match):
+    """Return True only when a match is backed by a verified/trusted medical source.
+
+    Production disease matches already come from ``_source_rows_for_disease``,
+    which filters to active, verified sources.  The extra URL check keeps this
+    helper safe for older rows/tests that may not carry ``verification_status``.
+    """
+    for source in (match.get("sources") or []):
+        status = str(source.get("verification_status") or "").strip().lower()
+        url = str(source.get("reference_url") or source.get("official_url") or "").strip().lower()
+        if status == "verified":
+            return True
+        if url and any(domain in url for domain in _TRUSTED_DOMAINS):
+            return True
+    return False
+
+
+def _displayable_matches(matches, data_quality):
+    """Filter weak matches without discarding useful, source-grounded context.
+
+    A weak match may be shown only when the required analysis information is
+    complete, at least two canonical symptoms support that condition, and a
+    trusted medical source is attached.  Single-symptom weak matches remain
+    hidden because they are too nonspecific for the result card.
+    """
+    sufficient = bool((data_quality or {}).get("sufficient"))
+    out = []
+    for match in (matches or []):
+        level = str(match.get("match_level") or "weak").lower()
+        if level != "weak":
+            out.append(match)
+            continue
+        matched = {
+            str(item.get("slug") or item.get("name_ar") or item.get("name_en") or "").strip()
+            for item in (match.get("matched_symptoms") or [])
+            if str(item.get("slug") or item.get("name_ar") or item.get("name_en") or "").strip()
+        }
+        if sufficient and len(matched) >= 2 and _has_trusted_medical_source(match):
+            out.append(match)
+    return out
+
+
 def _knowledge_recommendations(bundle, lang):
     recs, seen = [], set()
     for match in (bundle.get("matches") or [])[:3]:
@@ -554,15 +596,139 @@ def _knowledge_recommendations(bundle, lang):
     return recs[:4]
 
 
+def _warning_concept(text, lang):
+    """Map warning phrasing to a small semantic concept for deduplication."""
+    raw = re.sub(r"\s+", " ", str(text or "").strip().lower())
+    if not raw:
+        return ""
+    if lang == "ar":
+        if any(x in raw for x in ("جفاف", "قلة بول", "قلة البول", "جفاف الفم")):
+            return "dehydration"
+        if "دم" in raw and any(x in raw for x in ("قيء", "القيء", "براز")):
+            return "gi_bleeding"
+        if any(x in raw for x in ("ضيق التنفس", "صعوبة التنفس", "صعوبة تنفس", "لا يستطيع التنفس")):
+            return "breathing"
+        if any(x in raw for x in ("إغماء", "اغماء", "فقدان الوعي")):
+            return "fainting"
+        if any(x in raw for x in ("صعوبة الكلام", "ثقل الكلام", "تداخل الكلام")):
+            return "speech"
+        if any(x in raw for x in ("فقدان رؤية", "فقدان الرؤية", "تغير الرؤية", "تشوش الرؤية")):
+            return "vision"
+        if any(x in raw for x in ("ضعف في جانب", "ضعف جانب", "جهة واحدة", "جانب واحد")):
+            return "one_sided_neuro"
+        if "ألم صدر" in raw or "ألم الصدر" in raw:
+            return "chest_pain"
+        if "تشوش" in raw or "ارتباك" in raw:
+            return "confusion"
+        if "ألم" in raw and any(x in raw for x in ("شديد", "شديدة")):
+            return "severe_pain"
+    else:
+        if any(x in raw for x in ("dehydration", "reduced urination", "little urine", "dry mouth")):
+            return "dehydration"
+        if "blood" in raw and any(x in raw for x in ("vomit", "stool", "faec", "fec")):
+            return "gi_bleeding"
+        if any(x in raw for x in ("breathing difficulty", "shortness of breath", "difficulty breathing", "breathless")):
+            return "breathing"
+        if any(x in raw for x in ("fainting", "loss of consciousness", "passed out", "unconscious")):
+            return "fainting"
+        if any(x in raw for x in ("speech difficulty", "slurred speech", "trouble speaking")):
+            return "speech"
+        if any(x in raw for x in ("vision loss", "vision change", "blurred vision")):
+            return "vision"
+        if any(x in raw for x in ("one-sided weakness", "one sided weakness", "one-sided numbness", "one sided numbness")):
+            return "one_sided_neuro"
+        if "chest pain" in raw:
+            return "chest_pain"
+        if "confusion" in raw:
+            return "confusion"
+        if "severe" in raw and "pain" in raw:
+            return "severe_pain"
+    return ""
+
+
+def _semantic_warning_tokens(text, lang):
+    normalized = re.sub(r"[^\w\u0600-\u06FF]+", " ", str(text or "").lower(), flags=re.UNICODE)
+    if lang == "ar":
+        replacements = {
+            "صعوبه": "صعوبة", "التنفس": "تنفس", "الوعي": "وعي", "القيء": "قيء",
+            "البراز": "براز", "شديده": "شديد", "مفاجئه": "مفاجئ",
+        }
+        stop = {"في", "من", "مع", "أو", "او", "على", "إلى", "الى", "قد", "هو", "هي", "و"}
+    else:
+        replacements = {"difficulty": "difficult", "breathing": "breath", "fainted": "faint", "fainting": "faint"}
+        stop = {"the", "a", "an", "or", "and", "with", "in", "of", "to", "for", "is"}
+    words = []
+    for word in normalized.split():
+        word = replacements.get(word, word)
+        if word and word not in stop:
+            words.append(word)
+    return set(words)
+
+
+def _warnings_semantically_same(a, b, lang):
+    ca, cb = _warning_concept(a, lang), _warning_concept(b, lang)
+    if ca and cb and ca == cb:
+        return True
+    ta, tb = _semantic_warning_tokens(a, lang), _semantic_warning_tokens(b, lang)
+    if not ta or not tb:
+        return False
+    overlap = len(ta & tb) / max(1, min(len(ta), len(tb)))
+    return overlap >= 0.72
+
+
+def _dedupe_red_flags(matches, lang):
+    """Split red-flag prose, remove semantic duplicates, and merge GI warnings."""
+    fragments = []
+    for match in (matches or [])[:3]:
+        text = str(match.get("red_flags") or "").strip()
+        if not text:
+            continue
+        # Preserve the useful "blood in vomit or stool" phrase while separating
+        # a trailing severe-abdominal-pain clause that is semantically distinct.
+        if lang == "ar":
+            text = re.sub(r"(دم في القيء أو البراز)\s+أو\s+(ألم بطن شديد)", r"\1، \2", text)
+        else:
+            text = re.sub(r"(blood in vomit or stool)\s*,?\s*or\s+(severe abdominal pain)", r"\1, \2", text, flags=re.I)
+        for part in re.split(r"[\n،,؛;]+", text):
+            part = re.sub(r"^[\s.\-•]+|[\s.]+$", "", part).strip()
+            part = re.sub(r"^(?:أو|او|or)\s+", "", part, flags=re.I).strip()
+            if part:
+                fragments.append(part)
+
+    unique = []
+    for fragment in fragments:
+        found = None
+        for i, existing in enumerate(unique):
+            if _warnings_semantically_same(fragment, existing, lang):
+                found = i
+                break
+        if found is None:
+            unique.append(fragment)
+        elif len(fragment) > len(unique[found]):
+            # Keep the more informative wording when two clauses mean the same thing.
+            unique[found] = fragment
+
+    concepts = [_warning_concept(x, lang) for x in unique]
+    has_dehydration = "dehydration" in concepts
+    has_gi_bleeding = "gi_bleeding" in concepts
+    if has_dehydration and has_gi_bleeding:
+        merged = (
+            "جفاف شديد أو علامات نزيف هضمي مثل وجود دم في القيء أو البراز."
+            if lang == "ar" else
+            "Severe dehydration or signs of gastrointestinal bleeding, such as blood in vomit or stool."
+        )
+        first = min(concepts.index("dehydration"), concepts.index("gi_bleeding"))
+        kept = [x for x, concept in zip(unique, concepts) if concept not in {"dehydration", "gi_bleeding"}]
+        kept.insert(min(first, len(kept)), merged)
+        unique = kept
+    return unique
+
+
 def _grounded_guidance(bundle, patient, lang):
     """Return safety and follow-up copy without relying on generated facts."""
     risk = bundle.get("risk", {}).get("level", "low")
     matches = bundle.get("matches") or []
-    red_flags = []
-    for match in matches[:3]:
-        text = (match.get("red_flags") or "").strip()
-        if text and text not in red_flags:
-            red_flags.append(text)
+    red_flags = _dedupe_red_flags(matches, lang)
     if not red_flags:
         red_flags.append(
             "اطلب مساعدة عاجلة عند تدهور مفاجئ أو ظهور صعوبة تنفس أو إغماء أو علامة عصبية جديدة."
@@ -1157,14 +1323,20 @@ def run_analysis(patient, lang="ar"):
         # Safety, medication, follow-up, and red-flag wording must come from
         # deterministic data/rules rather than generated model output.
         result.update(_grounded_guidance(bundle, d, lang))
-    top_match_level = ((bundle.get("matches") or [{}])[0]).get("match_level")
+    all_matches = bundle.get("matches") or []
+    risk_is_urgent = bundle.get("risk", {}).get("level") == "urgent"
+    display_matches = all_matches if risk_is_urgent else _displayable_matches(all_matches, data_quality)
+    top_match_level = ((display_matches or all_matches or [{}])[0]).get("match_level")
     result["confidence"] = ({"strong": "high", "moderate": "medium", "weak": "low"}.get(top_match_level, "low"))
     assessment_status = "complete"
     needed_information = []
-    # Safe uncertainty mode: incomplete required information or weak/no grounded
-    # match never becomes a forced diagnosis. Red flags still override this gate.
-    if bundle.get("risk", {}).get("level") != "urgent" and (not data_quality.get("sufficient") or not bundle.get("matches") or result.get("confidence") == "low"):
-        assessment_status = "insufficient" if (not data_quality.get("sufficient") or not bundle.get("matches")) else "low_confidence"
+
+    # Safe uncertainty mode: missing required information or a weak result based
+    # on only one nonspecific symptom remains hidden. A weak match is allowed
+    # through only when the required information is complete, 2+ canonical
+    # symptoms support it, and it has a verified/trusted medical source.
+    if not risk_is_urgent and (not data_quality.get("sufficient") or not all_matches or not display_matches):
+        assessment_status = "insufficient" if (not data_quality.get("sufficient") or not all_matches) else "low_confidence"
         needed_information = _needed_information(d, bundle, lang)
         quality_missing = [x.get("label") for x in (data_quality.get("missing") or []) if x.get("required") and x.get("label")]
         for item in quality_missing:
@@ -1183,8 +1355,30 @@ def run_analysis(patient, lang="ar"):
             if lang == "ar" else
             "SymptoSense will not show a medical possibility when the information or grounded match is insufficient."
         )
+    elif not risk_is_urgent:
+        # Rebuild the user-facing explanation from only the matches allowed by
+        # the confidence gate. This prevents a secondary one-symptom weak match
+        # from leaking into the result when another condition is displayable.
+        display_bundle = dict(bundle)
+        display_bundle["matches"] = display_matches
+        result["possible_conditions"] = _render_possible_conditions(display_matches, lang)
+        result["recommendations"] = _knowledge_recommendations(display_bundle, lang)
+        result.update(_grounded_guidance(display_bundle, d, lang))
+        if display_matches and all(str(m.get("match_level") or "").lower() == "weak" for m in display_matches):
+            result["simple_explanation"] = (
+                "توافق منخفض — هذه احتمالات موثقة بالمصادر لكنها غير تشخيصية، وتُعرض لأن أكثر من عرض معروف يتوافق معها مع اكتمال المعلومات المطلوبة."
+                if lang == "ar" else
+                "Low match — these source-grounded possibilities are non-diagnostic and are shown because at least two recognized symptoms align while the required information is complete."
+            )
+    else:
+        display_bundle = bundle
 
-    display_matches = [] if assessment_status in {"insufficient", "low_confidence"} else (bundle.get("matches") or [])
+    if assessment_status in {"insufficient", "low_confidence"}:
+        display_matches = []
+        display_bundle = dict(bundle)
+        display_bundle["matches"] = []
+    elif risk_is_urgent:
+        display_bundle = bundle
 
     triage = pre_triage
     risk_level = bundle.get("risk", {}).get("level", "low")
@@ -1203,7 +1397,7 @@ def run_analysis(patient, lang="ar"):
         "en": {"high": "Urgent", "medium": "Needs medical review", "low": "Low risk"},
     })[lang][urgency]
     rule_flag = urgency == "high"
-    low_conf = result.get("confidence") == "low"
+    low_conf = assessment_status == "low_confidence"
 
     predicted = []
     ml_explanation = {"available": False, "used_for_display": False}
@@ -1214,7 +1408,7 @@ def run_analysis(patient, lang="ar"):
     except Exception:
         predicted = []
         ml_explanation = {"available": False, "used_for_display": False}
-    explainability = build_explainability(d, bundle, lang, ml_explanation=ml_explanation)
+    explainability = build_explainability(d, display_bundle, lang, ml_explanation=ml_explanation)
 
     med_matches = []
     try:
@@ -1227,61 +1421,59 @@ def run_analysis(patient, lang="ar"):
     record_id = None
     try:
         db.init_db()
-        record_id = db.save_record(
+        persisted_result = {
+            "lang": lang,
+            "age": d.get("age"),
+            "gender": d.get("gender"),
+            "symptoms": d.get("symptoms", []),
+            "duration": d.get("duration"),
+            "severity": d.get("severity"),
+            "conditions": d.get("conditions", ""),
+            "medications": d.get("medications", ""),
+            "allergies": d.get("allergies", ""),
+            "notes": d.get("notes", ""),
+            "urgency": result.get("urgency", "low"),
+            "possible_conditions": result.get("possible_conditions", ""),
+            "recommendations": [
+                {
+                    "title": (r.get("title") or ""),
+                    "tip": (r.get("tip") or r.get("text") or ""),
+                    "source": r.get("source") or "",
+                    "url": r.get("source_url") or r.get("url") or "",
+                }
+                for r in result.get("recommendations", []) if isinstance(r, dict)
+            ],
+            "personal_note": result.get("personal_note", ""),
+            "danger_signs": result.get("danger_signs", ""),
+            "when_to_seek_care": result.get("when_to_seek_care", ""),
+            "home_care": result.get("home_care", ""),
+            "medication_guidance": result.get("medication_guidance", ""),
+            "questions_for_doctor": result.get("questions_for_doctor", ""),
+            "risk_level": risk_level,
+            "risk_label": bundle.get("risk", {}).get("label", ""),
+            "risk_reasons": bundle.get("risk", {}).get("reasons", []),
+            "emergency": bool(bundle.get("risk", {}).get("emergency")),
+            "knowledge_matches": display_matches,
+            "medical_sources": bundle.get("sources", []),
+            "symptom_normalization": bundle.get("normalization", {}),
+            "knowledge_last_updated": bundle.get("last_updated"),
+            "why_result": _why_result(display_bundle, lang),
+            "assessment_status": assessment_status,
+            "needed_information": needed_information,
+            "confidence": result.get("confidence", "low"),
+            "data_quality": data_quality,
+            "explainability": explainability,
+            "location": d.get("location", ""),
+        }
+        # PERFORMANCE: one hosted-DB transaction instead of opening a second
+        # connection immediately after save_record just to persist the result.
+        record_id = db.save_analysis_record_with_result(
             user_id, lang, d.get("age"), d.get("gender"),
             d.get("symptoms", []), d.get("duration"),
             d.get("severity"), result.get("urgency", "low"),
-            d.get("conditions", ""), d.get("medications", ""),
+            persisted_result, d.get("conditions", ""), d.get("medications", ""),
             d.get("member_id", 0),
         )
-        if record_id:
-            db.save_result(
-                user_id, record_id,
-                {
-                    "lang": lang,
-                    "age": d.get("age"),
-                    "gender": d.get("gender"),
-                    "symptoms": d.get("symptoms", []),
-                    "duration": d.get("duration"),
-                    "severity": d.get("severity"),
-                    "conditions": d.get("conditions", ""),
-                    "medications": d.get("medications", ""),
-                    "allergies": d.get("allergies", ""),
-                    "notes": d.get("notes", ""),
-                    "urgency": result.get("urgency", "low"),
-                    "possible_conditions": result.get("possible_conditions", ""),
-                    "recommendations": [
-                        {
-                            "title": (r.get("title") or ""),
-                            "tip": (r.get("tip") or r.get("text") or ""),
-                            "source": r.get("source") or "",
-                            "url": r.get("source_url") or r.get("url") or "",
-                        }
-                        for r in result.get("recommendations", []) if isinstance(r, dict)
-                    ],
-                    "personal_note": result.get("personal_note", ""),
-                    "danger_signs": result.get("danger_signs", ""),
-                    "when_to_seek_care": result.get("when_to_seek_care", ""),
-                    "home_care": result.get("home_care", ""),
-                    "medication_guidance": result.get("medication_guidance", ""),
-                    "questions_for_doctor": result.get("questions_for_doctor", ""),
-                    "risk_level": risk_level,
-                    "risk_label": bundle.get("risk", {}).get("label", ""),
-                    "risk_reasons": bundle.get("risk", {}).get("reasons", []),
-                    "emergency": bool(bundle.get("risk", {}).get("emergency")),
-                    "knowledge_matches": display_matches,
-                    "medical_sources": bundle.get("sources", []),
-                    "symptom_normalization": bundle.get("normalization", {}),
-                    "knowledge_last_updated": bundle.get("last_updated"),
-                    "why_result": _why_result(bundle, lang),
-                    "assessment_status": assessment_status,
-                    "needed_information": needed_information,
-                    "confidence": result.get("confidence", "low"),
-                    "data_quality": data_quality,
-                    "explainability": explainability,
-                    "location": d.get("location", ""),
-                },
-            )
     except Exception:
         record_id = None
 
@@ -1321,7 +1513,7 @@ def run_analysis(patient, lang="ar"):
         "medical_sources": bundle.get("sources", []),
         "symptom_normalization": bundle.get("normalization", {}),
         "knowledge_last_updated": bundle.get("last_updated"),
-        "why_result": _md_safe(_why_result(bundle, lang), lang),
+        "why_result": _md_safe(_why_result(display_bundle, lang), lang),
         "emergency": bool(bundle.get("risk", {}).get("emergency")),
         "emergency_flags": [r.get("name") or r.get("message") for r in bundle.get("risk", {}).get("reasons", []) if r.get("name") or r.get("message")],
         "ml_predictions": predicted,

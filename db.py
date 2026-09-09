@@ -1460,6 +1460,49 @@ def save_record(user_id, lang, age, gender, symptoms, duration, severity, urgenc
         conn.close()
 
 
+def save_analysis_record_with_result(user_id, lang, age, gender, symptoms, duration, severity, urgency, result_data, conditions=None, medications=None, member_id=0):
+    """Persist the analysis record and full result in one transaction/connection.
+
+    On hosted PostgreSQL, opening a fresh connection for the record and then a
+    second one for the result adds avoidable latency to the user-facing Analyze
+    button. Keeping both writes atomic is also safer if one write fails.
+    """
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        params = (
+            _hash_user(user_id),
+            datetime.now(timezone.utc).isoformat(),
+            lang, age, gender,
+            ",".join(symptoms or []),
+            conditions or "", medications or "",
+            duration, severity, urgency, int(member_id or 0),
+        )
+        if USE_POSTGRES:
+            c.execute(
+                f"INSERT INTO records (user_hash, timestamp, lang, age, gender, symptoms, conditions, medications, duration, severity, urgency, member_id) "
+                f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH}) RETURNING id",
+                params,
+            )
+            rec_id = c.fetchone()[0]
+        else:
+            c.execute(
+                f"INSERT INTO records (user_hash, timestamp, lang, age, gender, symptoms, conditions, medications, duration, severity, urgency, member_id) "
+                f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH})",
+                params,
+            )
+            rec_id = c.lastrowid
+        c.execute(
+            f"INSERT INTO results (user_hash, record_id, data) VALUES ({PH},{PH},{PH}) "
+            f"ON CONFLICT(user_hash, record_id) DO UPDATE SET data=excluded.data",
+            (_hash_user(user_id), rec_id, json.dumps(result_data or {}, ensure_ascii=False)),
+        )
+        conn.commit()
+        return rec_id
+    finally:
+        conn.close()
+
+
 def save_blood_test(user_id, data, member_id=0):
     conn = _conn()
     try:

@@ -2709,8 +2709,17 @@ def _consent_subject_key():
 
 
 def _consent_state():
+    """Return consent once per request to avoid repeated hosted-DB round trips."""
     try:
-        return privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
+        key = (_consent_subject_key(), _ss_user_id())
+        if has_request_context():
+            cached = getattr(g, "_ss_consent_state_cache", None)
+            if cached and cached.get("key") == key:
+                return cached.get("value") or {}
+        value = privacy_features.get_consent(key[0], key[1])
+        if has_request_context():
+            g._ss_consent_state_cache = {"key": key, "value": value}
+        return value
     except Exception:
         return {"service_usage": False, "analytics_research": False, "needs_review": True}
 
@@ -3083,6 +3092,8 @@ def inject_login_success_toast(response):
     """Inject the pending login toast into the first successful HTML page only."""
     try:
         kind=session.get("login_toast")
+        if request.path == "/":
+            return response
         if not kind or response.status_code!=200 or response.mimetype!="text/html" or response.direct_passthrough:
             return response
         html=response.get_data(as_text=True)
@@ -3115,6 +3126,12 @@ def production_security_headers(response):
         "base-uri 'self'; form-action 'self'",
     )
     response.headers.setdefault("X-Request-ID", getattr(g, "request_id", ""))
+    if request.path == "/":
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers["X-SymptoSense-Landing"] = "bare-v8"
+        response.headers["Vary"] = "Cookie"
     return response
 
 
@@ -5172,7 +5189,7 @@ def home_page():
 
       <section class="ss-sources-strip" aria-labelledby="sourcesTitle">
         <div class="ss-sources-copy"><h3 id="sourcesTitle">__SRC_H__</h3><p>__SRC_P__</p><a class="ss-source-more" href="/sources">__ALL_SOURCES__ ←</a></div>
-        <div class="ss-sources-logos" aria-label="__SRC_H__"><span class="ss-source-badge"><i>🇸🇦</i>وزارة الصحة</span><span class="ss-source-badge"><i>🌐</i>WHO</span><span class="ss-source-badge"><i>▣</i>NHS</span><span class="ss-source-badge"><i>▣</i>CDC</span><span class="ss-source-badge"><i>♡</i>Mayo Clinic</span></div>
+        <div class="ss-sources-logos" aria-label="__SRC_H__"><span class="ss-source-badge"><i>🇸🇦</i>__MOH__</span><span class="ss-source-badge"><i>🌐</i>WHO</span><span class="ss-source-badge"><i>▣</i>NHS</span><span class="ss-source-badge"><i>▣</i>CDC</span><span class="ss-source-badge"><i>♡</i>Mayo Clinic</span></div>
       </section>
     </main>
     """
@@ -6405,7 +6422,7 @@ def chat_page():
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
     }
-    function focusStepQuestion(msg, answerOverride, kickerOverride) {
+    function focusStepQuestion(msg, answerOverride) {
       if (bodyEl.classList.contains('result-mode')) return addQ(msg);
       // Every new questionnaire step starts with a clean input state.
       // This prevents an old placeholder (for example allergies/medications)
@@ -6417,7 +6434,7 @@ def chat_page():
       card.className = 'step-focus-card';
       const kicker = document.createElement('div');
       kicker.className = 'step-focus-kicker';
-      kicker.textContent = kickerOverride || (LANG === 'ar' ? 'السؤال الحالي' : 'Current question');
+      kicker.textContent = LANG === 'ar' ? 'السؤال الحالي' : 'Current question';
       const q = document.createElement('div');
       q.className = 'step-focus-question';
       q.textContent = msg;
@@ -6889,13 +6906,8 @@ def chat_page():
         if (!d.ok || d.done || !d.question || !d.symptom_slug) { showDataQualityGate(); return; }
         differentialCount += 1;
         differentialAsked.push(d.symptom_slug);
-        // Keep one clear current-question card. Appending follow-up prompts below
-        // the previous question made the flow look stuck on desktop and mobile.
-        focusStepQuestion(
-          '🩺 ' + d.question,
-          undefined,
-          LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more'
-        );
+        addHtml('<div class="adaptive-step">'+esc(LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more')+'</div>','bot');
+        addQ('🩺 ' + d.question);
         showOpts([
           {label:TT('clar_yes'), fn:function(){
             add(TT('clar_yes'),'user');
@@ -7259,7 +7271,7 @@ def chat_page():
       if(!q) return '';
       const pct=Math.max(0,Math.min(100,parseInt(q.score||0)));
       const levelIcon=q.level==='excellent'?'🟢':(q.level==='good'?'🟡':(q.level==='limited'?'🟠':'🔴'));
-      let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
+      let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'جودة المعلومات':'Data Quality')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
       if(!compact){
         h+='<div class="dq-grid">'+(q.fields||[]).map(function(f){const icon=f.status==='provided'?'✅':(f.status==='needs_clarification'?'⚠️':'⚠️');const cls=f.status==='provided'?'':(f.status==='needs_clarification'?' clarify':' missing');return '<div class="dq-item'+cls+'">'+icon+' <b>'+esc(f.label)+'</b><div class="muted">'+esc(f.required?(LANG==='ar'?'مطلوب':'Required'):(LANG==='ar'?'موصى به':'Recommended'))+'</div></div>';}).join('')+'</div>';
       }
@@ -7288,7 +7300,7 @@ def chat_page():
         const opts=[{label:'🩺 '+(LANG==='ar'?'تحليل الأعراض':'Analyze symptoms'),fn:function(){runAnalysis();}}];
         if(missing.length) opts.push({label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}});
         showOpts(opts);
-      }catch(e){ if(String(e.message)!=='consent_required'){ add(LANG==='ar'?'تعذر حساب اكتمال المعلومات الآن. يمكنك متابعة الأسئلة ثم المحاولة مرة أخرى.':'Unable to calculate information completeness right now. Continue the questions and try again.','bot'); showOpts([{label:'🔄 '+(LANG==='ar'?'إعادة المحاولة':'Try again'),fn:showDataQualityGate}]); } }
+      }catch(e){ if(String(e.message)!=='consent_required'){ add(LANG==='ar'?'تعذر حساب جودة المعلومات الآن. يمكنك متابعة الأسئلة ثم المحاولة مرة أخرى.':'Unable to calculate data quality right now. Continue the questions and try again.','bot'); showOpts([{label:'🔄 '+(LANG==='ar'?'إعادة المحاولة':'Try again'),fn:showDataQualityGate}]); } }
     }
     function improveDataQuality(q){
       clearOpts();
@@ -7309,10 +7321,7 @@ def chat_page():
       trackJourney(state.previous_record_id ? 'reanalyze' : 'analysis');
       hideText();
       clearOpts();
-      const analyzingBubble = add(TT('analyzing'), 'bot');
-      const finishAnalysisLoading = function(){
-        if (analyzingBubble && analyzingBubble.isConnected) analyzingBubble.remove();
-      };
+      add(TT('analyzing'), 'bot');
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
@@ -7345,7 +7354,6 @@ def chat_page():
           clearTimeout(analysisTimer);
         }
         const d = await r.json();
-        finishAnalysisLoading();
         if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
         if (d.ok) {
           trackJourney('result');
@@ -7366,10 +7374,7 @@ def chat_page():
           }
         }
         else add(TT('err') + (d.error||'?'), 'bot');
-      } catch(e) {
-        finishAnalysisLoading();
-        add(TT('conn_err'), 'bot');
-      }
+      } catch(e) { add(TT('conn_err'), 'bot'); }
     }
     function showEmergency(d) {
       lastResult = d;
@@ -7392,18 +7397,8 @@ def chat_page():
     }
     function showIncompleteResult(d) {
       lastResult=d;
-      const quality = d.data_quality || lastDataQuality || {};
-      const inputComplete = quality.sufficient === true || Number(quality.required_completion) === 100;
-      const title = inputComplete
-        ? (LANG==='ar'?'🧠 لم نجد مطابقة طبية موثوقة كافية':'🧠 No sufficiently grounded medical match')
-        : (LANG==='ar'?'🧠 نحتاج معلومات إضافية لإجراء تقييم موثوق':'🧠 More information is needed');
-      const intro = inputComplete
-        ? (LANG==='ar'
-            ? 'بياناتك الأساسية مكتملة، لكن قاعدة المعرفة لم تجد مطابقة طبية موثوقة كافية لعرض احتمال محدد. هذا لا يعني وجود مشكلة في إدخالك.'
-            : 'Your required information is complete, but the knowledge base did not find a sufficiently grounded medical match to show a specific possibility. This does not mean your input was incorrect.')
-        : (LANG==='ar'
-            ? 'لن يعرض SymptoSense احتمالًا طبيًا قبل اكتمال المعلومات الأساسية أو توفر مطابقة موثوقة.'
-            : 'SymptoSense will not show a medical possibility until the required information is complete or a grounded match is available.');
+      const title = LANG==='ar'?'🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق':'🧠 Not Enough Information';
+      const intro = LANG==='ar'?'لن يعرض SymptoSense احتمالًا طبيًا عندما لا تكون المعلومات أو المطابقة الموثوقة كافية.':'SymptoSense will not show a medical possibility when the information or grounded match is insufficient.';
       const needed=(d.needed_information||[]).filter(Boolean);
       add(title, 'bot');
       let msg='<div class="v2-low-confidence-card"><p>'+esc(intro)+'</p>'+(needed.length?'<b>'+(LANG==='ar'?'معلومات إضافية مطلوبة:':'Additional information needed:')+'</b><ul>'+needed.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
@@ -7601,7 +7596,7 @@ def chat_page():
       const hasQScore = Number.isFinite(qScoreRaw);
       const qScore = hasQScore ? Math.max(0, Math.min(100, Math.round(qScoreRaw))) : null;
       const qLabel = (qScore === 100 || Number(q.required_completion) === 100)
-        ? (LANG === 'ar' ? 'المدخلات الأساسية مكتملة' : 'Required inputs complete')
+        ? (LANG === 'ar' ? 'المعلومات المطلوبة مكتملة' : 'Required information complete')
         : (q.level_label || '');
       const recs = (d.recommendations || []).filter(function(r){ return r && (r.tip || r.title); });
       const summaryRec = recs.length ? (recs[0].title || recs[0].tip) : (d.triage_label || d.risk_label || riskValue);
@@ -7618,7 +7613,7 @@ def chat_page():
         + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>'
         + '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
       if (hasQScore) {
-        h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
+        h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'جودة المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
       }
       if (summaryRec) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
       h += '</section>';
@@ -10727,12 +10722,7 @@ def healthcheck_alias():
 
 @app.route("/")
 def index():
-    """Always keep the public root as the language-selection landing page.
-
-    The selected language is still stored and used throughout the site, but a
-    previous choice must not silently skip the landing screen when the visitor
-    opens the main site URL again.
-    """
+    """Return the standalone language picker directly, never the app shell."""
     return welcome_page()
 
 
@@ -11373,7 +11363,7 @@ def analysis_detail_page(record_id):
     if isinstance(dq,dict) and dq.get('score') is not None:
         score=max(0,min(100,int(round(float(dq.get('score') or 0)))))
         level=escape(str(dq.get('level_label') or dq.get('level') or ''))
-        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'اكتمال المعلومات المدخلة' if ar else 'Information completeness'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
+        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'جودة المعلومات' if ar else 'Data Quality'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
     xai=result.get('explainability') or {}
     xai_html=''
     if isinstance(xai,dict) and xai:
@@ -14025,7 +14015,7 @@ def _augment_analysis_sources(result, symptoms):
 def api_analyze():
     try:
         db.init_db(); privacy_features.init_schema()
-        consent = privacy_features.get_consent(_consent_subject_key(), _ss_user_id())
+        consent = _consent_state()
         if not consent.get("service_usage") or consent.get("needs_review"):
             lang0 = _lang()
             return jsonify({"ok": False, "error": "يلزم اختيار تفضيلات الخصوصية قبل تحليل الأعراض." if lang0 == "ar" else "Please choose your privacy preferences before symptom analysis.", "consent_required": True, "consent_url": "/consent?next=/chat"}), 403
@@ -14080,12 +14070,15 @@ def api_analyze():
                     patient["blood"] = bt["data"]
             except Exception:
                 pass
-        # Smart context: use saved health profile if requested and permitted
+        # Smart context: use saved health profile if requested and permitted.
+        # Reuse the same privacy row later when deciding whether to save chat
+        # history so the Analyze request does not open another DB connection.
+        analysis_privacy = None
         if use_saved and not member:
             uid = _ss_user_id()
             if uid:
-                privacy = db.load_privacy_settings(uid)
-                if privacy.get("use_in_analysis", True):
+                analysis_privacy = db.load_privacy_settings(uid)
+                if analysis_privacy.get("use_in_analysis", True):
                     hp = db.load_health_profile(uid)
                     if hp:
                         if not patient["age"] and hp.get("dob"):
@@ -14150,7 +14143,7 @@ def api_analyze():
         # Save chat history if user is logged in and privacy allows
         uid = _ss_user_id()
         if uid:
-            privacy = db.load_privacy_settings(uid)
+            privacy = analysis_privacy if analysis_privacy is not None else db.load_privacy_settings(uid)
             if privacy.get("save_chat_history", True):
                 try:
                     symptoms_text = ", ".join(patient.get("symptoms", []))
@@ -14389,7 +14382,7 @@ def _pdf_report(result, lang="ar"):
 
     labels = ({
         "title":"تقرير تحليل الأعراض", "subtitle":"SymptoSense - ملخص صحي توعوي",
-        "summary":"نتيجة التحليل", "risk":"مستوى الخطورة", "quality":"اكتمال المعلومات المدخلة",
+        "summary":"نتيجة التحليل", "risk":"مستوى الخطورة", "quality":"جودة المعلومات المدخلة",
         "entered":"المعلومات المدخلة", "symptoms":"الأعراض", "duration":"المدة", "severity":"شدة الأعراض",
         "age":"العمر", "gender":"الجنس", "conditions":"الاحتمالات المحتملة", "now":"ماذا أفعل الآن؟",
         "warnings":"علامات تستدعي الانتباه", "home":"الرعاية المنزلية", "doctor":"أسئلة للطبيب",
