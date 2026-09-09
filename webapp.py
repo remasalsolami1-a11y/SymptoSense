@@ -4057,6 +4057,61 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         if gsc
         else ""
     )
+
+    # The public language picker is intentionally a *true* bare page.  Earlier
+    # versions hid the app navigation/assistant with CSS, but still shipped their
+    # DOM, JavaScript, modals and install prompt to first-time visitors.  Besides
+    # being unnecessary work, assistive technology could still discover some of
+    # those hidden controls.  Keep the first screen focused on one task only:
+    # choose a language, then enter the app.
+    if bare:
+        bare_css = """
+        *,*::before,*::after{box-sizing:border-box}
+        html,body{margin:0;padding:0;width:100%;min-height:100%}
+        button,input,select,textarea{font:inherit}
+        button{color:inherit}
+        .ss-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+        """ + extra_css
+        return f"""<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/brand-icon.svg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SymptoSense">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>{title}</title>
+<meta name="description" content="{desc}">
+<meta name="keywords" content="{_t('keywords')}">
+<meta name="robots" content="index, follow">
+{gsc_tag}
+<link rel="canonical" href="{base + request.path}">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:image" content="{base}/static/images/symptosense-social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SymptoSense — Understand your symptoms. Know your next step.">
+<meta property="og:url" content="{base + request.path}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SymptoSense">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{desc}">
+<meta name="twitter:image" content="{base}/static/images/symptosense-social-preview.png">
+<meta name="theme-color" content="#F8FCFF">
+<style>{bare_css}</style>
+</head>
+<body>{body}</body>
+</html>"""
+
     ast = CT["en" if lang == "en" else "ar"]
     body_class = ""
     try:
@@ -4078,8 +4133,8 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__OG_IMAGE__", base + "/static/images/symptosense-social-preview.png")
         .replace("__GSC_TAG__", gsc_tag)
         .replace("__CSS__", BASE_CSS + V2_CSS + extra_css + PREMIUM_POLISH_CSS)
-        .replace("__NAV__", "" if bare else _nav())
-        .replace("__FOOTER__", "" if bare else _footer())
+        .replace("__NAV__", _nav())
+        .replace("__FOOTER__", _footer())
         .replace("__BNAV_HOME__", _t("bnav_home"))
         .replace("__BNAV_CHAT__", _t("bnav_chat"))
         .replace("__BNAV_PSYCH__", _t("bnav_psych"))
@@ -4836,6 +4891,8 @@ body.ss-home-page .asst-fab{display:none!important}
 """
 def welcome_page():
     next_target = _safe_next_url("/home")
+    if next_target == "/" or next_target.startswith("/?"):
+        next_target = "/home"
     body = """
     <script>document.body.classList.add('ss-welcome-page');</script>
     <style id="ss-welcome-layout-v4">
@@ -4959,8 +5016,8 @@ def welcome_page():
     </style>
     <main class="first-lang" aria-labelledby="languageTitle">
       <div class="first-lang-shell">
-        <div class="first-lang-trust" aria-label="Trusted health information">
-          <span dir="rtl">معلومات موثوقة لصحة أفضل</span>
+        <div class="first-lang-trust" aria-label="معلومات صحية موثوقة / Trusted health information">
+          <span lang="ar" dir="rtl">معلومات موثوقة لصحة أفضل</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.7-2.8 8.2-7 10-4.2-1.8-7-5.3-7-10V6l7-3Z"/><path d="M12 7v9M8.8 11.5h6.4"/></svg>
         </div>
 
@@ -4977,36 +5034,37 @@ def welcome_page():
         <h1 class="first-lang-brand" lang="en">Sympto<span class="sense">Sense</span></h1>
         <p class="first-lang-slogan" lang="en">Your Health, Smarter</p>
 
-        <p class="first-lang-headline-ar">افهم أعراضك.<br>اعرف خطوتك التالية.</p>
+        <p class="first-lang-headline-ar" lang="ar" dir="rtl">افهم أعراضك.<br>اعرف خطوتك التالية.</p>
         <p class="first-lang-headline-en" lang="en">Understand your symptoms.<br>Know your next step.</p>
 
         <div class="first-lang-copy">
-          <p class="first-lang-desc-ar">مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة.</p>
+          <p class="first-lang-desc-ar" lang="ar" dir="rtl">مساعد صحي ذكي يساعدك على فهم الأعراض وتقييم مستوى الخطورة بطريقة مبسطة.</p>
           <p class="first-lang-desc-en" lang="en">An AI-powered health assistant that helps you understand symptoms and assess risk in a simple way.</p>
         </div>
 
-        <p class="first-lang-select-title" id="languageTitle" tabindex="-1"><span>اختر اللغة / <span lang="en">Choose language</span></span></p>
+        <p class="first-lang-select-title" id="languageTitle" tabindex="-1"><span><span lang="ar" dir="rtl">اختر اللغة</span><span aria-hidden="true"> / </span><span lang="en">Choose language</span></span></p>
         <div class="first-lang-options" id="languageOptions" role="group" aria-labelledby="languageTitle">
-          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="المتابعة باللغة العربية">
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('ar',this)" aria-label="اختيار العربية" lang="ar">
             <span class="first-lang-flag" aria-hidden="true">🇸🇦</span><span dir="rtl">العربية</span><span class="lang-arrow" aria-hidden="true">›</span>
           </button>
-          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Continue in English">
+          <button type="button" class="first-lang-option" onclick="ssChooseLanguage('en',this)" aria-label="Choose English" lang="en">
             <span class="first-lang-flag" aria-hidden="true">🇬🇧</span><span lang="en">English</span><span class="lang-arrow" aria-hidden="true">›</span>
           </button>
         </div>
 
-        <section class="first-lang-benefits" aria-label="SymptoSense benefits">
+        <section class="first-lang-benefits" aria-labelledby="firstLangBenefitsTitle">
+          <h2 id="firstLangBenefitsTitle" class="ss-sr-only"><span lang="ar">مزايا SymptoSense</span> / <span lang="en">SymptoSense benefits</span></h2>
           <div class="first-lang-benefit">
             <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 26 7v7c0 6.5-3.8 11.4-10 14-6.2-2.6-10-7.5-10-14V7l10-4Z"/><path d="M16 9v11M11.8 14.5h8.4"/></svg>
-            <b>معلومات موثوقة</b><small lang="en">Trusted information</small>
+            <b lang="ar" dir="rtl">معلومات موثوقة</b><small lang="en">Trusted information</small>
           </div>
           <div class="first-lang-benefit">
             <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="9" r="4"/><path d="M8.5 25v-3.5c0-4 3.2-7.1 7.5-7.1s7.5 3.1 7.5 7.1V25M5.4 12a3 3 0 1 0 0-6M4 24v-2.6c0-2.6 1.5-4.6 3.8-5.4M26.6 12a3 3 0 1 1 0-6M28 24v-2.6c0-2.6-1.5-4.6-3.8-5.4"/></svg>
-            <b>سهل الاستخدام</b><small lang="en">Easy to use</small>
+            <b lang="ar" dir="rtl">سهل الاستخدام</b><small lang="en">Easy to use</small>
           </div>
           <div class="first-lang-benefit">
             <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 27S5 20.4 5 12.5C5 8.5 7.7 6 11 6c2.2 0 4 1.2 5 3 1-1.8 2.8-3 5-3 3.3 0 6 2.5 6 6.5C27 20.4 16 27 16 27Z"/></svg>
-            <b>للتوعية فقط</b><small lang="en">For educational purposes only</small>
+            <b lang="ar" dir="rtl">للتوعية فقط</b><small lang="en">For educational purposes only</small>
           </div>
         </section>
 
@@ -5032,7 +5090,7 @@ def welcome_page():
     body = body.replace("__NEXT__", json.dumps(next_target))
     html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
     html = html.replace('<meta name="theme-color" content="#1976D2">', '<meta name="theme-color" content="#F8FCFF">')
-    return html.replace('<html lang="ar" dir="rtl">', '<html lang="en" dir="ltr">')
+    return html
 
 def home_page():
     ar = _lang() == "ar"
