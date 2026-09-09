@@ -34,6 +34,11 @@ class CompetitionReadinessStaticTests(unittest.TestCase):
         self.assertIn('os.environ.get("SYMPTOSENSE_ADMIN_EMAIL"', DB)
         self.assertNotIn("remasalsolami2020@gmail.com", DB)
 
+    def test_missing_admin_env_does_not_demote_persisted_admin(self):
+        self.assertIn("existing persisted Admin access is preserved", DB)
+        self.assertIn("if OWNER_ADMIN_EMAIL:", DB)
+        self.assertIn('role = "admin" if str(row[3] or "user").strip().lower() == "admin" else "user"', DB)
+
     def test_fainting_keeps_canonical_symptom(self):
         self.assertNotIn("add:['إغماء مع فقدان وعي'", WEBAPP)
         self.assertIn('"slug":"syncope"', WEBAPP)
