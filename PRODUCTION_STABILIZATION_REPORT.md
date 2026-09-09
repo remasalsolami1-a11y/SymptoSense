@@ -31,7 +31,7 @@ Remaining: ⚠️ real inbox delivery and post-Railway-restart sessions are not 
 
 ## 3. Admin Security
 
-- The authoritative owner remains `remasalsolami2020@gmail.com`.
+- The authoritative owner remains `the email configured in `SYMPTOSENSE_ADMIN_EMAIL``.
 - Normal users receive HTTP 403 from `/admin` and from static GET `/api/admin/*` routes at the backend.
 - Admin mutations require session, server-side scope authorization, and CSRF.
 - Self-role escalation is disabled; Admin debug logging defaults off.

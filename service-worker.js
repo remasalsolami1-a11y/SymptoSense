@@ -1,11 +1,21 @@
-const CACHE_NAME = 'symptosense-shell-v7-production-cleanup';
+const CACHE_NAME = 'symptosense-shell-v8-competition-ready';
 const APP_SHELL = [
-  '/offline', '/manifest.webmanifest', '/icons/icon-192.png',
-  '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/favicon.ico'
+  '/offline', '/icons/icon-192.png',
+  '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/favicon.ico', '/brand-icon.svg'
 ];
 
+// A missing optional asset must never abort Service Worker installation.
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.allSettled(APP_SHELL.map(async url => {
+      try {
+        const response = await fetch(url, {cache: 'reload'});
+        if (response && response.ok) await cache.put(url, response.clone());
+      } catch (_) {}
+    }));
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('symptosense-') && k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -13,8 +23,13 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request=event.request; if(request.method!=='GET')return;
   if(request.mode==='navigate'){event.respondWith(fetch(request).catch(()=>caches.match('/offline')));return;}
-  const url=new URL(request.url); const safe=url.origin===self.location.origin&&(url.pathname.startsWith('/icons/')||url.pathname==='/manifest.webmanifest'||url.pathname==='/favicon.ico');
-  if(safe) event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));return response;})));
+  const url=new URL(request.url);
+  if(url.origin===self.location.origin && url.pathname==='/manifest.webmanifest'){
+    event.respondWith(fetch(request).catch(()=>caches.match(request)));
+    return;
+  }
+  const safe=url.origin===self.location.origin&&(url.pathname.startsWith('/icons/')||url.pathname.startsWith('/static/')||url.pathname==='/favicon.ico'||url.pathname==='/brand-icon.svg');
+  if(safe) event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response&&response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;})));
 });
 
 self.addEventListener('push', event => {
@@ -25,11 +40,9 @@ self.addEventListener('push', event => {
     tag:data.tag||'symptosense-medication', renotify:true, silent:!!data.silent,
     data:{url:data.url||'/meds',token:data.token||''}
   };
-  // Action buttons are best-effort; some browsers/OS versions ignore them.
   if(data.token){options.actions=[{action:'taken',title:data.taken_label||'Taken'},{action:'snooze',title:data.snooze_label||'Snooze'}];}
   event.waitUntil(self.registration.showNotification(data.title||'💊 SymptoSense',options));
 });
-
 async function postAction(token, action){
   if(!token||!action)return;
   try{await fetch('/api/push/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,action})});}catch(e){}

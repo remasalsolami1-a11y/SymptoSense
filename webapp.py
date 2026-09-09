@@ -451,6 +451,13 @@ body.ss-chat-page .step-focus-kicker{font-size:11px;font-weight:800;color:#287FC
 body.ss-chat-page .step-focus-question{font-size:17px;font-weight:850;line-height:1.55;color:#173C63}
 body.ss-chat-page .step-focus-answer{margin-top:10px;padding:9px 11px;border-radius:11px;background:#EFF7FC;border:1px solid #D9EAF4;color:#36556D;font-size:12.5px;line-height:1.55}
 body.ss-chat-page .step-focus-answer b{color:#173C63}
+body.ss-chat-page .step-answer-summary{margin:8px 12px 4px;border:1px solid #D9EAF4;border-radius:12px;background:#fff;color:#36556D}
+body.ss-chat-page .step-answer-summary summary{cursor:pointer;padding:9px 12px;font-size:12.5px;font-weight:800;color:#287FC1;list-style:none}
+body.ss-chat-page .step-answer-summary summary::-webkit-details-marker{display:none}
+body.ss-chat-page .step-answer-summary-list{padding:0 12px 9px;display:grid;gap:7px}
+body.ss-chat-page .step-answer-summary-row{display:grid;gap:2px;padding-top:7px;border-top:1px solid #EDF3F7;font-size:11.5px;line-height:1.5}
+body.ss-chat-page .step-answer-summary-row b{color:#173C63}.step-answer-summary-row span{color:#60788B}
+@media(max-width:900px){body.ss-chat-page .chat-options.symptom-picker{max-height:none!important;overflow:visible!important}}
 @media (max-width:900px){
   body.ss-chat-page .chat-body:not(.result-mode){flex:0 0 auto!important;min-height:108px!important;max-height:29dvh!important;overflow-y:auto!important;padding:9px!important;background:#F7FAFC!important}
   body.ss-chat-page .chat-options{flex:1 1 auto!important;min-height:0!important;max-height:none!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-content:start!important;padding:9px!important;gap:8px!important}
@@ -1569,6 +1576,32 @@ PAGE_FRAME = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="symptosense-csrf" content="__USER_CSRF__">
+<script>
+(function(){
+  var originalFetch = window.fetch;
+  if (!originalFetch) return;
+  window.fetch = function(input, init){
+    init = init ? Object.assign({}, init) : {};
+    var method = String(init.method || (input && input.method) || 'GET').toUpperCase();
+    if (!['POST','PUT','PATCH','DELETE'].includes(method)) return originalFetch(input, init);
+    try {
+      var raw = (typeof input === 'string') ? input : ((input && input.url) || '');
+      var u = new URL(raw, window.location.href);
+      if (u.origin === window.location.origin) {
+        var meta = document.querySelector('meta[name="symptosense-csrf"]');
+        var token = meta ? meta.content : '';
+        if (token) {
+          var headers = new Headers(init.headers || (input && input.headers) || {});
+          if (!headers.has('X-CSRF-Token')) headers.set('X-CSRF-Token', token);
+          init.headers = headers;
+        }
+      }
+    } catch (_) {}
+    return originalFetch(input, init);
+  };
+})();
+</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="/brand-icon.svg">
@@ -1785,7 +1818,7 @@ __FOOTER__
   <a href="/home?assistant=mh" class="bn-psych" onclick="openAsstMH();return false;" aria-label="Mental health"><span class="bn-icon">🧠</span><span>__BNAV_PSYCH__</span></a>
   <a href="/profile" class="bn-profile" aria-label="My profile"><span class="bn-icon">👤</span><span>__BNAV_PROFILE__</span></a>
 </nav>
-<button class="asst-fab pulse" id="asstFab" onclick="asstToggle()" title="__AST_TITLE__"><span class="asst-fab-ic">🤖</span><span class="asst-fab-lb">__AST_TITLE__</span></button>
+<button class="asst-fab pulse" id="asstFab" onclick="asstToggle()" title="__AST_TITLE__" aria-label="__AST_TITLE__" aria-expanded="false" aria-controls="asstPanel"><span class="asst-fab-ic">🤖</span><span class="asst-fab-lb">__AST_TITLE__</span></button>
 <div class="asst-panel" id="asstPanel">
   <div class="asst-head">
     <button class="asst-back" id="asstBack" onclick="asstBackMain()" style="display:none;">↩</button>
@@ -1875,6 +1908,8 @@ function asstToggle() {
   var open = p.classList.toggle('open');
   f.querySelector('.asst-fab-ic').textContent = open ? '✕' : '🤖';
   f.querySelector('.asst-fab-lb').textContent = open ? asstTT('asst_close') : asstTT('asst_title');
+  f.setAttribute('aria-expanded', open ? 'true' : 'false');
+  f.setAttribute('aria-label', open ? asstTT('asst_close') : asstTT('asst_title'));
   if (open) {
     asstLockPage();
     asstShowMain();
@@ -2534,7 +2569,7 @@ function smartCtxAction(action) {
       installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
     } else if (mode === 'native') {
       text.textContent = isArabic
-        ? 'ثبّتي SymptoSense كتطبيق على جهازك للوصول إليه بسرعة.'
+        ? 'ثبّت تطبيق SymptoSense على جهازك للوصول إليه بسرعة.'
         : 'Install SymptoSense on your device for quick access.';
       installBtn.textContent = isArabic ? 'تثبيت' : 'Install';
     } else {
@@ -2796,6 +2831,45 @@ def _admin_csrf_token():
     return session["admin_csrf"]
 
 
+def _user_csrf_token():
+    """Session-bound CSRF token used by signed-in, state-changing user APIs."""
+    if "user_csrf" not in session:
+        session["user_csrf"] = secrets.token_urlsafe(32)
+    return session["user_csrf"]
+
+
+def _user_csrf_valid():
+    supplied = request.headers.get("X-CSRF-Token", "")
+    expected = session.get("user_csrf", "")
+    return bool(expected and supplied and hmac.compare_digest(supplied, expected))
+
+
+@app.before_request
+def protect_sensitive_user_api_csrf():
+    """Protect browser-originated mutations of signed-in user health/profile data.
+
+    Push notification actions use one-time action tokens and intentionally remain
+    outside this browser-session CSRF gate. Public analysis/assistant calls do not
+    mutate a signed-in user's stored profile and are also excluded.
+    """
+    if app.config.get("TESTING"):
+        return None
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"} or not _ss_user_id():
+        return None
+    path = request.path or ""
+    protected_prefixes = (
+        "/api/health-profile", "/api/privacy/", "/api/family",
+        "/api/meds/plan", "/api/meds/log", "/api/meds/snooze",
+        "/api/meds/settings", "/api/handoff/", "/api/checkin",
+        "/api/account/delete", "/api/chat-history/clear", "/api/user/preferences",
+        "/api/analysis/", "/api/profile", "/api/push/subscribe",
+        "/api/push/unsubscribe",
+    )
+    if path.startswith(protected_prefixes) and not _user_csrf_valid():
+        return jsonify({"ok": False, "error": "csrf_failed"}), 403
+    return None
+
+
 def _admin_auth_debug(event, user=None, granted=None, redirect_target=None):
     """Temporary, non-sensitive Admin authentication diagnostics.
 
@@ -2866,8 +2940,8 @@ def require_first_language_choice():
     if request.cookies.get("lang") in {"ar", "en"} or request.args.get("lang") in {"ar", "en"}:
         return None
     path = request.path or "/"
-    public_paths = {"/", "/manifest.webmanifest", "/service-worker.js", "/favicon.ico", "/offline", "/robots.txt", "/sitemap.xml"}
-    if path in public_paths or path.startswith("/api/") or path.startswith("/icons/") or path.startswith("/share/health/"):
+    public_paths = {"/", "/manifest.webmanifest", "/service-worker.js", "/favicon.ico", "/offline", "/robots.txt", "/sitemap.xml", "/brand-icon.svg", "/health", "/healthz"}
+    if path in public_paths or path.startswith("/api/") or path.startswith("/icons/") or path.startswith("/static/") or path.startswith("/share/health/"):
         return None
     target = request.full_path.rstrip("?")
     return redirect(url_for("index", next=target))
@@ -2976,7 +3050,7 @@ def production_security_headers(response):
     if app.config.get("SESSION_COOKIE_SECURE"):
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     response.headers.setdefault(
-        "Content-Security-Policy-Report-Only",
+        "Content-Security-Policy",
         "default-src 'self'; script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; "
@@ -3426,7 +3500,7 @@ L = {
         "nav_explore": "Explore", "nav_q": "Medical questions", "nav_geo": "Nearest hospital",
         "nav_aware": "Awareness", "nav_blog": "Blog",
         "footer_note": "SymptoSense © 2026 — Health awareness only; not a substitute for professional medical advice.",
-        "footer_emergency": "In an emergency call an ambulance directly: <b>997</b> (Saudi Arabia)",
+        "footer_emergency": "In an emergency, call your local emergency number. In Saudi Arabia, ambulance service is <b>997</b>.",
         "footer_tag": "Health awareness starts with a step.",
         "footer_privacy": "Privacy",
         "footer_terms": "Terms",
@@ -3487,7 +3561,7 @@ L = {
         "home_s1_t": "Enter your info", "home_s1_p": "Age, gender, symptoms, duration, and severity.",
         "home_s2_t": "The system analyzes the info", "home_s2_p": "A smart system analyzes the entered information using the analysis model and the medical sources used in the system.",
         "home_s3_t": "Get an initial assessment", "home_s3_p": "Urgency level, likely conditions, and appropriate recommendations.",
-        "home_warn": "⚠️ <b>Note:</b> This website is for health awareness only and is not a final medical diagnosis. If you have dangerous symptoms (severe chest pain, difficulty breathing, heavy bleeding, loss of consciousness) call an ambulance immediately at <b>997</b>.",
+        "home_warn": "⚠️ <b>Note:</b> This website is for health awareness only and is not a final medical diagnosis. For dangerous symptoms, call your local emergency service immediately (997 for ambulance in Saudi Arabia).",
         "home_badge": "Your AI-Powered Health Assistant",
         "home_h1": "Welcome to",
         "home_h1b": "SymptoSense",
@@ -3558,7 +3632,7 @@ L = {
         "ab_note": "Data is stored according to the privacy settings you choose, and optional usage analytics are not used unless you explicitly enable them.",
         "ab_hero_sub": "Your smart assistant to understand your health",
         "ab_hero_p": "SymptoSense is an awareness tool that helps you understand your symptoms, analyze blood tests, get medication information, and health guidance — based on trusted medical sources — to help you take the right step for your health.",
-        "ab_alert": "⚠️ SymptoSense is a supportive awareness tool and not a substitute for a doctor. For dangerous symptoms call an ambulance at <b>997</b> immediately.",
+        "ab_alert": "⚠️ SymptoSense is a supportive awareness tool and not a substitute for a doctor. For dangerous symptoms, call your local emergency service immediately (997 for ambulance in Saudi Arabia).",
         "ab_services_h": "🧰 What does SymptoSense offer?",
         "ab_sv1_t": "Symptom Analysis", "ab_sv1_p": "An initial assessment with urgency level, likely conditions, and recommendations.",
         "ab_sv2_t": "Blood Test Analysis", "ab_sv2_p": "Upload a CBC photo and get interpretation of values and reference ranges.",
@@ -3939,6 +4013,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__LANG__", "en" if lang == "en" else "ar")
         .replace("__DIR__", "ltr" if lang == "en" else "rtl")
         .replace("__BODY_CLASS__", body_class)
+        .replace("__USER_CSRF__", _user_csrf_token() if _ss_user_id() else "")
         .replace("__TITLE__", title)
         .replace("__DESC__", desc)
         .replace("__KEYWORDS__", _t("keywords"))
@@ -5205,14 +5280,18 @@ def privacy_page():
       <section><h2>__AI_H__</h2><p>__AI_P__</p></section>
       <section><h2>__CONTROL_H__</h2><p>__CONTROL_P__</p><div class="ss-btn-row"><a class="btn pri" href="/privacy-center">__SETTINGS__</a><a class="btn ghost" href="/manage">__MANAGE__</a></div></section>
       <section><h2>__ADMIN_H__</h2><p>__ADMIN_P__</p></section>
-      <section><h2>__KB_H__</h2><p>__KB_P__</p></section>
+      <section><h2>__RETENTION_H__</h2><p>__RETENTION_P__</p></section>
+      <section><h2>__PROVIDERS_H__</h2><p>__PROVIDERS_P__</p></section>
+      <section><h2>__MINORS_H__</h2><p>__MINORS_P__</p></section>
+      <section><h2>__CONTACT_H__</h2><p>__CONTACT_P__</p></section>
+      <section><h2>__KB_H__</h2><p>__KB_P__</p><p class="muted">__VERSION__</p></section>
     </main>
     """
     values = {
         "__TITLE__": bi("الخصوصية وحماية البيانات", "Privacy and data protection"),
         "__INTRO__": bi("نشرح هنا بلغة واضحة ما نستخدمه ولماذا، وما الذي يبقى تحت سيطرتك.", "This page explains, in plain language, what we use, why we use it, and what remains under your control."),
         "__COLLECT_H__": bi("ما البيانات التي نجمعها؟", "What data do we collect?"),
-        "__COLLECT_1__": bi("بيانات الحساب الأساسية فقط عند اختيار إنشاء حساب: الاسم والبريد الإلكتروني وكلمة مرور مشفرة.", "Basic account data only when you choose to register: name, email, and a securely hashed password."),
+        "__COLLECT_1__": bi("بيانات الحساب الأساسية فقط عند اختيار إنشاء حساب: الاسم والبريد الإلكتروني وكلمة مرور محفوظة باستخدام تجزئة آمنة.", "Basic account data only when you choose to register: name, email, and a securely hashed password."),
         "__COLLECT_2__": bi("المعلومات الصحية التي تُدخلها داخل الخدمة أو تختار حفظها؛ لا نطلبها أثناء التسجيل.", "Health information you enter in a service or explicitly choose to save; it is not requested during sign-up."),
         "__COLLECT_3__": bi("سجلات تشغيل وأمان أساسية مثل حالة الطلب ورقم مرجعي للخطأ تُستخدم لتشغيل الخدمة وحمايتها ولا تتضمن نص الأعراض أو المحادثة. أما إحصاءات الاستخدام مثل الصفحات والخدمات المستخدمة فلا تُحفظ إلا عند تفعيل خيار التحليلات الاختياري.", "Essential reliability and security logs such as request status and an error reference ID are used to operate and protect the service and do not include symptom or chat text. Usage analytics such as pages or services used are stored only when optional Analytics is enabled."),
         "__SAVE_H__": bi("ما الذي يتم حفظه؟", "What is saved?"),
@@ -5227,6 +5306,15 @@ def privacy_page():
         "__SETTINGS__": bi("مركز الخصوصية", "Privacy Center"), "__MANAGE__": bi("إدارة بياناتي", "Manage my data"),
         "__ADMIN_H__": bi("وصول المسؤولين", "Administrator access"),
         "__ADMIN_P__": bi("تحليلات الإدارة مجمعة قدر الإمكان. صفحة المستخدمين تعرض المعرّف والحالة والتواريخ والدور فقط، ولا تعرض الأعراض أو المحادثات أو النتائج الصحية افتراضيًا.", "Admin analytics are aggregated wherever possible. User management shows only an ID, status, dates, and role; it does not expose symptoms, chats, or personal health results by default."),
+        "__RETENTION_H__": bi("الاحتفاظ والحذف", "Retention and deletion"),
+        "__RETENTION_P__": bi("تُحفظ البيانات المرتبطة بالحساب ما دام الحساب قائمًا أو إلى أن تحذفها من أدوات التحكم المتاحة. عند طلب حذف الحساب تُزال البيانات النشطة المرتبطة به من مخزن التطبيق؛ وقد تبقى نسخ احتياطية تشغيلية لفترة محدودة وفق دورة الاحتفاظ لدى مزود الاستضافة قبل تدويرها. لا نَعِد بزمن حذف احتياطي أدق مما يتيحه المزود.", "Account-linked data is retained while the account is active or until you delete it using available controls. When account deletion is requested, active application data linked to the account is removed; operational backups may persist for a limited period under the hosting provider's backup-retention cycle before rotation. We do not promise a shorter backup-deletion time than the provider supports."),
+        "__PROVIDERS_H__": bi("مزودو الخدمة ومكان المعالجة", "Service providers and processing location"),
+        "__PROVIDERS_P__": bi("قد يعتمد التشغيل على Railway للاستضافة وقاعدة البيانات، وGroq لمعالجة بعض طلبات الذكاء الاصطناعي عند تفعيله، ومزود البريد للرسائل، وSentry لمراقبة الأعطال إذا كان مهيأً. قد تعالج هذه الخدمات البيانات في دول أخرى وفق بنيتها وسياساتها. نرسل فقط ما يلزم لتشغيل الميزة، ونوصي بعدم كتابة معرفات شخصية داخل وصف الحالة.", "Operation may rely on Railway for hosting/database services, Groq for some AI requests when enabled, an email provider for messages, and Sentry for error monitoring when configured. These providers may process data in other countries under their infrastructure and policies. Only data needed for the feature is sent, and users should avoid including personal identifiers in health descriptions."),
+        "__MINORS_H__": bi("استخدام القاصرين", "Use by minors"),
+        "__MINORS_P__": bi("SymptoSense أداة توعوية وليست بديلًا عن الرعاية الطبية. ينبغي للقاصر استخدام الخدمة بإشراف ولي أمر أو مسؤول مناسب وفق الأنظمة المحلية، وعدم الاعتماد عليها منفردًا في الحالات العاجلة.", "SymptoSense is an educational tool, not a substitute for medical care. Minors should use it with appropriate parent/guardian oversight under local requirements and should not rely on it alone in urgent situations."),
+        "__CONTACT_H__": bi("التواصل بشأن الخصوصية", "Privacy contact"),
+        "__CONTACT_P__": bi("يمكن استخدام وسيلة التواصل الرسمية المعروضة في الموقع لطلبات الخصوصية أو الحذف. لا ترسل أعراضًا أو نتائج طبية حساسة عبر قنوات التواصل العامة.", "Use the official contact method shown on the site for privacy or deletion requests. Do not send sensitive symptoms or medical results through general contact channels."),
+        "__VERSION__": bi("إصدار سياسة الخصوصية 1.0 — 9 سبتمبر 2026", "Privacy Policy version 1.0 — 9 September 2026"),
         "__KB_H__": bi("قاعدة المعرفة الطبية", "Medical knowledge base"),
         "__KB_P__": bi("تحتوي معلومات طبية عامة ومصادر وقواعد أمان فقط، ولا تحتوي بيانات مرضى أو محادثات شخصية.", "It contains general medical information, sources, and safety rules only—never patient records or personal conversations."),
     }
@@ -5867,28 +5955,18 @@ def chat_page():
             <option value="0">👤 __ME__</option>
           </select>
         </div>
-        <div class="chat-head-toggles" aria-label="__AUDIO_CONTROLS__">
-          <button id="spkBtn" type="button" class="spk-btn chat-audio-btn" aria-pressed="false" aria-label="__SPEAKER_OFF_ARIA__" title="__SPEAKER_OFF_ARIA__">
-            <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path class="audio-stroke" d="M4 9.5h4l5-4v13l-5-4H4z"/>
-              <path class="audio-stroke speaker-wave" d="M16 9c1.3 1.7 1.3 4.3 0 6"/>
-              <path class="audio-stroke speaker-wave" d="M18.5 6.5c2.8 3.1 2.8 7.9 0 11"/>
-              <path class="audio-stroke speaker-slash" d="M5 5l14 14"/>
-            </svg>
-          </button>
-          <button id="micBtn" type="button" class="spk-btn chat-audio-btn" aria-pressed="false" aria-label="__MIC_READY_ARIA__" title="__MIC_READY_ARIA__">
-            <svg class="chat-audio-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <g class="mic-ready-icon">
-                <rect class="audio-stroke" x="9" y="3" width="6" height="11" rx="3"/>
-                <path class="audio-stroke" d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v4M9 21h6"/>
-              </g>
-              <g class="mic-stop-icon">
-                <rect class="audio-fill" x="7" y="7" width="10" height="10" rx="2"/>
-              </g>
-            </svg>
-          </button>
-          <span id="audioState" class="sr-only" aria-live="polite"></span>
-        </div>
+        <details class="chat-access" id="chatAccess">
+          <summary aria-label="__ACCESSIBILITY_ARIA__">🔊 __ACCESSIBILITY__</summary>
+          <div class="chat-access-menu" role="group" aria-label="__AUDIO_CONTROLS__">
+            <button id="spkBtn" type="button" class="spk-btn" aria-pressed="false" aria-label="__SPEAKER_OFF_ARIA__" title="__SPEAKER_OFF_ARIA__">
+              <span aria-hidden="true">🔊</span><span id="spkText">__SPEAK_OFF__</span>
+            </button>
+            <button id="micBtn" type="button" class="spk-btn" aria-pressed="false" aria-label="__MIC_READY_ARIA__" title="__MIC_READY_ARIA__">
+              <span aria-hidden="true">🎙️</span><span id="micText">__VOICE_INPUT__</span>
+            </button>
+            <span id="audioState" class="sr-only" aria-live="polite"></span>
+          </div>
+        </details>
       </div>
       <div class="ss-flow" aria-live="polite"><div class="ss-flow-copy"><span id="flowStepLabel">__FLOW_STEP__</span><span id="flowStepName">__FLOW_DEMO__</span></div><div class="ss-flow-track" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="flowProgress"><div class="ss-flow-fill" id="flowFill"></div></div></div>
       <div class="chat-body" id="chatBody"></div>
@@ -5926,7 +6004,7 @@ def chat_page():
       {syms:['😵 إغماء أو فقدان وعي','😵 Fainting or loss of consciousness','إغماء','اغماء','فقدان الوعي','غشيان','Fainting','Syncope','Loss of consciousness'],
        node:{prompt:['لما تقول إغماء، أي وصف أقرب لما حدث؟','When you say fainting, which description is closer to what happened?'],options:[
          {label:['فقدت الوعي فعلًا ولو لثوانٍ','I actually lost consciousness, even briefly'],location:false,
-          add:['إغماء مع فقدان وعي','Fainting with loss of consciousness'],note:['حدث فقدان وعي فعلي.','Actual loss of consciousness occurred.'],
+          add:[],note:['حدث فقدان وعي فعلي.','Actual loss of consciousness occurred.'],
           next:{q:['هل استعدت وعيك بالكامل خلال أقل من دقيقة؟','Did you fully regain consciousness within about a minute?'],
             yes:{q:['هل صاحب الإغماء ألم صدر، خفقان قوي أو غير منتظم، ضيق تنفس، صعوبة في الكلام أو الحركة، تشنج، أو إصابة شديدة؟','Was the faint accompanied by chest pain, strong or irregular palpitations, shortness of breath, trouble speaking or moving, a seizure, or a serious injury?'],
               yes:{safety:['إغماء مع علامة خطر مصاحبة — يحتاج تقييماً عاجلاً','Fainting with an associated red flag — needs urgent assessment']},
@@ -6057,9 +6135,11 @@ def chat_page():
     const inpEl = document.getElementById('chatInput');
     const textInp = document.getElementById('textInp');
     const famSelect = document.getElementById('famSelect');
+    let highestFlowStep = 1;
     function updateFlow(step) {
       var map = {member:1,age:1,gender:1,symptoms:2,duration:3,severity:4,notes:5,conditions:6,medications:6,allergies:6,review:7,followup:7};
-      var number = map[step] || 1;
+      var number = Math.max(highestFlowStep, map[step] || 1);
+      highestFlowStep = number;
       var names = LANG === 'ar' ? ['العمر والجنس','الأعراض','مدة الأعراض','شدة الأعراض','الأعراض المصاحبة','التاريخ الصحي والأدوية والحساسيات','النتيجة'] : ['Age and sex','Symptoms','Symptom duration','Symptom severity','Associated symptoms','History, medicines and allergies','Result'];
       document.getElementById('flowStepLabel').textContent = (LANG === 'ar' ? 'الخطوة ' : 'Step ') + number + (LANG === 'ar' ? ' من 7' : ' of 7');
       document.getElementById('flowStepName').textContent = names[number - 1];
@@ -6104,8 +6184,16 @@ def chat_page():
     }
 
     let lastUserAnswerText = '';
+    let currentStepQuestionText = '';
+    const answerHistory = [];
     function add(msg, cls) {
-      if (cls === 'user') lastUserAnswerText = String(msg || '').trim();
+      if (cls === 'user') {
+        lastUserAnswerText = String(msg || '').trim();
+        if (currentStepQuestionText && lastUserAnswerText) {
+          answerHistory.push({q: currentStepQuestionText, a: lastUserAnswerText});
+          if (answerHistory.length > 12) answerHistory.shift();
+        }
+      }
       const d = document.createElement('div');
       d.className = 'bubble ' + cls;
       d.textContent = msg;
@@ -6133,6 +6221,10 @@ def chat_page():
       b.setAttribute('aria-label', label);
       b.title = label;
       b.classList.toggle('is-on', autoSpeak);
+      const textEl = document.getElementById('spkText');
+      if (textEl) textEl.textContent = autoSpeak
+        ? (LANG === 'ar' ? 'القراءة بصوت عالٍ: مفعلة' : 'Read aloud: On')
+        : (LANG === 'ar' ? 'القراءة بصوت عالٍ' : 'Read aloud');
     }
     function currentSpeakableText() {
       const focused = bodyEl && bodyEl.querySelector('.step-focus-question');
@@ -6199,8 +6291,8 @@ def chat_page():
       return d;
     }
     function focusStepQuestion(msg, answerOverride) {
-      const compact = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
-      if (!compact || bodyEl.classList.contains('result-mode')) return addQ(msg);
+      if (bodyEl.classList.contains('result-mode')) return addQ(msg);
+      currentStepQuestionText = String(msg || '').trim();
       bodyEl.innerHTML = '';
       const card = document.createElement('section');
       card.className = 'step-focus-card';
@@ -6223,6 +6315,23 @@ def chat_page():
         card.appendChild(a);
       }
       bodyEl.appendChild(card);
+      if (answerHistory.length) {
+        const details = document.createElement('details');
+        details.className = 'step-answer-summary';
+        const summary = document.createElement('summary');
+        summary.textContent = LANG === 'ar' ? 'ملخص إجاباتك (' + answerHistory.length + ')' : 'Your answer summary (' + answerHistory.length + ')';
+        details.appendChild(summary);
+        const list = document.createElement('div');
+        list.className = 'step-answer-summary-list';
+        answerHistory.slice(-8).forEach(function(item){
+          const row = document.createElement('div');
+          row.className = 'step-answer-summary-row';
+          const qq = document.createElement('b'); qq.textContent = item.q;
+          const aa = document.createElement('span'); aa.textContent = item.a;
+          row.appendChild(qq); row.appendChild(aa); list.appendChild(row);
+        });
+        details.appendChild(list); bodyEl.appendChild(details);
+      }
       bodyEl.scrollTop = 0;
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return card;
@@ -6361,6 +6470,10 @@ def chat_page():
       b.setAttribute('aria-label', label);
       b.title = label;
       b.classList.toggle('is-recording', quickMicActive);
+      const textEl = document.getElementById('micText');
+      if (textEl) textEl.textContent = quickMicActive
+        ? (LANG === 'ar' ? 'إيقاف التسجيل' : 'Stop recording')
+        : (LANG === 'ar' ? 'الإدخال الصوتي' : 'Voice input');
       setAudioStatus(quickMicActive
         ? (LANG === 'ar' ? 'جاري تسجيل إجابتك… اضغط مرة أخرى للإيقاف.' : 'Recording your answer… press again to stop.')
         : (LANG === 'ar' ? 'الميكروفون متوقف.' : 'Microphone stopped.'));
@@ -7340,7 +7453,7 @@ def chat_page():
       const hasQScore = Number.isFinite(qScoreRaw);
       const qScore = hasQScore ? Math.max(0, Math.min(100, Math.round(qScoreRaw))) : null;
       const qLabel = (qScore === 100 || Number(q.required_completion) === 100)
-        ? (LANG === 'ar' ? 'مكتملة' : 'Complete')
+        ? (LANG === 'ar' ? 'المعلومات المطلوبة مكتملة' : 'Required information complete')
         : (q.level_label || '');
       const recs = (d.recommendations || []).filter(function(r){ return r && (r.tip || r.title); });
       const summaryRec = recs.length ? (recs[0].title || recs[0].tip) : (d.triage_label || d.risk_label || riskValue);
@@ -7519,11 +7632,11 @@ def chat_page():
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'symptosense-report-'+(recordId||'current')+'.pdf';
+        link.download = 'SymptoSense_Report_'+(recordId||'current')+'.pdf';
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
-        setTimeout(function(){ URL.revokeObjectURL(url); link.remove(); }, 2000);
+        setTimeout(function(){ URL.revokeObjectURL(url); link.remove(); }, 60000);
       } catch (err) {
         const msg = (err && err.message) || (LANG==='ar' ? 'تعذر تحميل التقرير حاليًا.' : 'Unable to download the report.');
         if (status) { status.textContent = msg; status.hidden = false; } else { alert(msg); }
@@ -7671,7 +7784,7 @@ def chat_page():
       }, {enableHighAccuracy:false, timeout:20000, maximumAge:300000});
     }
     function restart() {
-      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null; lastUserAnswerText='';
+      Object.assign(state, {age:null,gender:null,symptoms:[],duration:null,severity:null,location:null,conditions:null,medications:null,allergies:null,notes:null,history_answered:false,previous_record_id:null,smart_prompt_shown:false}); compareBase=null; qualityReturnKey=null; lastDataQuality=null; lastAnalysisInput=null; lastUserAnswerText=''; currentStepQuestionText=''; answerHistory.length=0; highestFlowStep=1;
       bodyEl.innerHTML = '';
       bodyEl.classList.remove('result-mode');
       bodyEl.scrollTop = 0;
@@ -7701,7 +7814,10 @@ def chat_page():
         .replace("__CONDS__", json.dumps(conds, ensure_ascii=False))
         .replace("__REL__", json.dumps(_related_map(ar), ensure_ascii=False))
         .replace("__ME__", CHAT["ar" if ar else "en"]["me"])
-        .replace("__AUDIO_CONTROLS__", "التحكم بالصوت والميكروفون" if ar else "Speaker and microphone controls")
+        .replace("__ACCESSIBILITY__", "إمكانية الوصول" if ar else "Accessibility")
+        .replace("__ACCESSIBILITY_ARIA__", "فتح خيارات إمكانية الوصول" if ar else "Open accessibility options")
+        .replace("__VOICE_INPUT__", "الإدخال الصوتي" if ar else "Voice input")
+        .replace("__AUDIO_CONTROLS__", "خيارات القراءة والإدخال الصوتي" if ar else "Read-aloud and voice-input options")
         .replace("__SPEAKER_OFF_ARIA__", "القراءة الصوتية متوقفة. اضغط لتفعيلها." if ar else "Read aloud is off. Press to turn it on.")
         .replace("__MIC_READY_ARIA__", "الميكروفون متوقف. اضغط لبدء تسجيل إجابتك." if ar else "Microphone is off. Press to record your answer.")
         .replace("__VOICE_MODE_TITLE__", CHAT["ar" if ar else "en"]["voice_mode_title"])
@@ -8048,7 +8164,7 @@ CT = {
         "nav_search": "البحث الصحي",
         "title_search": "SymptoSense — البحث الصحي الذكي",
         "sea_h": "🔎 البحث الصحي الذكي",
-        "sea_sub": "ابحث عن أي عرض أو تحليل أو مصطلح طبي أو دواء بلغة بسيطة، وافهم متى يستدعي الانتباه ومتى تراجع الطبيب.",
+        "sea_sub": "ابحث في قاعدة المعرفة الطبية بلغة بسيطة. وإذا لم يوجد تطابق مباشر، يحاول المساعد فهم سؤالك كاملًا وتقديم إرشاد توعوي آمن.",
         "sea_ph": "اكتب سؤالك... مثال: ليش أحس أن الدنيا تلف؟ أو وش معنى WBC؟",
         "sea_btn": "ابحث 🔍",
         "sea_hint": "جرّب البحث بلغة طبيعية: «ليش أحس أن الدنيا تلف؟» أو «وش معنى WBC؟»",
@@ -8468,7 +8584,7 @@ CT = {
         "asst_svc_hosp": "Nearest hospital",
         "fa_h": "🚑 First Aid",
         "fa_sub": "Choose a condition to view step-by-step first aid instructions.",
-        "fa_warn": "⚠️ In critical cases (stopped breathing, heavy bleeding, loss of consciousness) call an ambulance at <b>997</b> immediately.",
+        "fa_warn": "⚠️ In critical cases (stopped breathing, heavy bleeding, loss of consciousness), call your local emergency service immediately (997 for ambulance in Saudi Arabia).",
         "fa_video": "▶ Watch a demo video",
         "tips_h": "🌿 Health Tips Center",
         "tips_sub": "Practical daily tips for better health for you and your family.",
@@ -8498,7 +8614,7 @@ CT = {
         "em_geo_sub": "Find the nearest hospital or emergency center based on your current location. Your location is used only for this search and is not saved to your account.",
         "em_geo_24h": "Available 24/7",
         "em_safety": "🛡️ Safety first — never wait when symptoms are dangerous; every minute may matter.",
-        "em_warn": "⚠️ For dangerous symptoms (severe chest pain, difficulty breathing, heavy bleeding, loss of consciousness) call an ambulance at <b>997</b> immediately; don't wait.",
+        "em_warn": "⚠️ For dangerous symptoms (severe chest pain, difficulty breathing, heavy bleeding, loss of consciousness), call your local emergency service immediately (997 for ambulance in Saudi Arabia); do not wait.",
         "em_geo": "A hospital near you 📍",
         "em_geo_btn": "🔎 Find nearest hospital",
         "em_geo_searching": "Locating you and searching...",
@@ -8515,11 +8631,11 @@ CT = {
         "nav_search": "Health Search",
         "title_search": "SymptoSense — Smart Health Search",
         "sea_h": "🔎 Smart Health Search",
-        "sea_sub": "Search any symptom, lab test, medical term, or medication in plain language — and understand when it needs attention or a doctor visit.",
+        "sea_sub": "Search the medical knowledge base in plain language. If there is no direct match, the assistant can interpret the full question and provide safe educational guidance.",
         "sea_ph": "Type your question... e.g. Why do I feel like the room is spinning? or What does WBC mean?",
         "sea_btn": "Search 🔍",
         "sea_hint": "Try natural language: \"Why does the room spin?\" or \"What does WBC mean?\"",
-        "sea_warn": "⚠️ The information shown is general awareness content and is not a medical diagnosis — in emergencies call 997 immediately.",
+        "sea_warn": "⚠️ The information shown is general awareness content and is not a medical diagnosis — in an emergency call your local emergency service (997 for ambulance in Saudi Arabia).",
         "sea_what": "What is it?",
         "sea_causes": "💡 Common causes",
         "sea_worry": "When should it worry me?",
@@ -8950,7 +9066,35 @@ def service_worker_file():
 
 @app.route("/manifest.webmanifest")
 def manifest_file():
-    return send_from_directory(BASE_DIR,"manifest.webmanifest",mimetype="application/manifest+json")
+    ar = _lang() == "ar"
+    data = {
+        "id": "/",
+        "name": "SymptoSense — مساعدك لفهم الأعراض" if ar else "SymptoSense — Understand your symptoms",
+        "short_name": "SymptoSense",
+        "description": (
+            "منصة صحية تثقيفية لفهم الأعراض وتقييم الخطورة والوصول إلى مصادر موثوقة."
+            if ar else
+            "An educational health platform for understanding symptoms, risk level, and trusted sources."
+        ),
+        "lang": "ar" if ar else "en",
+        "dir": "rtl" if ar else "ltr",
+        "start_url": "/?source=pwa", "scope": "/", "display": "standalone",
+        "orientation": "any", "background_color": "#F7FAFC", "theme_color": "#287FC1",
+        "categories": ["medical", "health"],
+        "icons": [
+            {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": "/brand-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+        ],
+        "shortcuts": [
+            {"name": "فحص الأعراض" if ar else "Symptom analysis", "short_name": "الأعراض" if ar else "Symptoms", "url": "/chat?source=pwa", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+            {"name": "الأدوية" if ar else "Medications", "short_name": "الأدوية" if ar else "Meds", "url": "/meds?source=pwa", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+            {"name": "الطوارئ" if ar else "Emergency", "short_name": "الطوارئ" if ar else "Emergency", "url": "/emergency?source=pwa", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+        ],
+    }
+    response = Response(json.dumps(data, ensure_ascii=False), mimetype="application/manifest+json")
+    response.headers["Cache-Control"] = "private, max-age=300"
+    return response
 
 
 @app.route("/brand-icon.svg")
@@ -10552,12 +10696,12 @@ def site_info():
         "__M4__": bi("الخطوة التالية", "Next-step guidance"), "__M4P__": bi("عرض احتمالات توعوية غير تشخيصية، إرشاد عملي، ومصادر طبية ذات صلة.", "Non-diagnostic educational possibilities, practical guidance, and relevant medical sources are presented."),
         "__SAFETY_H__": bi("السلامة أولًا", "Safety first"), "__SAFETY_P__": bi("إذا ظهرت علامات خطر، يقدّم النظام تنبيهًا واضحًا للرعاية العاجلة. النتيجة لا تؤكد مرضًا ولا تنفيه ولا تستبدل الطبيب أو الطوارئ.", "When red flags are detected, the system clearly directs the user toward urgent care. Results neither confirm nor rule out disease and do not replace clinicians or emergency services."),
         "__PRIVACY_H__": bi("الخصوصية وحماية البيانات", "Privacy & data protection"), "__PRIVACY_SUB__": bi("مبادئ واضحة حول ما يُجمع وما يُحفظ وكيف يتحكم المستخدم ببياناته.", "Clear principles for what is collected, what is stored, and how users control their data."),
-        "__PC1H__": bi("بيانات الحساب", "Account data"), "__PC1P__": bi("عند إنشاء حساب، تُستخدم بيانات أساسية مثل الاسم والبريد الإلكتروني، مع تخزين كلمة المرور بصورة مشفرة.", "When an account is created, basic details such as name and email are used, while passwords are stored as secure hashes."),
+        "__PC1H__": bi("بيانات الحساب", "Account data"), "__PC1P__": bi("عند إنشاء حساب، تُستخدم بيانات أساسية مثل الاسم والبريد الإلكتروني، وتُحفظ كلمة المرور باستخدام تجزئة آمنة ولا تُخزن كنص قابل للقراءة.", "When an account is created, basic details such as name and email are used, while passwords are stored as secure hashes rather than readable text."),
         "__PC2H__": bi("البيانات الصحية", "Health information"), "__PC2P__": bi("لا تُطلب بيانات صحية أثناء التسجيل. تُعالج المعلومات الصحية عندما يُدخلها المستخدم داخل الخدمة أو يختار حفظها.", "Health data is not requested at sign-up. It is processed when a user enters it in a service or explicitly chooses to save it."),
         "__PC3H__": bi("التحليلات الاختيارية", "Optional analytics"), "__PC3P__": bi("إحصاءات الاستخدام الاختيارية لا تُحفظ إلا بعد موافقة المستخدم، وتُستخدم بصورة مجمعة ومجهولة الهوية قدر الإمكان.", "Optional usage analytics are stored only with user consent and are used in aggregated, anonymized form where possible."),
         "__PC4H__": bi("خدمات الذكاء الاصطناعي", "AI services"), "__PC4P__": bi("عند استخدام بعض وظائف المساعد أو التحليل قد يُرسل النص اللازم إلى مزود الذكاء الاصطناعي المهيأ للمشروع. يُنصح بعدم إدخال معرفات شخصية داخل وصف الحالة.", "For some assistant or analysis functions, the text needed to generate a response may be sent to the AI provider configured for the project. Users should avoid including personal identifiers in health descriptions."),
         "__PC5H__": bi("التحكم والحذف", "Control & deletion"), "__PC5P__": bi("يمكن للمستخدم التحكم في البيانات المحفوظة ومسح السجل أو حذف البيانات الصحية والحساب من أدوات الخصوصية المتاحة.", "Users can manage stored information, clear history, or delete health data and their account using the available privacy controls."),
-        "__PC6H__": bi("الإحصاءات العامة", "Public statistics"), "__PC6P__": bi("لوحة المجتمع تعرض أرقامًا عامة وتعليقات وافق أصحابها على نشرها بشكل مجهول، ولا تعرض أسماء أو بريدًا إلكترونيًا أو سجلات صحية شخصية.", "The community dashboard shows aggregate counts and comments explicitly approved for anonymous sharing, never names, emails, or personal health records."),
+        "__PC6H__": bi("نتائج الاختبار الأولي", "Pilot results"), "__PC6P__": bi("لوحة الاختبار الأولي تعرض أرقامًا مجمعة فقط في نسخة المسابقة، وتبقى التعليقات الفردية مخفية افتراضيًا. لا تُعرض أسماء أو عناوين بريد أو سجلات صحية شخصية.", "The pilot dashboard shows aggregate results only in the competition build; individual comments stay hidden by default. Names, emails, and personal health records are never shown."),
         "__TERMS_H__": bi("شروط الاستخدام", "Terms of use"), "__TERMS_SUB__": bi("النقاط الأساسية لاستخدام SymptoSense بصورة آمنة ومسؤولة.", "The core rules for using SymptoSense safely and responsibly."),
         "__T1H__": bi("ليس أداة تشخيص", "Not a diagnostic tool"), "__T1P__": bi("النتائج احتمالات تثقيفية قابلة للخطأ ولا تؤكد مرضًا أو تنفيه.", "Results are fallible educational possibilities and neither confirm nor rule out disease."),
         "__T2H__": bi("الحالات العاجلة", "Urgent situations"), "__T2P__": bi("عند وجود علامة خطر أو تدهور الحالة، يجب طلب الرعاية العاجلة بدل انتظار نتيجة الموقع.", "If danger signs appear or the condition worsens, urgent care should be sought instead of waiting for a website result."),
@@ -10594,15 +10738,16 @@ def community_dashboard():
         text = re.sub(r"(?<!\d)(?:\+?\d[\d\s()\-]{7,}\d)(?!\d)", "[محذوف]" if ar else "[redacted]", text)
         return text
 
+    show_public_comments = os.environ.get("SHOW_PUBLIC_PILOT_COMMENTS", "0") == "1"
     cards = []
-    for item in stats.get("comments") or []:
+    for item in ((stats.get("comments") or []) if show_public_comments else []):
         comment = redact_public_comment(item.get("comment"))
         if not comment:
             continue
         rating = int(item.get("rating") or 0)
         stars = "★" * max(0, min(5, rating)) + "☆" * max(0, 5-rating)
         cards.append('<article class="community-comment"><div class="community-stars" aria-label="%s/5">%s</div><p>%s</p><small>%s</small></article>' % (rating, stars, escape(comment), bi("تعليق مجهول الهوية · نُشر بموافقة صاحبه", "Anonymous comment · shared with permission")))
-    comments_html = "".join(cards) or '<div class="community-empty">%s</div>' % bi("لا توجد تعليقات منشورة للعامة بعد.", "No public comments yet.")
+    comments_html = "".join(cards) or '<div class="community-empty">%s</div>' % bi("التعليقات الفردية مخفية في نسخة المسابقة؛ تُعرض النتائج المجمعة فقط.", "Individual comments are hidden in the competition build; only aggregate pilot results are shown.")
     avg = stats.get("average_5") or 0
     avg_text = ("%.1f/5" % avg) if stats.get("ratings") else "—/5"
     body = '''
@@ -10613,41 +10758,48 @@ def community_dashboard():
       <p class="community-privacy">🔒 __PRIVACY__</p>
     </main>'''
     repl = {
-        "__TITLE__": bi("لوحة مستخدمي SymptoSense", "SymptoSense Community Dashboard"),
-        "__SUB__": bi("نظرة عامة على مجتمع المشروع والتقييمات التي يشاركها المستخدمون.", "A public overview of the project community and feedback shared by users."),
-        "__USERS__": str(stats.get("users", 0)), "__USERS_L__": bi("مستخدم مسجل", "registered users"),
+        "__TITLE__": bi("الاختبار الأولي للمستخدمين — Pilot", "Pilot User Evaluation"),
+        "__SUB__": bi("مؤشرات أولية محدودة لاختبار سهولة الاستخدام وتجربة المنتج، وليست تحققًا سريريًا أو دليلًا على الدقة الطبية.", "Limited early indicators for usability and product experience; this is not clinical validation or evidence of medical accuracy."),
+        "__USERS__": str(stats.get("users", 0)), "__USERS_L__": bi("مستخدمون مسجلون", "registered users"),
         "__AVG__": avg_text, "__AVG_L__": bi("متوسط التقييم", "average rating"),
         "__RATINGS__": str(stats.get("ratings", 0)), "__RATINGS_L__": bi("إجمالي التقييمات", "total ratings"),
         "__COMMENT_COUNT__": str(stats.get("comment_count", 0)), "__COMMENT_COUNT_L__": bi("تعليق منشور", "published comments"),
-        "__COMMENTS_H__": bi("تعليقات المستخدمين", "User comments"),
-        "__COMMENTS_P__": bi("تظهر هنا فقط التعليقات التي وافق أصحابها صراحةً على نشرها بشكل مجهول.", "Only comments explicitly approved for anonymous public sharing appear here."),
+        "__COMMENTS_H__": bi("ملاحظات الاختبار الأولي", "Pilot feedback"),
+        "__COMMENTS_P__": bi("في نسخة المسابقة نعرض المؤشرات المجمعة فقط لتجنب إعطاء عينة صغيرة وزنًا أكبر من حجمها الحقيقي.", "The competition build shows aggregate indicators only, so a small sample is not given more weight than it deserves."),
         "__TRY__": bi("جرّب تحليل الأعراض", "Try symptom analysis"), "__COMMENTS__": comments_html,
         "__PRIVACY__": bi("لا نعرض أسماء المستخدمين أو بريدهم الإلكتروني أو بياناتهم الصحية في هذه الصفحة.", "Names, emails, and personal health records are never displayed on this page."),
     }
     for k, v in repl.items(): body = body.replace(k, v)
     css = '''.community-page{width:min(1040px,100%);margin:auto;display:grid;gap:20px}.community-hero{text-align:center;padding:34px 20px;border-radius:24px;background:linear-gradient(135deg,#F6FBFE,#ECF6FC);border:1px solid #D7E7F0}.community-hero>span{font-size:38px}.community-hero h1{margin:8px 0;color:#163B5C;font-size:clamp(27px,4vw,42px)}.community-hero p{margin:0;color:#60788B}.community-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.community-kpis article{padding:24px;border:1px solid #DCE8F0;border-radius:20px;background:#fff;text-align:center}.community-kpis strong{display:block;color:#287FC1;font-size:clamp(26px,4vw,38px)}.community-kpis span{color:#60788B;font-weight:700}.community-section{padding:24px;border:1px solid #DCE8F0;border-radius:22px;background:#fff}.community-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}.community-head h2{margin:0;color:#163B5C}.community-head p{margin:5px 0 0;color:#60788B}.community-comments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.community-comment{padding:18px;border-radius:17px;background:#F8FCFE;border:1px solid #DCE8F0}.community-stars{color:#E2A63B;letter-spacing:2px}.community-comment p{line-height:1.8;color:#29485F}.community-comment small,.community-privacy{color:#718899}.community-empty{grid-column:1/-1;padding:28px;text-align:center;color:#718899;background:#F8FCFE;border-radius:16px}.community-privacy{text-align:center}@media(max-width:700px){.community-hero{padding:26px 16px}.community-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.community-kpis article{padding:18px 10px;border-radius:17px}.community-kpis strong{font-size:clamp(24px,8vw,32px)}.community-kpis span{font-size:12px}.community-comments{grid-template-columns:1fr}.community-head{align-items:flex-start;flex-direction:column}.community-head .btn{width:100%;text-align:center}.community-section{padding:18px 14px}}@media(max-width:330px){.community-kpis{grid-template-columns:1fr}}'''
-    return _page(bi("لوحة مستخدمي SymptoSense", "SymptoSense Community Dashboard"), body, extra_css=css)
+    return _page(bi("الاختبار الأولي — SymptoSense", "SymptoSense Pilot Evaluation"), body, extra_css=css)
 
 
 @app.route("/methodology")
 def methodology():
     ar = _lang() == "ar"
     bi = lambda a, e: a if ar else e
-    body = '''
-    <main class="method-page"><section class="method-hero"><span class="method-tag">AI + Data Science + Digital Health</span><h1>__TITLE__</h1><p>__SUB__</p></section>
-    <section class="method-flow"><article><b>1</b><h3>__M1__</h3><p>__M1P__</p></article><article><b>2</b><h3>__M2__</h3><p>__M2P__</p></article><article><b>3</b><h3>__M3__</h3><p>__M3P__</p></article><article><b>4</b><h3>__M4__</h3><p>__M4P__</p></article></section>
-    <section class="method-note"><h2>__SAFE__</h2><p>__SAFEP__</p><a class="btn pri" href="/sources">__SRC__</a></section></main>'''
+    body = r'''<main class="method-page">
+      <section class="method-hero"><span class="method-tag">AI + Data Science + Digital Health</span><h1>__TITLE__</h1><p>__SUB__</p></section>
+      <section class="method-flow"><article><b>1</b><h3>__M1__</h3><p>__M1P__</p></article><article><b>2</b><h3>__M2__</h3><p>__M2P__</p></article><article><b>3</b><h3>__M3__</h3><p>__M3P__</p></article><article><b>4</b><h3>__M4__</h3><p>__M4P__</p></article></section>
+      <section class="method-note"><h2>🛡️ __ARCH_H__</h2><p>__ARCH_P__</p></section>
+      <section class="method-grid"><article><h2>🧪 __EVAL_H__</h2><p>__EVAL_P__</p><ul><li>__E1__</li><li>__E2__</li><li>__E3__</li><li>__E4__</li></ul></article><article><h2>⚠️ __LIMIT_H__</h2><p>__LIMIT_P__</p><ul><li>__L1__</li><li>__L2__</li><li>__L3__</li><li>__L4__</li></ul></article></section>
+      <section class="method-note"><h2>__SAFE__</h2><p>__SAFEP__</p><a class="btn pri" href="/sources">__SRC__</a></section>
+    </main>'''
     vals = {
         "__TITLE__": bi("كيف يعمل SymptoSense؟", "How SymptoSense works"),
-        "__SUB__": bi("منهجية تجمع بين تحليل البيانات والذكاء الاصطناعي وقواعد الأمان والمصادر الطبية الموثوقة، مع إبقاء النتيجة توعوية وغير تشخيصية.", "A methodology combining data analysis, AI, safety rules, and trusted medical sources while keeping results educational and non-diagnostic."),
-        "__M1__": bi("جمع السياق", "Context collection"), "__M1P__": bi("الأعراض والعمر والجنس والمدة والشدة، مع أسئلة متابعة متكيفة.", "Symptoms, age, sex, duration, severity, and adaptive follow-up questions."),
-        "__M2__": bi("تحليل منظم", "Structured analysis"), "__M2P__": bi("مطابقة قاعدة المعرفة وقواعد الخطورة مع المعلومات المدخلة.", "Matching user input against the knowledge base and risk rules."),
-        "__M3__": bi("تقييم الخطورة", "Risk triage"), "__M3P__": bi("إبراز مستوى الخطورة وعلامات الخطر قبل أي شرح إضافي.", "Prioritizing risk level and warning signs before additional explanation."),
-        "__M4__": bi("إرشاد ومصادر", "Guidance & sources"), "__M4P__": bi("عرض الاحتمالات غير التشخيصية والخطوة التالية والمصادر الطبية ذات الصلة.", "Showing non-diagnostic possibilities, next-step guidance, and relevant medical sources."),
-        "__SAFE__": bi("السلامة والخصوصية", "Safety & privacy"), "__SAFEP__": bi("لا يقدّم النظام تشخيصًا قطعيًا، ويُظهر علامات الخطر بوضوح، ويحافظ على فصل البيانات الشخصية عن الإحصاءات العامة قدر الإمكان.", "The system does not provide definitive diagnosis, clearly surfaces red flags, and separates personal data from public analytics wherever possible."),
-        "__SRC__": bi("عرض المصادر الطبية", "View medical sources")}
+        "__SUB__": bi("نموذج أولي هجين لدعم القرار الصحي يجمع قواعد سلامة حتمية، وقاعدة معرفة طبية منسقة، ومطابقة قابلة للتفسير، وطبقة ذكاء اصطناعي لتحسين اللغة والتفاعل. لا يعتمد قرار الطوارئ على نموذج لغوي وحده.", "A hybrid health decision-support prototype combining deterministic safety rules, a curated medical knowledge base, explainable matching, and an AI layer for language and interaction. Emergency triage does not depend on a language model alone."),
+        "__M1__": bi("جمع السياق", "Context collection"), "__M1P__": bi("الأعراض والعمر والجنس والمدة والشدة والأسئلة التكيفية، مع إبقاء النص الأصلي للمستخدم.", "Symptoms, age, sex, duration, severity, and adaptive follow-ups while preserving the user's original wording."),
+        "__M2__": bi("تطبيع ومطابقة", "Normalization & matching"), "__M2P__": bi("تحويل المرادفات إلى مفاهيم ثابتة ثم مطابقتها مع قاعدة المعرفة بصورة يمكن تفسيرها.", "Normalizing synonyms to stable concepts, then matching them against the knowledge base in an explainable way."),
+        "__M3__": bi("قواعد سلامة حتمية", "Deterministic safety rules"), "__M3P__": bi("تُفحص علامات الخطر قبل طبقة الذكاء الاصطناعي؛ الهدف هو تصعيد محافظ عند وجود إشارات مقلقة.", "Red flags are checked before the AI layer, with a deliberately conservative escalation policy for concerning signs."),
+        "__M4__": bi("إرشاد ومصادر", "Guidance & sources"), "__M4P__": bi("عرض مستوى الخطورة والاحتمالات غير التشخيصية والخطوة التالية والمصادر المرتبطة بالمعلومة.", "Showing risk level, non-diagnostic possibilities, next-step guidance, and sources linked to the information."),
+        "__ARCH_H__": bi("ما دور الذكاء الاصطناعي؟", "What does AI do?"), "__ARCH_P__": bi("يُستخدم لتحسين فهم اللغة الطبيعية وصياغة التفاعل عندما يكون المزود متاحًا. لا يُسمح له وحده بتقرير حالة الطوارئ، ولا يُعامل ناتجه كتشخيص. عند تعذر المزود توجد إجابات محلية محافظة للمسارات الشائعة.", "AI improves natural-language understanding and interaction when the provider is available. It does not independently decide emergency status, and its output is not treated as a diagnosis. Conservative local fallbacks cover common flows when the provider is unavailable."),
+        "__EVAL_H__": bi("كيف نقيس الجودة؟", "How quality is evaluated"), "__EVAL_P__": bi("التقييم الحالي هندسي/أولي، وليس دراسة سريرية. تُستخدم اختبارات برمجية ومجموعة أسئلة عربية واقعية لقياس الفهم والسلامة والأخطاء.", "Current evaluation is engineering/pilot evaluation, not a clinical study. Software tests and realistic Arabic queries are used to measure understanding, safety behavior, and failure cases."),
+        "__E1__": bi("نسبة الاستفسارات التي تم فهمها وإرجاع إجابة مفيدة لها.", "Share of queries understood with a useful response."), "__E2__": bi("التقاط علامات الخطر والحالات التي تم فيها التصعيد الزائد.", "Red-flag capture and over-triage cases."), "__E3__": bi("فشل التطبيع اللغوي مع العامية والأخطاء الإملائية.", "Normalization failures with colloquial language and typos."), "__E4__": bi("اختبارات واجهة ووظائف على الجوال والكمبيوتر.", "Functional and UI checks across mobile and desktop."),
+        "__LIMIT_H__": bi("الحدود الحالية", "Current limitations"), "__LIMIT_P__": bi("الشفافية جزء من السلامة: لا ندّعي دقة سريرية لم يتم إثباتها.", "Transparency is part of safety: no unproven clinical-accuracy claim is made."), "__L1__": bi("ليس جهازًا طبيًا معتمدًا ولا أداة تشخيص.", "Not an approved medical device or diagnostic tool."), "__L2__": bi("لم يخضع بعد لدراسة سريرية على عينة مرضى حقيقية.", "Not yet clinically validated on a real patient cohort."), "__L3__": bi("قد يبالغ منطق السلامة المحافظ في التصعيد لبعض الأعراض.", "Conservative safety logic may over-triage some presentations."), "__L4__": bi("مراجعة مختص صحي مستقلة مطلوبة قبل أي استخدام سريري.", "Independent clinician review is required before any clinical use."),
+        "__SAFE__": bi("السلامة والخصوصية", "Safety & privacy"), "__SAFEP__": bi("النتائج توعوية وقابلة للتفسير قدر الإمكان. تُعرض علامات الخطر قبل الاحتمالات، وتُفصل بيانات المستخدم الشخصية عن الإحصاءات العامة. لوحة الاستخدام العام تمثل Pilot محدودًا وليست تحققًا طبيًا.", "Results are educational and designed to be explainable where possible. Red flags appear before possibilities, personal user data is separated from public analytics, and public usage metrics are a limited pilot—not medical validation."), "__SRC__": bi("عرض المصادر الطبية", "View medical sources")
+    }
     for k, v in vals.items(): body = body.replace(k, v)
-    css = '''.method-page{width:min(1050px,100%);margin:auto;display:grid;gap:20px}.method-hero,.method-note{padding:32px;border:1px solid #DCE8F0;border-radius:24px;background:#F8FCFF}.method-tag{display:inline-flex;padding:7px 11px;border-radius:999px;background:#EAF5FC;color:#287FC1;font-weight:900;font-size:12px}.method-hero h1{color:#163B5C;font-size:clamp(28px,4vw,44px);margin:12px 0}.method-hero p,.method-note p{color:#60788B;line-height:1.9}.method-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.method-flow article{padding:22px;border:1px solid #DCE8F0;border-radius:20px;background:#fff}.method-flow b{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#287FC1;color:#fff}.method-flow h3{color:#163B5C}.method-flow p{color:#60788B;line-height:1.7}.method-note h2{color:#163B5C}@media(max-width:800px){.method-flow{grid-template-columns:1fr 1fr}}@media(max-width:520px){.method-flow{grid-template-columns:1fr}}'''
+    css = '''.method-page{width:min(1080px,100%);margin:auto;display:grid;gap:20px}.method-hero,.method-note,.method-grid>article{padding:30px;border:1px solid #DCE8F0;border-radius:24px;background:#F8FCFF}.method-tag{display:inline-flex;padding:7px 11px;border-radius:999px;background:#EAF5FC;color:#287FC1;font-weight:900;font-size:12px}.method-hero h1{color:#163B5C;font-size:clamp(28px,4vw,44px);margin:12px 0}.method-hero p,.method-note p,.method-grid p,.method-grid li{color:#60788B;line-height:1.85}.method-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.method-flow article{padding:22px;border:1px solid #DCE8F0;border-radius:20px;background:#fff}.method-flow b{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#287FC1;color:#fff}.method-flow h3,.method-note h2,.method-grid h2{color:#163B5C}.method-flow p{color:#60788B;line-height:1.7}.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.method-grid ul{padding-inline-start:22px;margin-bottom:0}@media(max-width:800px){.method-flow{grid-template-columns:1fr 1fr}.method-grid{grid-template-columns:1fr}}@media(max-width:520px){.method-flow{grid-template-columns:1fr}.method-hero,.method-note,.method-grid>article{padding:22px 18px}}'''
     return _page(bi("منهجية SymptoSense", "SymptoSense Methodology"), body, extra_css=css)
 
 
@@ -12281,7 +12433,7 @@ def api_user_info():
 
 
 _LOCAL_SYMPTOM_CATALOG = [
-    {"slug":"syncope","name_ar":"😵 إغماء أو فقدان وعي","name_en":"😵 Fainting or loss of consciousness","aliases":["إغماء","اغماء","أغمى علي","اغمى علي","فقدت الوعي","فقدان الوعي","غشيان","غشي","syncope","fainting","fainted","passed out","loss of consciousness","blackout"]},
+    {"slug":"syncope","name_ar":"😵 إغماء أو فقدان وعي","name_en":"😵 Fainting or loss of consciousness","aliases":["إغماء","اغماء","أغمى علي","اغمى علي","فقدت الوعي","فقدان الوعي","غشيان","غشي","إغماء مع فقدان وعي","قرب الإغماء أو خفة شديدة بالرأس","syncope","fainting","fainted","passed out","loss of consciousness","blackout","near-fainting","presyncope"]},
     {"slug":"palpitations","name_ar":"💓 خفقان القلب","name_en":"💓 Heart palpitations","aliases":["خفقان","خفقان القلب","دقات قلبي سريعة","نبضي سريع","تسارع دقات القلب","تسارع النبض","palpitations","heart palpitations","racing heart","pounding heartbeat"]},
     {"slug":"vomiting","name_ar":"🤮 قيء","name_en":"🤮 Vomiting","aliases":["قيء","تقيؤ","استفراغ","ترجيع","ارجع","أرجع","vomiting","vomit","throwing up","being sick"]},
     {"slug":"diarrhea","name_ar":"🚽 إسهال","name_en":"🚽 Diarrhea","aliases":["إسهال","اسهال","براز مائي","diarrhea","diarrhoea","watery stool","loose stool"]},
@@ -12848,6 +13000,13 @@ def api_admin_system_health():
     if not _configured_web_secret and health["components"].get("authentication", {}).get("status") == "online":
         health["components"]["authentication"]["status"] = "degraded"
         health["components"]["authentication"]["error"] = "WEB_SECRET is not configured; sessions use an ephemeral process key"
+    groq_configured = bool(os.environ.get("GROQ_API_KEY", "").strip())
+    health["components"]["assistant_provider"] = {
+        "status": "online" if groq_configured else "degraded",
+        "configured": groq_configured,
+        "fallback": "local_curated_health_fallback",
+        "error": None if groq_configured else "GROQ_API_KEY is not configured; local fallback remains available",
+    }
     return jsonify({"ok": True, "health": health})
 
 
@@ -14188,6 +14347,30 @@ def api_export_current_pdf():
         return _mk_error(exc, 500)
 
 
+def _groq_chat_completion_with_retry(messages, *, max_tokens=240, temperature=0.4, timeout=10):
+    """Best-effort assistant provider call with one short retry.
+
+    The retry is intentionally bounded so a competition demo does not hang.
+    Local fallbacks still handle the final failure.
+    """
+    last_error = None
+    for attempt in range(2):
+        try:
+            client = analysis_core._groq_client()
+            return client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout,
+            )
+        except Exception as exc:
+            last_error = exc
+            if attempt == 0:
+                time.sleep(0.25)
+    raise last_error or RuntimeError("assistant_provider_unavailable")
+
+
 def _followup_local_answer(question, context, lang):
     """Safe, context-aware answer when the external assistant is unavailable."""
     ar = lang != "en"
@@ -14280,13 +14463,9 @@ def api_followup():
                 f"سؤال المستخدم الآن: {question}\n\n"
                 "أجب بإيجاز (150 كلمة كحد أقصى) وذكّر أن هذه معلومات توعوية وليست تشخيصاً نهائياً."
             )
-        client = analysis_core._groq_client()
-        r = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.5,
-            max_tokens=500,
-            timeout=12,
+        r = _groq_chat_completion_with_retry(
+            [{"role": "user", "content": prompt}],
+            temperature=0.5, max_tokens=500, timeout=10,
         )
         answer = r.choices[0].message.content.strip()
         if not answer:
@@ -14323,7 +14502,7 @@ def _assistant_contextual_health_answer(text, lang):
         if ar:
             return (
                 "الغثيان مع الدورة ممكن يحصل عند بعض الأشخاص بسبب تغيّرات الهرمونات ومواد مثل البروستاغلاندينات، خصوصًا إذا كان معه مغص. "
-                "جرّبي وجبات خفيفة، سوائل على دفعات، وراحة؛ وإذا كان القيء متكررًا، ما تقدرين تحتفظين بالسوائل، عندك دوخة/إغماء، نزيف شديد جدًا أو ألم غير معتاد فالأفضل تقييم طبي. "
+                "يمكن تجربة وجبات خفيفة وتناول السوائل على دفعات مع الراحة. إذا كان القيء متكررًا أو تعذر الاحتفاظ بالسوائل، أو ظهرت دوخة أو إغماء أو نزيف شديد أو ألم غير معتاد، فالأفضل طلب تقييم طبي. "
                 "هذه معلومات توعوية وليست تشخيصًا."
             )
         return (
@@ -14333,6 +14512,70 @@ def _assistant_contextual_health_answer(text, lang):
         )
 
     return None
+
+
+def _assistant_general_local_fallback(text, lang):
+    """Demo-safe local fallback for health questions outside the curated index.
+
+    It preserves the user's full query, avoids diagnosis, and gives a relevant
+    next step even when the external provider is unavailable.
+    """
+    query = " ".join(str(text or "").strip().split())[:600]
+    if not query:
+        return None
+    low = query.lower()
+    ar = lang != "en"
+
+    # Common real-world demo query: painless knee clicking/crepitus.
+    knee = any(k in low for k in ("ركب", "knee"))
+    click = any(k in low for k in ("طقط", "فرقع", "صوت", "click", "crack", "pop", "crepitus"))
+    no_pain = any(k in low for k in ("بدون ألم", "بدون الم", "ما فيه ألم", "مافي ألم", "no pain", "painless"))
+    if knee and click:
+        if ar:
+            base = (
+                "طقطقة الركبة قد تحدث مع حركة الأوتار أو الأنسجة أو فقاعات صغيرة داخل المفصل، "
+                "وقد تكون شائعة إذا لم يصاحبها ألم أو تورم أو عدم ثبات. "
+            )
+            if not no_pain:
+                base += "وجود ألم أو تورم أو قفل بالمفصل يغيّر التقييم. "
+            return base + "راجع مختصًا إذا بدأت بعد إصابة، أو ظهر ألم/تورم/احمرار، أو صارت الركبة تعلق أو تخونك. هذه معلومات توعوية وليست تشخيصًا."
+        base = "Knee clicking can occur from normal movement of tendons/tissues or small gas bubbles in the joint, and it is often benign when there is no pain, swelling, or instability. "
+        if not no_pain:
+            base += "Pain, swelling, locking, or giving-way changes the picture. "
+        return base + "Seek medical review if it followed an injury or you develop pain, swelling, redness, locking, or instability. This is educational information, not a diagnosis."
+
+    # Category-aware fallback: useful without pretending the local KB knows the answer.
+    groups = [
+        (("دواء", "أدوية", "حبة", "جرعة", "medicine", "medication", "drug", "dose"),
+         "سؤالك يبدو متعلقًا بدواء. لا أؤكد جرعة أو تداخلًا دون اسم الدواء والتركيز وما الأدوية الأخرى المستخدمة. اذكر الاسم كما على العبوة، ولا تبدأ أو توقف دواءً موصوفًا من نفسك.",
+         "Your question appears medication-related. I cannot safely confirm a dose or interaction without the exact medicine, strength, and other medicines used. Share the label name, and do not start or stop a prescribed medicine on your own."),
+        (("تحليل", "مختبر", "cbc", "wbc", "hgb", "سكر", "lab", "test result", "blood test"),
+         "سؤالك يبدو متعلقًا بنتيجة تحليل. اكتب اسم الفحص والقيمة والوحدة والمدى المرجعي المكتوب في المختبر؛ التفسير يعتمد على هذه التفاصيل والسياق الصحي.",
+         "Your question appears to be about a lab result. Share the test name, value, unit, and the laboratory reference range; interpretation depends on those details and clinical context."),
+        (("دورة", "حيض", "حمل", "مهبل", "period", "menstrual", "pregnan", "vaginal"),
+         "سؤالك يتعلق بالصحة النسائية. التوقيت بالنسبة للدورة أو احتمال الحمل، شدة الألم أو النزف، ووجود دوخة أو إغماء تفاصيل مهمة. إذا كان هناك نزيف شديد جدًا أو ألم شديد مفاجئ أو إغماء فاطلب تقييمًا عاجلًا.",
+         "Your question relates to menstrual/pregnancy health. Timing, pregnancy possibility, pain/bleeding severity, and faintness are important. Seek urgent care for very heavy bleeding, sudden severe pain, or fainting."),
+        (("نوم", "أرق", "تعب", "sleep", "insomnia", "fatigue"),
+         "سؤالك يتعلق بالنوم أو الإرهاق. المدة، عدد ساعات النوم، الأدوية/الكافيين، ووجود أعراض أخرى مثل ضيق النفس أو فقدان وزن تساعد على فهمه. إذا استمر أو أثر في يومك فراجع مختصًا.",
+         "Your question relates to sleep or fatigue. Duration, sleep hours, medicines/caffeine, and other symptoms such as breathlessness or weight loss help clarify it. Seek medical review if it persists or disrupts daily life."),
+        (("جلد", "طفح", "حكة", "rash", "skin", "itch"),
+         "سؤالك يبدو متعلقًا بالجلد. صف الشكل والمكان والمدة وهل يوجد دواء/طعام جديد. صعوبة التنفس أو تورم الشفاه/اللسان مع طفح تستدعي مساعدة عاجلة.",
+         "Your question appears skin-related. Describe appearance, location, duration, and any new medicine/food. A rash with breathing difficulty or lip/tongue swelling needs urgent help."),
+        (("بول", "تبول", "urine", "urinary", "pee"),
+         "سؤالك يبدو متعلقًا بالمسالك البولية. وجود حرقة أو دم أو حرارة أو ألم بالخاصرة أو صعوبة شديدة في التبول يغيّر درجة الاستعجال؛ اذكر هذه التفاصيل إن وجدت.",
+         "Your question appears urinary. Burning, blood, fever, flank pain, or major difficulty urinating changes urgency; include those details if present."),
+    ]
+    for keys, ara, eng in groups:
+        if any(k in low for k in keys):
+            return (ara if ar else eng) + (" هذه معلومات توعوية وليست تشخيصًا." if ar else " This is educational information, not a diagnosis.")
+
+    return (
+        "أفهم سؤالك: «" + query + "». لا توجد مطابقة موثوقة كافية في قاعدة المعرفة المحلية لأعطي سببًا محددًا دون تخمين. "
+        "اذكر متى بدأ، المدة، الشدة، وما الذي يزيده أو يخففه وأي أدوية/أعراض مصاحبة؛ وإذا كان العرض شديدًا أو مفاجئًا أو معه صعوبة تنفس أو ألم صدر أو إغماء فاطلب تقييمًا عاجلًا. هذه معلومات توعوية وليست تشخيصًا."
+        if ar else
+        "I understand your question: “" + query + "”. The local knowledge base does not have a reliable enough direct match to name a cause without guessing. "
+        "Add onset, duration, severity, triggers/relievers, medicines, and associated symptoms; seek urgent care for severe/sudden symptoms, breathing difficulty, chest pain, or fainting. This is educational information, not a diagnosis."
+    )
 
 
 def _assistant_local_health_answer(text, lang):
@@ -14352,9 +14595,9 @@ def _assistant_local_health_answer(text, lang):
     try:
         result = health_search.search_health(query, lang)
     except Exception:
-        return None
+        result = None
     if not result:
-        return None
+        return _assistant_general_local_fallback(query, lang)
 
     ar = lang != "en"
 
@@ -14657,7 +14900,7 @@ def api_assistant():
                 "/family Family Health Hub with per-person records, /search smart health search, /calculators health calculators (BMI, fluids, calories, blood sugar), "
                 "/emergency emergency numbers & nearest hospitals, "
                 "/checkin daily tracking. If the user describes severe symptoms (chest pain, breathing trouble, bleeding, confusion, fainting), "
-                "urge them to call emergency services (997) immediately. Always add that this is awareness information, not a final diagnosis."
+                "urge them to call local emergency services immediately (997 for ambulance in Saudi Arabia). Always add that this is awareness information, not a final diagnosis."
             )
         else:
             sys = (
@@ -14683,13 +14926,8 @@ def api_assistant():
                     " استخدم فقط سياق قاعدة المعرفة المسترجع التالي عند شرح الحالات: ") + json.dumps(grounded, ensure_ascii=False)
         msgs = [{"role": "system", "content": sys}] + hist
         try:
-            client = analysis_core._groq_client()
-            r = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=msgs,
-                temperature=0.5,
-                max_tokens=240,
-                timeout=12,
+            r = _groq_chat_completion_with_retry(
+                msgs, temperature=0.5, max_tokens=240, timeout=10,
             )
             answer = r.choices[0].message.content.strip()
             # Defensive mode guard: a mental-wellbeing request must not surface
@@ -14723,9 +14961,9 @@ def api_assistant():
                           if (lang == "ar" and mode == "mh") else
                           "I'm here with you 🤍 Share what is on your mind in simple words, and I'll try to support you with a calm, safe next step."
                           if mode == "mh" else
-                          "تعذر الوصول إلى المساعد الكامل الآن. يمكن استخدام تحليل الأعراض، وإذا كانت الأعراض مستمرة أو تزداد سوءًا فاطلب تقييمًا طبيًا. هذه معلومات توعوية وليست تشخيصًا."
+                          (_assistant_general_local_fallback(last_text, lang) or "تعذر الوصول إلى المساعد الكامل الآن. اكتب تفاصيل أكثر عن سؤالك الصحي.")
                           if lang == "ar" else
-                          "The full assistant is temporarily unavailable. You can use Symptom Analysis, and if symptoms persist or worsen, seek medical evaluation. This is awareness information, not a diagnosis.")
+                          (_assistant_general_local_fallback(last_text, lang) or "The full assistant is temporarily unavailable. Add more detail to your health question."))
         answer = _assistant_compact_response(answer, lang, mode)
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services,
                         "medical_sources": assistant_sources})
@@ -14737,9 +14975,9 @@ def api_assistant():
                       if (lang == "ar" and mode == "mh") else
                       "I'm here with you 🤍 Share what is on your mind in simple words, and I'll try to support you with a calm, safe next step."
                       if mode == "mh" else
-                      "تعذر الوصول إلى المساعد الكامل الآن. جرّب البحث الصحي أو تحليل الأعراض، واطلب تقييمًا طبيًا إذا استمرت الأعراض أو ساءت. هذه معلومات توعوية وليست تشخيصًا."
+                      (_assistant_general_local_fallback(last_text, lang) or "تعذر الوصول إلى المساعد الكامل الآن. اكتب تفاصيل أكثر عن سؤالك الصحي.")
                       if lang == "ar" else
-                      "The full assistant is temporarily unavailable. Try Health Search or Symptom Analysis, and seek medical review if symptoms persist or worsen. This is educational information, not a diagnosis.")
+                      (_assistant_general_local_fallback(last_text, lang) or "The full assistant is temporarily unavailable. Add more detail to your health question."))
         answer = _assistant_compact_response(answer, lang, mode)
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services, "medical_sources": [], "fallback": True})
 
@@ -15657,9 +15895,13 @@ def _health_search_question_answer(query, lang, search_result=None):
         if what:
             return what
 
-    # Universal safe fallback for queries that are not covered by the local
-    # knowledge base. This intentionally preserves the exact query instead of
-    # guessing a different symptom/condition.
+    # Universal safe fallback for queries that are not covered by the structured
+    # search index. Reuse the curated local assistant fallback first so common
+    # natural-language questions (for example painless knee clicking) still get
+    # a directly useful answer when the external provider is offline.
+    local_general = _assistant_general_local_fallback(q, lang)
+    if local_general:
+        return _strip_search_answer_heading(_assistant_compact_response(local_general, lang, "search"), lang)
     emoji, category = _health_search_topic_meta(q, lang)
     if ar:
         if category == "medication":

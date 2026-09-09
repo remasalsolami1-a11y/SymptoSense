@@ -6,9 +6,9 @@ This release uses the **existing SymptoSense authentication session**. It does n
 
 The only account eligible for Admin is the existing user whose email is:
 
-`remasalsolami2020@gmail.com`
+`<OWNER_ADMIN_EMAIL>`
 
-This release fixes the Admin owner to `remasalsolami2020@gmail.com` exactly. A conflicting legacy `SYMPTOSENSE_ADMIN_EMAIL` environment value is ignored so an old Railway setting cannot assign Admin access to a different account.
+Set `SYMPTOSENSE_ADMIN_EMAIL=<OWNER_ADMIN_EMAIL>` in the production environment. The source code does not contain the owner email, and Admin access fails closed if the variable is missing.
 
 ## How assignment works
 

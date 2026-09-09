@@ -10,8 +10,10 @@ import health_search
 def _load_helper():
     source = (ROOT / 'webapp.py').read_text(encoding='utf-8')
     tree = ast.parse(source)
-    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == '_assistant_local_health_answer')
-    module = ast.Module(body=[node], type_ignores=[])
+    wanted = {'_normalize_health_query_text', '_assistant_contextual_health_answer', '_assistant_general_local_fallback', '_assistant_local_health_answer'}
+    nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in wanted]
+    assert {n.name for n in nodes} == wanted
+    module = ast.Module(body=nodes, type_ignores=[])
     ns = {'health_search': health_search}
     exec(compile(ast.fix_missing_locations(module), '<assistant-helper>', 'exec'), ns)
     return ns['_assistant_local_health_answer'], source

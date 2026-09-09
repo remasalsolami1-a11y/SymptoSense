@@ -43,6 +43,12 @@ These values are read from the exported `ml_model.json` metadata. No precision, 
 
 Rule-based red-flag checks and the Medical Knowledge Base take priority over the auxiliary model. When information is insufficient or urgent warning signs are present, the product should show the appropriate safety guidance rather than force a condition prediction. SymptoSense does not replace a physician or qualified healthcare professional.
 
+## Product architecture context
+
+The deployed product is a **hybrid decision-support prototype**, not an LLM diagnostic system. Deterministic red-flag rules are evaluated independently of the language model; curated knowledge and explainable matching support the result; an optional AI provider improves natural-language interaction. If the provider is unavailable, local conservative fallbacks remain available for common health questions. Public usage/feedback metrics are a usability **pilot**, not clinical validation.
+
+Independent clinician review and real-world clinical validation are required before any clinical-use claim.
+
 ## Reproducibility
 
 The training procedure, seed, curated mappings, split, evaluation call, and export logic are available in `train_model.py`. The deployed parameters and evaluation metadata are stored in `ml_model.json`.

@@ -7,9 +7,9 @@
 - استعادة كلمة المرور: `Forgot Password → Reset Email → Reset Password → Login`
 - Admin: `Login → role=admin → /admin`
 
-الحساب الإداري الوحيد هو الحساب الموجود مسبقًا:
+الحساب الإداري الوحيد هو الحساب الموجود مسبقًا والمحدد في متغير البيئة:
 
-`remasalsolami2020@gmail.com`
+`SYMPTOSENSE_ADMIN_EMAIL=<OWNER_ADMIN_EMAIL>`
 
 لا تحتوي الشفرة على كلمة مرور له، ولا تنشئ بديلًا إذا لم يكن موجودًا. جميع الحسابات الجديدة تُنشأ بدور `user`.
 
@@ -23,6 +23,7 @@ BREVO_FROM_EMAIL=remasalsolami1@gmail.com
 BREVO_FROM_NAME=SymptoSense
 SITE_URL=https://symptosense-production-b2e5.up.railway.app
 WEB_SECRET=<LONG_RANDOM_STABLE_SECRET>
+SYMPTOSENSE_ADMIN_EMAIL=<OWNER_ADMIN_EMAIL>
 SESSION_COOKIE_SECURE=1
 ADMIN_AUTH_DEBUG=0
 ```

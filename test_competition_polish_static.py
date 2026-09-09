@@ -5,10 +5,11 @@ WEB = (ROOT / 'webapp.py').read_text(encoding='utf-8')
 DB = (ROOT / 'db.py').read_text(encoding='utf-8')
 DASH = (ROOT / 'dashboard.py').read_text(encoding='utf-8')
 
-def test_public_community_dashboard_exists():
+def test_public_community_dashboard_exists_as_pilot():
     assert '@app.route("/community-dashboard")' in WEB
     assert 'public_site_summary(comment_limit=24)' in WEB
-    assert 'تعليقات المستخدمين' in WEB
+    assert 'الاختبار الأولي للمستخدمين — Pilot' in WEB
+    assert 'التعليقات الفردية مخفية في نسخة المسابقة' in WEB
 
 def test_public_comments_are_opt_in():
     assert 'public_comment = bool(data.get("public_comment")) and bool(comment)' in WEB
@@ -49,8 +50,10 @@ def test_accessibility_menu_groups_voice_and_reading():
     assert 'class="chat-access"' in WEB
     assert '__ACCESSIBILITY__' in WEB
     assert '__VOICE_INPUT__' in WEB
-    assert 'toggleSpeak()' in WEB
-    assert 'startVoice()' in WEB
+    assert 'id="spkBtn"' in WEB
+    assert 'id="micBtn"' in WEB
+    assert 'toggleSpeak' in WEB
+    assert 'toggleQuickMic' in WEB
 
 def test_result_core_order_is_dashboard_like():
     danger = WEB.index('// 5) Danger signs')
@@ -91,20 +94,23 @@ def test_voice_controls_are_only_exposed_inside_accessibility_menu():
     chat_start = WEB.index('def chat_page():')
     chat_end = WEB.index('\n\n@app.route("/blood")', chat_start)
     block = WEB[chat_start:chat_end]
-    assert 'id="micBtn"' not in block
-    assert 'class="cs-voice" onclick="startVoice()"' not in block
+    header = block[block.index('<div class="chat-head">'):block.index('<div class="ss-flow"')]
+    assert 'class="chat-head-toggles"' not in header
+    assert '<details class="chat-access"' in header
+    assert 'id="spkBtn"' in header
+    assert 'id="micBtn"' in header
+    assert '__ACCESSIBILITY__' in header
+    assert 'let autoSpeak = false;' in block
     assert "items.push({label:TT('voice_chip')" not in block
     assert "onclick=\"speakResult()\"" not in block
-    assert 'let autoSpeak = false;' in block
-    assert 'class="chat-access"' in block
-    assert 'onclick="startVoice()"' in block
 
 
 def test_home_uses_trust_strip_without_duplicate_bottom_disclaimer():
     start = WEB.index('def home_page():')
     end = WEB.index('\n\ndef _tools_html', start)
     block = WEB[start:end]
-    assert 'class="home-trust"' in block
+    assert 'class="ss-trust-row"' in block
+    assert '__TRUST_INFO__' in block and '__TRUST_PRIV__' in block and '__TRUST_NODIAG__' in block
     assert 'class="warn2"' not in block
 
 

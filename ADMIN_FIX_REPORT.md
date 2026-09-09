@@ -8,12 +8,12 @@ The Admin authorization layer itself was already server-side, but the login flow
 
 1. The JSON login endpoint always returned `redirect_url: /profile`, even when the authenticated user had `role = admin`.
 2. The normal HTML login followed the regular `next` target instead of redirecting an authenticated Admin directly to `/admin`.
-3. A legacy Railway environment variable, `SYMPTOSENSE_ADMIN_EMAIL`, could override the intended owner account. If that value was stale or different, `remasalsolami2020@gmail.com` would be treated as a normal user even after successful authentication.
+3. A legacy Railway environment variable, `SYMPTOSENSE_ADMIN_EMAIL`, could override the intended owner account. If that value was stale or different, `the email configured in `SYMPTOSENSE_ADMIN_EMAIL`` would be treated as a normal user even after successful authentication.
 4. Legacy role casing such as `Admin` or `ADMIN` was not canonicalized in all effective-role reads.
 
 ## Fixes applied
 
-- Fixed the only Admin owner account to `remasalsolami2020@gmail.com` in the backend authorization configuration.
+- Fixed the only Admin owner account to `the email configured in `SYMPTOSENSE_ADMIN_EMAIL`` in the backend authorization configuration.
 - A conflicting legacy `SYMPTOSENSE_ADMIN_EMAIL` value is ignored.
 - Existing owner account only: schema/startup synchronization looks up the existing `ss_users` row and changes only its persisted role to lowercase `admin` when required.
 - No owner account is created if the row is missing.

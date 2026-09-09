@@ -13,7 +13,7 @@ The existing Authentication flow itself was valid. The main failure came from th
 
 - Keep the existing login/session (`ss_user_id`).
 - The already-authenticated existing owner row is the only row eligible for promotion.
-- Owner email: `remasalsolami2020@gmail.com` (fixed; conflicting legacy `SYMPTOSENSE_ADMIN_EMAIL` values are ignored).
+- Owner email: `the email configured in `SYMPTOSENSE_ADMIN_EMAIL`` (fixed; conflicting legacy `SYMPTOSENSE_ADMIN_EMAIL` values are ignored).
 - No Admin account is created if that row is missing.
 - New ordinary accounts default to `role=user`.
 - `/admin` and all `/api/admin/*` permissions are checked server-side.
@@ -90,7 +90,7 @@ Using disposable SQLite databases (never the production database):
 
 ## Production limitation
 
-The uploaded project ZIP does not contain the Railway production database or the live browser session. Therefore this workspace cannot truthfully verify that `remasalsolami2020@gmail.com` exists in the live Railway database or perform a real login with that account.
+The uploaded project ZIP does not contain the Railway production database or the live browser session. Therefore this workspace cannot truthfully verify that `the email configured in `SYMPTOSENSE_ADMIN_EMAIL`` exists in the live Railway database or perform a real login with that account.
 
 The deployed code is intentionally fail-safe: if the existing owner row is missing, it does not create a replacement account and Admin access remains forbidden.
 

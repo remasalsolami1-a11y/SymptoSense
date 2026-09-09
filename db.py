@@ -14,15 +14,14 @@ DB_PATH = os.environ.get("DB_PATH", "symptosense.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL)
 
-# The project owner account is fixed by the project owner's explicit request.
-# This value is an account identifier, not a credential; no password/token is
-# stored in code. A stale deployment environment override must never silently
-# assign Admin access to a different account.
-OWNER_ADMIN_EMAIL = "remasalsolami2020@gmail.com"
-_legacy_admin_email_override = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "").strip().lower()
-if _legacy_admin_email_override and _legacy_admin_email_override != OWNER_ADMIN_EMAIL:
-    _logger = logging.getLogger("SymptoSense")
-    _logger.warning("Ignoring conflicting legacy SYMPTOSENSE_ADMIN_EMAIL override; fixed project-owner Admin account remains authoritative")
+# Project-owner Admin identity is deployment configuration, never source code.
+# Fail closed when it is not configured: no ordinary account is silently
+# promoted to Admin. Set SYMPTOSENSE_ADMIN_EMAIL in Railway/production.
+OWNER_ADMIN_EMAIL = os.environ.get("SYMPTOSENSE_ADMIN_EMAIL", "").strip().lower()
+if not OWNER_ADMIN_EMAIL:
+    logging.getLogger("SymptoSense").warning(
+        "SYMPTOSENSE_ADMIN_EMAIL is not configured; owner-only Admin access is disabled."
+    )
 
 PH = "%s" if USE_POSTGRES else "?"
 
