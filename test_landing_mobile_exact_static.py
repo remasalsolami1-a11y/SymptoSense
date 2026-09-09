@@ -18,7 +18,8 @@ def test_mobile_landing_uses_current_competition_structure():
         'Your Health, Smarter',
         'افهم أعراضك.<br>اعرف خطوتك التالية.',
         'Understand your symptoms.<br>Know your next step.',
-        'اختر اللغة / <span lang="en">Choose language</span>',
+        '<span lang="ar" dir="rtl">اختر اللغة</span>',
+        '<span lang="en">Choose language</span>',
         '🇸🇦',
         '🇬🇧',
         'first-lang-benefits',
@@ -56,6 +57,12 @@ def test_mobile_landing_is_safari_safe_and_compact():
     assert '<meta name="theme-color" content="#F8FCFF">' in block
     assert "history.scrollRestoration = 'manual'" in block
     assert 'body.ss-welcome-page .ss-bnav' in TEXT
+    # The landing is structurally bare now: hidden app chrome is not shipped in its HTML.
+    page_start = TEXT.index('def _page(')
+    page_end = TEXT.index('\n\n# ---------------------------------------------------------------- landing', page_start)
+    page_block = TEXT[page_start:page_end]
+    assert 'if bare:' in page_block
+    assert '<body>{body}</body>' in page_block
 
 
 def test_landing_language_behaviour_preserved():
