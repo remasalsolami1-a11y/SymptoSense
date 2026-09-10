@@ -44,7 +44,7 @@ DEFAULT_ALLOWED_DOMAINS = {
     "mayoclinic.org", "medlineplus.gov", "nih.gov",
 }
 
-_READY = False
+_READY_KEY = None
 _LOCK = threading.Lock()
 
 
@@ -106,11 +106,13 @@ def _columns(c, table):
 
 def init_schema():
     """Create the knowledge schema and idempotently load the verified starter set."""
-    global _READY
-    if _READY:
+    global _READY_KEY
+    current_key = db._database_identity()
+    if _READY_KEY == current_key:
         return
     with _LOCK:
-        if _READY:
+        current_key = db._database_identity()
+        if _READY_KEY == current_key:
             return
         db.init_db()
         conn = db._conn()
@@ -208,7 +210,9 @@ def init_schema():
                     c.execute(f"ALTER TABLE mk_red_flags ADD COLUMN {col} {ddl}")
             _seed(c)
             conn.commit()
-            _READY = True
+            # Recompute after initialization because a newly created SQLite
+            # database gains an inode. A failed initialization is never cached.
+            _READY_KEY = db._database_identity()
         finally:
             conn.close()
 

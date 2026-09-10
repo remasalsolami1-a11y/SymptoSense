@@ -816,7 +816,7 @@ def _urgent_result(bundle, lang):
         "recommendations": [], "danger_signs": reason_text,
         "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
         "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
-        "simple_explanation": "The priority is safety and timely medical assessment when needed. This result does not establish a diagnosis.",
+        "simple_explanation": "The priority is safety and urgent medical assessment. This result does not establish a diagnosis.",
         "confidence": "high", "urgency": "high", "urgency_text": "Urgent",
     }
 

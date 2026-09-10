@@ -3251,13 +3251,9 @@ L = {
         "home_btn_start": "ابدأ الفحص الآن 🚀",
         "home_btn_blood": "تحليل فحص الدم 📋",
         "home_features_title": "اختر ما تحتاج 🧰",
-        "home_f_t": "فحص الأعراض", "home_f_p": "أدخل أعراضك واحصل على تقييم أولي ذكي مع خطورة الحالة (بسيط / موعد / طوارئ).",
-        "home_b_t": "تحليل فحص الدم", "home_b_p": "ارفع صورة أو PDF لتحليل الدم (CBC) واحصل على تفسير القيم والمؤشرات.",
-        "home_m_t": "البحث عن دواء", "home_m_p": "تحذيرات الأدوية والتفاعلات وإرشادات الاستخدام الآمن.",
         "home_h_t": "أقرب مستشفى", "home_h_p": "بناءً على موقعك، نعرض لك أقرب المرافق الصحية بالمسافة ورابط الخريطة.",
         "home_q_t": "أسئلة لطبيبك", "home_q_p": "أسئلة ذكية جاهزة تسألها لطبيبك في الموعد، مع علامات الخطر ومتى تراجع.",
         "home_fa_t": "الإسعافات الأولية", "home_fa_p": "خطوات سريعة واضحة للحالات الطارئة اليومية.",
-        "home_calc_t": "الحاسبات الصحية", "home_calc_p": "احسب مؤشرات صحية شائعة (BMI، السعرات، السكر وغيرها) بنتائج مبسطة.",
         "home_t_t": "نصائح صحية", "home_t_p": "نصائح يومية عملية لصحة أفضل لك ولعائلتك.",
         "home_r_t": "استرخاء وتنفس", "home_r_p": "تمارين تنفس وهدوء لتخفيف التوتر والقلق.",
         "home_e_t": "أرقام الطوارئ", "home_e_p": "أرقام مهمة جاهزة للحالات الطارئة (997، 911، 937...).",
@@ -3620,13 +3616,9 @@ L = {
         "home_btn_start": "Start the check now 🚀",
         "home_btn_blood": "Blood test analysis 📋",
         "home_features_title": "What do you need? 🧰",
-        "home_f_t": "Symptom Check", "home_f_p": "Enter your symptoms and get an initial smart assessment with urgency level (Mild / Appointment / Emergency).",
-        "home_b_t": "Blood Test Analysis", "home_b_p": "Upload a photo or PDF of your CBC and get an interpretation of values and indicators.",
-        "home_m_t": "Medication Check", "home_m_p": "Medication warnings, interactions, and safe-use guidance.",
         "home_h_t": "Nearest Hospital", "home_h_p": "Based on your location, we show the nearest health facilities with distance and a map link.",
         "home_q_t": "Questions for Your Doctor", "home_q_p": "Ready smart questions to ask your doctor, with danger signs and when to follow up.",
         "home_fa_t": "First Aid", "home_fa_p": "Clear, quick steps for everyday emergencies.",
-        "home_calc_t": "Health Calculators", "home_calc_p": "Compute common health metrics (BMI, calories, sugar & more) with simple results.",
         "home_t_t": "Health Tips", "home_t_p": "Practical daily tips for better health for you and your family.",
         "home_r_t": "Relaxation & Breathing", "home_r_p": "Breathing and calm exercises to relieve stress and anxiety.",
         "home_e_t": "Emergency Numbers", "home_e_p": "Important numbers ready for emergencies (997, 911, 937...).",
@@ -6422,7 +6414,7 @@ def chat_page():
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
     }
-    function focusStepQuestion(msg, answerOverride) {
+    function focusStepQuestion(msg, answerOverride, kickerOverride) {
       if (bodyEl.classList.contains('result-mode')) return addQ(msg);
       // Every new questionnaire step starts with a clean input state.
       // This prevents an old placeholder (for example allergies/medications)
@@ -6434,7 +6426,7 @@ def chat_page():
       card.className = 'step-focus-card';
       const kicker = document.createElement('div');
       kicker.className = 'step-focus-kicker';
-      kicker.textContent = LANG === 'ar' ? 'السؤال الحالي' : 'Current question';
+      kicker.textContent = kickerOverride || (LANG === 'ar' ? 'السؤال الحالي' : 'Current question');
       const q = document.createElement('div');
       q.className = 'step-focus-question';
       q.textContent = msg;
@@ -6906,8 +6898,13 @@ def chat_page():
         if (!d.ok || d.done || !d.question || !d.symptom_slug) { showDataQualityGate(); return; }
         differentialCount += 1;
         differentialAsked.push(d.symptom_slug);
-        addHtml('<div class="adaptive-step">'+esc(LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more')+'</div>','bot');
-        addQ('🩺 ' + d.question);
+        // Keep one clear current-question card. Appending adaptive prompts below
+        // the previous question made the flow look stuck on desktop and mobile.
+        focusStepQuestion(
+          '🩺 ' + d.question,
+          undefined,
+          LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more'
+        );
         showOpts([
           {label:TT('clar_yes'), fn:function(){
             add(TT('clar_yes'),'user');
@@ -7271,7 +7268,7 @@ def chat_page():
       if(!q) return '';
       const pct=Math.max(0,Math.min(100,parseInt(q.score||0)));
       const levelIcon=q.level==='excellent'?'🟢':(q.level==='good'?'🟡':(q.level==='limited'?'🟠':'🔴'));
-      let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'جودة المعلومات':'Data Quality')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
+      let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
       if(!compact){
         h+='<div class="dq-grid">'+(q.fields||[]).map(function(f){const icon=f.status==='provided'?'✅':(f.status==='needs_clarification'?'⚠️':'⚠️');const cls=f.status==='provided'?'':(f.status==='needs_clarification'?' clarify':' missing');return '<div class="dq-item'+cls+'">'+icon+' <b>'+esc(f.label)+'</b><div class="muted">'+esc(f.required?(LANG==='ar'?'مطلوب':'Required'):(LANG==='ar'?'موصى به':'Recommended'))+'</div></div>';}).join('')+'</div>';
       }
@@ -7300,7 +7297,7 @@ def chat_page():
         const opts=[{label:'🩺 '+(LANG==='ar'?'تحليل الأعراض':'Analyze symptoms'),fn:function(){runAnalysis();}}];
         if(missing.length) opts.push({label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}});
         showOpts(opts);
-      }catch(e){ if(String(e.message)!=='consent_required'){ add(LANG==='ar'?'تعذر حساب جودة المعلومات الآن. يمكنك متابعة الأسئلة ثم المحاولة مرة أخرى.':'Unable to calculate data quality right now. Continue the questions and try again.','bot'); showOpts([{label:'🔄 '+(LANG==='ar'?'إعادة المحاولة':'Try again'),fn:showDataQualityGate}]); } }
+      }catch(e){ if(String(e.message)!=='consent_required'){ add(LANG==='ar'?'تعذر حساب اكتمال المعلومات الآن. يمكنك متابعة الأسئلة ثم المحاولة مرة أخرى.':'Unable to calculate information completeness right now. Continue the questions and try again.','bot'); showOpts([{label:'🔄 '+(LANG==='ar'?'إعادة المحاولة':'Try again'),fn:showDataQualityGate}]); } }
     }
     function improveDataQuality(q){
       clearOpts();
@@ -7321,7 +7318,10 @@ def chat_page():
       trackJourney(state.previous_record_id ? 'reanalyze' : 'analysis');
       hideText();
       clearOpts();
-      add(TT('analyzing'), 'bot');
+      const analyzingBubble = add(TT('analyzing'), 'bot');
+      const finishAnalysisLoading = function(){
+        if (analyzingBubble && analyzingBubble.isConnected) analyzingBubble.remove();
+      };
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
@@ -7354,6 +7354,7 @@ def chat_page():
           clearTimeout(analysisTimer);
         }
         const d = await r.json();
+        finishAnalysisLoading();
         if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
         if (d.ok) {
           trackJourney('result');
@@ -7374,7 +7375,10 @@ def chat_page():
           }
         }
         else add(TT('err') + (d.error||'?'), 'bot');
-      } catch(e) { add(TT('conn_err'), 'bot'); }
+      } catch(e) {
+        finishAnalysisLoading();
+        add(TT('conn_err'), 'bot');
+      }
     }
     function showEmergency(d) {
       lastResult = d;
@@ -7397,8 +7401,18 @@ def chat_page():
     }
     function showIncompleteResult(d) {
       lastResult=d;
-      const title = LANG==='ar'?'🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق':'🧠 Not Enough Information';
-      const intro = LANG==='ar'?'لن يعرض SymptoSense احتمالًا طبيًا عندما لا تكون المعلومات أو المطابقة الموثوقة كافية.':'SymptoSense will not show a medical possibility when the information or grounded match is insufficient.';
+      const quality = d.data_quality || lastDataQuality || {};
+      const inputComplete = quality.sufficient === true || Number(quality.required_completion) === 100;
+      const title = inputComplete
+        ? (LANG==='ar'?'🧠 لم نجد مطابقة طبية موثوقة كافية':'🧠 No sufficiently grounded medical match')
+        : (LANG==='ar'?'🧠 نحتاج معلومات إضافية لإجراء تقييم موثوق':'🧠 More information is needed');
+      const intro = inputComplete
+        ? (LANG==='ar'
+            ? 'بياناتك الأساسية مكتملة، لكن قاعدة المعرفة لم تجد مطابقة طبية موثوقة كافية لعرض احتمال محدد. هذا لا يعني وجود مشكلة في إدخالك.'
+            : 'Your required information is complete, but the knowledge base did not find a sufficiently grounded medical match to show a specific possibility. This does not mean your input was incorrect.')
+        : (LANG==='ar'
+            ? 'لن يعرض SymptoSense احتمالًا طبيًا قبل اكتمال المعلومات الأساسية أو توفر مطابقة موثوقة.'
+            : 'SymptoSense will not show a medical possibility until the required information is complete or a grounded match is available.');
       const needed=(d.needed_information||[]).filter(Boolean);
       add(title, 'bot');
       let msg='<div class="v2-low-confidence-card"><p>'+esc(intro)+'</p>'+(needed.length?'<b>'+(LANG==='ar'?'معلومات إضافية مطلوبة:':'Additional information needed:')+'</b><ul>'+needed.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
@@ -7596,7 +7610,7 @@ def chat_page():
       const hasQScore = Number.isFinite(qScoreRaw);
       const qScore = hasQScore ? Math.max(0, Math.min(100, Math.round(qScoreRaw))) : null;
       const qLabel = (qScore === 100 || Number(q.required_completion) === 100)
-        ? (LANG === 'ar' ? 'المعلومات المطلوبة مكتملة' : 'Required information complete')
+        ? (LANG === 'ar' ? 'المدخلات الأساسية مكتملة' : 'Required inputs complete')
         : (q.level_label || '');
       const recs = (d.recommendations || []).filter(function(r){ return r && (r.tip || r.title); });
       const summaryRec = recs.length ? (recs[0].title || recs[0].tip) : (d.triage_label || d.risk_label || riskValue);
@@ -7613,7 +7627,7 @@ def chat_page():
         + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>'
         + '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
       if (hasQScore) {
-        h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'جودة المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
+        h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
       }
       if (summaryRec) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
       h += '</section>';
@@ -11363,7 +11377,7 @@ def analysis_detail_page(record_id):
     if isinstance(dq,dict) and dq.get('score') is not None:
         score=max(0,min(100,int(round(float(dq.get('score') or 0)))))
         level=escape(str(dq.get('level_label') or dq.get('level') or ''))
-        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'جودة المعلومات' if ar else 'Data Quality'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
+        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'اكتمال المعلومات المدخلة' if ar else 'Information completeness'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
     xai=result.get('explainability') or {}
     xai_html=''
     if isinstance(xai,dict) and xai:
@@ -14382,7 +14396,7 @@ def _pdf_report(result, lang="ar"):
 
     labels = ({
         "title":"تقرير تحليل الأعراض", "subtitle":"SymptoSense - ملخص صحي توعوي",
-        "summary":"نتيجة التحليل", "risk":"مستوى الخطورة", "quality":"جودة المعلومات المدخلة",
+        "summary":"نتيجة التحليل", "risk":"مستوى الخطورة", "quality":"اكتمال المعلومات المدخلة",
         "entered":"المعلومات المدخلة", "symptoms":"الأعراض", "duration":"المدة", "severity":"شدة الأعراض",
         "age":"العمر", "gender":"الجنس", "conditions":"الاحتمالات المحتملة", "now":"ماذا أفعل الآن؟",
         "warnings":"علامات تستدعي الانتباه", "home":"الرعاية المنزلية", "doctor":"أسئلة للطبيب",
