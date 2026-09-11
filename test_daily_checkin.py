@@ -15,10 +15,6 @@ import privacy_features  # noqa: E402
 
 class DailyCheckinRegressionTest(unittest.TestCase):
     def setUp(self):
-        self.original_database_url = db.DATABASE_URL
-        self.original_use_postgres = db.USE_POSTGRES
-        self.original_ph = db.PH
-        self.original_db_path = db.DB_PATH
         self.tmp = tempfile.TemporaryDirectory(prefix="symptosense-checkin-")
         self.path = str(Path(self.tmp.name) / "checkin.sqlite3")
         db.DATABASE_URL = ""
@@ -30,12 +26,6 @@ class DailyCheckinRegressionTest(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
-        db.DATABASE_URL = self.original_database_url
-        db.USE_POSTGRES = self.original_use_postgres
-        db.PH = self.original_ph
-        db.DB_PATH = self.original_db_path
-        db._DB_READY_KEY = None
-        db._CHECKIN_SCHEMA_READY_KEY = None
 
     def test_one_record_per_user_per_day_updates_in_place(self):
         db.init_db()

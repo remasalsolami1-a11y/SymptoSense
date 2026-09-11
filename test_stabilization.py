@@ -10,8 +10,7 @@ from pathlib import Path
 
 _TEMP=tempfile.TemporaryDirectory(prefix="symptosense-stabilization-")
 os.environ.pop("DATABASE_URL",None)
-_STABILIZATION_DB_PATH=str(Path(_TEMP.name)/"stabilization.sqlite3")
-os.environ["DB_PATH"]=_STABILIZATION_DB_PATH
+os.environ["DB_PATH"]=str(Path(_TEMP.name)/"stabilization.sqlite3")
 os.environ["WEB_SECRET"]="stabilization-test-secret-more-than-32-characters"
 os.environ["SITE_URL"]="http://localhost"
 os.environ["SESSION_COOKIE_SECURE"]="0"
@@ -21,7 +20,6 @@ import medical_knowledge
 import medication_push
 import medication_warnings
 import platform_v2
-import privacy_features
 import analysis_core
 import advanced_features
 import webapp
@@ -41,29 +39,8 @@ class StabilizationTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._original_db_config=(db.DB_PATH,db.DATABASE_URL,db.USE_POSTGRES,db.PH)
-        db.DB_PATH=_STABILIZATION_DB_PATH
-        db.DATABASE_URL=""
-        db.USE_POSTGRES=False
-        db.PH="?"
-        for module,attribute in (
-            (medical_knowledge,"_READY_KEY"),
-            (platform_v2,"_SCHEMA_KEY"),
-            (privacy_features,"_SCHEMA_READY_KEY"),
-        ):
-            if hasattr(module,attribute): setattr(module,attribute,None)
         webapp.app.config.update(TESTING=True)
         db.init_db(); medical_knowledge.init_schema(); medication_push.init_schema(); medication_warnings.init_schema(); platform_v2.init_schema()
-
-    @classmethod
-    def tearDownClass(cls):
-        db.DB_PATH,db.DATABASE_URL,db.USE_POSTGRES,db.PH=cls._original_db_config
-        for module,attribute in (
-            (medical_knowledge,"_READY_KEY"),
-            (platform_v2,"_SCHEMA_KEY"),
-            (privacy_features,"_SCHEMA_READY_KEY"),
-        ):
-            if hasattr(module,attribute): setattr(module,attribute,None)
 
     def client(self,lang="en"):
         c=webapp.app.test_client(); c.set_cookie("lang",lang,domain="localhost"); return c
@@ -108,7 +85,7 @@ class StabilizationTest(unittest.TestCase):
         self.assertEqual(response.headers.get("Cache-Control"), "public, max-age=604800")
         response.close()
 
-    def test_csp_is_enforced(self):
+    def test_csp_starts_in_report_only_mode(self):
         response = self.client("en").get("/home")
         policy = response.headers.get("Content-Security-Policy", "")
         self.assertIn("default-src 'self'", policy)
@@ -156,8 +133,10 @@ class StabilizationTest(unittest.TestCase):
         for term,lang in [("صداع","ar"),("headache","en")]:
             payload=c.get("/api/search",query_string={"q":term,"lang":lang}).get_json()
             self.assertTrue(payload["ok"]); self.assertTrue(payload["result"]); self.assertTrue(payload["result"].get("sources"))
-        unknown=c.get("/api/search",query_string={"q":"not-in-medical-kb","lang":"en"}).get_json()["result"]
-        self.assertTrue(unknown.get("query_only")); self.assertEqual(unknown.get("sources"),[])
+        no_match=c.get("/api/search",query_string={"q":"not-in-medical-kb","lang":"en"}).get_json()
+        self.assertTrue(no_match["ok"])
+        self.assertEqual(no_match["result"].get("key"),"free_health_query")
+        self.assertEqual(no_match["result"].get("sources"),[])
         self.assertTrue(c.get("/api/search",query_string={"q":"","lang":"en"}).get_json()["suggestions"])
 
     def test_medication_database_search_and_reminder_crud(self):
@@ -214,7 +193,7 @@ class StabilizationTest(unittest.TestCase):
             self.assertIn(name,html)
             self.assertIn('class="au-inline-visual"',html)
             self.assertIn('class="au-story-map"',html)
-            self.assertIn('data:image/webp;base64,',html)
+            self.assertIn('au-live-frame',html)
             self.assertNotIn('/static/images/about-hero.webp',html)
             self.assertNotIn('/static/images/about-story.webp',html)
             self.assertNotIn('/icons/about-us-phone.webp',html)
@@ -248,7 +227,7 @@ class StabilizationTest(unittest.TestCase):
             self.assertIn("--ss-space-8:64px",html)
             self.assertIn("@media(max-width:1180px)",html)
             self.assertIn("@media(min-width:1181px)",html)
-            self.assertIn('class="ss-home-hero"',html)
+            self.assertIn('class="ss-hero-demo"',html)
             self.assertNotIn('/static/images/about-hero.webp',html)
             self.assertIn('class="ss-trust-row"',html)
             self.assertNotIn('SymptoSense V2</span>',html)
@@ -310,7 +289,7 @@ class StabilizationTest(unittest.TestCase):
         self.assertIn("[۰-۹]",html)
         self.assertIn("document.body.classList.add('ss-chat-page')",html)
         self.assertIn("state.step === 'age' ? 'numeric'",html)
-        self.assertIn("body.ss-chat-page .asst-fab",webapp.PREMIUM_POLISH_CSS)
+        self.assertIn("body.ss-chat-page .asst-fab",webapp.BASE_CSS + webapp.V2_CSS + webapp.PREMIUM_POLISH_CSS)
         self.assertIn("تم اعتماد وصفك كما كتبته",html)
         self.assertIn("concat([raw])",html)
 
@@ -352,7 +331,7 @@ class StabilizationTest(unittest.TestCase):
 
     def test_analysis_and_reminder_idor_is_denied(self):
         owner_id=self.verified_user("idor-owner@example.test"); attacker_id=self.verified_user("idor-attacker@example.test")
-        owner_key=f"account-{owner_id}"; record_id=db.save_record(owner_key,"en",30,"female",["headache"],"1 day",2,"low")
+        owner_key=f"account:{owner_id}"; record_id=db.save_record(owner_key,"en",30,"female",["headache"],"1 day",2,"low")
         db.save_result(owner_key,record_id,{"symptoms":["headache"],"risk_level":"low"})
         attacker=self.client(); self.login_session(attacker,attacker_id)
         self.assertEqual(attacker.get(f"/api/analysis/{record_id}").status_code,404)
