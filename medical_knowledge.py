@@ -44,6 +44,11 @@ DEFAULT_ALLOWED_DOMAINS = {
     "mayoclinic.org", "medlineplus.gov", "nih.gov",
 }
 
+# Keyed by db._database_identity() rather than a plain boolean so that a
+# different/replaced database within the same process (e.g. isolated test
+# suites each pointing at their own SQLite file) is detected and its schema
+# is (re)created instead of being silently skipped. See db.py's _DB_READY_KEY
+# for the same pattern.
 _READY_KEY = None
 _LOCK = threading.Lock()
 
@@ -210,8 +215,6 @@ def init_schema():
                     c.execute(f"ALTER TABLE mk_red_flags ADD COLUMN {col} {ddl}")
             _seed(c)
             conn.commit()
-            # Recompute after initialization because a newly created SQLite
-            # database gains an inode. A failed initialization is never cached.
             _READY_KEY = db._database_identity()
         finally:
             conn.close()
@@ -572,6 +575,43 @@ def normalize_symptoms(raw_symptoms, lang="ar", conn=None):
             seen.add(item["id"])
             found.append({"symptom_id":item["id"],"slug":item["slug"],"name_ar":item["name_ar"],"name_en":item["name_en"],"original":str(original),"matched_alias":alias})
     return {"canonical":found,"unmatched":unmatched}
+
+
+def suggest_similar_symptoms(text, lang="ar", limit=3, conn=None):
+    """Return up to `limit` known symptoms whose name/aliases are closest to
+    free-text `text` that did not match anything in normalize_symptoms().
+
+    This is a soft "did you mean" convenience only: it never blocks analysis
+    and never auto-selects anything on its own. A lower similarity floor than
+    normalize_symptoms() is used on purpose, since here we want plausible
+    nearby options for the user to pick from, not an automatic match.
+    """
+    text_norm = _normalize_text(text)
+    if not text_norm:
+        return []
+    symptoms = _fetch_symptoms(True, conn=conn)
+    scored = {}
+    for item in symptoms:
+        display = item["name_ar"] if lang == "ar" else item["name_en"]
+        if not display:
+            continue
+        aliases = [item["name_ar"], item["name_en"], item["slug"].replace("-", " ")] + item["aliases_ar"] + item["aliases_en"]
+        best_ratio = 0.0
+        for alias in aliases:
+            alias_norm = _normalize_text(alias)
+            if not alias_norm:
+                continue
+            ratio = difflib.SequenceMatcher(None, text_norm, alias_norm).ratio()
+            if alias_norm in text_norm or text_norm in alias_norm:
+                ratio = max(ratio, 0.6)
+            if ratio > best_ratio:
+                best_ratio = ratio
+        if best_ratio >= 0.4:
+            prev = scored.get(item["id"])
+            if prev is None or best_ratio > prev[0]:
+                scored[item["id"]] = (best_ratio, display, item["slug"])
+    ranked = sorted(scored.values(), key=lambda x: x[0], reverse=True)[:limit]
+    return [{"label": label, "slug": slug} for _ratio, label, slug in ranked]
 
 
 def _source_rows_for_disease(c, disease_id):

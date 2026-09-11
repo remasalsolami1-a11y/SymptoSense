@@ -816,7 +816,7 @@ def _urgent_result(bundle, lang):
         "recommendations": [], "danger_signs": reason_text,
         "when_to_seek_care": "\n".join(actions[:3]) if actions else default_action,
         "home_care": "", "medication_guidance": "", "questions_for_doctor": "",
-        "simple_explanation": "The priority is safety and urgent medical assessment. This result does not establish a diagnosis.",
+        "simple_explanation": "The priority right now is safety and urgent, timely medical assessment. This result does not establish a diagnosis.",
         "confidence": "high", "urgency": "high", "urgency_text": "Urgent",
     }
 
@@ -1029,9 +1029,28 @@ def assess_data_quality(patient, lang="ar", bundle=None):
             "تم التعرف على عرض واحد على الأقل في قاعدة المعرفة.",
             "At least one symptom was recognized in the medical knowledge base.")
     elif raw_symptoms:
-        add("main_symptom", "العرض الرئيسي", "Main symptom", 30, True, "needs_clarification",
-            "تم إدخال عرض لكن يحتاج إلى صياغة أو تحديد أوضح.",
-            "A symptom was entered but needs clearer wording or selection.")
+        suggestions = []
+        try:
+            unmatched_terms = norm.get("unmatched") or raw_symptoms
+            for term in unmatched_terms:
+                for s in medical_knowledge.suggest_similar_symptoms(term, lang, limit=3):
+                    if s not in suggestions:
+                        suggestions.append(s)
+                if len(suggestions) >= 4:
+                    break
+        except Exception:
+            suggestions = []
+        fields.append({
+            "key": "main_symptom",
+            "label": "العرض الرئيسي" if ar else "Main symptom",
+            "weight": 30,
+            "required": True,
+            "status": "needs_clarification",
+            "provided": False,
+            "detail": ("تم إدخال عرض لكن يحتاج إلى صياغة أو تحديد أوضح." if ar else
+                       "A symptom was entered but needs clearer wording or selection."),
+            "suggestions": suggestions[:4],
+        })
     else:
         add("main_symptom", "العرض الرئيسي", "Main symptom", 30, True, "missing")
 
@@ -1073,7 +1092,10 @@ def assess_data_quality(patient, lang="ar", bundle=None):
     required_completion = int(round(req_earned * 100 / req_total))
     recommended_completion = int(round(rec_earned * 100 / rec_total))
 
-    sufficient = all(x["status"] == "provided" for x in required)
+    sufficient = all(
+        x["status"] == "provided" or (x["key"] == "main_symptom" and x["status"] == "needs_clarification")
+        for x in required
+    )
     level = "excellent" if score >= 90 else ("good" if score >= 70 else ("limited" if score >= 50 else "insufficient"))
     labels = {
         "ar": {"excellent": "ممتاز", "good": "جيد", "limited": "محدود", "insufficient": "غير كافٍ"},

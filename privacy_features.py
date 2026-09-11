@@ -12,7 +12,6 @@ import io
 import json
 import os
 import secrets
-import threading
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -28,8 +27,9 @@ except (TypeError, ValueError):
 _EPHEMERAL_CONSENT_SECRET = secrets.token_bytes(32)
 # This project does not currently train/fine-tune an AI model from user health records.
 AI_IMPROVEMENT_ACTIVE = False
-_SCHEMA_READY_KEY = None
-_SCHEMA_LOCK = threading.Lock()
+# Keyed by db._database_identity() (see medical_knowledge.py / db.py for the
+# same pattern) so a different database within the same process is detected.
+_SCHEMA_READY = None
 
 
 def _now():
@@ -55,27 +55,21 @@ def _rows(c):
 
 
 def init_schema():
-    """Ensure privacy tables exist once per active database identity.
+    """Ensure privacy tables exist once per application process.
 
     The app initializes schemas at startup. Re-running the full database DDL on
     every consent/status request adds unnecessary production latency,
-    especially when PostgreSQL is hosted remotely. Keying the cache by the
-    actual database keeps that speed-up while safely supporting replaced local
-    databases and isolated test databases in the same process.
+    especially when PostgreSQL is hosted remotely.
     """
-    global _SCHEMA_READY_KEY
+    global _SCHEMA_READY
     current_key = db._database_identity()
-    if _SCHEMA_READY_KEY == current_key:
+    if _SCHEMA_READY == current_key:
         return
-    with _SCHEMA_LOCK:
-        current_key = db._database_identity()
-        if _SCHEMA_READY_KEY == current_key:
-            return
-        db.init_db()
-        conn = db._conn(); c = conn.cursor()
-        serial = "SERIAL PRIMARY KEY" if db.USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
-        try:
-            c.execute(f"""
+    db.init_db()
+    conn = db._conn(); c = conn.cursor()
+    serial = "SERIAL PRIMARY KEY" if db.USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    try:
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS ss_consent_state (
                 subject_hash TEXT PRIMARY KEY,
                 user_id INTEGER,
@@ -86,7 +80,7 @@ def init_schema():
                 updated_at TEXT NOT NULL
             )
         """)
-            c.execute(f"""
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS ss_consent_log (
                 id {serial}, subject_hash TEXT NOT NULL, user_id INTEGER,
                 consent_type TEXT NOT NULL, consent_status TEXT NOT NULL,
@@ -94,35 +88,35 @@ def init_schema():
                 timestamp TEXT NOT NULL
             )
         """)
-            c.execute("CREATE INDEX IF NOT EXISTS idx_consent_log_subject ON ss_consent_log(subject_hash,timestamp)")
-            c.execute(f"""
+        c.execute("CREATE INDEX IF NOT EXISTS idx_consent_log_subject ON ss_consent_log(subject_hash,timestamp)")
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS ss_privacy_events (
                 id {serial}, subject_hash TEXT NOT NULL, action TEXT NOT NULL,
                 metadata TEXT, timestamp TEXT NOT NULL
             )
         """)
-            c.execute("CREATE INDEX IF NOT EXISTS idx_privacy_events_time ON ss_privacy_events(timestamp)")
-            c.execute(f"""
+        c.execute("CREATE INDEX IF NOT EXISTS idx_privacy_events_time ON ss_privacy_events(timestamp)")
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS ss_handoff_links (
                 id {serial}, owner_hash TEXT NOT NULL, token_hash TEXT UNIQUE NOT NULL,
                 payload_json TEXT NOT NULL, created_at TEXT NOT NULL,
                 expires_at TEXT NOT NULL, revoked_at TEXT
             )
         """)
-            c.execute("CREATE INDEX IF NOT EXISTS idx_handoff_exp ON ss_handoff_links(expires_at)")
-            # Mark whether an analysis was eligible for optional health analytics at collection time.
-            if db.USE_POSTGRES:
-                c.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s", ("records",))
-                cols = {r[0] for r in c.fetchall()}
-            else:
-                c.execute("PRAGMA table_info(records)")
-                cols = {r[1] for r in c.fetchall()}
-            if "analytics_eligible" not in cols:
-                c.execute("ALTER TABLE records ADD COLUMN analytics_eligible INTEGER NOT NULL DEFAULT 0")
-            conn.commit()
-            _SCHEMA_READY_KEY = db._database_identity()
-        finally:
-            conn.close()
+        c.execute("CREATE INDEX IF NOT EXISTS idx_handoff_exp ON ss_handoff_links(expires_at)")
+        # Mark whether an analysis was eligible for optional health analytics at collection time.
+        if db.USE_POSTGRES:
+            c.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s", ("records",))
+            cols = {r[0] for r in c.fetchall()}
+        else:
+            c.execute("PRAGMA table_info(records)")
+            cols = {r[1] for r in c.fetchall()}
+        if "analytics_eligible" not in cols:
+            c.execute("ALTER TABLE records ADD COLUMN analytics_eligible INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+        _SCHEMA_READY = current_key
+    finally:
+        conn.close()
 
 
 def get_consent(subject_key: str, user_id=None) -> dict:

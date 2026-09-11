@@ -169,7 +169,7 @@ body.ss-accessibility{font-size:112%;line-height:1.75}body.ss-accessibility .btn
 .footer .f-brand,.footer .f-sec h4,.footer .f-love{color:var(--v2-blue-dark)!important}.footer .f-tag,.footer .f-sec p,.footer .f-copy{color:var(--v2-muted)!important}.footer a,.footer .f-links a,.footer .f-sec .f-owner{color:var(--v2-blue)!important}.footer .f-tg{background:var(--v2-blue)!important;color:#fff!important}
 .v2-symptom-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.v2-symptom-chip{display:inline-flex;align-items:center;min-height:34px;padding:6px 10px;border-radius:999px;background:var(--v2-sky);border:1px solid var(--v2-line);color:var(--v2-blue-dark);font-size:12px;font-weight:700}
 .v2-low-confidence-card{margin:12px 0;padding:15px;border:1px solid #cfe4f5;border-radius:15px;background:#f7fbff;color:#284764}.v2-low-confidence-card h3{color:#123B70;margin-bottom:7px}.v2-low-confidence-card ul{margin:8px 20px 0;line-height:1.8}
-.data-quality-card{margin:12px 0;padding:16px;border:1px solid #CFE3F2;border-radius:17px;background:#F8FCFF;color:#24445F}.dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}.dq-head>div:first-child{min-width:0}.dq-head>div:last-child{min-width:76px;max-width:110px;flex:none}.dq-score{font-size:23px;font-weight:900;color:#123B70;white-space:nowrap;direction:ltr;unicode-bidi:isolate;line-height:1.15}.dq-level{display:inline-flex;align-items:center;justify-content:center;max-width:100%;white-space:normal;word-break:normal;overflow-wrap:normal;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;line-height:1.35}.dq-track{height:9px;background:#E5EEF5;border-radius:999px;overflow:hidden;margin:11px 0}.dq-fill{height:100%;background:var(--v2-blue);border-radius:inherit;transition:width .28s ease}.dq-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dq-item{padding:8px 10px;border-radius:11px;background:#fff;border:1px solid #E1ECF3;font-size:12px}.dq-item.missing{background:#FFF9ED;border-color:#F6E3B2}.dq-item.clarify{background:#FFF4EA;border-color:#F5D2AE}.dq-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--v2-muted)}.xai-card{margin:13px 0;border:1px solid #D4E6F1;border-radius:17px;background:#fff;overflow:hidden}.xai-card summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:900;color:#123B70;background:#F7FBFE;display:flex;align-items:center;justify-content:space-between;gap:10px}.xai-card summary::-webkit-details-marker{display:none}.xai-body{padding:15px}.xai-basis{display:inline-flex;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;margin-bottom:10px}.xai-factor{padding:11px 0;border-bottom:1px solid #EDF2F6}.xai-factor:last-child{border-bottom:0}.xai-factor-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.xai-influence{font-size:10px;font-weight:900;border-radius:999px;padding:4px 8px;background:#F1F5F9;color:#475569}.xai-influence.high{background:#EAF5FC;color:#155D8B}.xai-influence.medium{background:#FFF7E6;color:#8A5A00}.xai-influence.low{background:#F1F5F9;color:#526477}.xai-detail{font-size:12px;color:var(--v2-muted);line-height:1.7;margin-top:5px}.xai-meter{display:inline-flex;gap:3px;align-items:center;margin-inline-start:7px}.xai-meter i{display:block;width:18px;height:5px;border-radius:999px;background:#DFE7ED}.xai-meter i.on{background:#6EAED3}.xai-note{margin-top:10px;padding:10px 11px;background:#F8FAFC;border-radius:11px;color:#526477;font-size:11px;line-height:1.7}@media(max-width:600px){.dq-grid{grid-template-columns:1fr}.dq-head{grid-template-columns:minmax(0,1fr) 82px;align-items:start}.dq-score{font-size:22px}.dq-level{font-size:10px;padding:5px 6px}.xai-factor-head{align-items:flex-start;flex-direction:column}}.v2-emergency-card{background:var(--v2-red-bg);border:1px solid #F2CACA;border-inline-start:4px solid var(--v2-red);border-radius:16px;padding:16px;margin:12px 0;color:#713434}.v2-emergency-card h3{color:var(--v2-red);font-size:17px;margin-bottom:7px}.v2-emergency-card strong{display:block;color:#713434;margin-top:10px}.v2-emergency-card p{margin:4px 0;line-height:1.75}
+.data-quality-card{margin:12px 0;padding:16px;border:1px solid #CFE3F2;border-radius:17px;background:#F8FCFF;color:#24445F}.dq-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}.dq-head>div:first-child{min-width:0}.dq-head>div:last-child{min-width:76px;max-width:110px;flex:none}.dq-score{font-size:23px;font-weight:900;color:#123B70;white-space:nowrap;direction:ltr;unicode-bidi:isolate;line-height:1.15}.dq-level{display:inline-flex;align-items:center;justify-content:center;max-width:100%;white-space:normal;word-break:normal;overflow-wrap:normal;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;line-height:1.35}.dq-track{height:9px;background:#E5EEF5;border-radius:999px;overflow:hidden;margin:11px 0}.dq-fill{height:100%;background:var(--v2-blue);border-radius:inherit;transition:width .28s ease}.dq-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dq-item{padding:8px 10px;border-radius:11px;background:#fff;border:1px solid #E1ECF3;font-size:12px}.dq-item.missing{background:#FFF9ED;border-color:#F6E3B2}.dq-item.clarify{background:#FFF4EA;border-color:#F5D2AE}.dq-item-detail{margin-top:4px;font-size:11px;line-height:1.6;color:#6B7C8C}.dq-suggest{margin-top:8px;font-size:11px;color:#6B7C8C}.dq-chip{display:inline-block;margin:4px 4px 0 0;padding:4px 10px;border-radius:999px;border:1px solid #CFE3F2;background:#fff;color:#155D8B;font-size:11px;font-weight:700;cursor:pointer}.dq-chip:hover{background:#EAF5FC}.dq-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--v2-muted)}.dq-safe-note{margin-top:8px;padding:8px 10px;border-radius:11px;background:#F0F9F0;color:#2E6B3E;font-size:11px;font-weight:700}.xai-card{margin:13px 0;border:1px solid #D4E6F1;border-radius:17px;background:#fff;overflow:hidden}.xai-card summary{cursor:pointer;list-style:none;padding:15px 16px;font-weight:900;color:#123B70;background:#F7FBFE;display:flex;align-items:center;justify-content:space-between;gap:10px}.xai-card summary::-webkit-details-marker{display:none}.xai-body{padding:15px}.xai-basis{display:inline-flex;padding:5px 9px;border-radius:999px;background:#EAF5FC;color:#225C86;font-size:11px;font-weight:800;margin-bottom:10px}.xai-factor{padding:11px 0;border-bottom:1px solid #EDF2F6}.xai-factor:last-child{border-bottom:0}.xai-factor-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.xai-influence{font-size:10px;font-weight:900;border-radius:999px;padding:4px 8px;background:#F1F5F9;color:#475569}.xai-influence.high{background:#EAF5FC;color:#155D8B}.xai-influence.medium{background:#FFF7E6;color:#8A5A00}.xai-influence.low{background:#F1F5F9;color:#526477}.xai-detail{font-size:12px;color:var(--v2-muted);line-height:1.7;margin-top:5px}.xai-meter{display:inline-flex;gap:3px;align-items:center;margin-inline-start:7px}.xai-meter i{display:block;width:18px;height:5px;border-radius:999px;background:#DFE7ED}.xai-meter i.on{background:#6EAED3}.xai-note{margin-top:10px;padding:10px 11px;background:#F8FAFC;border-radius:11px;color:#526477;font-size:11px;line-height:1.7}@media(max-width:600px){.dq-grid{grid-template-columns:1fr}.dq-head{grid-template-columns:minmax(0,1fr) 82px;align-items:start}.dq-score{font-size:22px}.dq-level{font-size:10px;padding:5px 6px}.xai-factor-head{align-items:flex-start;flex-direction:column}}.v2-emergency-card{background:var(--v2-red-bg);border:1px solid #F2CACA;border-inline-start:4px solid var(--v2-red);border-radius:16px;padding:16px;margin:12px 0;color:#713434}.v2-emergency-card h3{color:var(--v2-red);font-size:17px;margin-bottom:7px}.v2-emergency-card strong{display:block;color:#713434;margin-top:10px}.v2-emergency-card p{margin:4px 0;line-height:1.75}
 .v2-condition-card{border-inline-start:3px solid var(--v2-blue)!important}.v2-match-badge{margin-inline-start:auto;background:var(--v2-sky);color:var(--v2-blue-dark);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}.v2-match-list{display:grid;gap:5px;margin-top:8px}.v2-match-item{color:var(--v2-text);font-size:13px}
 .v2-redflag-card{background:var(--v2-red-bg)!important;border-color:#F2CACA!important;border-inline-start:3px solid var(--v2-red)!important}.v2-redflag-card .rec-head b{color:var(--v2-red)!important}.v2-safe-note{background:var(--v2-green-bg);border:1px solid #CDE7D8;border-radius:14px;padding:13px 15px;color:var(--v2-green);font-weight:700;margin:8px 0 14px}.v2-disclaimer{background:var(--v2-bg);border:1px solid var(--v2-line);border-radius:14px;padding:13px 15px;color:var(--v2-muted);font-size:12px;line-height:1.75;margin-top:16px;text-align:center}
 .v2-result-section-title{font-size:15px!important;color:var(--v2-blue-dark)!important;margin-top:18px!important;margin-bottom:8px!important}.v2-source-link{display:inline-flex;align-items:center;min-height:38px;margin-top:7px}
@@ -6414,7 +6414,7 @@ def chat_page():
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
     }
-    function focusStepQuestion(msg, answerOverride, kickerOverride) {
+    function focusStepQuestion(msg, answerOverride) {
       if (bodyEl.classList.contains('result-mode')) return addQ(msg);
       // Every new questionnaire step starts with a clean input state.
       // This prevents an old placeholder (for example allergies/medications)
@@ -6426,7 +6426,7 @@ def chat_page():
       card.className = 'step-focus-card';
       const kicker = document.createElement('div');
       kicker.className = 'step-focus-kicker';
-      kicker.textContent = kickerOverride || (LANG === 'ar' ? 'السؤال الحالي' : 'Current question');
+      kicker.textContent = LANG === 'ar' ? 'السؤال الحالي' : 'Current question';
       const q = document.createElement('div');
       q.className = 'step-focus-question';
       q.textContent = msg;
@@ -6898,13 +6898,8 @@ def chat_page():
         if (!d.ok || d.done || !d.question || !d.symptom_slug) { showDataQualityGate(); return; }
         differentialCount += 1;
         differentialAsked.push(d.symptom_slug);
-        // Keep one clear current-question card. Appending adaptive prompts below
-        // the previous question made the flow look stuck on desktop and mobile.
-        focusStepQuestion(
-          '🩺 ' + d.question,
-          undefined,
-          LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more'
-        );
+        addHtml('<div class="adaptive-step">'+esc(LANG==='ar'?'ساعدنا نفهم أكثر':'Help us understand more')+'</div>','bot');
+        addQ('🩺 ' + d.question);
         showOpts([
           {label:TT('clar_yes'), fn:function(){
             add(TT('clar_yes'),'user');
@@ -7270,9 +7265,11 @@ def chat_page():
       const levelIcon=q.level==='excellent'?'🟢':(q.level==='good'?'🟡':(q.level==='limited'?'🟠':'🔴'));
       let h='<div class="data-quality-card"><div class="dq-head"><div><b>📊 '+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</b><div class="muted" style="margin-top:3px">'+esc(q.meaning||'')+'</div></div><div style="text-align:center"><div class="dq-score">'+pct+'%</div><div class="dq-level">'+levelIcon+' '+esc(q.level_label||'')+'</div></div></div><div class="dq-track"><div class="dq-fill" style="width:'+pct+'%"></div></div>';
       if(!compact){
-        h+='<div class="dq-grid">'+(q.fields||[]).map(function(f){const icon=f.status==='provided'?'✅':(f.status==='needs_clarification'?'⚠️':'⚠️');const cls=f.status==='provided'?'':(f.status==='needs_clarification'?' clarify':' missing');return '<div class="dq-item'+cls+'">'+icon+' <b>'+esc(f.label)+'</b><div class="muted">'+esc(f.required?(LANG==='ar'?'مطلوب':'Required'):(LANG==='ar'?'موصى به':'Recommended'))+'</div></div>';}).join('')+'</div>';
+        h+='<div class="dq-grid">'+(q.fields||[]).map(function(f){const icon=f.status==='provided'?'✅':(f.status==='needs_clarification'?'⚠️':'⚠️');const cls=f.status==='provided'?'':(f.status==='needs_clarification'?' clarify':' missing');const detail=(f.status!=='provided'&&f.detail)?'<div class="dq-item-detail">'+esc(f.detail)+'</div>':'';const suggestions=(f.suggestions&&f.suggestions.length)?('<div class="dq-suggest">'+esc(LANG==='ar'?'ربما تقصد: ':'Did you mean: ')+f.suggestions.map(function(s){return '<button type="button" class="dq-chip" onclick="applySymptomSuggestion('+JSON.stringify(s.label)+')">'+esc(s.label)+'</button>';}).join('')+'</div>'):'';return '<div class="dq-item'+cls+'">'+icon+' <b>'+esc(f.label)+'</b><div class="muted">'+esc(f.required?(LANG==='ar'?'مطلوب':'Required'):(LANG==='ar'?'موصى به':'Recommended'))+'</div>'+detail+suggestions+'</div>';}).join('')+'</div>';
       }
-      h+='<div class="dq-meta"><span>'+esc(LANG==='ar'?'المطلوب مكتمل: ':'Required complete: ')+esc(String(q.required_completion||0))+'%</span><span>'+esc(LANG==='ar'?'السياق الموصى به: ':'Recommended context: ')+esc(String(q.recommended_completion||0))+'%</span></div></div>';
+      const clarifySym=(q.fields||[]).find(function(f){return f.key==='main_symptom' && f.status==='needs_clarification';});
+      const safeNote=(q.sufficient && clarifySym) ? '<div class="dq-safe-note">✅ '+esc(LANG==='ar'?'يمكن إجراء تحليل آمن، لكن العرض يحتاج توضيحًا.':'A safe analysis can be run, but the symptom needs clearer wording.')+'</div>' : '';
+      h+='<div class="dq-meta"><span>'+esc(LANG==='ar'?'المطلوب مكتمل: ':'Required complete: ')+esc(String(q.required_completion||0))+'%</span><span>'+esc(LANG==='ar'?'السياق الموصى به: ':'Recommended context: ')+esc(String(q.recommended_completion||0))+'%</span></div>'+safeNote+'</div>';
       return h;
     }
     async function fetchDataQuality(){
@@ -7282,6 +7279,11 @@ def chat_page():
       if(!r.ok||!d.ok) throw new Error(d.error||'quality_failed');
       lastDataQuality=d.data_quality; return d.data_quality;
     }
+    function applySymptomSuggestion(label){
+      state.symptoms = Array.from(new Set((state.symptoms||[]).concat([label])));
+      add((LANG==='ar'?'تمت إضافة: ':'Added: ')+label,'user');
+      showDataQualityGate();
+    }
     async function showDataQualityGate(){
       clearOpts(); hideText();
       add(LANG==='ar'?'أراجع اكتمال المعلومات قبل التحليل…':'Checking information completeness before analysis…','bot');
@@ -7290,7 +7292,9 @@ def chat_page():
         addHtml(dataQualityHtml(q,false),'bot');
         const missing=(q.missing||[]);
         if(!q.sufficient){
-          add(LANG==='ar'?'أكمل المعلومات المطلوبة أولًا. إذا ظهرت علامة خطر، ستظل طبقة الأمان لها الأولوية عند تشغيل التقييم.':'Please complete the required information first. If a red flag is present, the safety layer still takes priority when the assessment runs.','bot');
+          const symField=(q.fields||[]).find(function(f){return f.key==='main_symptom' && f.status!=='provided';});
+          const specific=symField && symField.detail ? symField.detail : (LANG==='ar'?'أكمل المعلومات المطلوبة أولًا.':'Please complete the required information first.');
+          add(specific+' '+(LANG==='ar'?'إذا ظهرت علامة خطر، ستظل طبقة الأمان لها الأولوية عند تشغيل التقييم.':'If a red flag is present, the safety layer still takes priority when the assessment runs.'),'bot');
           showOpts([{label:'➕ '+(LANG==='ar'?'تحسين معلوماتي':'Improve My Information'),fn:function(){improveDataQuality(q);}}]);
           return;
         }
@@ -7318,10 +7322,7 @@ def chat_page():
       trackJourney(state.previous_record_id ? 'reanalyze' : 'analysis');
       hideText();
       clearOpts();
-      const analyzingBubble = add(TT('analyzing'), 'bot');
-      const finishAnalysisLoading = function(){
-        if (analyzingBubble && analyzingBubble.isConnected) analyzingBubble.remove();
-      };
+      add(TT('analyzing'), 'bot');
       try {
         const payload = Object.assign({}, state, {lang: LANG});
         payload.member_id = state.member_id || 0;
@@ -7354,14 +7355,13 @@ def chat_page():
           clearTimeout(analysisTimer);
         }
         const d = await r.json();
-        finishAnalysisLoading();
         if (d.consent_required) { location.href=d.consent_url||'/consent?next=/chat'; return; }
         if (d.ok) {
           trackJourney('result');
           if (d.emergency) { showEmergency(d); }
           else {
             if (d.assessment_status === 'insufficient' || d.assessment_status === 'low_confidence' || d.low_confidence) {
-              showIncompleteResult(d);
+              renderResult(d);
             } else {
               renderResult(d);
               if (useSaved && profileMissing.length > 0 && userInfo && userInfo.profile) {
@@ -7375,10 +7375,7 @@ def chat_page():
           }
         }
         else add(TT('err') + (d.error||'?'), 'bot');
-      } catch(e) {
-        finishAnalysisLoading();
-        add(TT('conn_err'), 'bot');
-      }
+      } catch(e) { add(TT('conn_err'), 'bot'); }
     }
     function showEmergency(d) {
       lastResult = d;
@@ -7398,30 +7395,6 @@ def chat_page():
         try { const ta = document.createElement('textarea'); ta.value = num; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch(e) {}
         done();
       }
-    }
-    function showIncompleteResult(d) {
-      lastResult=d;
-      const quality = d.data_quality || lastDataQuality || {};
-      const inputComplete = quality.sufficient === true || Number(quality.required_completion) === 100;
-      const title = inputComplete
-        ? (LANG==='ar'?'🧠 لم نجد مطابقة طبية موثوقة كافية':'🧠 No sufficiently grounded medical match')
-        : (LANG==='ar'?'🧠 نحتاج معلومات إضافية لإجراء تقييم موثوق':'🧠 More information is needed');
-      const intro = inputComplete
-        ? (LANG==='ar'
-            ? 'بياناتك الأساسية مكتملة، لكن قاعدة المعرفة لم تجد مطابقة طبية موثوقة كافية لعرض احتمال محدد. هذا لا يعني وجود مشكلة في إدخالك.'
-            : 'Your required information is complete, but the knowledge base did not find a sufficiently grounded medical match to show a specific possibility. This does not mean your input was incorrect.')
-        : (LANG==='ar'
-            ? 'لن يعرض SymptoSense احتمالًا طبيًا قبل اكتمال المعلومات الأساسية أو توفر مطابقة موثوقة.'
-            : 'SymptoSense will not show a medical possibility until the required information is complete or a grounded match is available.');
-      const needed=(d.needed_information||[]).filter(Boolean);
-      add(title, 'bot');
-      let msg='<div class="v2-low-confidence-card"><p>'+esc(intro)+'</p>'+(needed.length?'<b>'+(LANG==='ar'?'معلومات إضافية مطلوبة:':'Additional information needed:')+'</b><ul>'+needed.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
-      addHtml(msg,'bot');
-      showOpts([
-        {label:'✏️ '+(LANG==='ar'?'إضافة معلومات':'Add information'), fn:function(){clearOpts();improveDataQuality(d.data_quality||lastDataQuality||{missing:[]});}},
-        {label:'📚 '+(LANG==='ar'?'عرض المصادر الموثوقة':'View trusted sources'), fn:function(){clearOpts();renderResult(d);}},
-        {label:'🩺 '+(LANG==='ar'?'عرض النتيجة الآمنة':'View safe result'), fn:function(){clearOpts();renderResult(d);}}
-      ]);
     }
     function reAnalyzeWithMoreInfo(previousD) {
       add(TT('incomplete_reanalyzing'), 'bot');
@@ -7610,7 +7583,7 @@ def chat_page():
       const hasQScore = Number.isFinite(qScoreRaw);
       const qScore = hasQScore ? Math.max(0, Math.min(100, Math.round(qScoreRaw))) : null;
       const qLabel = (qScore === 100 || Number(q.required_completion) === 100)
-        ? (LANG === 'ar' ? 'المدخلات الأساسية مكتملة' : 'Required inputs complete')
+        ? (LANG === 'ar' ? 'المعلومات المطلوبة مكتملة' : 'Required information complete')
         : (q.level_label || '');
       const recs = (d.recommendations || []).filter(function(r){ return r && (r.tip || r.title); });
       const summaryRec = recs.length ? (recs[0].title || recs[0].tip) : (d.triage_label || d.risk_label || riskValue);
@@ -7631,6 +7604,21 @@ def chat_page():
       }
       if (summaryRec) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
       h += '</section>';
+
+      if (d.assessment_status === 'insufficient' || d.assessment_status === 'low_confidence' || d.low_confidence) {
+        h += '<div class="v2-low-confidence-card">'
+          + '<b>' + esc(
+              LANG === 'ar'
+                ? 'نتيجة مبنية على المعلومات المتاحة'
+                : 'Result based on the available information'
+            ) + '</b>'
+          + '<p>' + esc(
+              LANG === 'ar'
+                ? 'تم تحليل مستوى الخطورة والإرشادات الآمنة، لكن لم نجد مطابقة طبية موثوقة كافية لعرض احتمال محدد.'
+                : 'Risk and safe guidance were analyzed, but no sufficiently trusted medical match was found to show a specific possibility.'
+            ) + '</p>'
+          + '</div>';
+      }
 
       // Keep entered information available, but prioritize the decision dashboard first.
       const inputRows = [
@@ -11377,7 +11365,7 @@ def analysis_detail_page(record_id):
     if isinstance(dq,dict) and dq.get('score') is not None:
         score=max(0,min(100,int(round(float(dq.get('score') or 0)))))
         level=escape(str(dq.get('level_label') or dq.get('level') or ''))
-        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'اكتمال المعلومات المدخلة' if ar else 'Information completeness'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
+        dq_html=f'''<section class="detail-card"><div class="section-head"><h2>📊 {'اكتمال المعلومات' if ar else 'Information completeness'}</h2><b>{score}% · {level}</b></div><div class="detail-progress"><span style="width:{score}%"></span></div><p class="muted">{'يقيس هذا اكتمال المعلومات المتاحة للتحليل فقط، وليس احتمال مرض أو دقة تشخيص.' if ar else 'This measures information completeness only, not disease probability or diagnostic accuracy.'}</p></section>'''
     xai=result.get('explainability') or {}
     xai_html=''
     if isinstance(xai,dict) and xai:
