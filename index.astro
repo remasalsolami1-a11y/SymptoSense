@@ -1,0 +1,407 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import site from "../content/site.json";
+
+const nav = (site.nav || []).filter((x) => x.enabled !== false);
+const waDigits = (site.contact.phone || "").replace(/\D/g, "");
+const waLink = `https://wa.me/${waDigits}?text=${encodeURIComponent("مرحباً هدايات")}`;
+---
+
+<BaseLayout meta={site.meta}>
+  <nav class="navbar navbar-expand-lg fixed-top hdr" aria-label="التنقل الرئيسي">
+    <div class="container align-items-center">
+      <a class="navbar-brand d-flex align-items-center" href="#home">
+        <span class="brand-logo-shell brand-logo-shell-nav">
+          <img src={site.assets.logoNav} alt="شعار مؤسسة هدايات التعليمية" class="brand-logo brand-logo-nav" />
+        </span>
+        <span class="visually-hidden">الانتقال إلى بداية الصفحة</span>
+      </a>
+
+      <a class="whatsapp-btn d-flex d-lg-none ms-auto me-2"
+         href={waLink} target="_blank" rel="noopener"
+         aria-label="تواصل عبر واتساب" title="تواصل عبر واتساب">
+        <i class="bi bi-whatsapp" aria-hidden="true"></i>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain"
+              aria-controls="navMain" aria-expanded="false" aria-label="إظهار القائمة">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav nav-rtl mx-auto gap-lg-2">
+          {nav.map((item) => (
+            <li class="nav-item"><a class="nav-link" href={item.href}>{item.label}</a></li>
+          ))}
+        </ul>
+
+        <div class="d-none d-lg-flex ms-lg-3">
+          <a class="whatsapp-btn"
+             href={waLink} target="_blank" rel="noopener"
+             aria-label="تواصل عبر واتساب" title="تواصل عبر واتساب">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="brand-ribbon" role="presentation" aria-hidden="true"></div>
+
+  <main>
+    <section id="home" class="hero-section" style={{ "--hero-bg": `url(${site.assets.heroBackground})` }}>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-10">
+            <div class="brand-logo-shell brand-logo-shell-hero hero-logo-img mb-5">
+              <img src={site.assets.logoHero} alt="شعار مؤسسة هدايات التعليمية" class="brand-logo brand-logo-hero" />
+            </div>
+            <h1 class="display-6 fw-bold hero-title mb-3">{site.hero.headline}</h1>
+            <p class="lead hero-lead mb-4">{site.hero.lead}</p>
+
+            <div class="d-flex flex-wrap justify-content-center gap-2 gap-md-3 mt-2">
+              {site.hero.cta.map((b) => (
+                <a href={b.href} class={b.variant === "secondary" ? "btn-cta-secondary" : "btn-cta-primary"}>
+                  {b.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <svg class="hero-wave" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 160" preserveAspectRatio="none">
+        <path fill="#101713" opacity="0.9" d="M0,80 C240,120 480,40 720,80 C960,120 1200,60 1440,90 L1440,160 L0,160 Z"></path>
+        <path fill="#101713" opacity="0.7" d="M0,90 C240,130 480,50 720,90 C960,130 1200,70 1440,100 L1440,160 L0,160 Z"></path>
+        <path fill="#101713" opacity="0.5" d="M0,100 C240,140 480,60 720,100 C960,140 1200,80 1440,110 L1440,160 L0,160 Z"></path>
+      </svg>
+    </section>
+
+    <section id="about" class="ref-wrap">
+      <div class="vertical-decor vertical-decor--end" aria-hidden="true"></div>
+      <div class="ref-section">
+        <div class="ref-section-header">
+          <h2 class="ref-section-title">{site.about.title}</h2>
+          <p class="ref-section-subtitle">{site.about.subtitle}</p>
+        </div>
+
+        <div class="ref-card report-about-card p-4 p-md-5 reveal-on-scroll">
+          <div class="row g-4 align-items-center">
+            <div class="col-md-5">
+              <div class="p-4 rounded-3" style="background-color:#d4c4a8;">
+                <div class="d-flex flex-column align-items-center text-center">
+                  <i class="bi bi-patch-check-fill display-5 mb-3" style="color:var(--primary);" aria-hidden="true"></i>
+                  <h3 class="fw-bold" style="font-family: var(--font-family-arabic); color: var(--primary);">
+                    {site.about.cardTitle}
+                  </h3>
+                  <p class="mb-0" style="color:var(--text-card-muted);">
+                    {site.about.cardText}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-7">
+              <h4 class="mb-3" style="font-family: var(--font-family-arabic); color: var(--primary);">
+                {site.about.textTitle}
+              </h4>
+              <p class="mb-3" style="color:var(--text-card-muted);">{site.about.p1}</p>
+              <p class="mb-0" style="color:var(--text-card-muted);">{site.about.p2}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="circle-photo-break" aria-hidden="true">
+      <div class="circle-photo-frame"></div>
+    </div>
+
+    <section id="vision" class="ref-wrap">
+      <div class="vertical-decor vertical-decor--start" aria-hidden="true"></div>
+      <div class="ref-section">
+        <div class="ref-section-header">
+          <h2 class="ref-section-title">{site.vision.title}</h2>
+          <p class="ref-section-subtitle">{site.vision.subtitle}</p>
+        </div>
+
+        <div class="ref-grid-2 report-grid-vision">
+          {site.vision.items.map((x) => (
+            <div class="ref-card ref-feature reveal-on-scroll">
+              <div class="icon"><i class={x.icon} aria-hidden="true"></i></div>
+              <h3>{x.title}</h3>
+              <p>{x.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="goals" class="ref-wrap">
+      <div class="ref-section">
+        <div class="ref-section-header">
+          <h2 class="ref-section-title">{site.goals.title}</h2>
+          <p class="ref-section-subtitle">{site.goals.subtitle}</p>
+        </div>
+
+        <div class="ref-grid-4 report-grid-goals">
+          {site.goals.items.map((g) => (
+            <div class="ref-card ref-feature goal-card reveal-on-scroll">
+              <div class="icon"><i class={g.icon} aria-hidden="true"></i></div>
+              <h3>{g.title}</h3>
+              <p>{g.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="values" class="ref-wrap">
+      <div class="ref-section">
+        <div class="ref-section-header">
+          <h2 class="ref-section-title">{site.values.title}</h2>
+          <p class="ref-section-subtitle">{site.values.subtitle}</p>
+        </div>
+
+        <div class="ref-grid-4 report-grid-values">
+          {site.values.items.map((v) => (
+            <div class="ref-card ref-feature reveal-on-scroll">
+              <div class="icon"><i class={v.icon} aria-hidden="true"></i></div>
+              <h3>{v.title}</h3>
+              <p>{v.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <div class="pattern-divider" aria-hidden="true"></div>
+
+ <section id="board" class="ref-wrap">
+  <div class="ref-section text-center">
+    <div class="ref-section-header">
+      <h2 class="ref-section-title">{site.docs.board.title}</h2>
+      {site.docs.board.subtitle && (
+        <p class="ref-section-subtitle">{site.docs.board.subtitle}</p>
+      )}
+    </div>
+
+    <div class="mx-auto reveal-on-scroll" style="max-width: 640px;">
+      <a href={site.docs.board.fileHref} download class="ref-card ref-link-card">
+        <div class="left">
+          <div class="icon"><i class="bi bi-file-earmark-person" aria-hidden="true"></i></div>
+          <div>
+            <div class="title">{site.docs.board.buttonLabel}</div>
+            {site.docs.board.buttonHint && <small>{site.docs.board.buttonHint}</small>}
+          </div>
+        </div>
+        <i class="bi bi-download" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="reports" class="ref-wrap">
+  <div class="ref-section">
+    <div class="ref-section-header text-center">
+      <h2 class="ref-section-title">{site.docs.reports.title}</h2>
+      {site.docs.reports.subtitle && (
+        <p class="ref-section-subtitle">{site.docs.reports.subtitle}</p>
+      )}
+    </div>
+
+    <div class="mx-auto" style="max-width: 640px; display: grid; gap: 1rem;">
+      {(site.docs.reports.items ?? []).map((r) => (
+        <a href={r.fileHref} download class="ref-card ref-link-card reveal-on-scroll">
+          <div class="left">
+            <div class="icon"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i></div>
+            <div>
+              <div class="title">{r.buttonLabel}</div>
+              {r.buttonHint && <small>{r.buttonHint}</small>}
+            </div>
+          </div>
+          <i class="bi bi-download" aria-hidden="true"></i>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+    <section id="contact" class="ref-wrap">
+      <div class="vertical-decor vertical-decor--end" aria-hidden="true"></div>
+      <div class="ref-section">
+        <div class="ref-section-header">
+          <h2 class="ref-section-title">{site.contact.title}</h2>
+          <p class="ref-section-subtitle">{site.contact.subtitle}</p>
+        </div>
+
+        <div class="contact-container report-contact">
+          <div class="contact-form reveal-on-scroll">
+            <form id="contact-form"   name="contact"
+  method="POST"
+  data-netlify="true"
+  data-netlify-honeypot="bot-field"
+  action="/thank">
+   <!-- لازم هذا -->
+  <input type="hidden" name="form-name" value="contact" />
+
+  <!-- Honeypot ضد السبام (مخفي) -->
+  <p style="display:none;">
+    <label>Don’t fill this out: <input name="bot-field" /></label>
+  </p>
+              <div class="form-group">
+                <label class="form-label" for="name">الاسم الكامل</label>
+                <input class="form-input" id="name" name="name" type="text" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="email">البريد الإلكتروني</label>
+                <input class="form-input" id="email" name="email" type="email" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="subject">موضوع الرسالة</label>
+                <input class="form-input" id="subject" name="subject" type="text" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="message">نص الرسالة</label>
+                <textarea class="form-textarea" id="message" name="message" required></textarea>
+              </div>
+
+              <button type="submit" class="btn-form-submit">إرسال الرسالة</button>
+              <div id="form-status" class="mt-2" style="font-size:0.85rem;"></div>
+            </form>
+          </div>
+
+          <div class="contact-info">
+            <div class="contact-item reveal-on-scroll">
+              <div class="contact-icon"><i class="bi bi-envelope" aria-hidden="true"></i></div>
+              <div class="contact-details">
+                <h3>البريد الإلكتروني</h3>
+                <p>{site.contact.email}</p>
+              </div>
+            </div>
+
+            <div class="contact-item reveal-on-scroll">
+              <div class="contact-icon"><i class="bi bi-telephone" aria-hidden="true"></i></div>
+              <div class="contact-details">
+                <h3>رقم الهاتف / واتساب</h3>
+                <p>{site.contact.phone}</p>
+              </div>
+            </div>
+
+            <div class="contact-item reveal-on-scroll">
+              <div class="contact-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></div>
+              <div class="contact-details">
+                <h3>العنوان</h3>
+                <p>{site.contact.address}</p>
+              </div>
+            </div>
+
+            {site.contact.iban && (
+              <div class="contact-item reveal-on-scroll">
+                <div class="contact-icon"><i class="bi bi-shield-lock" aria-hidden="true"></i></div>
+                <div class="contact-details">
+                  <h3>معلومات الحساب البنكي</h3>
+                  <p>
+                    رقم الحساب البنكي (آيبان):
+                    <span dir="ltr" style="font-family: monospace;">{site.contact.iban}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {(() => {
+              const activeSocial = site.contact.social.filter((s) => s.url && s.url !== "#");
+              return activeSocial.length > 0 && (
+                <div class="contact-item reveal-on-scroll">
+                  <div class="contact-icon"><i class="bi bi-share" aria-hidden="true"></i></div>
+                  <div class="contact-details">
+                    <h3>تابعنا على</h3>
+                    <div class="social-icons-row">
+                      {activeSocial.map((s) => (
+                        <a href={s.url} target="_blank" rel="noopener" class="social-icon-circle" aria-label={s.label}>
+                          <i class={s.icon}></i>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <img src="/identity-grid.png" alt="" aria-hidden="true" class="footer-watermark" />
+    <div class="footer-top">
+      <div class="footer-logos">
+        <div class="brand-logo-shell brand-logo-shell-footer footer-logo">
+          <img src={site.assets.logoNav} alt="شعار مؤسسة هدايات التعليمية" class="brand-logo brand-logo-footer" />
+        </div>
+        <img src={site.assets.nationalCenterLogo} alt="شعار المركز الوطني لتنمية القطاع غير الربحي" class="footer-logo" />
+      </div>
+
+      <p class="footer-license">{site.footer.licenseText}</p>
+    </div>
+
+    <hr class="footer-divider" />
+
+    <div class="footer-bottom">
+      <div class="footer-copy">
+        {site.footer.copyrightText.replace("{year}", String(new Date().getFullYear()))}
+      </div>
+    </div>
+  </footer>
+
+  <script is:inline>
+    // هيدر مع السكول
+    const hdr = document.querySelector('.hdr');
+    function handleScroll() {
+      if (!hdr) return;
+      if (window.scrollY > 60) hdr.classList.add('scrolled');
+      else hdr.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('load', handleScroll);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // reveal
+      const revealEls = document.querySelectorAll('.reveal-on-scroll');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              obs.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15 });
+        revealEls.forEach(el => observer.observe(el));
+      } else {
+        revealEls.forEach(el => el.classList.add('is-visible'));
+      }
+
+      // Formspree AJAX
+
+      // إغلاق منيو الجوال
+      const navMain    = document.getElementById('navMain');
+      const navToggler = document.querySelector('.navbar-toggler');
+      if (navMain && navToggler) {
+        const navLinks = navMain.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+          link.addEventListener('click', () => {
+            const isTogglerVisible = window.getComputedStyle(navToggler).display !== 'none';
+            const isExpanded = navToggler.getAttribute('aria-expanded') === 'true';
+            if (isTogglerVisible && isExpanded) navToggler.click();
+          });
+        });
+      }
+    });
+  </script>
+</BaseLayout>

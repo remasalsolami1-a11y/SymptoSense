@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480">
+<defs>
+<pattern id="tile" width="160" height="160" patternUnits="userSpaceOnUse">
+<rect x="64" y="0" width="8" height="32" fill="#21607F"/>
+<rect x="64" y="32" width="8" height="8" fill="#93BBBA"/>
+<rect x="64" y="40" width="8" height="8" fill="#E06659"/>
+<rect x="64" y="48" width="8" height="8" fill="#E69D74"/>
+<rect x="64" y="56" width="8" height="8" fill="#BEAE59"/>
+<rect x="64" y="96" width="8" height="8" fill="#BEAE59"/>
+<rect x="64" y="104" width="8" height="8" fill="#E69D74"/>
+<rect x="64" y="112" width="8" height="8" fill="#E06659"/>
+<rect x="64" y="120" width="8" height="8" fill="#93BBBA"/>
+<rect x="64" y="128" width="8" height="32" fill="#21607F"/>
+<rect x="88" y="0" width="8" height="32" fill="#21607F"/>
+<rect x="88" y="32" width="8" height="8" fill="#93BBBA"/>
+<rect x="88" y="40" width="8" height="8" fill="#E06659"/>
+<rect x="88" y="48" width="8" height="8" fill="#E69D74"/>
+<rect x="88" y="56" width="8" height="8" fill="#BEAE59"/>
+<rect x="88" y="96" width="8" height="8" fill="#BEAE59"/>
+<rect x="88" y="104" width="8" height="8" fill="#E69D74"/>
+<rect x="88" y="112" width="8" height="8" fill="#E06659"/>
+<rect x="88" y="120" width="8" height="8" fill="#93BBBA"/>
+<rect x="88" y="128" width="8" height="32" fill="#21607F"/>
+<rect x="0" y="64" width="32" height="8" fill="#21607F"/>
+<rect x="32" y="64" width="8" height="8" fill="#93BBBA"/>
+<rect x="40" y="64" width="8" height="8" fill="#E06659"/>
+<rect x="48" y="64" width="8" height="8" fill="#E69D74"/>
+<rect x="56" y="64" width="8" height="8" fill="#BEAE59"/>
+<rect x="96" y="64" width="8" height="8" fill="#BEAE59"/>
+<rect x="104" y="64" width="8" height="8" fill="#E69D74"/>
+<rect x="112" y="64" width="8" height="8" fill="#E06659"/>
+<rect x="120" y="64" width="8" height="8" fill="#93BBBA"/>
+<rect x="128" y="64" width="32" height="8" fill="#21607F"/>
+<rect x="0" y="88" width="32" height="8" fill="#21607F"/>
+<rect x="32" y="88" width="8" height="8" fill="#93BBBA"/>
+<rect x="40" y="88" width="8" height="8" fill="#E06659"/>
+<rect x="48" y="88" width="8" height="8" fill="#E69D74"/>
+<rect x="56" y="88" width="8" height="8" fill="#BEAE59"/>
+<rect x="96" y="88" width="8" height="8" fill="#BEAE59"/>
+<rect x="104" y="88" width="8" height="8" fill="#E69D74"/>
+<rect x="112" y="88" width="8" height="8" fill="#E06659"/>
+<rect x="120" y="88" width="8" height="8" fill="#93BBBA"/>
+<rect x="128" y="88" width="32" height="8" fill="#21607F"/>
+<rect x="64" y="64" width="8" height="8" fill="#647550"/>
+<rect x="88" y="64" width="8" height="8" fill="#647550"/>
+<rect x="64" y="88" width="8" height="8" fill="#647550"/>
+<rect x="88" y="88" width="8" height="8" fill="#647550"/>
+</pattern>
+</defs>
+<rect width="480" height="480" fill="url(#tile)"/>
+</svg>

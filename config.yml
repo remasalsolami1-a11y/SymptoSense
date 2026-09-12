@@ -1,0 +1,171 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+locale: "ar"
+
+collections:
+  - name: "site"
+    label: "محتوى الموقع"
+    files:
+      - name: "home"
+        label: "الصفحة الرئيسية"
+        file: "src/content/site.json"
+        format: "json"
+        fields:
+          - label: "SEO والمشاركة"
+            name: "meta"
+            widget: "object"
+            fields:
+              - { label: "عنوان الموقع", name: "title", widget: "string" }
+              - { label: "وصف الموقع", name: "description", widget: "text" }
+              - { label: "رابط الموقع", name: "url", widget: "string" }
+              - { label: "OG Image (واتساب)", name: "ogImage", widget: "image" }
+              - { label: "Locale", name: "locale", widget: "string", default: "ar_SA" }
+
+          - label: "الصور الثابتة"
+            name: "assets"
+            widget: "object"
+            fields:
+              - { label: "شعار النافبار", name: "logoNav", widget: "image" }
+              - { label: "شعار الهيرو", name: "logoHero", widget: "image" }
+              - { label: "خلفية الهيرو", name: "heroBackground", widget: "image" }
+              - { label: "شعار المركز الوطني", name: "nationalCenterLogo", widget: "image" }
+
+          - label: "القائمة العلوية"
+            name: "nav"
+            widget: "list"
+            fields:
+              - { label: "إظهار", name: "enabled", widget: "boolean", default: true }
+              - { label: "النص", name: "label", widget: "string" }
+              - { label: "الرابط (#id)", name: "href", widget: "string" }
+
+          - label: "قسم الهيرو"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "headline", widget: "string" }
+              - { label: "الوصف", name: "lead", widget: "text" }
+              - label: "الأزرار"
+                name: "cta"
+                widget: "list"
+                fields:
+                  - { label: "النص", name: "label", widget: "string" }
+                  - { label: "الرابط", name: "href", widget: "string" }
+                  - { label: "النوع", name: "variant", widget: "select", options: ["primary", "secondary"], default: "primary" }
+
+          - label: "من نحن"
+            name: "about"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "title", widget: "string" }
+              - { label: "العنوان الفرعي", name: "subtitle", widget: "string" }
+              - { label: "عنوان البطاقة", name: "cardTitle", widget: "string" }
+              - { label: "وصف البطاقة", name: "cardText", widget: "text" }
+              - { label: "عنوان النص", name: "textTitle", widget: "string" }
+              - { label: "الفقرة الأولى", name: "p1", widget: "text" }
+              - { label: "الفقرة الثانية", name: "p2", widget: "text" }
+
+          - label: "الرؤية والرسالة"
+            name: "vision"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "title", widget: "string" }
+              - { label: "العنوان الفرعي", name: "subtitle", widget: "string" }
+              - label: "العناصر"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "العنوان", name: "title", widget: "string" }
+                  - { label: "الوصف", name: "text", widget: "text" }
+                  - { label: "أيقونة Bootstrap (class)", name: "icon", widget: "string" }
+
+          - label: "الأهداف الاستراتيجية"
+            name: "goals"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "title", widget: "string" }
+              - { label: "العنوان الفرعي", name: "subtitle", widget: "string" }
+              - label: "الأهداف"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "العنوان", name: "title", widget: "string" }
+                  - { label: "الوصف", name: "text", widget: "text" }
+                  - { label: "أيقونة Bootstrap (class)", name: "icon", widget: "string" }
+
+          - label: "القيم"
+            name: "values"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "title", widget: "string" }
+              - { label: "العنوان الفرعي", name: "subtitle", widget: "string" }
+              - label: "القيم"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "العنوان", name: "title", widget: "string" }
+                  - { label: "الوصف", name: "text", widget: "text" }
+                  - { label: "أيقونة Bootstrap (class)", name: "icon", widget: "string" }
+
+          - label: "الوثائق"
+            name: "docs"
+            widget: "object"
+            fields:
+              # ===== مجلس الإدارة =====
+              - label: "مجلس الإدارة"
+                name: "board"
+                widget: "object"
+                fields:
+                  - { label: "العنوان", name: "title", widget: "string" }
+                  - { label: "الوصف", name: "subtitle", widget: "string", required: false }
+                  - { label: "اسم الزر", name: "buttonLabel", widget: "string" }
+                  - { label: "وصف الزر", name: "buttonHint", widget: "string", required: false }
+                  - { label: "ملف مجلس الإدارة (PDF)", name: "fileHref", widget: "file" }
+
+              # ===== التقارير =====
+              - label: "التقارير"
+                name: "reports"
+                widget: "object"
+                fields:
+                  - { label: "العنوان", name: "title", widget: "string" }
+                  - { label: "الوصف", name: "subtitle", widget: "string", required: false }
+
+                  - label: "قائمة التقارير"
+                    name: "items"
+                    widget: "list"
+                    required: false
+                    allow_add: true
+                    allow_delete: true
+                    fields:
+                      - { label: "عنوان التقرير (اسم الزر)", name: "buttonLabel", widget: "string" }
+                      - { label: "وصف مختصر", name: "buttonHint", widget: "string", required: false }
+                      - { label: "ملف التقرير (PDF)", name: "fileHref", widget: "file" }
+
+          - label: "التواصل"
+            name: "contact"
+            widget: "object"
+            fields:
+              - { label: "العنوان", name: "title", widget: "string" }
+              - { label: "الوصف", name: "subtitle", widget: "text" }
+              - { label: "الإيميل", name: "email", widget: "string" }
+              - { label: "الهاتف", name: "phone", widget: "string" }
+              - { label: "العنوان", name: "address", widget: "string" }
+              - { label: "IBAN", name: "iban", widget: "string" }
+              - label: "روابط السوشيال"
+                name: "social"
+                widget: "list"
+                fields:
+                  - { label: "الاسم", name: "label", widget: "string" }
+                  - { label: "الرابط", name: "url", widget: "string" }
+                  - { label: "أيقونة Bootstrap (class)", name: "icon", widget: "string" }
+
+          - label: "الفوتر"
+            name: "footer"
+            widget: "object"
+            fields:
+              - { label: "نص الترخيص", name: "licenseText", widget: "string" }
+              - { label: "نص الحقوق (اكتبي {year} بدل السنة)", name: "copyrightText", widget: "string" }
