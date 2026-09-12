@@ -260,15 +260,15 @@ SYMPTOMS = [
     ("facial-numbness", "تنميل الوجه", "Facial numbness", "neurological", ["خدر الوجه", "وخز الوجه", "تنميل في الوجه"], ["face numbness", "facial tingling"]),
     ("one-sided-numbness", "تنميل مفاجئ في جهة واحدة", "Sudden one-sided numbness", "neurological", ["تنميل جهة واحدة", "تنميل في جانب واحد", "خدر جهة واحدة", "نصف جسمي منمل"], ["one sided numbness", "sudden numbness on one side"]),
     ("widespread-numbness", "تنميل في أكثر من مكان", "Numbness in multiple areas", "neurological", ["تنميل منتشر", "تنميل في الجسم", "تنميل بعدة اماكن", "تنميل عدة أماكن"], ["widespread numbness", "numbness in several areas"]),
-    ("joint-pain", "ألم المفاصل", "Joint pain", "pain", ["الم المفاصل", "مفاصلي تعورني", "وجع المفاصل"], ["joint pain", "aching joints"]),
+    ("joint-pain", "ألم المفاصل", "Joint pain", "pain", ["الم المفاصل", "ألم المفاصل", "مفاصلي تعورني", "وجع المفاصل", "مفاصلي توجعني", "توجعني مفاصلي"], ["joint pain", "aching joints"]),
     ("leg-pain", "ألم الرجل أو الساق", "Leg pain", "pain", ["الم الرجل", "ألم الساق", "وجع الرجل", "رجلي تعورني"], ["leg pain", "painful leg"]),
     ("itching", "حكة", "Itching", "skin", ["حكه", "هرش", "حكة الجلد"], ["itching", "itchy skin"]),
     ("eye-redness", "احمرار العين", "Eye redness", "general", ["احمرار العيون", "العين حمراء", "عيوني حمراء"], ["red eye", "eye redness"]),
     ("dehydration", "جفاف", "Dehydration", "general", ["قلة البول", "جفاف الفم"], ["dry mouth", "reduced urination"]),
     ("wheezing", "صفير التنفس", "Wheezing", "respiratory", ["صفير في الصدر"], ["wheeze"]),
-    ("shortness-of-breath", "ضيق التنفس", "Shortness of breath", "respiratory", ["صعوبة التنفس", "ما اقدر اتنفس", "لا استطيع التنفس", "ضيق شديد في التنفس", "ضيق شديد بالتنفس", "صعوبة شديدة في التنفس"], ["difficulty breathing", "trouble breathing", "breathless", "severe shortness of breath", "severe breathing difficulty"]),
+    ("shortness-of-breath", "ضيق التنفس", "Shortness of breath", "respiratory", ["صعوبة التنفس", "ما اقدر اتنفس", "لا استطيع التنفس", "ضيق شديد في التنفس", "ضيق شديد بالتنفس", "صعوبة شديدة في التنفس", "ضيق تنفس شديد", "ضيق تنفس", "ضيق في التنفس"], ["difficulty breathing", "trouble breathing", "breathless", "severe shortness of breath", "severe breathing difficulty"]),
     ("chest-tightness", "ضيق الصدر", "Chest tightness", "respiratory", ["شد في الصدر"], ["tight chest"]),
-    ("chest-pain", "ألم الصدر", "Chest pain", "cardiovascular", ["الم في الصدر", "وجع الصدر"], ["pain in chest", "heart pain"]),
+    ("chest-pain", "ألم الصدر", "Chest pain", "cardiovascular", ["الم في الصدر", "وجع الصدر", "الم بالصدر", "ألم بالصدر", "الم شديد بالصدر", "الم شديد في الصدر", "وجع شديد بالصدر"], ["pain in chest", "heart pain"]),
     ("sweating", "تعرق غير معتاد", "Unusual sweating", "general", ["عرق بارد", "تعرق شديد"], ["cold sweat", "sweating heavily"]),
     ("one-sided-weakness", "ضعف في جانب واحد", "One-sided weakness", "neurological", ["ضعف جهة واحدة", "تنميل في جانب", "خدر في جانب", "ضعف مفاجئ", "ضعف مفاجئ في جهة واحدة", "تنميل مفاجئ في جانب"], ["weakness on one side", "one sided numbness", "arm weakness", "sudden weakness", "sudden arm weakness"]),
     ("speech-difficulty", "صعوبة في الكلام", "Speech difficulty", "neurological", ["ثقل الكلام", "الكلام متداخل", "صعوبة مفاجئة في الكلام", "صعوبه مفاجئه في الكلام"], ["slurred speech", "trouble speaking", "speech difficulty", "sudden speech difficulty"]),
@@ -277,6 +277,68 @@ SYMPTOMS = [
     ("loss-of-consciousness", "فقدان الوعي", "Loss of consciousness", "neurological", ["اغماء", "إغماء", "غيبوبه"], ["unconscious", "fainted", "passed out"]),
     ("severe-bleeding", "نزيف شديد", "Severe bleeding", "cardiovascular", ["نزيف لا يتوقف", "دم لا يتوقف"], ["heavy bleeding", "uncontrollable bleeding"]),
     ("suicidal-thoughts", "أفكار لإيذاء النفس", "Thoughts of self-harm", "mental-health", ["افكار انتحاريه", "أفكار انتحارية", "ابي اموت", "إيذاء النفس"], ["suicidal thoughts", "self harm", "want to die"]),
+    # --- Expanded general symptom coverage ---
+    ("back-pain", "ألم الظهر", "Back pain", "pain", ["الم الظهر", "ألم الظهر", "ظهري يعورني", "وجع الظهر", "الم اسفل الظهر", "ألم أسفل الظهر"], ["back pain", "lower back pain"]),
+    ("neck-pain", "ألم الرقبة", "Neck pain", "pain", ["الم الرقبه", "ألم الرقبة", "رقبتي تعورني", "تيبس الرقبه", "تيبس الرقبة"], ["neck pain", "stiff neck"]),
+    ("ear-pain", "ألم الأذن", "Ear pain", "pain", ["الم الاذن", "ألم الأذن", "اذني تعورني", "وجع الاذن"], ["ear pain", "earache"]),
+    ("tooth-pain", "ألم الأسنان", "Tooth pain", "pain", ["الم الاسنان", "ألم الأسنان", "سني يعورني", "وجع ضرس", "الم الضرس"], ["tooth pain", "toothache"]),
+    ("shoulder-pain", "ألم الكتف", "Shoulder pain", "pain", ["الم الكتف", "ألم الكتف", "كتفي يعورني"], ["shoulder pain"]),
+    ("knee-pain", "ألم الركبة", "Knee pain", "pain", ["الم الركبه", "ألم الركبة", "ركبتي تعورني"], ["knee pain"]),
+    ("muscle-cramps", "تشنج عضلي", "Muscle cramps", "pain", ["تقلص عضلي", "شد عضلي", "كرامب", "تشنج بالعضل"], ["muscle cramp", "muscle spasm"]),
+    ("menstrual-cramps", "ألم الدورة الشهرية", "Menstrual cramps", "pain", ["الم الدوره", "ألم الدورة", "مغص الدوره", "مغص الدورة", "تقلصات الدوره"], ["period pain", "menstrual cramps"]),
+    ("eye-pain", "ألم العين", "Eye pain", "pain", ["عيني تعورني", "وجع العين", "الم العين"], ["eye pain"]),
+    ("wrist-pain", "ألم الرسغ", "Wrist pain", "pain", ["الم المعصم", "ألم المعصم", "رسغي يعورني"], ["wrist pain"]),
+    ("sneezing", "عطس", "Sneezing", "respiratory", ["عطاس", "عطسه", "عطسة متكرره"], ["sneezing"]),
+    ("nasal-congestion", "احتقان الأنف", "Nasal congestion", "respiratory", ["انسداد الانف", "انفي مسدود", "انفي مسدوده"], ["stuffy nose", "blocked nose"]),
+    ("loss-of-smell", "فقدان حاسة الشم", "Loss of smell", "respiratory", ["مو شام الريحه", "فقدان الشم", "ما اشم"], ["loss of smell", "anosmia"]),
+    ("loss-of-taste", "فقدان حاسة التذوق", "Loss of taste", "respiratory", ["مو ذايق الاكل", "فقدان التذوق", "ما اتذوق"], ["loss of taste"]),
+    ("hoarseness", "بحة الصوت", "Hoarseness", "respiratory", ["صوتي مبحوح", "بحه بالصوت", "بحة الصوت"], ["hoarse voice", "hoarseness"]),
+    ("sinus-pressure", "ضغط الجيوب الأنفية", "Sinus pressure", "respiratory", ["ضغط بالجيوب", "الم الجيوب الانفيه", "ألم الجيوب الأنفية"], ["sinus pressure", "sinus pain"]),
+    ("phlegm", "بلغم", "Phlegm", "respiratory", ["نخامه", "بلغم بالصدر", "نخامة"], ["phlegm", "mucus", "sputum"]),
+    ("rapid-breathing", "تسارع التنفس", "Rapid breathing", "respiratory", ["تنفس سريع", "انفاسي سريعه", "أنفاسي سريعة"], ["rapid breathing", "fast breathing"]),
+    ("constipation", "إمساك", "Constipation", "digestive", ["امساك", "إمساك", "صعوبة التبرز", "صعوبه بالتبرز"], ["constipation"]),
+    ("bloating", "انتفاخ البطن", "Bloating", "digestive", ["نفخه", "غازات", "انتفاخ", "بطني منتفخ"], ["bloating", "gas"]),
+    ("heartburn", "حرقة المعدة", "Heartburn", "digestive", ["حموضه", "حموضة", "حرقان بالمعده", "حرقان بالمعدة", "ارتجاع"], ["heartburn", "acid reflux"]),
+    ("loss-of-appetite", "فقدان الشهية", "Loss of appetite", "digestive", ["مو جاي لي شهيه", "ما اشتهي الاكل", "فقدان الشهيه"], ["loss of appetite", "poor appetite"]),
+    ("blood-in-stool", "دم في البراز", "Blood in stool", "digestive", ["دم مع البراز", "براز فيه دم"], ["blood in stool"]),
+    ("difficulty-swallowing", "صعوبة البلع", "Difficulty swallowing", "digestive", ["صعوبه بالبلع", "صعوبة البلع", "اتعب وانا ابلع"], ["difficulty swallowing", "dysphagia"]),
+    ("excessive-gas", "غازات زائدة", "Excessive gas", "digestive", ["غازات كثيره", "غازات كثيرة", "تكون غازات"], ["excessive gas", "flatulence"]),
+    ("abdominal-cramps", "مغص البطن", "Abdominal cramps", "digestive", ["مغص", "مغص شديد بالبطن", "مغص بالبطن"], ["abdominal cramps", "stomach cramps"]),
+    ("tremor", "رعشة اليد", "Tremor", "neurological", ["رعشه", "رعشة", "ايدي ترتجف", "يدي ترتجف", "رجفان اليد"], ["tremor", "shaking"]),
+    ("confusion", "تشوش الذهن", "Confusion", "neurological", ["تشوش", "ما اقدر افكر صح", "تشتت ذهني"], ["confusion", "disorientation"]),
+    ("memory-problems", "مشاكل الذاكرة", "Memory problems", "neurological", ["نسيان", "ضعف الذاكره", "ضعف الذاكرة"], ["memory problems", "forgetfulness"]),
+    ("insomnia", "أرق واضطراب النوم", "Insomnia", "neurological", ["ارق", "أرق", "ما اقدر انام", "اضطراب النوم"], ["insomnia", "sleep problems", "trouble sleeping"]),
+    ("tinnitus", "طنين الأذن", "Tinnitus", "neurological", ["طنين", "صفير بالاذن", "رنين بالاذن", "طنين بالاذن", "نبض بالاذن", "نبض خلف الاذن", "نبض غريب خلف الاذن", "احس بنبض بالاذن"], ["tinnitus", "ringing in ears", "pulsing in ear"]),
+    ("blurred-vision", "تشوش الرؤية", "Blurred vision", "neurological", ["تشوش بالرؤيه", "ما اشوف زين", "رؤيه ضبابيه", "رؤية ضبابية"], ["blurred vision", "blurry vision"]),
+    ("balance-problems", "اضطراب التوازن", "Balance problems", "neurological", ["اختلال التوازن", "ما اقدر اتزن"], ["balance problems", "unsteady"]),
+    ("burning-sensation", "إحساس بالحرقان", "Burning sensation", "neurological", ["حرقان بالجلد", "احساس حرق", "إحساس بالحرق"], ["burning sensation", "burning feeling"]),
+    ("seizure", "نوبة تشنجية", "Seizure", "neurological", ["تشنج", "نوبه صرع", "نوبة صرع", "تشنجات"], ["seizure", "convulsion"]),
+    ("skin-rash", "طفح جلدي", "Skin rash", "skin", ["طفح", "حبوب بالجلد", "طفح جلدي"], ["rash", "skin rash"]),
+    ("hives", "شرى جلدي", "Hives", "skin", ["شري", "ارتيكاريا", "حساسيه جلديه منتفخه"], ["hives", "urticaria"]),
+    ("dry-skin", "جفاف الجلد", "Dry skin", "skin", ["جفاف البشره", "جفاف البشرة", "جلدي جاف"], ["dry skin"]),
+    ("easy-bruising", "كدمات سهلة", "Easy bruising", "skin", ["كدمات بدون سبب", "ازرق بجلدي", "أزرق بجلدي"], ["easy bruising", "bruising easily"]),
+    ("hair-loss", "تساقط الشعر", "Hair loss", "skin", ["تساقط شعر", "صلع", "شعري يتساقط"], ["hair loss", "hair fall"]),
+    ("swelling", "تورم", "Swelling", "skin", ["تورم", "انتفاخ بالجسم"], ["swelling", "edema"]),
+    ("pale-skin", "شحوب الجلد", "Pale skin", "skin", ["شحوب", "وجهي شاحب", "اصفرار الوجه"], ["pale skin", "paleness"]),
+    ("palpitations", "خفقان القلب", "Palpitations", "cardiovascular", ["خفقان", "قلبي يدق بسرعه", "قلبي يدق بسرعة", "تسارع نبض"], ["heart palpitations", "racing heart"]),
+    ("cold-extremities", "برودة الأطراف", "Cold extremities", "cardiovascular", ["ايدي بارده", "يدي باردة", "رجلي بارده", "رجلي باردة"], ["cold hands", "cold feet"]),
+    ("leg-swelling", "تورم الساقين", "Leg swelling", "cardiovascular", ["تورم الرجلين", "رجلي متورمه", "رجلي متورمة"], ["leg swelling", "swollen legs"]),
+    ("high-blood-pressure-symptoms", "أعراض ارتفاع ضغط الدم", "High blood pressure symptoms", "cardiovascular", ["ضغطي عالي", "ارتفاع الضغط"], ["high blood pressure symptoms"]),
+    ("irregular-heartbeat", "عدم انتظام ضربات القلب", "Irregular heartbeat", "cardiovascular", ["نبض غير منتظم", "قلبي يتقطع"], ["irregular heartbeat", "arrhythmia"]),
+    ("anxiety", "قلق", "Anxiety", "mental-health", ["توتر", "قلق شديد", "عصبيه زايده", "عصبية زايدة"], ["anxiety", "feeling anxious"]),
+    ("low-mood", "مزاج منخفض", "Low mood", "mental-health", ["حزن", "مزاجي تعبان", "اكتئاب"], ["low mood", "sadness", "feeling down"]),
+    ("panic-attack", "نوبة هلع", "Panic attack", "mental-health", ["نوبه هلع", "نوبة هلع", "خوف مفاجئ شديد"], ["panic attack"]),
+    ("irritability", "تهيج وعصبية", "Irritability", "mental-health", ["عصبيه", "عصبية", "سرعة انفعال"], ["irritability", "easily angered"]),
+    ("difficulty-concentrating", "صعوبة التركيز", "Difficulty concentrating", "mental-health", ["صعوبة التركيز", "تشتت الانتباه"], ["difficulty concentrating", "poor focus"]),
+    ("weight-loss", "نقص الوزن", "Unexplained weight loss", "general", ["نزل وزني", "خسارة وزن بدون سبب", "خسرت وزن"], ["weight loss", "losing weight"]),
+    ("weight-gain", "زيادة الوزن", "Unexplained weight gain", "general", ["زاد وزني", "زيادة وزن"], ["weight gain"]),
+    ("night-sweats", "تعرق ليلي", "Night sweats", "general", ["تعرق بالليل", "اتعرق وانا نايم"], ["night sweats"]),
+    ("swollen-lymph-nodes", "تورم الغدد اللمفاوية", "Swollen lymph nodes", "general", ["تورم الغدد", "غدد منتفخه", "غدد منتفخة"], ["swollen glands", "swollen lymph nodes"]),
+    ("general-weakness", "ضعف عام", "General weakness", "general", ["ضعف عام", "جسمي ضعيف"], ["general weakness", "feeling weak"]),
+    ("increased-thirst", "زيادة العطش", "Increased thirst", "general", ["عطش شديد", "اعطش كثير", "أعطش كثير"], ["increased thirst", "excessive thirst"]),
+    ("frequent-urination", "كثرة التبول", "Frequent urination", "general", ["تبول متكرر", "اروح الحمام كثير"], ["frequent urination"]),
+    ("painful-urination", "ألم عند التبول", "Painful urination", "general", ["حرقان عند التبول", "الم بالتبول", "ألم بالتبول"], ["painful urination", "burning urination"]),
+    ("joint-clicking", "طقطقة المفاصل", "Joint clicking (without pain)", "pain", ["تطقطق", "طقطقة الركبه", "طقطقة الركبة", "فرقعة المفصل", "صوت طقطقة بالمفصل", "ركبتي تطقطق"], ["joint clicking", "joint popping", "cracking joint"]),
 ]
 
 DISEASES = [
@@ -287,7 +349,7 @@ DISEASES = [
      "causes_ar":"السبب الدقيق غير معروف؛ قد تشارك تغيرات عصبية ووعائية وتوجد محفزات تختلف بين الأشخاص.","causes_en":"The exact cause is unknown; neurological and vascular changes may contribute, with triggers varying by person.",
      "red_ar":"صداع مفاجئ شديد جدًا، ضعف في جانب واحد، صعوبة كلام، فقدان رؤية أو تشوش.","red_en":"A sudden extremely severe headache, one-sided weakness, speech difficulty, vision loss, or confusion.",
      "next_ar":"راقب نمط الصداع ومحفزاته واطلب تقييمًا طبيًا إذا كان جديدًا أو متكررًا أو يزداد سوءًا.","next_en":"Track the headache pattern and triggers, and seek medical review if it is new, recurrent, or worsening.",
-     "symptoms":{"headache":1.0,"nausea":0.75,"vomiting":0.45,"light-sensitivity":0.9,"sound-sensitivity":0.85,"dizziness":0.35},
+     "symptoms":{"headache":1.0,"nausea":0.75,"vomiting":0.45,"light-sensitivity":0.9,"sound-sensitivity":0.85,"dizziness":0.35,"blurred-vision":0.3},
      "sources":[("saudi-moh","الصداع النصفي — وزارة الصحة","Migraine — Saudi MOH","https://www.moh.gov.sa/healthawareness/educationalcontent/diseases/nervous-system/pages/migraine.aspx"),("who","اضطرابات الصداع — منظمة الصحة العالمية","Headache disorders — WHO","https://www.who.int/news-room/fact-sheets/detail/headache-disorders"),("nhs","الصداع النصفي — NHS","Migraine — NHS","https://www.nhs.uk/conditions/migraine/"),("mayo-clinic","الصداع النصفي — مايو كلينك","Migraine — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/migraine-headache/symptoms-causes/syc-20360201")]},
     {"slug":"influenza","name_ar":"الإنفلونزا","name_en":"Influenza (flu)","category":"respiratory","severity":"moderate",
      "description_ar":"عدوى تنفسية فيروسية تبدأ غالبًا بصورة مفاجئة وقد تسبب الحمى والسعال وآلام الجسم والتعب.","description_en":"A viral respiratory infection that often starts suddenly and may cause fever, cough, body aches, and fatigue.",
@@ -295,7 +357,7 @@ DISEASES = [
      "causes_ar":"فيروسات الإنفلونزا التي تنتقل أساسًا عبر الرذاذ والمخالطة.","causes_en":"Influenza viruses spread mainly through respiratory droplets and close contact.",
      "red_ar":"صعوبة تنفس، ألم صدر، تشوش، جفاف شديد أو تحسن ثم تدهور مفاجئ.","red_en":"Breathing difficulty, chest pain, confusion, severe dehydration, or improvement followed by sudden worsening.",
      "next_ar":"راقب التنفس والترطيب واطلب تقييمًا طبيًا مبكرًا عند وجود عوامل خطورة أو تدهور.","next_en":"Monitor breathing and hydration and seek early medical review if risk factors or worsening are present.",
-     "symptoms":{"fever":0.9,"cough":0.8,"sore-throat":0.45,"runny-nose":0.35,"fatigue":0.75,"body-aches":0.85,"headache":0.6,"chills":0.7},
+     "symptoms":{"fever":0.9,"cough":0.8,"sore-throat":0.45,"runny-nose":0.35,"fatigue":0.75,"body-aches":0.85,"headache":0.6,"chills":0.7,"loss-of-appetite":0.4,"night-sweats":0.3},
      "sources":[("cdc","علامات وأعراض الإنفلونزا — CDC","Flu signs and symptoms — CDC","https://www.cdc.gov/flu/signs-symptoms/index.html")]},
     {"slug":"common-cold","name_ar":"نزلة البرد الشائعة","name_en":"Common cold","category":"respiratory","severity":"mild",
      "description_ar":"عدوى فيروسية شائعة في الجهاز التنفسي العلوي تبدأ أعراضها عادةً تدريجيًا.","description_en":"A common viral upper-respiratory infection whose symptoms usually begin gradually.",
@@ -303,7 +365,7 @@ DISEASES = [
      "causes_ar":"فيروسات تنفسية متعددة تنتقل بالمخالطة والرذاذ والأسطح الملوثة.","causes_en":"Multiple respiratory viruses spread by contact, droplets, and contaminated surfaces.",
      "red_ar":"ضيق تنفس، ألم صدر، حرارة مرتفعة مستمرة أو تدهور بعد عدة أيام.","red_en":"Shortness of breath, chest pain, persistent high fever, or worsening after several days.",
      "next_ar":"راقب الأعراض واطلب مراجعة طبية إذا لم تتحسن خلال المدة المتوقعة أو ظهرت علامة خطر.","next_en":"Monitor symptoms and seek review if they do not improve as expected or a red flag appears.",
-     "symptoms":{"runny-nose":0.95,"sore-throat":0.75,"cough":0.65,"fatigue":0.35,"fever":0.25,"body-aches":0.2},
+     "symptoms":{"runny-nose":0.95,"sore-throat":0.75,"cough":0.65,"fatigue":0.35,"fever":0.25,"body-aches":0.2,"sneezing":0.7,"nasal-congestion":0.6,"loss-of-smell":0.3},
      "sources":[("nhs","نزلة البرد الشائعة — NHS","Common cold — NHS","https://www.nhs.uk/conditions/common-cold/")]},
     {"slug":"viral-gastroenteritis","name_ar":"التهاب المعدة والأمعاء الفيروسي","name_en":"Viral gastroenteritis","category":"digestive","severity":"moderate",
      "description_ar":"التهاب في المعدة أو الأمعاء يسبب القيء أو الإسهال وقد يؤدي إلى الجفاف.","description_en":"Inflammation of the stomach or intestines causing vomiting or diarrhea and sometimes dehydration.",
@@ -311,7 +373,7 @@ DISEASES = [
      "causes_ar":"فيروسات معوية شديدة العدوى مثل نوروفيروس.","causes_en":"Highly contagious enteric viruses such as norovirus.",
      "red_ar":"جفاف شديد، قلة بول، خمول غير معتاد، دم في القيء أو البراز أو ألم بطن شديد.","red_en":"Severe dehydration, reduced urination, unusual drowsiness, blood in vomit or stool, or severe abdominal pain.",
      "next_ar":"عوّض السوائل تدريجيًا واطلب تقييمًا طبيًا عند علامات الجفاف أو استمرار الأعراض أو تدهورها.","next_en":"Replace fluids gradually and seek medical review for dehydration, persistent symptoms, or worsening.",
-     "symptoms":{"diarrhea":0.95,"vomiting":0.85,"nausea":0.7,"abdominal-pain":0.7,"fever":0.3,"headache":0.2,"body-aches":0.25,"dehydration":0.55},
+     "symptoms":{"diarrhea":0.95,"vomiting":0.85,"nausea":0.7,"abdominal-pain":0.7,"fever":0.3,"headache":0.2,"body-aches":0.25,"dehydration":0.55,"abdominal-cramps":0.6,"loss-of-appetite":0.4},
      "sources":[("cdc","حول نوروفيروس — CDC","About norovirus — CDC","https://www.cdc.gov/norovirus/about/index.html")]},
     {"slug":"asthma","name_ar":"الربو","name_en":"Asthma","category":"respiratory","severity":"moderate",
      "description_ar":"مرض رئوي مزمن يسبب التهابًا وضيقًا في الشعب الهوائية، وقد تتفاوت أعراضه مع الوقت.","description_en":"A chronic lung disease involving inflamed and narrowed airways, with symptoms that can vary over time.",
@@ -319,7 +381,7 @@ DISEASES = [
      "causes_ar":"تشارك عوامل وراثية وبيئية، وقد تحفز الأعراض مهيجات مختلفة.","causes_en":"Genetic and environmental factors contribute, with symptoms triggered by different irritants.",
      "red_ar":"صعوبة تنفس شديدة، عدم القدرة على الكلام بصورة طبيعية أو ازرقاق الشفاه.","red_en":"Severe breathing difficulty, inability to speak normally, or blue lips.",
      "next_ar":"تحدث مع مختص صحي لتقييم الأعراض ووضع خطة واضحة، واطلب رعاية عاجلة عند صعوبة التنفس الشديدة.","next_en":"Speak with a health professional for assessment and an action plan; seek urgent care for severe breathing difficulty.",
-     "symptoms":{"wheezing":1.0,"shortness-of-breath":0.95,"chest-tightness":0.85,"cough":0.7,"fatigue":0.2},
+     "symptoms":{"wheezing":1.0,"shortness-of-breath":0.95,"chest-tightness":0.85,"cough":0.7,"fatigue":0.2,"rapid-breathing":0.4},
      "sources":[("who","الربو — منظمة الصحة العالمية","Asthma — WHO","https://www.who.int/news-room/fact-sheets/detail/asthma")]},
     {"slug":"peripheral-neuropathy","name_ar":"اعتلال الأعصاب الطرفية","name_en":"Peripheral neuropathy","category":"neurological","severity":"moderate",
      "description_ar":"مصطلح يصف تضرر الأعصاب الطرفية، وقد يسبب تنميلًا أو وخزًا أو تغيرًا في الإحساس، غالبًا في اليدين أو القدمين.","description_en":"Damage to peripheral nerves that may cause numbness, tingling, or altered sensation, often in the hands or feet.",
@@ -327,7 +389,7 @@ DISEASES = [
      "causes_ar":"قد يرتبط بحالات صحية أو إصابات أو أدوية، ولا يمكن تحديد السبب من عرض واحد.","causes_en":"It may relate to health conditions, injuries, or medicines; one symptom alone cannot identify the cause.",
      "red_ar":"تنميل مفاجئ في جهة واحدة، ضعف، تدلي الوجه أو صعوبة الكلام.","red_en":"Sudden one-sided numbness, weakness, facial droop, or speech difficulty.",
      "next_ar":"اطلب تقييمًا طبيًا إذا استمر التنميل أو تكرر، واطلب الطوارئ عند ظهوره فجأة في جهة واحدة.","next_en":"Seek medical review if numbness persists or recurs; seek emergency help for sudden one-sided symptoms.",
-     "symptoms":{"numbness":1.0,"hand-numbness":0.85,"foot-numbness":0.9,"widespread-numbness":0.55},
+     "symptoms":{"numbness":1.0,"hand-numbness":0.85,"foot-numbness":0.9,"widespread-numbness":0.55,"burning-sensation":0.6},
      "sources":[("nhs","اعتلال الأعصاب الطرفية — NHS","Peripheral neuropathy — NHS","https://www.nhs.uk/conditions/peripheral-neuropathy/")]},
     {"slug":"carpal-tunnel-syndrome","name_ar":"متلازمة النفق الرسغي","name_en":"Carpal tunnel syndrome","category":"neurological","severity":"mild",
      "description_ar":"ضغط على عصب في الرسغ قد يسبب تنميلًا أو وخزًا وألمًا في اليد والأصابع.","description_en":"Pressure on a nerve at the wrist that can cause numbness, tingling, and pain in the hand and fingers.",
@@ -335,7 +397,7 @@ DISEASES = [
      "causes_ar":"ضغط العصب المتوسط أثناء مروره عبر الرسغ.","causes_en":"Compression of the median nerve as it passes through the wrist.",
      "red_ar":"ضعف متزايد أو فقدان إحساس مستمر أو أعراض مفاجئة في جهة كاملة.","red_en":"Increasing weakness, persistent sensory loss, or sudden symptoms affecting a whole side.",
      "next_ar":"راجع مختصًا إذا استمرت الأعراض أو أثرت في استخدام اليد أو النوم.","next_en":"Seek clinical review if symptoms persist or affect hand use or sleep.",
-     "symptoms":{"hand-numbness":1.0,"numbness":0.55},
+     "symptoms":{"hand-numbness":1.0,"numbness":0.55,"wrist-pain":0.7},
      "sources":[("nhs","متلازمة النفق الرسغي — NHS","Carpal tunnel syndrome — NHS","https://www.nhs.uk/conditions/carpal-tunnel-syndrome/")]},
     {"slug":"sciatica","name_ar":"عرق النسا","name_en":"Sciatica","category":"neurological","severity":"moderate",
      "description_ar":"أعراض تنتج عن تهيج أو ضغط العصب الوركي، وقد تشمل ألمًا يمتد في الساق مع تنميل أو وخز.","description_en":"Symptoms from irritation or compression of the sciatic nerve, including pain down a leg with numbness or tingling.",
@@ -343,7 +405,7 @@ DISEASES = [
      "causes_ar":"تهيج أو ضغط العصب الوركي.","causes_en":"Irritation or compression of the sciatic nerve.",
      "red_ar":"خدر حول منطقة العجان، فقد التحكم بالبول أو البراز، أو ضعف شديد متزايد.","red_en":"Numbness around the saddle area, loss of bladder or bowel control, or worsening severe weakness.",
      "next_ar":"راجع مختصًا عند استمرار الألم أو التنميل، واطلب رعاية عاجلة عند علامات الخطر.","next_en":"Seek clinical review for persistent pain or numbness and urgent care for red flags.",
-     "symptoms":{"leg-pain":1.0,"foot-numbness":0.65,"numbness":0.4},
+     "symptoms":{"leg-pain":1.0,"foot-numbness":0.65,"numbness":0.4,"back-pain":0.85},
      "sources":[("nhs","عرق النسا — NHS","Sciatica — NHS","https://www.nhs.uk/conditions/sciatica/")]},
     {"slug":"acute-sinusitis","name_ar":"التهاب الجيوب الأنفية","name_en":"Sinusitis","category":"respiratory","severity":"mild",
      "description_ar":"التهاب في الجيوب الأنفية قد يسبب انسداد الأنف وألمًا أو ضغطًا في الوجه وصداعًا.","description_en":"Inflammation of the sinuses that may cause nasal blockage, facial pressure, and headache.",
@@ -351,7 +413,7 @@ DISEASES = [
      "causes_ar":"غالبًا عدوى فيروسية، وقد توجد أسباب أخرى.","causes_en":"Often a viral infection, though other causes exist.",
      "red_ar":"تورم حول العين أو تغير الرؤية أو صداع شديد جدًا.","red_en":"Swelling around the eye, vision changes, or an extremely severe headache.",
      "next_ar":"راقب الأعراض وراجع مختصًا إذا كانت شديدة أو لم تتحسن.","next_en":"Monitor symptoms and seek review if severe or not improving.",
-     "symptoms":{"runny-nose":0.9,"headache":0.7,"fever":0.35,"cough":0.3},
+     "symptoms":{"runny-nose":0.9,"headache":0.7,"fever":0.35,"cough":0.3,"sinus-pressure":0.85,"nasal-congestion":0.6},
      "sources":[("nhs","التهاب الجيوب الأنفية — NHS","Sinusitis — NHS","https://www.nhs.uk/conditions/sinusitis-sinus-infection/")]},
     {"slug":"acute-bronchitis","name_ar":"التهاب الشعب الهوائية","name_en":"Bronchitis","category":"respiratory","severity":"moderate",
      "description_ar":"التهاب في الممرات الهوائية يسبب السعال وقد يصاحبه تعب أو صفير أو ضيق تنفس.","description_en":"Inflammation of the airways causing cough, sometimes with fatigue, wheezing, or breathlessness.",
@@ -359,7 +421,7 @@ DISEASES = [
      "causes_ar":"غالبًا عدوى، وقد تؤثر المهيجات التنفسية أيضًا.","causes_en":"Often infection-related; respiratory irritants can also contribute.",
      "red_ar":"صعوبة تنفس شديدة، ازرقاق، ألم صدر أو سعال مصحوب بدم.","red_en":"Severe breathing difficulty, blue lips, chest pain, or coughing blood.",
      "next_ar":"راجع مختصًا إذا كان السعال شديدًا أو مستمرًا أو صاحبه ضيق تنفس.","next_en":"Seek review if cough is severe, persistent, or accompanied by breathlessness.",
-     "symptoms":{"cough":1.0,"wheezing":0.55,"fatigue":0.45,"fever":0.35,"shortness-of-breath":0.4},
+     "symptoms":{"cough":1.0,"wheezing":0.55,"fatigue":0.45,"fever":0.35,"shortness-of-breath":0.4,"phlegm":0.6},
      "sources":[("nhs","التهاب الشعب الهوائية — NHS","Bronchitis — NHS","https://www.nhs.uk/conditions/bronchitis/")]},
     {"slug":"food-poisoning","name_ar":"التسمم الغذائي","name_en":"Food poisoning","category":"digestive","severity":"moderate",
      "description_ar":"مرض ينتج عن تناول طعام ملوث، وقد يسبب الغثيان والقيء والإسهال وألم البطن.","description_en":"Illness from contaminated food that may cause nausea, vomiting, diarrhoea, and abdominal pain.",
@@ -367,17 +429,91 @@ DISEASES = [
      "causes_ar":"جراثيم أو سموم موجودة في طعام ملوث.","causes_en":"Germs or toxins in contaminated food.",
      "red_ar":"جفاف شديد، دم في القيء أو البراز، ألم شديد أو تدهور عام.","red_en":"Severe dehydration, blood in vomit or stool, severe pain, or marked deterioration.",
      "next_ar":"اهتم بالسوائل واطلب تقييمًا عند علامات الجفاف أو استمرار الأعراض أو شدتها.","next_en":"Maintain fluids and seek review for dehydration, persistent symptoms, or severe illness.",
-     "symptoms":{"nausea":0.8,"vomiting":0.9,"diarrhea":0.95,"abdominal-pain":0.8,"fever":0.35,"dehydration":0.5},
+     "symptoms":{"nausea":0.8,"vomiting":0.9,"diarrhea":0.95,"abdominal-pain":0.8,"fever":0.35,"dehydration":0.5,"abdominal-cramps":0.7},
      "sources":[("nhs","التسمم الغذائي — NHS","Food poisoning — NHS","https://www.nhs.uk/conditions/food-poisoning/")]},
+    {"slug":"gerd","name_ar":"ارتجاع المريء (حرقة المعدة المزمنة)","name_en":"Gastroesophageal reflux disease (GERD)","category":"digestive","severity":"mild",
+     "description_ar":"عودة حمض المعدة إلى المريء بشكل متكرر، وأبرز أعراضه حرقة المعدة، وقد يرافقه صعوبة بلع أو بحة صوت.","description_en":"Frequent backflow of stomach acid into the esophagus; heartburn is the cardinal symptom and it may include swallowing trouble or hoarseness.",
+     "risk_ar":"زيادة الوزن، التدخين، وجبات كبيرة أو النوم بعد الأكل مباشرة.","risk_en":"Excess weight, smoking, large meals, or lying down soon after eating.",
+     "causes_ar":"ضعف في العضلة العاصرة السفلية للمريء يسمح بارتداد الحمض.","causes_en":"A weakened lower esophageal sphincter allows stomach acid to flow back up.",
+     "red_ar":"صعوبة بلع شديدة، فقدان وزن غير مبرر، قيء دموي أو براز أسود.","red_en":"Severe difficulty swallowing, unexplained weight loss, vomiting blood, or black stools.",
+     "next_ar":"جرّب تعديل الوجبات ورفع الرأس أثناء النوم، واطلب تقييمًا إذا تكررت الأعراض أكثر من مرتين أسبوعيًا.","next_en":"Try meal adjustments and elevating the head while sleeping; seek review if symptoms occur more than twice a week.",
+     "symptoms":{"heartburn":1.0,"difficulty-swallowing":0.45,"hoarseness":0.3,"nausea":0.3,"bloating":0.25},
+     "sources":[("mayo-clinic","الحرقة وارتجاع المريء — مايو كلينك","Heartburn and GERD — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/heartburn/symptoms-causes/syc-20373223")]},
+    {"slug":"laryngitis","name_ar":"التهاب الحنجرة","name_en":"Laryngitis","category":"respiratory","severity":"mild",
+     "description_ar":"التهاب في الحنجرة غالبًا بسبب عدوى فيروسية أو إجهاد الصوت، يسبب بحة أو فقدانًا مؤقتًا للصوت.","description_en":"Inflammation of the voice box, usually from a viral infection or voice overuse, causing hoarseness or temporary voice loss.",
+     "risk_ar":"عدوى تنفسية علوية حديثة، إجهاد الصوت، أو التدخين.","risk_en":"A recent upper-respiratory infection, voice overuse, or smoking.",
+     "causes_ar":"عدوى فيروسية غالبًا، وأحيانًا إجهاد الصوت أو ارتجاع الحمض.","causes_en":"Usually viral infection; sometimes voice strain or acid reflux.",
+     "red_ar":"صعوبة تنفس، صعوبة بلع اللعاب، أو استمرار البحة أكثر من أسبوعين.","red_en":"Breathing difficulty, difficulty swallowing saliva, or hoarseness lasting more than two weeks.",
+     "next_ar":"أرح صوتك ورطّب الجو، واطلب تقييمًا إذا استمرت البحة أكثر من أسبوعين.","next_en":"Rest your voice and use humidified air; seek review if hoarseness lasts more than two weeks.",
+     "symptoms":{"hoarseness":1.0,"sore-throat":0.55,"cough":0.4,"fever":0.2},
+     "sources":[("mayo-clinic","التهاب الحنجرة — مايو كلينك","Laryngitis — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/laryngitis/symptoms-causes/syc-20374262")]},
+    {"slug":"ear-infection","name_ar":"التهاب الأذن","name_en":"Ear infection (otitis)","category":"general","severity":"mild",
+     "description_ar":"التهاب أو تجمّع سوائل في الأذن الوسطى أو الخارجية، يسبب ألمًا وأحيانًا طنينًا أو حمى خفيفة.","description_en":"Inflammation or fluid buildup in the middle or outer ear, causing pain and sometimes tinnitus or mild fever.",
+     "risk_ar":"عدوى تنفسية حديثة، السباحة، أو التعرض للماء داخل الأذن.","risk_en":"A recent respiratory infection, swimming, or water trapped in the ear.",
+     "causes_ar":"عدوى فيروسية أو بكتيرية أو تهيّج الأذن الخارجية بالماء أو الأجسام الغريبة.","causes_en":"Viral or bacterial infection, or outer-ear irritation from water or foreign objects.",
+     "red_ar":"تورم أو احمرار خلف الأذن، حمى شديدة، أو خروج إفرازات أو دم.","red_en":"Swelling or redness behind the ear, high fever, or discharge/blood from the ear.",
+     "next_ar":"راقب الألم والحمى، واطلب تقييمًا إذا استمر الألم أكثر من يومين أو ظهرت إفرازات.","next_en":"Monitor pain and fever; seek review if pain lasts more than two days or discharge appears.",
+     "symptoms":{"ear-pain":1.0,"tinnitus":0.35,"fever":0.3,"balance-problems":0.2},
+     "sources":[("nhs","التهابات الأذن — NHS","Ear infections — NHS","https://www.nhs.uk/conditions/ear-infections/")]},
+    {"slug":"contact-dermatitis","name_ar":"التهاب الجلد التماسي (حساسية جلدية)","name_en":"Contact dermatitis","category":"skin","severity":"mild",
+     "description_ar":"تهيّج جلدي ناتج عن ملامسة مادة مهيّجة أو مسببة للحساسية، يظهر كطفح جلدي مع حكة وأحيانًا جفاف أو تورم موضعي.","description_en":"Skin irritation from contact with an irritant or allergen, appearing as an itchy rash with sometimes dryness or localized swelling.",
+     "risk_ar":"التعرض لمواد تنظيف، معادن، نباتات، أو مستحضرات جديدة.","risk_en":"Exposure to cleaning products, metals, plants, or new cosmetic products.",
+     "causes_ar":"تلامس مباشر مع مادة مهيّجة أو مادة تسبب استجابة تحسسية.","causes_en":"Direct contact with an irritant or a substance triggering an allergic response.",
+     "red_ar":"تورم الوجه أو الشفتين أو الحلق، صعوبة تنفس، أو انتشار الطفح بسرعة على كامل الجسم.","red_en":"Swelling of the face, lips, or throat, breathing difficulty, or a rash spreading rapidly over the whole body.",
+     "next_ar":"ابتعد عن المادة المسببة ونظّف المنطقة، واطلب تقييمًا إذا ساء الطفح أو انتشر.","next_en":"Avoid the trigger substance and clean the area; seek review if the rash worsens or spreads.",
+     "symptoms":{"skin-rash":0.85,"dry-skin":0.3,"swelling":0.35},
+     "sources":[("mayo-clinic","التهاب الجلد التماسي — مايو كلينك","Contact dermatitis — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/contact-dermatitis/symptoms-causes/syc-20352742")]},
+    {"slug":"urticaria","name_ar":"الشرى الجلدي (الأرتيكاريا)","name_en":"Hives (urticaria)","category":"skin","severity":"mild",
+     "description_ar":"بقع أو انتفاخات جلدية مرتفعة تظهر فجأة وتكون غالبًا شديدة الحكة، وقد تتغير أماكنها أو تندمج معًا.","description_en":"Raised skin welts or bumps that appear suddenly, are often very itchy, and may change location or join together.",
+     "risk_ar":"حساسية تجاه طعام أو دواء أو لدغة حشرة، أو محفزات مثل الحرارة أو البرد أو التوتر.","risk_en":"Allergy to a food, medication, or insect sting, or triggers such as heat, cold, or stress.",
+     "causes_ar":"استجابة تحسسية أو مناعية تُطلق مواد تسبب تورم سطحي في الجلد؛ وأحيانًا دون سبب واضح.","causes_en":"An allergic or immune response that releases substances causing superficial skin swelling; sometimes with no clear cause.",
+     "red_ar":"تورم الوجه أو الشفتين أو الحلق أو اللسان، صعوبة تنفس أو بلع، أو دوخة — قد تكون علامات حساسية شديدة (تأق).","red_en":"Swelling of the face, lips, throat, or tongue, difficulty breathing or swallowing, or dizziness — these can be signs of a severe allergic reaction (anaphylaxis).",
+     "next_ar":"ابتعد عن المحفز المحتمل، ومضادات الهيستامين قد تخفف الأعراض؛ اطلب تقييمًا إذا استمر الشرى أكثر من أيام قليلة أو تكرر، واطلب الطوارئ فورًا مع أي علامة خطر.","next_en":"Avoid the likely trigger; antihistamines may ease symptoms. Seek review if hives last more than a few days or recur, and seek emergency care immediately with any red-flag sign.",
+     "symptoms":{"hives":1.0,"skin-rash":0.4,"swelling":0.35},
+     "sources":[("mayo-clinic","الشرى والوذمة الوعائية — مايو كلينك","Hives and angioedema — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/hives-and-angioedema/symptoms-causes/syc-20354908")]},
+    {"slug":"urinary-tract-infection","name_ar":"التهاب المسالك البولية","name_en":"Urinary tract infection (UTI)","category":"general","severity":"mild",
+     "description_ar":"عدوى بكتيرية في المسالك البولية، تسبب حرقانًا عند التبول وكثرة التبول وأحيانًا ألمًا أسفل البطن.","description_en":"A bacterial infection of the urinary tract causing painful, frequent urination and sometimes lower abdominal pain.",
+     "risk_ar":"النساء أكثر عرضة، وكذلك قلة شرب الماء أو حصى الكلى السابقة.","risk_en":"More common in women; also low fluid intake or a history of kidney stones.",
+     "causes_ar":"دخول بكتيريا إلى المسالك البولية، غالبًا من الجهاز الهضمي.","causes_en":"Bacteria entering the urinary tract, often from the digestive tract.",
+     "red_ar":"حمى مع قشعريرة، ألم الخاصرة، أو دم واضح في البول.","red_en":"Fever with chills, flank pain, or visible blood in the urine.",
+     "next_ar":"اشرب سوائل كافية واطلب تقييمًا طبيًا للعلاج المناسب، خصوصًا مع الحمى أو ألم الخاصرة.","next_en":"Drink adequate fluids and seek medical review for appropriate treatment, especially with fever or flank pain.",
+     "symptoms":{"painful-urination":1.0,"frequent-urination":0.75,"abdominal-pain":0.3,"fever":0.25},
+     "sources":[("nhs","التهابات المسالك البولية — NHS","Urinary tract infections (UTIs) — NHS","https://www.nhs.uk/conditions/urinary-tract-infections-utis/")]},
+    {"slug":"heart-palpitations","name_ar":"خفقان القلب — أسباب محتملة متعددة","name_en":"Heart palpitations — multiple possible causes","category":"cardiovascular","severity":"mild",
+     "description_ar":"إحساس بتسارع أو خفقان أو عدم انتظام نبض القلب. غالبًا ما يكون مرتبطًا بالتوتر أو القلق أو الكافيين وغير خطير، لكنه قد يرتبط أحيانًا باضطراب في نظم القلب، خصوصًا مع ألم الصدر أو الإغماء أو ضيق التنفس.","description_en":"A sensation of a racing, pounding, or irregular heartbeat. It is often linked to stress, anxiety, or caffeine and is not dangerous, but it can sometimes be related to a heart rhythm disorder, especially alongside chest pain, fainting, or shortness of breath.",
+     "risk_ar":"التوتر والقلق، الكافيين، قلة النوم، أو وجود مشكلة سابقة في نظم القلب.","risk_en":"Stress and anxiety, caffeine, lack of sleep, or a pre-existing heart rhythm condition.",
+     "causes_ar":"استجابة الجسم للتوتر أو المنبهات في أغلب الحالات؛ وأحيانًا اضطراب فعلي في نظم القلب يحتاج تقييمًا.","causes_en":"Usually the body's response to stress or stimulants; sometimes an actual heart rhythm disorder that needs evaluation.",
+     "red_ar":"خفقان مصحوب بألم صدر، إغماء، ضيق تنفس شديد، أو خفقان لا يهدأ ويستمر لدقائق طويلة.","red_en":"Palpitations with chest pain, fainting, severe breathlessness, or a racing heart that does not settle for many minutes.",
+     "next_ar":"قلّل الكافيين والتوتر وراقب النمط، واطلب تقييمًا قلبيًا إذا تكرر الخفقان أو صاحبته أعراض أخرى — ولا يُفترض اعتباره حميدًا دون تقييم إذا تكرر.","next_en":"Reduce caffeine and stress and monitor the pattern; seek a cardiac review if palpitations recur or come with other symptoms — it should not be assumed benign without evaluation if it recurs.",
+     "symptoms":{"palpitations":1.0,"anxiety":0.4,"irregular-heartbeat":0.45},
+     "sources":[("mayo-clinic","خفقان القلب — مايو كلينك","Heart palpitations — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/heart-palpitations/symptoms-causes/syc-20373196")]},
+    {"slug":"osteoarthritis","name_ar":"خشونة المفاصل (الفصال العظمي)","name_en":"Osteoarthritis","category":"pain","severity":"mild",
+     "description_ar":"تآكل تدريجي في غضروف المفصل يسبب ألمًا وتيبسًا، وغالبًا يزداد مع الاستخدام ويتحسن بالراحة.","description_en":"Gradual wear of joint cartilage causing pain and stiffness that often worsens with use and eases with rest.",
+     "risk_ar":"التقدم بالعمر، زيادة الوزن، أو إصابات مفصلية سابقة.","risk_en":"Older age, excess weight, or previous joint injury.",
+     "causes_ar":"تآكل الغضروف الواقي للمفصل مع مرور الوقت.","causes_en":"Wear of the protective cartilage in the joint over time.",
+     "red_ar":"تورم شديد ومفاجئ، احمرار وحرارة موضعية، أو حمى مصاحبة لألم المفصل.","red_en":"Sudden severe swelling, redness and warmth over the joint, or fever accompanying joint pain.",
+     "next_ar":"مارس نشاطًا خفيفًا منتظمًا وحافظ على وزن صحي، واطلب تقييمًا إذا أثّر الألم على الحركة اليومية.","next_en":"Stay lightly active regularly and maintain a healthy weight; seek review if pain affects daily movement.",
+     "symptoms":{"joint-pain":0.9,"knee-pain":0.55,"shoulder-pain":0.3,"joint-clicking":0.4},
+     "sources":[("mayo-clinic","الفصال العظمي — مايو كلينك","Osteoarthritis — Mayo Clinic","https://www.mayoclinic.org/diseases-conditions/osteoarthritis/symptoms-causes/syc-20351925")]},
+    {"slug":"insomnia-disorder","name_ar":"الأرق واضطراب النوم","name_en":"Insomnia and sleep disturbance","category":"neurological","severity":"mild",
+     "description_ar":"صعوبة في بدء النوم أو الاستمرار فيه تؤثر على الأداء خلال النهار. تُسمى قصيرة المدى إذا استمرت أقل من 3 أشهر، وطويلة المدى إذا استمرت 3 أشهر أو أكثر.","description_en":"Difficulty falling or staying asleep that affects daytime functioning. It is called short-term if it lasts less than 3 months, and long-term if it lasts 3 months or more.",
+     "risk_ar":"التوتر والقلق، جداول نوم غير منتظمة، أو الكافيين المتأخر.","risk_en":"Stress and anxiety, irregular sleep schedules, or late caffeine intake.",
+     "causes_ar":"غالبًا مرتبط بالتوتر أو عادات النوم؛ وأحيانًا حالة نفسية أو طبية أخرى.","causes_en":"Often linked to stress or sleep habits; sometimes another underlying medical or mental-health condition.",
+     "red_ar":"أرق مصحوب بأفكار إيذاء النفس أو تدهور واضح في الأداء اليومي.","red_en":"Insomnia accompanied by thoughts of self-harm or marked decline in daily functioning.",
+     "next_ar":"حافظ على موعد نوم ثابت وقلّل الكافيين مساءً، واطلب تقييمًا طبيًا إذا استمر الأرق 3 أشهر أو أكثر أو أثّر بشدة على حياتك اليومية.","next_en":"Keep a consistent sleep schedule and reduce evening caffeine; seek medical review if insomnia lasts 3 months or more, or is severely affecting daily life.",
+     "symptoms":{"insomnia":1.0,"general-weakness":0.4,"difficulty-concentrating":0.4,"irritability":0.3,"anxiety":0.25},
+     "sources":[("nhs","الأرق — NHS","Insomnia — NHS","https://www.nhs.uk/conditions/insomnia/")]},
 ]
 
 RED_RULES = [
     ("sudden-one-sided-numbness", "تنميل مفاجئ في جهة واحدة", "Sudden one-sided numbness", ["one-sided-numbness"], "any", [], [], 1, "urgent", "التنميل المفاجئ في جهة واحدة قد يكون علامة عصبية طارئة.", "Sudden numbness on one side can be a neurological emergency sign.", "cdc"),
+    ("sudden-one-sided-weakness", "ضعف مفاجئ في جهة واحدة", "Sudden one-sided weakness", ["one-sided-weakness"], "any", [], [], 1, "urgent", "الضعف المفاجئ في جهة واحدة من الجسم قد يكون علامة سكتة دماغية.", "Sudden weakness on one side of the body can be a stroke warning sign.", "cdc"),
     ("chest-breathing", "ألم الصدر مع ضيق التنفس", "Chest pain with breathing difficulty", ["chest-pain","shortness-of-breath"], "all", [], [], 1, "urgent", "ألم الصدر مع صعوبة التنفس قد يحتاج رعاية عاجلة.", "Chest pain with breathing difficulty may require urgent care.", "nhs"),
     ("stroke-combination", "علامات سكتة دماغية محتملة", "Possible stroke signs", ["one-sided-weakness","speech-difficulty"], "all", [], [], 1, "urgent", "ضعف جانب واحد مع صعوبة الكلام علامة طارئة محتملة.", "One-sided weakness with speech difficulty is a possible emergency.", "cdc"),
     ("face-droop", "تدلي الوجه المفاجئ", "Sudden face drooping", ["face-drooping"], "any", [], [], 1, "urgent", "تدلي الوجه المفاجئ يحتاج طلب الطوارئ فورًا.", "Sudden face drooping needs emergency help now.", "cdc"),
     ("sudden-vision", "فقدان الرؤية المفاجئ", "Sudden vision loss", ["sudden-vision-loss"], "any", [], [], 1, "urgent", "فقدان الرؤية المفاجئ يحتاج تقييمًا عاجلًا.", "Sudden vision loss needs urgent assessment.", "cdc"),
     ("unconscious", "فقدان الوعي", "Loss of consciousness", ["loss-of-consciousness"], "any", [], [], 1, "urgent", "فقدان الوعي علامة تستدعي طلب الطوارئ.", "Loss of consciousness requires emergency help.", "nhs"),
+    ("seizure-event", "نوبة تشنجية", "Seizure", ["seizure"], "any", [], [], 1, "urgent", "النوبة التشنجية علامة تستدعي طلب الطوارئ، خصوصًا إن كانت الأولى أو استمرت طويلًا.", "A seizure is a sign that requires emergency help, especially if it is the first one or lasts a long time.", "cdc"),
     ("severe-bleeding", "نزيف شديد", "Severe bleeding", ["severe-bleeding"], "any", [], [], 1, "urgent", "النزيف الشديد أو الذي لا يتوقف يحتاج طوارئ.", "Severe or uncontrolled bleeding needs emergency care.", "nhs"),
     ("severe-head-neuro", "صداع شديد مع علامة عصبية", "Severe headache with neurological sign", ["severe-headache","one-sided-weakness"], "all", [], [], 1, "urgent", "الصداع الشديد المفاجئ مع ضعف في جانب واحد علامة طارئة.", "A sudden severe headache with one-sided weakness is an emergency sign.", "cdc"),
     ("self-harm", "خطر إيذاء النفس", "Risk of self-harm", ["suicidal-thoughts"], "any", [], [], 1, "urgent", "أفكار إيذاء النفس تحتاج دعمًا فوريًا وعدم البقاء وحيدًا.", "Thoughts of self-harm need immediate support; do not stay alone.", "who"),
@@ -391,6 +527,13 @@ RED_RULE_DETAILS = {
     "sudden-one-sided-numbness": {
         "description_ar": "التنميل أو الضعف المفاجئ في الوجه أو الذراع أو الساق، خصوصًا في جهة واحدة، من علامات السكتة الدماغية المعروفة.",
         "description_en": "Sudden numbness or weakness of the face, arm, or leg, especially on one side, is a recognized stroke warning sign.",
+        "action_ar": "اطلب خدمات الطوارئ فورًا ولا تنتظر زوال الأعراض.",
+        "action_en": "Contact emergency services immediately and do not wait for symptoms to pass.",
+        "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
+    },
+    "sudden-one-sided-weakness": {
+        "description_ar": "الضعف المفاجئ في الوجه أو الذراع أو الساق، خصوصًا في جهة واحدة، من علامات السكتة الدماغية المعروفة (اختبار FAST).",
+        "description_en": "Sudden weakness of the face, arm, or leg, especially on one side, is a recognized stroke warning sign (the FAST test).",
         "action_ar": "اطلب خدمات الطوارئ فورًا ولا تنتظر زوال الأعراض.",
         "action_en": "Contact emergency services immediately and do not wait for symptoms to pass.",
         "url": "https://www.cdc.gov/stroke/signs-symptoms/index.html",
@@ -422,6 +565,12 @@ RED_RULE_DETAILS = {
         "description_en": "Loss of consciousness or abnormal unresponsiveness can represent a life-threatening emergency.",
         "action_ar": "تواصل مع خدمات الطوارئ المناسبة فوراً.", "action_en": "Contact the appropriate emergency service immediately.",
         "url": "https://www.nhs.uk/nhs-services/urgent-and-emergency-care-services/when-to-call-999/"},
+    "seizure-event": {
+        "description_ar": "النوبة التشنجية، خصوصًا الأولى أو المطوّلة أو المتكررة، قد تكون علامة طارئة تستدعي تقييمًا فوريًا.",
+        "description_en": "A seizure — especially a first, prolonged, or repeated one — can be an emergency sign requiring immediate assessment.",
+        "action_ar": "اطلب الطوارئ فوراً، خصوصًا إن استمرت النوبة أكثر من 5 دقائق أو تكررت أو لم يستعد الوعي بعدها.",
+        "action_en": "Seek emergency help immediately, especially if the seizure lasts more than 5 minutes, repeats, or consciousness does not return afterward.",
+        "url": "https://www.cdc.gov/epilepsy/about/first-aid.htm"},
     "severe-bleeding": {
         "description_ar": "النزيف الغزير أو الذي لا يمكن إيقافه يحتاج إلى رعاية طارئة.",
         "description_en": "Heavy or uncontrolled bleeding requires emergency care.",
@@ -540,6 +689,23 @@ def _fetch_symptoms(active_only=True, conn=None):
     return out
 
 
+def _light_stem(text):
+    """Strip a single leading Arabic proclitic (و ف ب ل ك) from each word of
+    length >= 3, e.g. "وتوتر" -> "توتر", "بقلق" -> "قلق". This is a
+    conservative, widely-used light-stemming step used only to help match
+    free-text phrasing against the symptom dictionary; it never changes what
+    is stored or displayed.
+    """
+    words = text.split(" ")
+    out = []
+    for w in words:
+        if len(w) >= 3 and w[0] in "وفبلك":
+            out.append(w[1:])
+        else:
+            out.append(w)
+    return " ".join(out)
+
+
 def normalize_symptoms(raw_symptoms, lang="ar", conn=None):
     symptoms = _fetch_symptoms(True, conn=conn)
     candidates = []
@@ -553,11 +719,15 @@ def normalize_symptoms(raw_symptoms, lang="ar", conn=None):
     found, unmatched, seen = [], [], set()
     for original in raw_symptoms or []:
         text = _normalize_text(original)
+        text_loose = _light_stem(text)
         local = []
         for _, alias, item in candidates:
             if item["id"] in seen:
                 continue
-            if alias == text or (len(alias) >= 4 and re.search(r"(?:^|\s)" + re.escape(alias) + r"(?:$|\s)", text)):
+            if alias == text or alias == text_loose or (len(alias) >= 3 and (
+                re.search(r"(?:^|\s)" + re.escape(alias) + r"(?:$|\s)", text) or
+                re.search(r"(?:^|\s)" + re.escape(alias) + r"(?:$|\s)", text_loose)
+            )):
                 local.append((alias,item))
         if not local and text:
             best = None
@@ -589,6 +759,7 @@ def suggest_similar_symptoms(text, lang="ar", limit=3, conn=None):
     text_norm = _normalize_text(text)
     if not text_norm:
         return []
+    text_loose = _light_stem(text_norm)
     symptoms = _fetch_symptoms(True, conn=conn)
     scored = {}
     for item in symptoms:
@@ -601,8 +772,11 @@ def suggest_similar_symptoms(text, lang="ar", limit=3, conn=None):
             alias_norm = _normalize_text(alias)
             if not alias_norm:
                 continue
-            ratio = difflib.SequenceMatcher(None, text_norm, alias_norm).ratio()
-            if alias_norm in text_norm or text_norm in alias_norm:
+            ratio = max(
+                difflib.SequenceMatcher(None, text_norm, alias_norm).ratio(),
+                difflib.SequenceMatcher(None, text_loose, alias_norm).ratio(),
+            )
+            if alias_norm in text_norm or text_norm in alias_norm or alias_norm in text_loose:
                 ratio = max(ratio, 0.6)
             if ratio > best_ratio:
                 best_ratio = ratio

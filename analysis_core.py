@@ -1367,16 +1367,32 @@ def run_analysis(patient, lang="ar"):
         needed_information = needed_information[:5]
         result["possible_conditions"] = ""
         result["recommendations"] = []
-        result["personal_note"] = (
-            "🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق. أضف معلومات إضافية أو راجع المصادر الطبية الموثوقة، واطلب تقييمًا طبيًا إذا استمرت الأعراض أو ساءت."
-            if lang == "ar" else
-            "🧠 The available information is not sufficient for a reliable assessment. Add more information or review trusted medical sources, and seek professional evaluation if symptoms persist or worsen."
-        )
-        result["simple_explanation"] = (
-            "لن يعرض SymptoSense احتمالًا طبيًا عندما تكون المعلومات أو المطابقة غير كافية."
-            if lang == "ar" else
-            "SymptoSense will not show a medical possibility when the information or grounded match is insufficient."
-        )
+        if data_quality.get("sufficient"):
+            # The symptom itself was understood (a canonical or at-least
+            # needs-clarification match exists); there simply isn't a
+            # sufficiently trusted disease match to name a specific
+            # possibility. This is a normal, safe outcome — not missing data.
+            result["personal_note"] = (
+                "🧠 تم فهم العرض، لكن لا توجد معلومات كافية لعرض احتمالات موثوقة. إليك مستوى الخطورة والخطوة المناسبة."
+                if lang == "ar" else
+                "🧠 The symptom was understood, but there is not enough information to show trusted possibilities. Here is the risk level and the appropriate next step."
+            )
+            result["simple_explanation"] = (
+                "تم فهم العرض، لكن لا توجد مطابقة طبية موثوقة كافية لعرض احتمال محدد؛ هذا لا يعني نقصًا في المعلومات."
+                if lang == "ar" else
+                "The symptom was understood, but there is no sufficiently trusted medical match to show a specific possibility; this does not mean information is missing."
+            )
+        else:
+            result["personal_note"] = (
+                "🧠 المعلومات المتوفرة غير كافية لإجراء تقييم موثوق. أضف معلومات إضافية أو راجع المصادر الطبية الموثوقة، واطلب تقييمًا طبيًا إذا استمرت الأعراض أو ساءت."
+                if lang == "ar" else
+                "🧠 The available information is not sufficient for a reliable assessment. Add more information or review trusted medical sources, and seek professional evaluation if symptoms persist or worsen."
+            )
+            result["simple_explanation"] = (
+                "لن يعرض SymptoSense احتمالًا طبيًا عندما تكون المعلومات أو المطابقة غير كافية."
+                if lang == "ar" else
+                "SymptoSense will not show a medical possibility when the information or grounded match is insufficient."
+            )
     elif not risk_is_urgent:
         # Rebuild the user-facing explanation from only the matches allowed by
         # the confidence gate. This prevents a secondary one-symptom weak match

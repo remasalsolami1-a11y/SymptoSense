@@ -7609,13 +7609,13 @@ def chat_page():
         h += '<div class="v2-low-confidence-card">'
           + '<b>' + esc(
               LANG === 'ar'
-                ? 'نتيجة مبنية على المعلومات المتاحة'
-                : 'Result based on the available information'
+                ? 'تم فهم العرض، لكن لا توجد معلومات كافية لعرض احتمالات موثوقة'
+                : 'The symptom was understood, but there is not enough information to show trusted possibilities'
             ) + '</b>'
           + '<p>' + esc(
               LANG === 'ar'
-                ? 'تم تحليل مستوى الخطورة والإرشادات الآمنة، لكن لم نجد مطابقة طبية موثوقة كافية لعرض احتمال محدد.'
-                : 'Risk and safe guidance were analyzed, but no sufficiently trusted medical match was found to show a specific possibility.'
+                ? 'إليك مستوى الخطورة والخطوة المناسبة بدلًا من ذلك.'
+                : 'Here is the risk level and the appropriate next step instead.'
             ) + '</p>'
           + '</div>';
       }
