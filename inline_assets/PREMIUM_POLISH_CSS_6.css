@@ -88,7 +88,7 @@
   }
   body.ss-chat-page .step-focus-kicker{font-size:11px!important;line-height:1.25!important;margin-bottom:5px!important}
   body.ss-chat-page #chatBody .step-focus-question{
-    font-size:17px!important;line-height:1.55!important;font-weight:850!important;color:#173C63!important;
+    font-size:17px!important;line-height:1.55!important;font-weight:850!important;color:#123B70!important;
   }
   body.ss-chat-page .step-focus-answer{font-size:11.5px!important;margin-top:7px!important;padding:6px 9px!important}
 
@@ -147,7 +147,7 @@
     font-size:9px!important;line-height:1.15!important;
   }
   body.ss-chat-page .ss-bnav a .bn-icon{font-size:19px!important;line-height:1!important}
-  body.ss-chat-page .ss-bnav a.on{background:transparent!important;color:#0F5FB0!important}
+  body.ss-chat-page .ss-bnav a.on{background:transparent!important;color:#1F6FAE!important}
 
   body.ss-chat-page #chatSafetyNote{margin:8px 14px 12px!important;font-size:10.5px!important;line-height:1.55!important}
 }

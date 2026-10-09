@@ -8,7 +8,7 @@ def test_login_guest_button_has_dedicated_high_contrast_style():
     src = source_bundle.webapp_text()
     assert 'class="btn auth-guest-btn"' in src
     assert '.auth-card .auth-guest-btn' in src
-    assert 'color:#163B5C!important' in src
+    assert 'color:#123B70!important' in src
     assert 'background:#F7FBFE!important' in src
     login_block = src[src.index('@app.route("/login"'):src.index('@app.route("/admin/2fa/setup"')]
     assert 'class="btn ghost"' not in login_block

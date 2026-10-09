@@ -5,7 +5,7 @@ html[dir="ltr"] body,html[lang="en"] body{font-family:'Poppins','Tajawal','Segoe
 button,input,select,textarea{font-family:inherit}
 /* SymptoSense Design System v1 — shared tokens and reusable primitives. */
 :root{
-  --ss-color-primary:#1f6fae;--ss-color-primary-strong:#163b5c;--ss-color-primary-soft:#eaf5fc;
+  --ss-color-primary:#1f6fae;--ss-color-primary-strong:#123B70;--ss-color-primary-soft:#eaf5fc;
   --ss-color-bg:#f7fafc;--ss-color-surface:#fff;--ss-color-text:#23384a;--ss-color-muted:#566a7d;
   --ss-color-border:#dce8f0;--ss-color-success:#267a52;--ss-color-warning:#8a651e;--ss-color-danger:#a33a3a;
   --ss-radius-sm:10px;--ss-radius-md:14px;--ss-radius-lg:18px;--ss-radius-pill:999px;

@@ -75,8 +75,8 @@ class StabilizationTest(unittest.TestCase):
                 response.close()
 
     def test_active_bottom_navigation_meets_wcag_aa_contrast(self):
-        self.assertIn('.ss-bnav a.on { color: #0F5FB0; background: var(--primary-light); }', webapp.BASE_CSS)
-        self.assertGreaterEqual(self._contrast_ratio("#0F5FB0", "#EAF4FF"), 4.5)
+        self.assertIn('.ss-bnav a.on { color: #1F6FAE; background: var(--primary-light); }', webapp.BASE_CSS)
+        self.assertGreaterEqual(self._contrast_ratio("#1F6FAE", "#EAF4FF"), 4.5)
 
     def test_active_bottom_navigation_meets_wcag_aa_contrast_dark_mode(self):
         self.assertIn('.ss-bnav a.on { background: #1E3A5F; color: #60A5FA; }', webapp.BASE_CSS)

@@ -487,7 +487,7 @@ def render_chat_page(*, lang, page, t, json_for_script):
         <div class="avatar" id="chatAvatar">🏥</div>
         <div><h3>SymptoSense</h3><p id="headP"></p></div>
         <div id="profileSwitcher" style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-          <select id="famSelect" style="background:#fff;color:#0F2F63;border:1px solid #fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;cursor:pointer;max-width:140px;" aria-label="Select family member">
+          <select id="famSelect" style="background:#fff;color:#123B70;border:1px solid #fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;cursor:pointer;max-width:140px;" aria-label="Select family member">
             <option value="0">__ME__</option>
           </select>
         </div>
@@ -517,7 +517,7 @@ def render_chat_page(*, lang, page, t, json_for_script):
     <div class="em-overlay" id="emOverlay"></div>
 
     <style>
-    .smart-context-found{margin-top:10px;padding:10px 11px;border:1px solid #d7e8f2;border-radius:12px;background:#f8fcff}.smart-context-found>b{display:block;color:#123b70;font-size:12px}.smart-context-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.smart-context-chips span{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eaf5fc;color:#225c86;font-size:10.5px;font-weight:800}.smart-context-found small{display:block;margin-top:7px;color:#566a7d;font-size:10.5px;line-height:1.6}.ss-pattern-summary-v151 p{margin:8px 0;color:#24445f;line-height:1.85}.ss-pattern-summary-v151 small{color:#566a7d;line-height:1.6}.symptom-path-rail.compact{overflow-x:auto;padding-bottom:4px}
+    .smart-context-found{margin-top:10px;padding:10px 11px;border:1px solid #d7e8f2;border-radius:12px;background:#f8fcff}.smart-context-found>b{display:block;color:#123b70;font-size:12px}.smart-context-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.smart-context-chips span{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eaf5fc;color:#1F6FAE;font-size:10.5px;font-weight:800}.smart-context-found small{display:block;margin-top:7px;color:#566a7d;font-size:10.5px;line-height:1.6}.ss-pattern-summary-v151 p{margin:8px 0;color:#123B70;line-height:1.85}.ss-pattern-summary-v151 small{color:#566a7d;line-height:1.6}.symptom-path-rail.compact{overflow-x:auto;padding-bottom:4px}
     </style>
     <style id="bm-v244">
     .bm-visual{position:relative;width:100%;max-width:380px;aspect-ratio:360/540;margin:8px auto 0;direction:ltr}
@@ -535,59 +535,59 @@ def render_chat_page(*, lang, page, t, json_for_script):
     .bm-svg .bm-zone:hover .bm-hl-s{stroke:#2A78D0;stroke-opacity:.16}
     .bm-svg .bm-zone.on:hover .bm-hl-f{fill-opacity:.38}
     .bm-svg .bm-zone.on:hover .bm-hl-s{stroke-opacity:.38}
-    .bm-svg .bm-zone:focus-visible .bm-halo{stroke:#0F2F63;stroke-width:2.5}
+    .bm-svg .bm-zone:focus-visible .bm-halo{stroke:#123B70;stroke-width:2.5}
     .bm-svg .bm-halo{fill:rgba(31,111,208,.18)}
-    .bm-svg .bm-dot{fill:#1F6FD0;stroke:#fff;stroke-width:2}
+    .bm-svg .bm-dot{fill:#1F6FAE;stroke:#fff;stroke-width:2}
     .bm-svg .bm-zone.on .bm-halo{fill:rgba(31,111,208,.32)}
     .bm-svg .bm-zone.on .bm-dot{fill:#0B4FA8}
     .bm-svg .bm-hit{fill:transparent}
     .bm-svg .bm-line{fill:none;stroke:#8DB6E3;stroke-width:1.5;stroke-linecap:round}
-    .bm-svg .bm-line.on{stroke:#1F6FD0;stroke-width:2}
-    .bm-label{position:absolute;transform:translateY(-50%);width:25%;min-height:40px;padding:5px 9px;box-sizing:border-box;border-radius:12px;border:1.5px solid #C2D9EF;background:#fff;color:#0F2F63;font-family:'Tajawal','Poppins','Segoe UI',sans-serif;font-size:13.5px;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 2px 6px rgba(31,111,208,.10);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;direction:inherit;-webkit-tap-highlight-color:transparent}
+    .bm-svg .bm-line.on{stroke:#1F6FAE;stroke-width:2}
+    .bm-label{position:absolute;transform:translateY(-50%);width:25%;min-height:40px;padding:5px 9px;box-sizing:border-box;border-radius:12px;border:1.5px solid #C2D9EF;background:#fff;color:#123B70;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;font-size:13.5px;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 2px 6px rgba(31,111,208,.10);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;direction:inherit;-webkit-tap-highlight-color:transparent}
     .bm-label.bm-L{left:0}.bm-label.bm-R{right:0}
     .bm-label i{font-style:normal;font-size:13px}
-    .bm-label:hover{border-color:#1F6FD0}
-    .bm-label.on{background:#1F6FD0;border-color:#1F6FD0;color:#fff}
-    .bm-label:focus-visible{outline:3px solid #0F2F63;outline-offset:2px}
+    .bm-label:hover{border-color:#1F6FAE}
+    .bm-label.on{background:#1F6FAE;border-color:#1F6FAE;color:#fff}
+    .bm-label:focus-visible{outline:3px solid #123B70;outline-offset:2px}
     .bm-label{word-break:normal;overflow-wrap:normal;hyphens:none}
     @media(max-width:420px){.bm-label{width:27%;font-size:13px;padding:4px 5px;min-height:44px}}
     @media(max-width:350px){.bm-label{width:30%;font-size:13px;padding:2px 4px;min-height:36px;line-height:1.15;letter-spacing:-.2px}}
-    body.ss-chat-page #smartBodyCard{font-family:'Tajawal','Poppins','Segoe UI',sans-serif!important;color:#0F2F63!important}
-    body.ss-chat-page #smartBodyCard .smart-body-copy b{font-size:21px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard{font-family:'Tajawal','Segoe UI',Tahoma,sans-serif!important;color:#123B70!important}
+    body.ss-chat-page #smartBodyCard .smart-body-copy b{font-size:21px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-copy p,body.ss-chat-page #smartBodyCard .smart-body-copy .muted{font-size:15px!important;line-height:1.7!important;color:#3F5B7B!important}
     body.ss-chat-page #smartBodyCard .smart-body-hint{font-size:14.5px!important;font-weight:700!important;color:#3F5B7B!important}
-    body.ss-chat-page #smartBodyCard .smart-toggle-btn{min-height:46px!important;font-size:16px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-toggle-btn{min-height:46px!important;font-size:16px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-toggle-btn.on{color:#0B4FA8!important}
     body.ss-chat-page #smartBodyCard .smart-body-visual-help{font-size:14px!important;font-weight:600!important;color:#3F5B7B!important;margin-top:6px!important}
-    body.ss-chat-page #smartBodyCard .smart-body-selection-note{font-size:15px!important;font-weight:700!important;color:#0F2F63!important}
-    body.ss-chat-page #smartBodyCard .smart-body-selection-tray-head b{font-size:16px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-body-selection-note{font-size:15px!important;font-weight:700!important;color:#123B70!important}
+    body.ss-chat-page #smartBodyCard .smart-body-selection-tray-head b{font-size:16px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-selection-tray-head span{font-size:15px!important;color:#3F5B7B!important}
-    body.ss-chat-page #smartBodyCard .smart-body-selection-chip{font-size:15px!important;font-weight:700!important;min-height:42px!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-body-selection-chip{font-size:15px!important;font-weight:700!important;min-height:42px!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-clear{min-height:44px!important;font-size:15px!important;font-weight:700!important;color:#3F5B7B!important}
     body.ss-chat-page #smartBodyCard .smart-body-next{min-height:48px!important;font-size:17px!important;font-weight:800!important}
     body.ss-chat-page #smartBodyCard .smart-body-empty{font-size:15px!important;color:#3F5B7B!important;line-height:1.7!important}
-    body.ss-chat-page #smartBodyCard .smart-body-region-head b{font-size:21px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-body-region-head b{font-size:21px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-region-head small{font-size:15px!important;color:#3F5B7B!important;line-height:1.6!important}
     body.ss-chat-page #smartBodyCard .smart-body-selected-badge{font-size:13.5px!important;font-weight:800!important}
     body.ss-chat-page #smartBodyCard .smart-body-existing{font-size:14px!important;line-height:1.6!important;color:#1D5A3A!important}
-    body.ss-chat-page #smartBodyCard .smart-body-zone-intro{font-size:16.5px!important;font-weight:800!important;color:#0F2F63!important;margin:12px 0 8px!important}
-    body.ss-chat-page #smartBodyCard .smart-body-symptom{min-height:50px!important;font-size:16.5px!important;font-weight:700!important;line-height:1.3!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-body-zone-intro{font-size:16.5px!important;font-weight:800!important;color:#123B70!important;margin:12px 0 8px!important}
+    body.ss-chat-page #smartBodyCard .smart-body-symptom{min-height:50px!important;font-size:16.5px!important;font-weight:700!important;line-height:1.3!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-symptom.on{color:#fff!important}
     body.ss-chat-page #smartBodyCard .smart-body-other{margin-top:14px!important;padding:14px!important;border:1.5px dashed #9BBFE6!important;border-radius:16px!important;background:#F5FAFF!important}
-    body.ss-chat-page #smartBodyCard .smart-body-other b{display:block!important;font-size:16.5px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page #smartBodyCard .smart-body-other b{display:block!important;font-size:16.5px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page #smartBodyCard .smart-body-other small{display:block!important;font-size:14.5px!important;line-height:1.6!important;color:#3F5B7B!important;margin:2px 0 10px!important}
-    body.ss-chat-page #smartBodyCard .smart-body-other input{min-height:50px!important;font-size:16px!important;color:#0F2F63!important;width:100%!important;box-sizing:border-box!important}
+    body.ss-chat-page #smartBodyCard .smart-body-other input{min-height:50px!important;font-size:16px!important;color:#123B70!important;width:100%!important;box-sizing:border-box!important}
     body.ss-chat-page #smartBodyCard .smart-body-other button{min-height:50px!important;font-size:16px!important;font-weight:800!important}
     body.ss-chat-page #smartBodyCard .smart-body-other>div{display:flex!important;flex-direction:column!important;gap:10px!important}
-    body.ss-chat-page #smartBodyCard .smart-body-other button{background:#1F6FD0!important;color:#fff!important;border:0!important;border-radius:12px!important;padding:0 18px!important;width:100%!important}
-    body.ss-chat-page #smartBodyCard .smart-body-next{background:#1F6FD0!important;color:#fff!important;border:0!important;border-radius:12px!important;padding:0 22px!important;cursor:pointer}
+    body.ss-chat-page #smartBodyCard .smart-body-other button{background:#1F6FAE!important;color:#fff!important;border:0!important;border-radius:12px!important;padding:0 18px!important;width:100%!important}
+    body.ss-chat-page #smartBodyCard .smart-body-next{background:#1F6FAE!important;color:#fff!important;border:0!important;border-radius:12px!important;padding:0 22px!important;cursor:pointer}
     body.ss-chat-page #smartBodyCard .smart-body-next:disabled{background:#C9D9EA!important;color:#566E8A!important;cursor:not-allowed}
     body.ss-chat-page #smartBodyCard .smart-body-clear{background:#fff!important;border:1.5px solid #C2D9EF!important;border-radius:12px!important;padding:0 14px!important;cursor:pointer}
     body.ss-chat-page #smartBodyCard .smart-body-clear:disabled{opacity:.55;cursor:not-allowed}
     body.ss-chat-page #smartBodyCard .smart-body-selection-tray{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:10px!important}
     body.ss-chat-page #smartBodyCard .smart-body-selection-tray-head{flex:1 1 100%!important;display:flex!important;align-items:center!important;gap:8px!important;justify-content:space-between!important}
     body.ss-chat-page #smartBodyCard .smart-body-selection-chip{flex:1 1 140px!important}
-    body.ss-chat-page .symptom-method-btn{font-size:15px!important;font-weight:800!important;color:#0F2F63!important}
+    body.ss-chat-page .symptom-method-btn{font-size:15px!important;font-weight:800!important;color:#123B70!important}
     body.ss-chat-page .symptom-method-btn.active{color:#0B4FA8!important}
     </style>
     <script>

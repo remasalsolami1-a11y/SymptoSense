@@ -16,8 +16,8 @@ def test_static_asset_is_copied_in_production_image():
     assert 'body-map-front-v241.png' in DOCKER and 'static/images/' in DOCKER
 
 def test_cache_and_css_are_bumped():
-    assert '/assets/app-shell-v112.css?v=272' in WEB
-    assert 'symptosense-app-shell-v112-v272' in WEB
+    assert '/assets/app-shell-v112.css?v=273' in WEB
+    assert 'symptosense-app-shell-v112-v273' in WEB
     assert versioning.SW_CACHE in SW
     assert "'/static/images/body-map-front-v241.png'" in SW
 

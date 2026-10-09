@@ -81,7 +81,7 @@ body.ss-home-page .ss-hero-primary,body.ss-home-page .ss-hero-secondary{min-heig
 body.ss-home-page .ss-hero-secondary,body.ss-home-page .ss-hero-demo-cta{width:100%!important}
 body.ss-home-page .ss-trust-row{justify-content:flex-start!important;margin-top:18px!important;gap:16px!important;font-size:11px!important}
 body.ss-home-page .ss-trust-links{justify-content:flex-start!important;margin-top:9px!important}
-body.ss-home-page .ss-trust-safety-link{display:inline-flex;align-items:center;gap:7px;color:#39708f;text-decoration:none;font-size:11.5px;font-weight:850;padding:4px 0;border-bottom:1px solid transparent;transition:color .18s ease,border-color .18s ease}
+body.ss-home-page .ss-trust-safety-link{display:inline-flex;align-items:center;gap:7px;color:#1F6FAE;text-decoration:none;font-size:11.5px;font-weight:850;padding:4px 0;border-bottom:1px solid transparent;transition:color .18s ease,border-color .18s ease}
 body.ss-home-page .ss-trust-safety-link:hover{color:#147fc7;border-bottom-color:#8ac8ed}
 body.ss-home-page .ss-trust-safety-link b{font-size:13px}
 body.ss-home-page .ss-hero-demo{

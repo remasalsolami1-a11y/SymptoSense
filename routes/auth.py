@@ -121,7 +121,7 @@ def login():
     create_action=""
     body="""
     <div class="auth-wrap"><div class="auth-card">
-      <div class="auth-icon">🩺</div><div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
+      <div class="auth-icon">🩺</div><div style="font-weight:900;color:#123B70;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
       <h1>__H__</h1><p class="auth-sub">__SUB__</p><div class="auth-reason">🔐 __REASON__</div>
       <div class="auth-error __ERR_CLASS__">__ERR__</div>__CREATE_ACTION__
       <form method="POST" action="/login?next=__NEXT__">
@@ -171,7 +171,7 @@ def register():
             mapping={"email_exists":"تعذر إكمال إنشاء الحساب بهذه البيانات. جرّب تسجيل الدخول أو استخدم بريدًا آخر." if lang=="ar" else "Unable to complete registration with these details. Try signing in or use another email.","owner_account_must_exist":"حساب مالك المشروع يجب أن يكون موجودًا مسبقًا ولا يمكن إنشاؤه من صفحة التسجيل." if lang=="ar" else "The project owner account must already exist and cannot be created from this page.","password_too_short":"استخدم 8 أحرف على الأقل لكلمة المرور." if lang=="ar" else "Use at least 8 characters for your password.","password_too_long":"كلمة المرور طويلة جدًا. استخدم 256 حرفًا أو أقل." if lang=="ar" else "The password is too long. Use 256 characters or fewer.","invalid_email":"أدخل بريدًا إلكترونيًا صالحًا." if lang=="ar" else "Enter a valid email address.","invalid_name":"أدخل اسمًا صالحًا." if lang=="ar" else "Enter a valid name."}
             error=mapping.get(err,t["register_error"])
     body="""
-    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🩺</div><div style="font-weight:900;color:#163B5C;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
+    <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🩺</div><div style="font-weight:900;color:#123B70;font-size:20px;direction:ltr;margin-bottom:5px">SymptoSense 🩺</div>
       <h1>__H__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR_CLASS__">__ERR__</div>
       <form method="POST" action="/register?next=__NEXT__">
         <input type="hidden" name="csrf_token" value="__CSRF__">

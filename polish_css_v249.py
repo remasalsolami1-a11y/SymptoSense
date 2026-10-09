@@ -35,9 +35,9 @@ body.ss-chat-page .ss-quality-score,body.ss-chat-page a.ss-step-source{color:#1F
 body.ss-em-open{overflow:hidden}
 /* V261 contrast (WCAG AA): later generic rules were overriding these colours on wide screens */
 .nav .links a.v2-nav-cta,.nav .links a.v2-nav-cta:hover{background:#1b66a3!important;color:#fff!important}
-#famSelect,body.ss-chat-page #famSelect{background:#fff!important;color:#0F2F63!important;border:1px solid #fff!important;font-weight:700}
+#famSelect,body.ss-chat-page #famSelect{background:#fff!important;color:#123B70!important;border:1px solid #fff!important;font-weight:700}
 .f-tg,.f-tg:hover,.footer .f-tg,.footer .f-tg:hover{background:#1b66a3!important;color:#fff!important}
-.footer .f-love b,.footer .f-brand span{color:#1d5f99!important}
+.footer .f-love b,.footer .f-brand span{color:#1F6FAE!important}
 /* V261 legibility floor: no UI text under 12px (safety banner, step label, bottom-nav labels, chat sub-title) */
 body #ssOfflineBanner small{font-size:12.5px!important;line-height:1.6!important}
 body #ssOfflineBanner a{font-size:13px!important;min-height:44px;display:inline-flex;align-items:center}
@@ -71,7 +71,7 @@ html body .footer .f-brand{display:inline-flex!important;align-items:center;gap:
 html body .footer .f-logo{display:block;width:40px;height:40px;flex:0 0 40px}
 html body .footer .f-brand span{color:transparent!important}
 html body .footer .f-tag,html body .footer .f-love,html body .footer .f-copy{display:block;width:100%;max-width:none!important;margin-inline:auto!important;text-align:center!important}
-html body .footer .f-tag{margin:2px 0 0!important;font-size:14px!important;font-weight:600;color:#4a6580!important}
+html body .footer .f-tag{margin:2px 0 0!important;font-size:14px!important;font-weight:600;color:#566A7D!important}
 html body .footer .f-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px 36px!important;max-width:none!important;margin:18px auto 0!important;text-align:start!important;align-items:start}
 html body .footer .f-sec{min-width:0}
 html body .footer .f-sec h4{font-size:14px!important;margin:0 0 6px!important}

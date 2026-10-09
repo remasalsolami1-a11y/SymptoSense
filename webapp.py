@@ -1418,8 +1418,8 @@ def _login_toast_markup(kind, lang):
 <style>
 .ss-login-toast{position:fixed;z-index:2147483000;top:18px;inset-inline-end:18px;width:min(390px,calc(100vw - 28px));display:grid;grid-template-columns:38px 1fr auto;align-items:start;gap:10px;padding:14px 15px;background:#fff;border:1px solid #CFE5F4;border-inline-start:4px solid #1f6fae;border-radius:15px;box-shadow:0 16px 45px rgba(22,59,92,.16);color:#23384A;animation:ssToastIn .24s ease both}
 .ss-login-toast .ss-toast-check{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#EDF8F2;color:#267A52;font-weight:900}
-.ss-login-toast strong{display:block;color:#163B5C;font-size:14px;line-height:1.45}.ss-login-toast p{margin:3px 0 0;color:#566a7d;font-size:13px;line-height:1.55}
-.ss-login-toast button{border:0;background:transparent;color:#566a7d;font-size:19px;line-height:1;padding:5px;cursor:pointer;border-radius:8px}.ss-login-toast button:hover,.ss-login-toast button:focus-visible{background:#EAF5FC;color:#163B5C;outline:2px solid #1f6fae;outline-offset:1px}
+.ss-login-toast strong{display:block;color:#123B70;font-size:14px;line-height:1.45}.ss-login-toast p{margin:3px 0 0;color:#566a7d;font-size:13px;line-height:1.55}
+.ss-login-toast button{border:0;background:transparent;color:#566a7d;font-size:19px;line-height:1;padding:5px;cursor:pointer;border-radius:8px}.ss-login-toast button:hover,.ss-login-toast button:focus-visible{background:#EAF5FC;color:#123B70;outline:2px solid #1f6fae;outline-offset:1px}
 .ss-login-toast.ss-toast-out{animation:ssToastOut .2s ease both}@keyframes ssToastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}@keyframes ssToastOut{to{opacity:0;transform:translateY(-8px)}}
 @media(max-width:600px){.ss-login-toast{top:10px;inset-inline:14px;width:auto}}@media(prefers-reduced-motion:reduce){.ss-login-toast,.ss-login-toast.ss-toast-out{animation:none}}
 </style>
@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v272")
+    response.set_etag("symptosense-app-shell-v112-v273")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2602,7 +2602,7 @@ def contact_page():
     </main>
     <style>
       .ss-contact-page section{max-width:720px;margin-inline:auto;text-align:center}
-      .ss-contact-page .ss-contact-action{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:0 20px;border-radius:14px;background:#1565c0;color:#fff;font-weight:800;text-decoration:none}
+      .ss-contact-page .ss-contact-action{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:0 20px;border-radius:14px;background:#1F6FAE;color:#fff;font-weight:800;text-decoration:none}
     </style>
     """
     action = ('<a class="ss-contact-action" href="%s" target="_blank" rel="noopener noreferrer">%s</a>' % (html_lib.escape(tg_url, quote=True), ("فتح Telegram" if ar else "Open Telegram"))) if tg_url else ''
@@ -2771,8 +2771,8 @@ def offline():
 # ---------------------------------------------------------------- family health hub
 MEDS_CSS = """
 .med-error{padding:14px;border:1px solid #fecaca;border-radius:14px;background:#fff1f2;color:#991b1b}
-.med-retry{margin-top:10px;border:0;border-radius:10px;background:#1565c0;color:#fff;padding:9px 14px;font:inherit;font-weight:800;cursor:pointer}
-.med-loading{display:flex;align-items:center;gap:10px;padding:18px;color:#5f7185}
+.med-retry{margin-top:10px;border:0;border-radius:10px;background:#1F6FAE;color:#fff;padding:9px 14px;font:inherit;font-weight:800;cursor:pointer}
+.med-loading{display:flex;align-items:center;gap:10px;padding:18px;color:#566A7D}
 """
 
 FAM_CSS = """
@@ -2781,20 +2781,20 @@ FAM_CSS = """
 .fam-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(18,59,112,.12); }
 .fam-av { width: 58px; height: 58px; margin: 0 auto 10px; border-radius: 50%; background: #EAF4FF; border: 2px solid #DCEBFA; display: flex; align-items: center; justify-content: center; font-size: 28px; }
 .fam-name { font-weight: 800; font-size: 16px; color: #123B70; }
-.fam-meta { font-size: 13px; color: #5F7185; margin-top: 4px; }
+.fam-meta { font-size: 13px; color: #566A7D; margin-top: 4px; }
 .fam-stat { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 12px; color: #40566F; }
-.fam-stat b { color: #1565c0; }
+.fam-stat b { color: #1F6FAE; }
 .fam-form { background: #FFFFFF; border: 1px solid #DCEBFA; border-radius: 18px; padding: 20px; margin-top: 16px; }
 .fam-rel-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.fam-chip { padding: 8px 14px; border-radius: 999px; border: 1.5px solid #1565c0; background: #FFFFFF; color: #1565c0; font-size: 13px; font-weight: 700; cursor: pointer; }
-.fam-chip.sel { background: #1565c0; color: #FFFFFF; }
+.fam-chip { padding: 8px 14px; border-radius: 999px; border: 1.5px solid #1F6FAE; background: #FFFFFF; color: #1F6FAE; font-size: 13px; font-weight: 700; cursor: pointer; }
+.fam-chip.sel { background: #1F6FAE; color: #FFFFFF; }
 .tl-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed #DCEBFA; font-size: 14px; }
 .tl-dot { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; background: #EAF4FF; flex: 0 0 34px; }
 .tl-date { color: #94A3B8; font-size: 12px; }
 .tl-type { color: #40566F; }
 .tl-type b { color: #123B70; }
 .mplan-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #F5F9FF; border: 1px solid #DCEBFA; border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
-.mplan-time { font-weight: 800; color: #1565c0; min-width: 52px; }
+.mplan-time { font-weight: 800; color: #1F6FAE; min-width: 52px; }
 .mplan-name { font-weight: 700; color: #40566F; }
 .mplan-status { display: flex; gap: 6px; flex-wrap: wrap; }
 .mini-btn { border: 1px solid #DCEBFA; background: #FFFFFF; color: #40566F; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -2803,7 +2803,7 @@ FAM_CSS = """
 .mini-btn.lt { border-color: #FDE68A; color: #92400E; }
 .mini-btn.done { opacity: .55; pointer-events: none; }
 .adh-bar { height: 8px; background: #DCEBFA; border-radius: 8px; overflow: hidden; margin-top: 6px; }
-.adh-fill { height: 100%; background: #1565c0; border-radius: 8px; }
+.adh-fill { height: 100%; background: #1F6FAE; border-radius: 8px; }
 """
 
 def _fam_emoji(relation):
@@ -2921,7 +2921,7 @@ def relax_page():
     <div class="card">
       <h2>__RELAXH__</h2>
       <div style="font-size:16px;line-height:2;background:#EAF4FF;border-radius:12px;padding:20px;white-space:pre-wrap;">__TXT__</div>
-      <div style="text-align:center;margin-top:16px;"><div id="breathBox" style="font-size:30px;font-weight:800;color:#1565c0;height:70px;display:flex;align-items:center;justify-content:center;"></div></div>
+      <div style="text-align:center;margin-top:16px;"><div id="breathBox" style="font-size:30px;font-weight:800;color:#1F6FAE;height:70px;display:flex;align-items:center;justify-content:center;"></div></div>
     </div>
     <script>
     const phases = [['__BRIN__', 4], ['__BRHOLD__', 7], ['__BROUT__', 8]];
@@ -3259,7 +3259,7 @@ def _safeid_public_response(html, status=200):
 def public_safeid(token):
     ar = _lang() == "ar"
     public_css = r'''
-    .em-public{width:min(760px,100%);margin:20px auto;display:grid;gap:14px}.em-card{border:1px solid #dce8f0;border-radius:22px;background:#fff;padding:22px}.em-head{text-align:center;background:linear-gradient(180deg,#f8fcff,#f2f9fd)}.em-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#e9f5fb;color:#176f9e;font-weight:900;font-size:11px}.em-head h1{color:#0b3775;margin:12px 0 6px}.em-head p{color:#6f8393;margin:0}.em-title{display:flex;align-items:center;gap:9px;margin-bottom:12px}.em-title span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#edf7fd}.em-title h2{margin:0;color:#173e60;font-size:18px}.em-field{padding:12px 0;border-bottom:1px solid #edf2f5}.em-field:last-child{border-bottom:0}.em-field b{display:block;color:#3b5c72;font-size:11px}.em-field p{margin:4px 0 0;color:#203e53;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.em-contact{background:#f8fcfa;border-color:#d8eee3}.em-person{display:flex;align-items:center;gap:10px;margin-bottom:12px}.em-person .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e8f6ef;color:#188653;font-size:20px}.em-person b{display:block;color:#173e60}.em-person small{color:#7a8d9e}.em-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.em-call,.em-sms{text-decoration:none;text-align:center;border-radius:12px;padding:12px;font-weight:900}.em-call{background:#e9f8f0;color:#14844f}.em-sms{background:#eaf4fb;color:#176fa7}.em-note{font-size:10px;color:#758897;line-height:1.7;margin-top:10px}.em-warning{background:#fff8e7;color:#755b1d;border-radius:12px;padding:10px;font-size:10px;line-height:1.7}.em-empty{text-align:center;color:#7b8f9f;padding:10px}@media(max-width:600px){.em-card{padding:17px}.em-actions{grid-template-columns:1fr}}
+    .em-public{width:min(760px,100%);margin:20px auto;display:grid;gap:14px}.em-card{border:1px solid #dce8f0;border-radius:22px;background:#fff;padding:22px}.em-head{text-align:center;background:linear-gradient(180deg,#f8fcff,#f2f9fd)}.em-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#e9f5fb;color:#176f9e;font-weight:900;font-size:11px}.em-head h1{color:#123B70;margin:12px 0 6px}.em-head p{color:#6f8393;margin:0}.em-title{display:flex;align-items:center;gap:9px;margin-bottom:12px}.em-title span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#edf7fd}.em-title h2{margin:0;color:#173e60;font-size:18px}.em-field{padding:12px 0;border-bottom:1px solid #edf2f5}.em-field:last-child{border-bottom:0}.em-field b{display:block;color:#3b5c72;font-size:11px}.em-field p{margin:4px 0 0;color:#203e53;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.em-contact{background:#f8fcfa;border-color:#d8eee3}.em-person{display:flex;align-items:center;gap:10px;margin-bottom:12px}.em-person .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e8f6ef;color:#188653;font-size:20px}.em-person b{display:block;color:#173e60}.em-person small{color:#7a8d9e}.em-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.em-call,.em-sms{text-decoration:none;text-align:center;border-radius:12px;padding:12px;font-weight:900}.em-call{background:#e9f8f0;color:#14844f}.em-sms{background:#eaf4fb;color:#176fa7}.em-note{font-size:10px;color:#758897;line-height:1.7;margin-top:10px}.em-warning{background:#fff8e7;color:#755b1d;border-radius:12px;padding:10px;font-size:10px;line-height:1.7}.em-empty{text-align:center;color:#7b8f9f;padding:10px}@media(max-width:600px){.em-card{padding:17px}.em-actions{grid-template-columns:1fr}}
     '''
     card = privacy_features.get_safeid_public(token)
     if not card:
@@ -3621,7 +3621,7 @@ def how_we_work_page():
     source_fragment = _extract_main_as_div(source_html)
     extra_css = _extract_styles(trust_html, (".trust-page", ".trust-hero")) + "\n" + _extract_styles(method_html, (".method-page", ".method-hero"))
     shell_css = r"""
-    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#163b5c;font-size:clamp(28px,4vw,42px)}.ia-hub-head p{margin:8px 0 0;color:#60788b;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
+    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#123B70;font-size:clamp(28px,4vw,42px)}.ia-hub-head p{margin:8px 0 0;color:#60788b;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
     """
     body = '''<div class="ia-hub">
       <section class="ia-hub-head"><h1>%s</h1><p>%s</p></section>
