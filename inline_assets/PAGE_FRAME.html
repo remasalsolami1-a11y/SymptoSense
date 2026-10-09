@@ -64,7 +64,7 @@ __HREFLANG__
 <meta name="twitter:description" content="__DESC__">
 <meta name="twitter:image" content="__OG_IMAGE__">
 <meta name="theme-color" content="#1565c0">
-<link rel="stylesheet" href="/assets/app-shell-v112.css?v=276">
+<link rel="stylesheet" href="/assets/app-shell-v112.css?v=277">
 <style>__EXTRA_CSS__</style>
 <style>
 .asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1565c0, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
@@ -210,8 +210,8 @@ body.ss-assistant-open::after { content: ""; position: fixed; inset: 0; z-index:
 </head>
 <body class="__BODY_CLASS__">
 <a class="ss-skip-link" href="#main-content">__SKIP_TO_CONTENT__</a>
-<div class="ss-offline-banner" id="ssOfflineBanner" role="status" aria-live="polite"><div><b>__OFFLINE_TITLE__</b><small>__OFFLINE_SUB__</small></div><a href="/offline">__OFFLINE_OPEN__</a></div>
-<script>(function(){const b=document.getElementById('ssOfflineBanner');if(!b)return;function sync(){b.classList.toggle('show',!navigator.onLine);}window.addEventListener('online',sync);window.addEventListener('offline',sync);sync();})();</script>
+<div class="ss-offline-banner" id="ssOfflineBanner" role="status" aria-live="polite" aria-hidden="true"><div><b>__OFFLINE_TITLE__</b><small>__OFFLINE_SUB__</small></div><a href="/offline">__OFFLINE_OPEN__</a></div>
+<script>(function(){const b=document.getElementById('ssOfflineBanner');if(!b)return;function sync(){b.classList.toggle('show',!navigator.onLine);b.setAttribute('aria-hidden',navigator.onLine?'true':'false');}window.addEventListener('online',sync);window.addEventListener('offline',sync);sync();})();</script>
 <div class="pwa-install" id="pwaInstall" role="dialog" aria-live="polite" aria-label="Install SymptoSense">
   <img class="pwa-install-icon" src="/icons/icon-192.png" alt="">
   <div class="pwa-install-copy" id="pwaInstallText"></div>
@@ -1271,7 +1271,7 @@ try {
 } catch(e) {}
 </script>
 <!-- Smart Context Modal -->
-<div class="ss-modal-overlay" id="smartCtxModal">
+<div class="ss-modal-overlay" id="smartCtxModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="smartCtxTitle">
   <div class="ss-modal">
     <div style="font-size:36px;margin-bottom:8px;">✨</div>
     <h3 id="smartCtxTitle">✨ استخدام معلوماتي المحفوظة؟</h3>
@@ -1340,11 +1340,11 @@ function smartCtxShow(profile, callback, userInfo) {
   if (titleEl) titleEl.textContent = LANG === 'ar' ? '✨ استخدام معلومات ملفك الصحي' : '✨ Use your health profile';
   var descEl = document.getElementById('smartCtxDesc');
   if (descEl) descEl.textContent = LANG === 'ar' ? 'سيتم استخدام معلوماتك المحفوظة في التحليل الطبي' : 'Your saved info will be used in the medical analysis'; [['smartCtxUse','✨ استخدام معلوماتي','✨ Use my information'],['smartCtxManual','إدخال المعلومات يدويًا','Enter information manually'],['smartCtxSkip','تخطي','Skip']].forEach(function(b){var e=document.getElementById(b[0]);if(e)e.textContent=LANG==='ar'?b[1]:b[2];});
-  modal.classList.add('open');
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
 }
 function smartCtxAction(action) {
   var modal = document.getElementById('smartCtxModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
   if (smartCtxCallback) smartCtxCallback(action);
   smartCtxCallback = null;
 }

@@ -11,7 +11,7 @@ METRICS=json.loads((ROOT/"release_metrics.json").read_text(encoding="utf-8"))
 
 def test_shared_css_is_external_and_large_enough():
     assert len(CSS) > 200_000
-    assert '/assets/app-shell-v112.css?v=276' in WEB
+    assert '/assets/app-shell-v112.css?v=277' in WEB
     assert '.replace("__EXTRA_CSS__", extra_css)' in WEB
     assert '.replace("__CSS__", BASE_CSS + V2_CSS + extra_css + PREMIUM_POLISH_CSS)' not in WEB
 

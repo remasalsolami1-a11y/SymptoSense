@@ -587,7 +587,7 @@ def about_us_page():
     for key, value in replacements.items():
         body = body.replace(key, value)
     return _page(
-        bi("من نحن — ريماس حميد السلمي", "About — Remas Hameed Alsolami"),
+        bi("من نحن | SymptoSense", "About | SymptoSense"),
         body,
         desc=bi("تعرف على ريماس حميد السلمي وقصة تطوير SymptoSense.", "Meet Remas Hameed Alsolami and the story behind SymptoSense."),
         extra_css=ABOUT_US_POLISH_CSS,

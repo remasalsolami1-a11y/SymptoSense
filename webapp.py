@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v276")
+    response.set_etag("symptosense-app-shell-v112-v277")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2173,8 +2173,9 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         hreflang_tags = (
             '<link rel="alternate" hreflang="ar" href="%s">'
             '<link rel="alternate" hreflang="en" href="%s">'
-            '<link rel="alternate" hreflang="x-default" href="%s/">'
-        ) % (html_lib.escape(ar_href, quote=True), html_lib.escape(en_href, quote=True), html_lib.escape(base, quote=True))
+            '<link rel="alternate" hreflang="x-default" href="%s">'
+        ) % (html_lib.escape(ar_href, quote=True), html_lib.escape(en_href, quote=True), (html_lib.escape(base, quote=True) + "/") if suffix == "/" else html_lib.escape(ar_href, quote=True))
+        hreflang_tags += __import__("seo_jsonld").for_path(request.path, base)
     else:
         hreflang_tags = ""
     og_image = html_lib.escape(base + "/static/images/symptosense-social-preview.png", quote=True)

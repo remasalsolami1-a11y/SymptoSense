@@ -1035,7 +1035,7 @@ def sitemap_xml():
     # Canonical public pages only. Legacy unprefixed pages are 301 redirects and
     # never appear here, preventing duplicate language/indexation signals.
     pages = [
-        "/", "/chat", "/blood", "/search", "/calculators", "/meds",
+        "/", "/search", "/calculators", "/meds",
         "/emergency", "/firstaid", "/tips", "/relax", "/about",
         "/how-we-work", "/community-dashboard", "/health-trends",
         "/health-library", "/privacy", "/terms",
@@ -1054,9 +1054,9 @@ def sitemap_xml():
                 '  <url><loc>%s</loc>'
                 '<xhtml:link rel="alternate" hreflang="ar" href="%s"/>'
                 '<xhtml:link rel="alternate" hreflang="en" href="%s"/>'
-                '<xhtml:link rel="alternate" hreflang="x-default" href="%s/"/>'
-                '<changefreq>weekly</changefreq><priority>%.1f</priority></url>'
-                % (loc, ar_href, en_href, html_lib.escape(base, quote=True), priority)
+                '<xhtml:link rel="alternate" hreflang="x-default" href="%s"/>'
+                '<priority>%.1f</priority></url>'
+                % (loc, ar_href, en_href, (html_lib.escape(base, quote=True) + "/") if suffix == "/" else ar_href, priority)
             )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
