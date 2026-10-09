@@ -7,7 +7,7 @@ WEB = source_bundle.webapp_text()
 SW = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 
 def test_page_frame_uses_app_served_css():
-    assert '<link rel="stylesheet" href="/assets/app-shell-v112.css?v=269">' in WEB
+    assert '<link rel="stylesheet" href="/assets/app-shell-v112.css?v=272">' in WEB
     assert '/static/css/app-shell-v111.css' not in WEB
 
 def test_app_shell_route_is_public_and_cacheable():
@@ -18,6 +18,6 @@ def test_app_shell_route_is_public_and_cacheable():
     assert 'public, max-age=31536000, immutable' in WEB
 
 def test_service_worker_precaches_new_app_shell():
-    assert "'/assets/app-shell-v112.css?v=269'" in SW
+    assert "'/assets/app-shell-v112.css?v=272'" in SW
     assert "url.pathname.startsWith('/assets/')" in SW
     assert versioning.SW_CACHE in SW

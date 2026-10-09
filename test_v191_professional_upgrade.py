@@ -72,7 +72,7 @@ def test_duplicate_legacy_routes_are_permanent_redirects():
 
 def test_mobile_and_accessibility_hardening_is_shipped_with_cache_bust():
     src = source_bundle.webapp_text()
-    assert '/assets/app-shell-v112.css?v=269' in src
+    assert '/assets/app-shell-v112.css?v=272' in src
     assert ':focus-visible{outline:3px solid #0b5f96!important' in src
     assert 'input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-size:16px!important' in src
     assert '<div class="drop" id="drop" role="button" tabindex="0"' in src

@@ -20,7 +20,7 @@ def test_admin_primary_navigation_is_intentionally_small():
 
 def test_admin_and_home_surface_source_growth_and_strength():
     assert 'recent_source_additions' in WEB
-    assert 'كيف صار المحتوى أقوى؟' in WEB
+    assert 'معرفة صحية تستند إلى مصادر موثوقة' in WEB
     assert 'projectStrengthStats' in DASH
     assert 'مصادر قوية أضيفت مؤخرًا' in DASH
     assert 'knowledgeQuality' in DASH

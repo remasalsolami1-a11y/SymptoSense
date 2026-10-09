@@ -16,7 +16,7 @@ def test_requested_brand_line_is_primary_home_message():
 def test_home_strength_surfaces_sources_and_coverage():
     for token in ("__STAT_SOURCES__", "__STAT_CONDITIONS__", "__STAT_SYMPTOMS__", "__STAT_RULES__", "__STAT_COVERAGE__"):
         assert token in WEB
-    assert "كيف صار المحتوى أقوى؟" in WEB
+    assert "معرفة صحية تستند إلى مصادر موثوقة" in WEB
 
 
 def test_admin_navigation_is_compact_and_strength_is_visible():

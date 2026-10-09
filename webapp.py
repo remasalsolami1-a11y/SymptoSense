@@ -1968,8 +1968,8 @@ def _nav():
 def _footer():
     tg = "https://t.me/" + CONTACT_TELEGRAM if CONTACT_TELEGRAM else "#"
     return (
-        '<div class="footer" id="contact">'
-        '<div class="f-brand"><span class="ss-brand-gradient">SymptoSense</span> <span class="f-brand-heart">💙</span></div>'
+        '<div class="footer" id="contact"><div class="f-inner">'
+        '<a class="f-brand" href="/home" aria-label="SymptoSense"><img class="f-logo" src="/brand-icon.svg" width="40" height="40" alt="" aria-hidden="true" decoding="async" loading="lazy"><span class="ss-brand-gradient">SymptoSense</span></a>'
         '<p class="f-tag">%s</p>'
         '<div class="f-grid">'
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
@@ -1984,9 +1984,9 @@ def _footer():
         '<a href="/sources">%s</a>'
         '%s'
         '</div>'
-        '<p class="f-love"><span>%s</span> <b>%s</b></p>'
+        '<hr class="f-sep" aria-hidden="true"><p class="f-love"><span>%s</span> <b>%s</b></p>'
         '<p class="f-copy">%s</p>'
-        '</div>'
+        '</div></div>'
     ) % (_t("footer_slogan"),
          _t("footer_synopsis_t"), _t("footer_synopsis_d"),
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v269")
+    response.set_etag("symptosense-app-shell-v112-v272")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):

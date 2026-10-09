@@ -1,0 +1,7 @@
+تحديث 272 — إصلاح تداخل الجوال (الصفحة الرئيسية + صفوف الاحتمالات + مساحة شريط التنقل)
+1) انسخي محتوى الـzip فوق المجلد الداخلي: SymptoSense-V247-clean-for-git\SymptoSense
+2) PowerShell داخل المجلد الداخلي SymptoSense:
+   git add -A
+   git commit -m "V272 fix mobile overlaps"
+   git push
+(بدون --force)
