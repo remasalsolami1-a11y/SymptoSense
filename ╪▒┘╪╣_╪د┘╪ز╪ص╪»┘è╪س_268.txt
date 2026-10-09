@@ -1,0 +1,17 @@
+تحديث المشروع على GitHub (الإصدار 268.0.0) - بدون force
+
+1) فكي ضغط هذا الملف (Extract All) في مجلد جديد. الملفات تظهر مباشرة داخل المجلد، بدون مجلد ثاني بداخله.
+
+2) افتحي المجلد القديم اللي فيه الريبو (الذي رفعتِ منه المرة السابقة):
+   C:\Users\remas\Downloads\SymptoSense-V247-clean-for-git\SymptoSense
+   (فيه مجلد مخفي اسمه .git، لا تحذفيه)
+
+3) انسخي كل محتوى المجلد الجديد (Ctrl+A ثم Ctrl+C)، والصقيه داخل المجلد القديم (Ctrl+V)، واختاري "Replace the files in the destination".
+
+4) افتحي PowerShell داخل المجلد القديم ونفّذي سطرًا سطرًا:
+
+   git add -A
+   git commit -m "Language page redesign and admin stats fix (v268.0.0)"
+   git push
+
+5) بعد الـ push يبدأ Railway النشر تلقائيًا. تأكدي في Railway > Deployments أنه صار Active، ثم افتحي symptosensehealth.com.

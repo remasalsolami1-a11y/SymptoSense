@@ -1071,6 +1071,7 @@ def sitemap_xml():
 @route("/api/stats")
 def api_stats():
     db.init_db()
+    privacy_features.init_schema()  # creates records.analytics_eligible (optional schemas are lazy at startup)
     stats = db.get_usage_stats(days=7)
     trends, _ = db.get_trends(days=7)
     top_symptoms = trends.most_common(8)

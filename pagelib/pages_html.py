@@ -46,7 +46,7 @@ def welcome_page():
     body.ss-welcome-page .ss-bnav,body.ss-welcome-page #ssBnav{display:none!important;visibility:hidden!important;pointer-events:none!important;}
     body.ss-welcome-page .container{max-width:none!important;padding:0!important;}
     body.ss-welcome-page .first-lang{
-      --fl-ink:#0F2F63;--fl-body:#4A6685;--fl-blue:#2A78D0;--fl-teal:#1FA3D6;--fl-chip:#E2F0FB;--fl-line:#D3E5F4;
+      --fl-ink:#0F2F63;--fl-body:#33506F;--fl-card-line:#B4D3F0;--fl-blue:#2A78D0;--fl-teal:#1FA3D6;--fl-chip:#E2F0FB;--fl-line:#D3E5F4;
       position:relative!important;min-height:100vh!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:visible!important;
       background:linear-gradient(180deg,#F8FBFF 0%,#E6F2FC 100%)!important;color:var(--fl-ink);
     }
@@ -88,19 +88,21 @@ def welcome_page():
     body.ss-welcome-page .first-lang--en .first-lang-select-title{font-family:'Poppins','Segoe UI',sans-serif!important;font-size:15px!important;}
     body.ss-welcome-page .first-lang-select-title::before,body.ss-welcome-page .first-lang-select-title::after{content:'';height:1.5px;flex:0 1 44px;border-radius:2px;background:var(--fl-blue);opacity:.45;}
     body.ss-welcome-page .first-lang-options{width:100%!important;display:flex!important;flex-direction:column!important;gap:12px!important;margin-top:16px!important;}
-    body.ss-welcome-page .first-lang-option{display:flex!important;flex-direction:row!important;align-items:center!important;gap:14px!important;width:100%!important;min-height:68px!important;padding:12px 14px!important;box-sizing:border-box!important;border-radius:18px!important;background:#fff!important;border:1.5px solid var(--fl-line)!important;box-shadow:0 6px 16px rgba(42,120,208,.08)!important;color:var(--fl-ink)!important;text-decoration:none!important;text-align:start!important;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;-webkit-tap-highlight-color:transparent;}
+    body.ss-welcome-page .first-lang-option{display:flex!important;flex-direction:row!important;align-items:center!important;gap:16px!important;width:100%!important;min-height:76px!important;padding:12px 18px!important;box-sizing:border-box!important;border-radius:20px!important;background:#fff!important;border:2px solid var(--fl-card-line)!important;box-shadow:0 6px 16px rgba(42,120,208,.08)!important;color:var(--fl-ink)!important;text-decoration:none!important;text-align:start!important;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;-webkit-tap-highlight-color:transparent;}
     body.ss-welcome-page .first-lang--ar .first-lang-option{direction:rtl!important;}
     body.ss-welcome-page .first-lang--en .first-lang-option{direction:ltr!important;}
-    body.ss-welcome-page .first-lang-option:hover{transform:translateY(-1px)!important;border-color:#A8CEF0!important;box-shadow:0 10px 22px rgba(42,120,208,.14)!important;}
+    body.ss-welcome-page .first-lang-option:hover{transform:translateY(-1px)!important;border-color:#5B9BDD!important;background:#F7FBFF!important;box-shadow:0 12px 26px rgba(42,120,208,.18)!important;}
     body.ss-welcome-page .first-lang-option:active{transform:scale(.99)!important;}
-    body.ss-welcome-page .first-lang-option:focus-visible{outline:3px solid #2A78D0!important;outline-offset:3px!important;}
-    body.ss-welcome-page .first-lang-chip{order:0!important;display:grid!important;place-items:center!important;width:42px!important;height:42px!important;flex:0 0 42px!important;border-radius:50%!important;background:var(--fl-chip)!important;border:0!important;color:var(--fl-blue)!important;font:800 18px/1 'Tajawal','Segoe UI',sans-serif!important;}
+    body.ss-welcome-page .first-lang-option:focus-visible{outline:3px solid #174E88!important;outline-offset:3px!important;border-color:#2A78D0!important;}
+    body.ss-welcome-page .first-lang-chip{order:0!important;display:grid!important;place-items:center!important;width:46px!important;height:46px!important;flex:0 0 46px!important;border-radius:50%!important;background:var(--fl-chip)!important;border:0!important;color:var(--fl-blue)!important;font:800 18px/1 'Tajawal','Segoe UI',sans-serif!important;}
     body.ss-welcome-page .first-lang-option[data-lang="en"] .first-lang-chip{font:700 14px/1 'Poppins','Segoe UI',sans-serif!important;}
-    body.ss-welcome-page .first-lang-label{order:1!important;flex:1 1 auto!important;font-weight:700!important;font-size:20px!important;line-height:1.2!important;white-space:nowrap!important;}
+    body.ss-welcome-page .first-lang-label{order:1!important;flex:1 1 auto!important;font-weight:700!important;font-size:22px!important;line-height:1.2!important;white-space:nowrap!important;}
     body.ss-welcome-page .first-lang--ar .first-lang-label{text-align:right!important;}
     body.ss-welcome-page .first-lang--en .first-lang-label{text-align:left!important;}
-    body.ss-welcome-page .first-lang-option[data-lang="en"] .first-lang-label{font-family:'Poppins','Segoe UI',sans-serif!important;font-size:18px!important;}
-    body.ss-welcome-page .first-lang-option .lang-arrow{order:2!important;display:grid!important;place-items:center!important;flex:0 0 22px!important;width:22px!important;margin:0!important;color:var(--fl-blue)!important;font:500 28px/1 'Segoe UI',sans-serif!important;}
+    body.ss-welcome-page .first-lang-option[data-lang="en"] .first-lang-label{font-family:'Poppins','Segoe UI',sans-serif!important;font-size:20px!important;}
+    body.ss-welcome-page .first-lang-option .lang-arrow{order:2!important;display:grid!important;place-items:center!important;flex:0 0 26px!important;width:26px!important;height:26px!important;margin:0!important;color:var(--fl-blue)!important;}
+    body.ss-welcome-page .first-lang-option .lang-arrow svg{display:block;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+    body.ss-welcome-page .first-lang--ar .first-lang-option .lang-arrow svg{transform:scaleX(-1);}
     body.ss-welcome-page .first-lang-benefits{width:100%!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;margin:20px 0 0!important;padding:12px 4px!important;border:1px solid var(--fl-line)!important;border-radius:18px!important;background:rgba(255,255,255,.7)!important;box-sizing:border-box!important;}
     body.ss-welcome-page .first-lang-benefit{min-height:0!important;padding:0 6px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;text-align:center!important;}
     body.ss-welcome-page .first-lang-benefit + .first-lang-benefit{border-inline-start:1px solid var(--fl-line)!important;}
@@ -125,7 +127,37 @@ def welcome_page():
       body.ss-welcome-page .first-lang-headline-ar{font-size:36px!important;}
       body.ss-welcome-page .first-lang-headline-en{font-size:26px!important;}
     }
-    @media (prefers-reduced-motion:reduce){body.ss-welcome-page .first-lang-option{transition:none!important;}}
+    body.ss-welcome-page .fl-preview{display:none;}body.ss-welcome-page .fl-preview [data-copy]{display:none!important;}
+    body.ss-welcome-page .first-lang--ar .fl-preview [data-copy="ar"],body.ss-welcome-page .first-lang--en .fl-preview [data-copy="en"]{display:inline!important;}
+    @media (min-width:980px){
+      body.ss-welcome-page .first-lang-shell{width:min(100%,1180px)!important;padding:56px 40px 28px!important;}
+      body.ss-welcome-page .first-lang-card{display:grid!important;grid-template-columns:minmax(0,500px) minmax(0,1fr)!important;column-gap:64px!important;align-content:center!important;justify-items:center!important;}
+      body.ss-welcome-page .first-lang-card>*{grid-column:1;}body.ss-welcome-page .first-lang--ar .first-lang-card{direction:rtl!important;}body.ss-welcome-page .first-lang--en .first-lang-card{direction:ltr!important;}
+      body.ss-welcome-page .first-lang-headline-ar{font-size:44px!important;}
+      body.ss-welcome-page .first-lang-headline-en{font-size:32px!important;}
+      body.ss-welcome-page .first-lang-copy{max-width:430px!important;}
+      body.ss-welcome-page .first-lang-desc-ar{font-size:18px!important;}
+      body.ss-welcome-page .first-lang-desc-en{font-size:16px!important;}
+      body.ss-welcome-page .first-lang-card>.fl-preview{display:block;grid-column:2;grid-row:1 / span 10;align-self:center;justify-self:center;position:relative;width:100%;max-width:540px;height:440px;}
+      body.ss-welcome-page .fl-pv-window{position:absolute;top:0;right:0;bottom:62px;left:0;display:flex;gap:16px;padding:18px;box-sizing:border-box;border-radius:28px;background:rgba(255,255,255,.86);border:1px solid #CFE3F5;box-shadow:0 30px 60px rgba(42,120,208,.16),0 6px 18px rgba(42,120,208,.08);}
+      body.ss-welcome-page .fl-pv-side{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:2px;}
+      body.ss-welcome-page .fl-pv-logo{display:block;width:34px;height:34px;margin-bottom:6px;}body.ss-welcome-page .fl-pv-logo svg{display:block;width:100%;height:100%;}
+      body.ss-welcome-page .fl-pv-pill{display:block;width:100%;height:12px;border-radius:6px;background:#E3EEF9;}body.ss-welcome-page .fl-pv-pill.is-on{height:34px;background:#CFE4FA;}
+      body.ss-welcome-page .fl-pv-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:14px;}
+      body.ss-welcome-page .fl-pv-search{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-radius:14px;background:#EEF5FC;color:#33506F;font-size:13px;line-height:1.2;}body.ss-welcome-page .fl-pv-search svg{flex:0 0 18px;width:18px;height:18px;fill:none;stroke:#2A78D0;stroke-width:2;stroke-linecap:round;}
+      body.ss-welcome-page .fl-pv-grid{flex:1 1 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+      body.ss-welcome-page .fl-pv-tile{display:flex;flex-direction:column;justify-content:space-between;gap:10px;padding:16px;border-radius:18px;background:#fff;border:1px solid #DCEAF7;box-shadow:0 6px 16px rgba(42,120,208,.07);color:var(--fl-ink);font-size:14px;font-weight:700;line-height:1.3;}
+      body.ss-welcome-page .fl-pv-ic{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--fl-chip);}body.ss-welcome-page .fl-pv-ic svg{width:22px;height:22px;fill:none;stroke:var(--fl-blue);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+      body.ss-welcome-page .fl-pv-pulse{position:absolute;bottom:0;inset-inline-start:28px;display:flex;align-items:center;gap:14px;width:250px;height:76px;padding:0 18px;box-sizing:border-box;border-radius:22px;background:#fff;border:1px solid #DCEAF7;box-shadow:0 16px 34px rgba(42,120,208,.16);}
+      body.ss-welcome-page .fl-pv-pulse svg{flex:0 0 40px;width:40px;height:40px;fill:none;stroke:var(--fl-blue);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+      body.ss-welcome-page .fl-pv-lines{flex:1 1 auto;display:flex;flex-direction:column;gap:9px;}
+      body.ss-welcome-page .fl-pv-lines i{display:block;height:9px;border-radius:5px;background:#D6E7F8;}body.ss-welcome-page .fl-pv-lines i+i{width:62%;background:#E6F0FA;}
+      body.ss-welcome-page .fl-pv-badge{position:absolute;top:-20px;inset-inline-end:26px;display:grid;place-items:center;width:62px;height:62px;border-radius:20px;background:#fff;border:1px solid #DCEAF7;box-shadow:0 14px 30px rgba(42,120,208,.18);}
+      body.ss-welcome-page .fl-pv-badge svg{width:30px;height:30px;fill:none;stroke:var(--fl-blue);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    }
+    @media (min-width:980px) and (prefers-reduced-motion:no-preference){body.ss-welcome-page .fl-pv-window{animation:flFloat 7s ease-in-out infinite;}body.ss-welcome-page .fl-pv-pulse{animation:flFloat 9s ease-in-out infinite reverse;}}
+    @keyframes flFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+    @media (prefers-reduced-motion:reduce){body.ss-welcome-page .first-lang-option{transition:none!important;}body.ss-welcome-page .fl-pv-window,body.ss-welcome-page .fl-pv-pulse{animation:none!important;}}
     </style>
     <main class="first-lang __LANG_CLASS__" aria-labelledby="languageTitle" dir="__DIR__" lang="__HTML_LANG__">
       <svg class="fl-art fl-art-top" viewBox="0 0 370 300" preserveAspectRatio="xMidYMin slice" aria-hidden="true" focusable="false">
@@ -214,6 +246,25 @@ def welcome_page():
             <span class="dot" aria-hidden="true">·</span>
             <a href="__PRIVACY_URL__"><span data-copy="ar" lang="ar" dir="rtl">الخصوصية</span><span data-copy="en" lang="en">Privacy</span></a>
           </nav>
+          <div class="fl-preview" aria-hidden="true">
+            <div class="fl-pv-window">
+              <div class="fl-pv-side">
+                <span class="fl-pv-logo"><svg viewBox="0 0 64 64" focusable="false"><path d="M16 9v12c0 10 7.1 17.5 16 17.5S48 31 48 21V9" fill="none" stroke="#318AEF" stroke-width="5" stroke-linecap="round"/><circle cx="16" cy="8" r="4" fill="#28C5D8"/><circle cx="48" cy="8" r="4" fill="#59BDF2"/><path d="M32 38.5v5.8c0 7.2 5.4 12.7 12.6 12.7h2.6" fill="none" stroke="#318AEF" stroke-width="5" stroke-linecap="round"/><circle cx="52" cy="56" r="6.2" fill="#fff" stroke="#3A78E2" stroke-width="4"/></svg></span>
+                <span class="fl-pv-pill is-on"></span><span class="fl-pv-pill"></span><span class="fl-pv-pill"></span><span class="fl-pv-pill"></span>
+              </div>
+              <div class="fl-pv-main">
+                <div class="fl-pv-search"><svg viewBox="0 0 24 24" focusable="false"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-copy="ar" lang="ar" dir="rtl">ابحث عن أعراض أو أدوية أو فحوصات</span><span data-copy="en" lang="en">Search symptoms, medicines, tests</span></div>
+                <div class="fl-pv-grid">
+                  <div class="fl-pv-tile"><span class="fl-pv-ic"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 3v6a5 5 0 0 0 10 0V3"/><path d="M12 14v2a4 4 0 0 0 8 0v-1"/><circle cx="20" cy="13" r="1.6"/></svg></span><span><span data-copy="ar" lang="ar" dir="rtl">تحليل الأعراض</span><span data-copy="en" lang="en">Symptom analysis</span></span></div>
+                  <div class="fl-pv-tile"><span class="fl-pv-ic"><svg viewBox="0 0 24 24" focusable="false"><g transform="rotate(-40 12 12)"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><path d="M12 8.5v7"/></g></svg></span><span><span data-copy="ar" lang="ar" dir="rtl">الأدوية</span><span data-copy="en" lang="en">Medications</span></span></div>
+                  <div class="fl-pv-tile"><span class="fl-pv-ic"><svg viewBox="0 0 24 24" focusable="false"><path d="M9 3h6"/><path d="M10 3v13a2 2 0 0 0 4 0V3"/><path d="M10 11h4"/></svg></span><span><span data-copy="ar" lang="ar" dir="rtl">الفحوصات وCBC</span><span data-copy="en" lang="en">Tests &amp; CBC</span></span></div>
+                  <div class="fl-pv-tile"><span class="fl-pv-ic"><svg viewBox="0 0 24 24" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7.5h7M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg></span><span><span data-copy="ar" lang="ar" dir="rtl">الحاسبات الصحية</span><span data-copy="en" lang="en">Health calculators</span></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="fl-pv-pulse"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M7 11h2l1.5-2.5 2 4 1.5-1.5H17"/></svg><span class="fl-pv-lines"><i></i><i></i></span></div>
+            <div class="fl-pv-badge"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 9v6M9 12h6"/></svg></div>
+          </div>
         </section>
       </div>
     </main>
@@ -235,7 +286,7 @@ def welcome_page():
     body = body.replace("__HTML_LANG__", ui_lang)
     body = body.replace("__TERMS_URL__", html_lib.escape(_localized_url("/terms", ui_lang), quote=True))
     body = body.replace("__PRIVACY_URL__", html_lib.escape(_localized_url("/privacy", ui_lang), quote=True))
-    body = body.replace("__ARROW__", "‹" if is_ar else "›")
+    body = body.replace("__ARROW__", '<svg viewBox="0 0 24 24" focusable="false"><path d="M9 5l7 7-7 7"/></svg>')
     html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
     html = html.replace('<meta name="theme-color" content="#1565c0">', '<meta name="theme-color" content="#F8FBFF">')
     return html
