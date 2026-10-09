@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v268")
+    response.set_etag("symptosense-app-shell-v112-v269")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):

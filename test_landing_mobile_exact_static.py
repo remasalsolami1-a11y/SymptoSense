@@ -18,7 +18,7 @@ def test_mobile_landing_uses_current_competition_structure():
         'Your Health, Smarter',
         'افهم أعراضك<em>واعرف خطوتك التالية</em>',
         'Understand your symptoms<em>and know your next step</em>',
-        '<span data-copy="ar" lang="ar" dir="rtl">اختر لغتك</span>',
+        '<span data-copy="ar" lang="ar" dir="rtl">اختر لغتك للبدء</span>',
         '<span data-copy="en" lang="en">Choose your language</span>',
         '>ع</span>',
         '>EN</span>',

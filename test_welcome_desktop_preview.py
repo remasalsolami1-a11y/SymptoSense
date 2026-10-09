@@ -49,7 +49,7 @@ def test_arrow_is_one_svg_mirrored_by_css_on_the_rtl_page():
     assert '"‹" if is_ar else "›"' not in b
     assert 'M9 5l7 7-7 7' in b
     css = _css()
-    assert '.first-lang--ar .first-lang-option .lang-arrow svg{transform:scaleX(-1);}' in css
+    assert '.first-lang--ar .first-lang-option .lang-arrow svg{transform:scaleX(-1);}' in css  # base rule; per-card rule lives in WELCOME_BILINGUAL_CSS
 
 
 def test_preview_is_decorative_desktop_only_and_motion_is_optional():

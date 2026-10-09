@@ -17,7 +17,7 @@ import json
 import logging
 import medical_knowledge
 import privacy_features
-import re
+import re, inline_assets
 
 DEPS = ("ABOUT_US_POLISH_CSS", "BLOOD_COLLECTION_CONSENT_VERSION", "CALC_CSS", "CT", "FAM_CSS", "HOME_CSS", "LANG_PICKER_CSS", "MEDS_CSS", "SEARCH_CSS", "_consent_state", "_consent_subject_key", "_data_user_id", "_fam_emoji", "_home_knowledge_snapshot", "_json_for_script", "_lang", "_localized_target_from_legacy", "_localized_url", "_page", "_safe_next_url", "_safeid_share_url", "_safeid_subject_from_request", "_safeid_subject_owned", "_service_consent_ok", "_site_url", "_ss_user_id", "_t", )
 
@@ -158,7 +158,7 @@ def welcome_page():
     @media (min-width:980px) and (prefers-reduced-motion:no-preference){body.ss-welcome-page .fl-pv-window{animation:flFloat 7s ease-in-out infinite;}body.ss-welcome-page .fl-pv-pulse{animation:flFloat 9s ease-in-out infinite reverse;}}
     @keyframes flFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
     @media (prefers-reduced-motion:reduce){body.ss-welcome-page .first-lang-option{transition:none!important;}body.ss-welcome-page .fl-pv-window,body.ss-welcome-page .fl-pv-pulse{animation:none!important;}}
-    </style>
+    </style><style id="ss-welcome-bilingual-v269">__BILINGUAL_CSS__</style>
     <main class="first-lang __LANG_CLASS__" aria-labelledby="languageTitle" dir="__DIR__" lang="__HTML_LANG__">
       <svg class="fl-art fl-art-top" viewBox="0 0 370 300" preserveAspectRatio="xMidYMin slice" aria-hidden="true" focusable="false">
         <defs>
@@ -195,20 +195,16 @@ def welcome_page():
           </div>
           <h1 class="first-lang-brand ss-brand-gradient" lang="en">SymptoSense</h1>
           <p class="first-lang-slogan" lang="en">Your Health, Smarter</p>
-
           <p class="first-lang-headline-ar" lang="ar" dir="rtl">افهم أعراضك<em>واعرف خطوتك التالية</em></p>
           <p class="first-lang-headline-en" lang="en">Understand your symptoms<em>and know your next step</em></p>
-
           <div class="first-lang-copy">
-            <p class="first-lang-desc-ar" lang="ar" dir="rtl">مساعد صحي ذكي يساعدك على فهم أعراضك، دون تشخيص طبي.</p>
-            <p class="first-lang-desc-en" lang="en">A smart health assistant to help you understand your symptoms, not a medical diagnosis.</p>
+            <p class="first-lang-desc-ar" lang="ar" dir="rtl">مساعد صحي ذكي يساعدك على فهم أعراضك والحصول على معلومات صحية عامة، دون تقديم تشخيص طبي.</p>
+            <p class="first-lang-desc-en" lang="en">A smart health assistant to help you understand your symptoms and get general health information, not a medical diagnosis.</p>
           </div>
-
           <p class="first-lang-select-title" id="languageTitle" tabindex="-1">
-            <span data-copy="ar" lang="ar" dir="rtl">اختر لغتك</span>
+            <span data-copy="ar" lang="ar" dir="rtl">اختر لغتك للبدء</span>
             <span data-copy="en" lang="en">Choose your language</span>
           </p>
-
           <div class="first-lang-options" id="languageOptions" role="group" aria-labelledby="languageTitle">
             <a class="first-lang-option" data-lang="ar" href="__LANG_AR_TARGET__" aria-label="اختيار العربية" lang="ar">
               <span class="first-lang-chip" aria-hidden="true">ع</span>
@@ -221,26 +217,24 @@ def welcome_page():
               <span class="lang-arrow" aria-hidden="true">__ARROW__</span>
             </a>
           </div>
-
           <section class="first-lang-benefits" aria-labelledby="firstLangBenefitsTitle">
             <h2 id="firstLangBenefitsTitle" class="ss-sr-only">SymptoSense benefits</h2>
             <div class="first-lang-benefit">
               <span class="fl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 9v6M9 12h6"/></svg></span>
-              <b data-copy="ar" lang="ar" dir="rtl">إرشاد غير تشخيصي</b>
-              <b data-copy="en" lang="en">Not a diagnosis</b>
+              <b data-copy="ar" lang="ar" dir="rtl">إرشاد لا تشخيص</b>
+              <b data-copy="en" lang="en">Guidance, not diagnosis</b>
             </div>
             <div class="first-lang-benefit">
               <span class="fl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-              <b data-copy="ar" lang="ar" dir="rtl">خصوصية وأمان</b>
-              <b data-copy="en" lang="en">Private &amp; secure</b>
+              <b data-copy="ar" lang="ar" dir="rtl">خصوصيتك أولويتنا</b>
+              <b data-copy="en" lang="en">Your privacy matters</b>
             </div>
             <div class="first-lang-benefit">
               <span class="fl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg></span>
-              <b data-copy="ar" lang="ar" dir="rtl">معلومات صحية عامة</b>
-              <b data-copy="en" lang="en">General health info</b>
+              <b data-copy="ar" lang="ar" dir="rtl">معلومات مرجعية</b>
+              <b data-copy="en" lang="en">Reference information</b>
             </div>
           </section>
-
           <nav class="first-lang-legal" aria-label="روابط الموقع / Site links">
             <a href="__TERMS_URL__"><span data-copy="ar" lang="ar" dir="rtl">الشروط</span><span data-copy="en" lang="en">Terms</span></a>
             <span class="dot" aria-hidden="true">·</span>
@@ -286,6 +280,11 @@ def welcome_page():
     body = body.replace("__HTML_LANG__", ui_lang)
     body = body.replace("__TERMS_URL__", html_lib.escape(_localized_url("/terms", ui_lang), quote=True))
     body = body.replace("__PRIVACY_URL__", html_lib.escape(_localized_url("/privacy", ui_lang), quote=True))
+    body = body.replace("__BILINGUAL_CSS__", inline_assets.text("WELCOME_BILINGUAL_CSS.css"))
+    if not is_ar:  # browser language only decides which card comes first (and so the tab order)
+        a, b = body.index('<a class="first-lang-option" data-lang="ar"'), body.index('<a class="first-lang-option" data-lang="en"')
+        e = body.index('</div>', b)
+        body = body[:a] + body[b:e] + body[a:b] + body[e:]
     body = body.replace("__ARROW__", '<svg viewBox="0 0 24 24" focusable="false"><path d="M9 5l7 7-7 7"/></svg>')
     html = _page("SymptoSense — Choose language | اختر اللغة", body, bare=True, extra_css=LANG_PICKER_CSS)
     html = html.replace('<meta name="theme-color" content="#1565c0">', '<meta name="theme-color" content="#F8FBFF">')

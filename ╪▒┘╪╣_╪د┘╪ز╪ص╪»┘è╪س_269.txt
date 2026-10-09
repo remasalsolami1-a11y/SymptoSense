@@ -1,0 +1,7 @@
+تحديث 269 — شاشة اللغة ثنائية اللغة
+1) فكّي الضغط وانسخي المحتوى فوق المجلد الداخلي: SymptoSense-V247-clean-for-git\SymptoSense
+2) افتحي PowerShell داخل المجلد الداخلي SymptoSense (وليس الخارجي) ثم:
+   git add -A
+   git commit -m "V269 bilingual language screen"
+   git push
+(بدون --force)

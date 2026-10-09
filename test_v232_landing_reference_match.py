@@ -18,7 +18,7 @@ def test_v232_reference_layout_content():
         'افهم أعراضك<em>واعرف خطوتك التالية</em>',
         'Understand your symptoms<em>and know your next step</em>',
         '>ع</span>', '>EN</span>', '>SA</span>' if False else 'first-lang-chip',
-        'إرشاد غير تشخيصي', 'Not a diagnosis',
+        'إرشاد لا تشخيص', 'Guidance, not diagnosis',
     ]:
         assert token in block, token
     assert '>SA</span>' not in block
