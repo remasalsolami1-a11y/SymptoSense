@@ -18,8 +18,8 @@ def test_v239_reference_css_present():
     assert ".smart-body-svg.v239" in CSS
 
 def test_v239_cache_bust():
-    assert "/assets/app-shell-v112.css?v=274" in WEB
-    assert "symptosense-app-shell-v112-v274" in WEB
+    assert "/assets/app-shell-v112.css?v=273" in WEB
+    assert "symptosense-app-shell-v112-v273" in WEB
     assert versioning.SW_CACHE in SW
 
 def test_duplicate_chat_and_css_are_synced():

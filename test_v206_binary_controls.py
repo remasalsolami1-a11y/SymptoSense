@@ -25,6 +25,6 @@ def test_all_known_binary_control_surfaces_still_exist():
 
 def test_binary_control_css_is_cache_busted():
     sw=(ROOT/"service-worker.js").read_text(encoding="utf-8")
-    assert '/assets/app-shell-v112.css?v=274' in WEB
-    assert "'/assets/app-shell-v112.css?v=274'" in sw
-    assert 'symptosense-app-shell-v112-v274' in WEB
+    assert '/assets/app-shell-v112.css?v=273' in WEB
+    assert "'/assets/app-shell-v112.css?v=273'" in sw
+    assert 'symptosense-app-shell-v112-v273' in WEB

@@ -64,7 +64,7 @@ __HREFLANG__
 <meta name="twitter:description" content="__DESC__">
 <meta name="twitter:image" content="__OG_IMAGE__">
 <meta name="theme-color" content="#1565c0">
-<link rel="stylesheet" href="/assets/app-shell-v112.css?v=274">
+<link rel="stylesheet" href="/assets/app-shell-v112.css?v=273">
 <style>__EXTRA_CSS__</style>
 <style>
 .asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1565c0, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
@@ -1339,7 +1339,7 @@ function smartCtxShow(profile, callback, userInfo) {
   var titleEl = document.getElementById('smartCtxTitle');
   if (titleEl) titleEl.textContent = LANG === 'ar' ? '✨ استخدام معلومات ملفك الصحي' : '✨ Use your health profile';
   var descEl = document.getElementById('smartCtxDesc');
-  if (descEl) descEl.textContent = LANG === 'ar' ? 'سيتم استخدام معلوماتك المحفوظة في التحليل الطبي' : 'Your saved info will be used in the medical analysis'; [['smartCtxUse','✨ استخدام معلوماتي','✨ Use my information'],['smartCtxManual','إدخال المعلومات يدويًا','Enter information manually'],['smartCtxSkip','تخطي','Skip']].forEach(function(b){var e=document.getElementById(b[0]);if(e)e.textContent=LANG==='ar'?b[1]:b[2];});
+  if (descEl) descEl.textContent = LANG === 'ar' ? 'سيتم استخدام معلوماتك المحفوظة في التحليل الطبي' : 'Your saved info will be used in the medical analysis';
   modal.classList.add('open');
 }
 function smartCtxAction(action) {

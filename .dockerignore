@@ -1,0 +1,51 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+playwright-report/
+test-results/
+tests/
+e2e/
+docs/
+tools/*.png
+*.db
+*.sqlite
+*.sqlite3
+all_pages_report.json
+device_report.json
+*_preview.html
+*.md
+!README.md
+
+# Local QA utilities are not production runtime dependencies.
+# Keep the whole tools/ tree out of the production image. The Dockerfile must
+# never execute or require files from this directory.
+tools/
+release_check.py
+
+# Runtime view builders are intentionally flattened into root modules in V95.
+views/
+
+# Flat release QA/source artifacts (kept in the ZIP, excluded from production image)
+test_*.py
+test_*.js
+*_smoke.py
+*.spec.js
+playwright.config.js
+package.json
+ci.yml
+RESPONSIVE_TEST_REPORT.json
+v76_full_audit_report.json
+CACHEDIR.TAG
+README (1).md
+webapp (8).py
+*_smoke_test.py
+full_interaction_audit.py
+SymptoSense_Audit.html

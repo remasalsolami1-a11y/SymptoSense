@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v274")
+    response.set_etag("symptosense-app-shell-v112-v273")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2292,7 +2292,6 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__BODY__", body)
         .replace("__ASSET_VERSION__", html_lib.escape(STATIC_ASSET_VERSION, quote=True))
     )
-    if lang == "en": rendered = rendered.replace("✨ استخدام معلوماتي المحفوظة؟", "✨ Use your saved information?").replace("لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.", "You have saved information that may make the result more personalized.").replace("✨ استخدام معلوماتي<", "✨ Use my information<").replace(">إدخال المعلومات يدويًا<", ">Enter information manually<").replace(">تخطي<", ">Skip<")
     return _localize_html_links(rendered, lang)
 
 # ---------------------------------------------------------------- landing
