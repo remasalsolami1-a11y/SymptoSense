@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "policy": "A content area is shown to users as clinician-reviewed only when status is 'reviewed' and reviewer, credentials and date are filled in. Everything else is shown as not yet clinically reviewed.",
+  "areas": {
+    "emergency_rules": {
+      "title_ar": "قواعد الطوارئ وشاشة التوقف",
+      "title_en": "Emergency rules and stop screen",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "redflag_screens": {
+      "title_ar": "أسئلة فحص علامات الخطر",
+      "title_en": "Red-flag screening questions",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "search_new_v251": {
+      "title_ar": "مواضيع البحث الجديدة (الحساسية، عرق النسا، الهلع، انخفاض الضغط، زغللة، اكتئاب)",
+      "title_en": "New search topics (allergy, sciatica, panic, low blood pressure, blurred vision, depression)",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "search_base": {
+      "title_ar": "مكتبة مواضيع البحث",
+      "title_en": "Search topic library",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "lab_cards": {
+      "title_ar": "بطاقات التحاليل",
+      "title_en": "Lab-test cards",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "library_core": {
+      "title_ar": "مكتبة الأعراض والأمراض",
+      "title_en": "Symptom and condition library",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "vitals_thresholds": {
+      "title_ar": "حدود تنبيهات القياسات المنزلية (ضغط، سكر، حرارة، نبض، SpO₂)",
+      "title_en": "Home-vitals alert thresholds (BP, glucose, temperature, pulse, SpO2)",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "medication_context": {
+      "title_ar": "ربط الأدوية بالأعراض والحالات (من نصوص الكتالوج)",
+      "title_en": "Medication context links (from catalog text)",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    },
+    "clinical_reasoning": {
+      "title_ar": "منطق الصورة السريرية وقواعد رفع مستوى المتابعة",
+      "title_en": "Clinical reasoning and follow-up level-raising rules",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": ""
+    }
+  }
+}

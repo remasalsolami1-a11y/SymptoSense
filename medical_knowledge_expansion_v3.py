@@ -1,0 +1,283 @@
+"""V61 source-grounded knowledge expansion for SymptoSense.
+
+Adds broader symptom vocabulary and common presentations using official public
+health / NIH / NHS sources. Educational only; no diagnosis is inferred from a
+single symptom or condition match.
+"""
+
+EXTRA_SOURCES_V3 = [
+    (
+        "nei", "National Eye Institute (NEI)", "National Eye Institute",
+        "https://nei.nih.gov/", "government", 17,
+        "معهد وطني أمريكي تابع لـ NIH مختص بصحة العين وأمراضها، وينشر معلومات تثقيفية ومراجعة علميًا.",
+        "A U.S. NIH institute focused on eye health and eye diseases, publishing reviewed educational information.",
+    ),
+    (
+        "nimh", "National Institute of Mental Health (NIMH)", "National Institute of Mental Health",
+        "https://nimh.nih.gov/", "government", 18,
+        "معهد وطني أمريكي تابع لـ NIH مختص بالصحة النفسية والاضطرابات النفسية والمعلومات المبنية على البحث.",
+        "A U.S. NIH institute focused on mental health and research-based information about mental disorders.",
+    ),
+    (
+        "niaid", "NIAID", "National Institute of Allergy and Infectious Diseases",
+        "https://niaid.nih.gov/", "government", 19,
+        "معهد وطني أمريكي تابع لـ NIH مختص بالحساسية والأمراض المناعية والمعدية.",
+        "A U.S. NIH institute focused on allergy, immunology, and infectious diseases.",
+    ),
+    (
+        "nidcd", "NIDCD", "National Institute on Deafness and Other Communication Disorders",
+        "https://nidcd.nih.gov/", "government", 20,
+        "معهد وطني أمريكي تابع لـ NIH مختص بالسمع والتوازن والشم والتذوق واضطرابات التواصل.",
+        "A U.S. NIH institute focused on hearing, balance, smell, taste, and communication disorders.",
+    ),
+    (
+        "nichd", "NICHD", "Eunice Kennedy Shriver National Institute of Child Health and Human Development",
+        "https://nichd.nih.gov/", "government", 22,
+        "معهد وطني أمريكي تابع لـ NIH ينشر معلومات بحثية موثوقة حول صحة المرأة والإنجاب والنمو والتطور.",
+        "A U.S. NIH institute publishing research-based information on reproductive, maternal, child, and developmental health.",
+    ),
+]
+
+EXTRA_SYMPTOMS_V3 = [
+    ("heat-exposure", "التعرض لحرارة شديدة", "Exposure to extreme heat", "general", ["جلست بالحر", "تعرضت للشمس وقت طويل", "كنت في حر شديد", "حر شديد", "دوخة من الحر", "صداع من الحر", "تعب من الحر"], ["extreme heat exposure", "been in the heat", "hot environment"]),
+    ("hot-dry-skin", "جلد حار وجاف", "Hot dry skin", "skin", ["جلدي حار وجاف", "جسمي حار بدون عرق"], ["hot dry skin", "hot skin not sweating"]),
+    ("collapse-in-heat", "انهيار أو إغماء مع الحر", "Collapse or fainting in heat", "general", ["اغماء من الحر", "طحت من الحر", "انهرت في الشمس"], ["fainted in heat", "collapsed in heat"]),
+    ("motion-triggered-nausea", "غثيان مع الحركة أو السفر", "Nausea triggered by travel or motion", "digestive", ["اغثي بالسياره", "غثيان في السيارة", "اتعب بالطائرة", "غثيان بالسفر"], ["nausea in car", "travel nausea", "motion nausea"]),
+    ("motion-triggered-dizziness", "دوخة مع الحركة أو السفر", "Dizziness triggered by travel or motion", "neurological", ["ادوخ بالسياره", "دوخه في السيارة", "دوار بالسفر"], ["dizzy in car", "travel dizziness", "motion dizziness"]),
+    ("upper-abdominal-burning", "حرقان أو ألم أعلى البطن", "Burning or pain in the upper abdomen", "digestive", ["حرقان اعلى البطن", "حرقان فم المعدة", "الم فم المعده", "وجع فم المعدة"], ["upper abdominal burning", "upper stomach pain", "epigastric pain"]),
+    ("early-satiety", "الشبع بسرعة", "Feeling full very quickly", "digestive", ["اشبع بسرعه", "احس بالشبع من كم لقمه", "امتلئ بسرعه"], ["feel full quickly", "early satiety", "full after a few bites"]),
+    ("black-tarry-stool", "براز أسود قطراني", "Black tarry stool", "digestive", ["براز اسود", "براز اسود لزج", "البراز مثل القطران"], ["black tarry stool", "black sticky stool", "melena"]),
+    ("pelvic-pain", "ألم الحوض", "Pelvic pain", "pain", ["الم الحوض", "وجع اسفل الحوض", "الم اسفل بطني بالحوض"], ["pelvic pain", "lower pelvic pain"]),
+    ("pain-during-sex", "ألم أثناء أو بعد الجماع", "Pain during or after sex", "pain", ["الم وقت الجماع", "الجماع مؤلم", "الم بعد الجماع"], ["pain during sex", "pain after sex", "dyspareunia"]),
+    ("heavy-periods", "دورة شهرية غزيرة", "Heavy periods", "general", ["دورتي غزيره", "نزيف الدورة كثير", "دورة قوية"], ["heavy periods", "heavy menstrual bleeding"]),
+    ("irregular-periods", "دورة شهرية غير منتظمة", "Irregular periods", "general", ["دورتي غير منتظمه", "الدوره تتاخر", "الدورة تنقطع وترجع"], ["irregular periods", "missed periods", "periods far apart"]),
+    ("excess-hair-growth", "زيادة شعر الوجه أو الجسم", "Excess facial or body hair", "general", ["شعر زائد بالوجه", "طلع لي شعر بالذقن", "شعر جسم زائد"], ["excess facial hair", "excess body hair", "hirsutism"]),
+    ("oily-skin", "بشرة دهنية", "Oily skin", "skin", ["بشرتي دهنيه", "وجهي دهني"], ["oily skin", "greasy skin"]),
+    ("acne-spots", "حبوب أو بثور جلدية", "Acne spots or pimples", "skin", ["حبوب الوجه", "حب شباب", "بثور بالوجه"], ["acne spots", "pimples", "acne"]),
+    ("blackheads-whiteheads", "رؤوس سوداء أو بيضاء", "Blackheads or whiteheads", "skin", ["رؤوس سوداء", "رؤوس بيضاء", "زيوان"], ["blackheads", "whiteheads", "comedones"]),
+    ("painful-skin-nodules", "عقد جلدية مؤلمة", "Painful skin nodules", "skin", ["حبوب كبيره مؤلمه", "كتل تحت الجلد مؤلمه"], ["painful acne nodules", "painful skin lumps"]),
+    ("food-triggered-mouth-itch", "حكة بالفم بعد طعام", "Mouth itching after food", "general", ["فمي يحكني بعد الاكل", "حلقي يحكني بعد طعام", "حكة الفم بعد المكسرات"], ["mouth itching after food", "itchy mouth after eating", "itchy throat after food"]),
+    ("food-triggered-swelling", "تورم بعد تناول طعام", "Swelling after eating a food", "general", ["شفايفي تورمت بعد الاكل", "تورم بعد طعام", "وجهي انتفخ بعد الاكل"], ["swelling after food", "lip swelling after eating", "face swelling after food"]),
+    ("eye-burning", "حرقة أو لسع في العين", "Burning or stinging eyes", "general", ["عيوني تحرق", "حرقة بالعين", "لسع بالعين"], ["burning eyes", "stinging eyes"]),
+    ("intense-night-itch", "حكة شديدة تزداد ليلًا", "Intense itching worse at night", "skin", ["الحكة تزيد بالليل", "حكة قوية وقت النوم"], ["itching worse at night", "intense night itching"]),
+    ("burrow-like-rash", "خطوط أو أنفاق صغيرة مع طفح", "Small burrow-like lines with rash", "skin", ["خطوط صغيره بالجلد مع حكة", "انفاق صغيرة بين الاصابع"], ["skin burrows", "small lines in rash", "burrow-like rash"]),
+    ("ear-discharge", "إفرازات من الأذن", "Ear discharge", "general", ["اذني تطلع سائل", "افرازات الاذن", "صديد من الاذن"], ["ear discharge", "fluid from ear", "pus from ear"]),
+    ("muffled-hearing", "سمع مكتوم أو غير واضح", "Muffled hearing", "general", ["سمعي مكتوم", "اسمع كان اذني مسكره", "الصوت مكتوم"], ["muffled hearing", "hearing sounds muffled"]),
+    ("sudden-hearing-loss", "فقدان سمع مفاجئ", "Sudden hearing loss", "general", ["فقدت السمع فجأه", "ما اسمع من اذني فجأة", "السمع راح فجاة"], ["sudden hearing loss", "sudden deafness", "hearing suddenly gone"]),
+    ("loud-noise-exposure", "تعرض متكرر أو شديد لضوضاء عالية", "Exposure to loud noise", "general", ["اسمع موسيقى عاليه", "تعرضت لصوت قوي", "ضوضاء عاليه لفتره"], ["loud noise exposure", "very loud sound", "loud headphones"]),
+    ("ear-canal-pain", "ألم داخل قناة الأذن", "Ear canal pain", "pain", ["الم داخل قناة الاذن", "وجع داخل الاذن من برا"], ["ear canal pain", "pain in outer ear canal"]),
+    ("pain-ear-touch", "ألم يزداد عند لمس أو تحريك الأذن", "Ear pain worse when touched or moved", "pain", ["اذني توجع اذا لمستها", "الالم يزيد لما احرك الاذن"], ["ear hurts when touched", "pain when moving ear"]),
+]
+
+# Extend aliases of an existing canonical symptom without duplicating it.
+EXTRA_SYMPTOMS_V3 += [
+    ("sweating", "تعرق", "Sweating", "general", ["تعرق", "تعرق شديد"], ["sweating", "heavy sweating"]),
+]
+
+EXTRA_DISEASES_V3 = [
+    {
+        "slug": "heat-exhaustion", "name_ar": "الإجهاد الحراري", "name_en": "Heat exhaustion", "category": "general", "severity": "moderate",
+        "symptoms": {"heat-exposure": 0.95, "sweating": 0.8, "headache": 0.55, "dizziness": 0.75, "nausea": 0.55, "fatigue": 0.65, "muscle-cramps": 0.45, "dehydration": 0.45},
+        "description_ar": "قد يحدث بعد فقدان الماء والملح مع التعرض للحر، وقد يسبب تعرقًا شديدًا ودوخة وصداعًا وغثيانًا وتعبًا. هذا نمط توعوي وليس تشخيصًا.",
+        "description_en": "Heat exhaustion can follow excessive loss of water and salt in hot conditions and may cause heavy sweating, dizziness, headache, nausea, and weakness. This is educational, not diagnostic.",
+        "risk_ar": "قد يتطور المرض الحراري إذا استمر التعرض أو ظهرت اضطرابات في الوعي.", "risk_en": "Heat illness can worsen if exposure continues or altered mental status develops.",
+        "causes_ar": "التعرض لحرارة مرتفعة مع التعرق وفقد السوائل والأملاح.", "causes_en": "High heat exposure with sweating and loss of fluid and salt.",
+        "red_ar": "الارتباك أو التشنج أو فقدان الوعي أو حرارة جسم شديدة جدًا قد تشير لضربة حر وتحتاج طوارئ.", "red_en": "Confusion, seizure, loss of consciousness, or very high body temperature can signal heat stroke and need emergency care.",
+        "next_ar": "انتقل لمكان أبرد، أوقف المجهود، واطلب تقييمًا سريعًا إذا لم تتحسن الأعراض أو ظهرت علامات الخطر.", "next_en": "Move to a cooler place, stop exertion, and seek prompt care if symptoms do not improve or warning signs appear.",
+        "sources": [("cdc", "الأمراض المرتبطة بالحرارة — CDC", "Heat-related illnesses — CDC", "https://www.cdc.gov/niosh/heat-stress/about/illnesses.html")],
+    },
+    {
+        "slug": "heat-stroke-warning-pattern", "name_ar": "نمط تحذيري لضربة الحر", "name_en": "Heat stroke warning pattern", "category": "general", "severity": "severe",
+        "symptoms": {"heat-exposure": 0.9, "confusion": 1.0, "hot-dry-skin": 0.75, "seizure": 0.75, "loss-of-consciousness": 0.85, "collapse-in-heat": 0.8, "headache": 0.4, "rapid-breathing": 0.35},
+        "description_ar": "ضربة الحر أخطر أمراض الحرارة وقد تترافق مع اضطراب الوعي أو تشنج أو فقدان الوعي مع حرارة شديدة. هذا نمط أمان يستدعي التحرك العاجل.",
+        "description_en": "Heat stroke is the most serious heat illness and may involve altered mental status, seizures, or loss of consciousness in extreme heat. This is a safety warning pattern.",
+        "risk_ar": "قد تسبب تلفًا دائمًا أو الوفاة إذا تأخر العلاج.", "risk_en": "Delayed treatment can cause permanent disability or death.",
+        "causes_ar": "فشل الجسم في التحكم بحرارته أثناء التعرض الشديد للحر.", "causes_en": "Failure of the body to control temperature during severe heat exposure.",
+        "red_ar": "ارتباك أو تشنج أو فقدان الوعي أو انهيار في الحر يستدعي الطوارئ فورًا.", "red_en": "Confusion, seizure, loss of consciousness, or collapse in heat requires emergency care immediately.",
+        "next_ar": "اتصل بالطوارئ فورًا وابدأ التبريد الآمن أثناء انتظار المساعدة.", "next_en": "Call emergency services immediately and begin safe cooling while help is on the way.",
+        "sources": [("cdc", "ضربة الحر — CDC", "Heat stroke — CDC", "https://www.cdc.gov/niosh/heat-stress/about/illnesses.html")],
+    },
+    {
+        "slug": "motion-sickness", "name_ar": "دوار الحركة", "name_en": "Motion sickness", "category": "neurological", "severity": "mild",
+        "symptoms": {"motion-triggered-nausea": 1.0, "motion-triggered-dizziness": 0.95, "nausea": 0.6, "vomiting": 0.4, "headache": 0.3, "sweating": 0.35, "dizziness": 0.45},
+        "description_ar": "دوخة أو غثيان يحدثان أثناء السفر بالسيارة أو الطائرة أو القارب بسبب تعارض إشارات الحركة بين العين والأذن الداخلية.",
+        "description_en": "Dizziness or nausea during travel can occur when motion signals from the eyes and inner ear conflict.",
+        "risk_ar": "عادة بسيط، لكن القيء المستمر قد يسبب الجفاف.", "risk_en": "Usually mild, but persistent vomiting can cause dehydration.",
+        "causes_ar": "الحركة المتكررة أثناء السفر.", "causes_en": "Repeated movement during travel.",
+        "red_ar": "إذا استمرت الدوخة خارج السفر أو ترافق معها ضعف أو صعوبة كلام أو فقدان سمع مفاجئ، يلزم تقييم عاجل.", "red_en": "Persistent dizziness outside travel, neurological symptoms, or sudden hearing loss needs urgent assessment.",
+        "next_ar": "خفف الحركة قدر الإمكان وانظر لنقطة ثابتة واطلب نصيحة مختص إذا كانت النوبات متكررة أو شديدة.", "next_en": "Reduce motion where possible, focus on a fixed point, and seek professional advice if episodes are frequent or severe.",
+        "sources": [("nhs", "دوار الحركة — NHS", "Motion sickness — NHS", "https://www.nhs.uk/conditions/motion-sickness/")],
+    },
+    {
+        "slug": "peptic-ulcer-disease", "name_ar": "قرحة المعدة أو الاثني عشر", "name_en": "Peptic ulcer disease", "category": "digestive", "severity": "moderate",
+        "symptoms": {"upper-abdominal-burning": 1.0, "abdominal-pain": 0.6, "early-satiety": 0.55, "nausea": 0.45, "bloating": 0.4, "vomiting": 0.25, "black-tarry-stool": 0.7},
+        "description_ar": "قرحة في بطانة المعدة أو الاثني عشر قد تسبب ألمًا أو حرقة أعلى البطن أو الشبع المبكر أو الغثيان. لا يمكن تأكيدها من الأعراض وحدها.",
+        "description_en": "A sore in the stomach or duodenal lining may cause upper abdominal pain or burning, early fullness, or nausea. Symptoms alone cannot confirm it.",
+        "risk_ar": "قد تسبب نزيفًا أو مضاعفات أخرى.", "risk_en": "Ulcers can bleed or cause other complications.",
+        "causes_ar": "من أكثر الأسباب شيوعًا عدوى H. pylori واستخدام مضادات الالتهاب غير الستيرويدية.", "causes_en": "Common causes include H. pylori infection and NSAID use.",
+        "red_ar": "براز أسود قطراني أو قيء دم أو ألم شديد مفاجئ أو دوخة/إغماء يحتاج تقييمًا عاجلًا.", "red_en": "Black tarry stool, vomiting blood, sudden severe abdominal pain, dizziness, or fainting needs urgent assessment.",
+        "next_ar": "راجع الطبيب للأعراض المتكررة أو المستمرة، واطلب رعاية عاجلة عند علامات النزيف.", "next_en": "Seek medical review for recurrent or persistent symptoms and urgent care for bleeding signs.",
+        "sources": [("niddk", "أعراض وأسباب قرحة المعدة — NIDDK", "Symptoms & Causes of Peptic Ulcers — NIDDK", "https://www.niddk.nih.gov/health-information/digestive-diseases/peptic-ulcers-stomach-ulcers/symptoms-causes")],
+    },
+    {
+        "slug": "endometriosis-pattern", "name_ar": "نمط قد يتوافق مع بطانة الرحم المهاجرة", "name_en": "Pattern compatible with endometriosis", "category": "general", "severity": "moderate",
+        "symptoms": {"pelvic-pain": 1.0, "menstrual-cramps": 0.9, "pain-during-sex": 0.75, "heavy-periods": 0.55, "fatigue": 0.35, "abdominal-pain": 0.3, "painful-urination": 0.2},
+        "description_ar": "ألم الحوض والدورة المؤلمة أو ألم الجماع قد تظهر في بطانة الرحم المهاجرة، لكن هذه الأعراض لها أسباب عديدة ولا تؤكد التشخيص.",
+        "description_en": "Pelvic pain, painful periods, or pain during sex can occur with endometriosis, but these symptoms have many causes and do not confirm a diagnosis.",
+        "risk_ar": "قد تؤثر الأعراض في الحياة اليومية والخصوبة لدى بعض الأشخاص.", "risk_en": "Symptoms can affect daily life and fertility in some people.",
+        "causes_ar": "السبب الدقيق غير محسوم؛ الحالة تتضمن نمو نسيج شبيه ببطانة الرحم خارج الرحم.", "causes_en": "The exact cause is not fully understood; the condition involves endometrium-like tissue growing outside the uterus.",
+        "red_ar": "ألم حوض شديد مفاجئ أو نزيف شديد مع دوخة أو إغماء يحتاج تقييمًا عاجلًا.", "red_en": "Sudden severe pelvic pain or heavy bleeding with dizziness or fainting needs urgent assessment.",
+        "next_ar": "راجعي مختصًا إذا كانت آلام الدورة أو الحوض تؤثر في نشاطك أو تستمر أو تزداد.", "next_en": "Seek medical review if period or pelvic pain affects daily activities, persists, or worsens.",
+        "sources": [("nichd", "أعراض بطانة الرحم المهاجرة — NICHD", "Endometriosis symptoms — NICHD", "https://www.nichd.nih.gov/health/topics/endometri/conditioninfo/symptoms")],
+    },
+    {
+        "slug": "polycystic-ovary-syndrome-pattern", "name_ar": "نمط قد يتوافق مع متلازمة تكيس المبايض (PCOS/PMOS)", "name_en": "Pattern compatible with PCOS/PMOS", "category": "general", "severity": "moderate",
+        "symptoms": {"irregular-periods": 1.0, "excess-hair-growth": 0.75, "acne-spots": 0.6, "oily-skin": 0.45, "weight-gain": 0.45, "hair-loss": 0.35, "fatigue": 0.25},
+        "description_ar": "عدم انتظام الدورة مع علامات زيادة الأندروجين مثل الشعر الزائد أو حب الشباب قد يظهر ضمن PCOS/PMOS، لكن التشخيص يحتاج تقييمًا طبيًا وليس الأعراض وحدها.",
+        "description_en": "Irregular periods with androgen-related signs such as excess hair growth or acne can occur with PCOS/PMOS, but diagnosis requires clinical assessment rather than symptoms alone.",
+        "risk_ar": "قد يرتبط بمشكلات في الإباضة والتمثيل الغذائي لدى بعض الأشخاص.", "risk_en": "It may be associated with ovulation and metabolic issues in some people.",
+        "causes_ar": "اضطراب هرموني متعدد العوامل؛ السبب الدقيق يختلف بين الأشخاص.", "causes_en": "A multifactorial hormonal condition whose exact drivers vary among individuals.",
+        "red_ar": "نزيف شديد جدًا أو ألم حوض حاد مفاجئ يحتاج تقييمًا عاجلًا.", "red_en": "Very heavy bleeding or sudden severe pelvic pain needs urgent assessment.",
+        "next_ar": "راجعي الطبيب عند تكرر عدم انتظام الدورة أو وجود شعر زائد/حب شباب شديد أو صعوبة حمل.", "next_en": "Seek medical review for persistent menstrual irregularity, excess hair growth, severe acne, or fertility concerns.",
+        "sources": [("nichd", "أعراض PCOS — NICHD", "PCOS symptoms — NICHD", "https://www.nichd.nih.gov/health/topics/pcos/conditioninfo/symptoms")],
+    },
+    {
+        "slug": "food-allergy-pattern", "name_ar": "نمط قد يتوافق مع حساسية الطعام", "name_en": "Pattern compatible with food allergy", "category": "general", "severity": "moderate",
+        "symptoms": {"food-triggered-mouth-itch": 0.9, "food-triggered-swelling": 0.95, "hives": 0.65, "tongue-swelling": 0.8, "throat-swelling": 0.8, "vomiting": 0.35, "diarrhea": 0.3, "abdominal-pain": 0.3},
+        "description_ar": "ظهور حكة بالفم أو شرى أو تورم بعد طعام معين قد يتوافق مع حساسية طعام، لكن تحديد المسبب يحتاج تقييمًا طبيًا.",
+        "description_en": "Mouth itching, hives, or swelling after a particular food can be compatible with food allergy, but identifying the trigger requires medical assessment.",
+        "risk_ar": "بعض تفاعلات الحساسية قد تتطور بسرعة إلى تحسس شديد يهدد التنفس.", "risk_en": "Some allergic reactions can rapidly progress to life-threatening anaphylaxis.",
+        "causes_ar": "استجابة مناعية غير طبيعية لمكوّن في طعام معين.", "causes_en": "An abnormal immune response to a component of a food.",
+        "red_ar": "تورم اللسان أو الحلق أو صعوبة التنفس بعد الطعام حالة طارئة.", "red_en": "Tongue/throat swelling or breathing difficulty after food is an emergency.",
+        "next_ar": "توقف عن تناول الطعام المشتبه به واطلب تقييمًا؛ وإذا ظهرت علامات تنفسية أو تورم بالحلق فاتصل بالطوارئ فورًا.", "next_en": "Stop the suspected food and seek assessment; call emergency services immediately for airway or breathing symptoms.",
+        "sources": [("niaid", "حساسية الطعام — NIAID", "Food allergy — NIAID", "https://pubweb-prod.niaid.nih.gov/diseases-conditions/food-allergy")],
+    },
+    {
+        "slug": "allergic-conjunctivitis", "name_ar": "التهاب الملتحمة التحسسي", "name_en": "Allergic conjunctivitis", "category": "general", "severity": "mild",
+        "symptoms": {"eye-redness": 0.8, "watery-eyes": 0.85, "itchy-eyelids": 0.6, "eye-burning": 0.6, "sneezing": 0.35, "nasal-congestion": 0.3},
+        "description_ar": "الحساسية قد تهيّج العين وتسبب احمرارًا وحكة ودموعًا، وقد تترافق مع أعراض حساسية الأنف.",
+        "description_en": "Allergy can irritate the eyes and cause redness, itching, and watering, often with nasal allergy symptoms.",
+        "risk_ar": "غالبًا بسيط، لكن ألم العين أو تغير الرؤية يحتاج تقييمًا.", "risk_en": "Usually mild, but eye pain or vision change needs assessment.",
+        "causes_ar": "التعرض لمواد مثيرة للحساسية مثل حبوب اللقاح أو الغبار أو وبر الحيوانات.", "causes_en": "Exposure to allergens such as pollen, dust mites, or animal dander.",
+        "red_ar": "ألم متوسط أو شديد، حساسية شديدة للضوء أو تشوش الرؤية يستدعي مراجعة طبية.", "red_en": "Moderate/severe pain, marked light sensitivity, or blurred vision needs medical review.",
+        "next_ar": "تجنب المهيجات المعروفة وراجع مختصًا إذا استمرت الأعراض أو أثرت في الرؤية.", "next_en": "Avoid known triggers and seek review if symptoms persist or affect vision.",
+        "sources": [("nei", "التهاب الملتحمة — NEI", "Pink eye / conjunctivitis — NEI", "https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/pink-eye")],
+    },
+    {
+        "slug": "acne-vulgaris", "name_ar": "حب الشباب", "name_en": "Acne", "category": "skin", "severity": "mild",
+        "symptoms": {"acne-spots": 1.0, "blackheads-whiteheads": 0.9, "oily-skin": 0.55, "painful-skin-nodules": 0.65},
+        "description_ar": "حب الشباب حالة جلدية شائعة تسبب رؤوسًا سوداء أو بيضاء وبثورًا وقد تظهر عقد مؤلمة في الحالات الأشد.",
+        "description_en": "Acne is a common skin condition causing blackheads, whiteheads, pimples, and sometimes painful nodules.",
+        "risk_ar": "قد يؤدي العبث بالبثور أو الحالات الشديدة إلى ندبات.", "risk_en": "Picking or severe acne can increase the risk of scarring.",
+        "causes_ar": "انسداد بصيلات الشعر وزيادة إفراز الدهون والتغيرات الهرمونية من العوامل الشائعة.", "causes_en": "Blocked hair follicles, excess sebum, and hormonal changes are common contributors.",
+        "red_ar": "الكتل العميقة المؤلمة أو الندبات أو التأثير النفسي الكبير تستدعي مراجعة مختص.", "red_en": "Painful deep nodules, scarring, or major psychological impact warrants professional review.",
+        "next_ar": "استشر الصيدلي للحالات البسيطة، وراجع الطبيب إذا كان حب الشباب متوسطًا أو شديدًا أو يترك ندبات.", "next_en": "Ask a pharmacist for mild acne and seek medical review for moderate/severe acne or scarring.",
+        "sources": [("nhs", "حب الشباب — NHS", "Acne — NHS", "https://www.nhs.uk/conditions/acne/")],
+    },
+    {
+        "slug": "scabies", "name_ar": "الجرب", "name_en": "Scabies", "category": "skin", "severity": "moderate",
+        "symptoms": {"intense-night-itch": 1.0, "burrow-like-rash": 0.9, "itching": 0.6, "skin-rash": 0.55},
+        "description_ar": "الجرب طفح شديد الحكة يسببه عث صغير وينتقل غالبًا بالمخالطة الجلدية القريبة.",
+        "description_en": "Scabies is an intensely itchy rash caused by mites and commonly spreads through close skin contact.",
+        "risk_ar": "ينتقل بسهولة وقد يؤدي الحك الشديد لعدوى جلدية ثانوية.", "risk_en": "It spreads easily and scratching can lead to secondary skin infection.",
+        "causes_ar": "عدوى بعث الجرب تنتقل غالبًا مع التلامس الجلدي القريب.", "causes_en": "Infestation with scabies mites, usually spread through close skin contact.",
+        "red_ar": "طفح متقشر شديد لدى ضعيف المناعة أو علامات عدوى جلدية تحتاج مراجعة طبية.", "red_en": "Crusted rash in an immunocompromised person or signs of skin infection need medical review.",
+        "next_ar": "استشر الصيدلي أو الطبيب للعلاج المناسب وعلاج المخالطين وفق الإرشادات لتقليل الانتقال.", "next_en": "Seek pharmacist or medical advice for treatment and contact management to reduce spread.",
+        "sources": [("nhs", "الجرب — NHS", "Scabies — NHS", "https://www.nhs.uk/conditions/Scabies/")],
+    },
+    {
+        "slug": "otitis-externa", "name_ar": "التهاب قناة الأذن الخارجية", "name_en": "Otitis externa", "category": "general", "severity": "moderate",
+        "symptoms": {"ear-canal-pain": 1.0, "pain-ear-touch": 0.9, "ear-discharge": 0.55, "muffled-hearing": 0.45, "ear-pain": 0.7},
+        "description_ar": "التهاب الأذن الخارجية يصيب قناة الأذن وقد يسبب ألمًا يزداد مع لمس الأذن أو تحريكها مع إفرازات أو سمع مكتوم.",
+        "description_en": "Outer ear infection affects the ear canal and can cause pain worsened by touching/moving the ear, discharge, or muffled hearing.",
+        "risk_ar": "قد يزداد بعد دخول الماء أو تهيج قناة الأذن.", "risk_en": "It can be associated with water exposure or irritation of the ear canal.",
+        "causes_ar": "قد ينتج عن تهيج الجلد أو عدوى بكتيرية أو فطرية في قناة الأذن.", "causes_en": "It can result from skin irritation or bacterial/fungal infection of the ear canal.",
+        "red_ar": "ألم شديد أو تورم ممتد أو حرارة عامة أو ضعف مناعة يستدعي تقييمًا مبكرًا.", "red_en": "Severe pain, spreading swelling, fever, or immunocompromise needs prompt assessment.",
+        "next_ar": "تجنب إدخال أدوات داخل الأذن واطلب تقييمًا إذا استمر الألم أو ظهرت إفرازات أو ضعف سمع.", "next_en": "Avoid putting objects in the ear and seek review for persistent pain, discharge, or hearing change.",
+        "sources": [("nhs", "التهابات الأذن — NHS", "Ear infections — NHS", "https://www.nhs.uk/conditions/ear-infections/")],
+    },
+    {
+        "slug": "noise-induced-hearing-loss", "name_ar": "ضعف السمع المرتبط بالضوضاء", "name_en": "Noise-induced hearing loss", "category": "general", "severity": "moderate",
+        "symptoms": {"loud-noise-exposure": 1.0, "muffled-hearing": 0.75, "tinnitus": 0.6},
+        "description_ar": "التعرض للأصوات العالية قد يسبب ضعفًا تدريجيًا أو أحيانًا فوريًا في السمع، وقد يترافق مع طنين.",
+        "description_en": "Loud noise exposure can cause gradual or sometimes immediate hearing loss and may occur with tinnitus.",
+        "risk_ar": "التعرض المتكرر قد يسبب أذية دائمة لخلايا الأذن الداخلية.", "risk_en": "Repeated loud-noise exposure can permanently damage inner-ear sensory cells.",
+        "causes_ar": "أصوات شديدة جدًا لمرة واحدة أو التعرض المتكرر لمستويات ضوضاء مرتفعة.", "causes_en": "A single very loud sound or repeated exposure to high noise levels.",
+        "red_ar": "فقدان السمع المفاجئ في أذن واحدة أو كلتيهما يحتاج تقييمًا طبيًا عاجلًا.", "red_en": "Sudden hearing loss in one or both ears needs urgent medical assessment.",
+        "next_ar": "ابتعد عن الضوضاء العالية واستخدم حماية السمع، واطلب فحص سمع عند وجود ضعف أو طنين مستمر.", "next_en": "Reduce loud-noise exposure, use hearing protection, and seek hearing assessment for persistent hearing loss or tinnitus.",
+        "sources": [("nidcd", "ضعف السمع الناتج عن الضوضاء — NIDCD", "Noise-Induced Hearing Loss — NIDCD", "https://www.nidcd.nih.gov/health/noise-induced-hearing-loss")],
+    },
+    {
+        "slug": "sudden-hearing-loss-warning-pattern", "name_ar": "نمط تحذيري لفقدان السمع المفاجئ", "name_en": "Sudden hearing loss warning pattern", "category": "general", "severity": "severe",
+        "symptoms": {"sudden-hearing-loss": 1.0, "muffled-hearing": 0.35, "tinnitus": 0.4, "dizziness": 0.3},
+        "description_ar": "فقدان السمع السريع خلال ساعات أو أيام، خصوصًا في أذن واحدة، يحتاج تقييمًا طبيًا عاجلًا ولا ينبغي افتراض أنه مجرد شمع أو احتقان.",
+        "description_en": "Rapid hearing loss over hours or days, especially in one ear, needs urgent medical assessment and should not be assumed to be wax or congestion.",
+        "risk_ar": "تأخير التقييم قد يقلل فرصة الاستفادة من العلاج عند وجود فقدان سمع عصبي مفاجئ.", "risk_en": "Delaying assessment can reduce the chance of effective treatment for sudden sensorineural hearing loss.",
+        "causes_ar": "قد تكون الأسباب متعددة وغالبًا لا يظهر سبب واضح مباشرة.", "causes_en": "There are multiple possible causes and often no clear cause is identified immediately.",
+        "red_ar": "فقدان السمع المفاجئ حالة تستدعي مراجعة طبية فورية.", "red_en": "Sudden hearing loss warrants immediate medical evaluation.",
+        "next_ar": "اطلب تقييمًا طبيًا اليوم/فورًا إذا فقدت السمع فجأة، خصوصًا في أذن واحدة.", "next_en": "Seek immediate or same-day medical evaluation for sudden hearing loss, especially in one ear.",
+        "sources": [("nidcd", "فقدان السمع المفاجئ — NIDCD", "Sudden Deafness — NIDCD", "https://www.nidcd.nih.gov/health/sudden-deafness")],
+    },
+]
+
+EXISTING_DISEASE_SOURCE_ENRICHMENT_V3 = {
+    "dry-eyes": [("nei", "جفاف العين — NEI", "Dry Eye — NEI", "https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/dry-eye")],
+    "conjunctivitis": [("nei", "التهاب الملتحمة — NEI", "Pink Eye — NEI", "https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/pink-eye")],
+    "iron-deficiency-anaemia": [("nhlbi", "فقر الدم بنقص الحديد — NHLBI", "Iron-Deficiency Anemia — NHLBI", "https://www.nhlbi.nih.gov/health/anemia/iron-deficiency-anemia")],
+    "panic-disorder": [("nimh", "اضطراب الهلع — NIMH", "Panic Disorder — NIMH", "https://www.nimh.nih.gov/health/publications/panic-disorder-when-fear-overwhelms")],
+    "generalised-anxiety-disorder": [("nimh", "اضطرابات القلق — NIMH", "Anxiety Disorders — NIMH", "https://www.nimh.nih.gov/health/topics/anxiety-disorders")],
+    "clinical-depression": [("nimh", "الاكتئاب — NIMH", "Depression — NIMH", "https://www.nimh.nih.gov/health/publications/depression")],
+    "asthma": [("cdc", "الربو — CDC", "About Asthma — CDC", "https://www.cdc.gov/asthma/about/index.html")],
+}
+
+EXISTING_DISEASE_SYMPTOM_ENRICHMENT_V3 = {
+    "conjunctivitis": {"eye-burning": 0.45},
+    "period-pain": {"pelvic-pain": 0.45},
+    "ear-infection": {"ear-discharge": 0.35, "muffled-hearing": 0.35},
+}
+
+EXTRA_RED_RULES_V3 = [
+    (
+        "heat-stroke-pattern", "علامات ضربة الحر", "Heat stroke warning signs",
+        ["heat-exposure", "confusion"], "all", ["اغماء من الحر", "تشنج من الحر", "انهار من الحر"],
+        ["fainted in heat", "seizure in heat", "collapsed in heat"],
+        1, "urgent", "الارتباك أو التشنج أو فقدان الوعي مع التعرض الشديد للحر قد يدل على ضربة حر.",
+        "Confusion, seizure, or loss of consciousness with severe heat exposure can indicate heat stroke.", "cdc",
+    ),
+    (
+        "sudden-hearing-loss", "فقدان سمع مفاجئ", "Sudden hearing loss",
+        ["sudden-hearing-loss"], "any", [], [],
+        1, "urgent", "فقدان السمع المفاجئ يحتاج تقييمًا طبيًا عاجلًا ولا ينبغي الانتظار.",
+        "Sudden hearing loss needs urgent medical assessment and should not be delayed.", "nidcd",
+    ),
+    (
+        "gi-bleeding-black-stool", "براز أسود قطراني", "Black tarry stool",
+        ["black-tarry-stool"], "any", [], [],
+        1, "urgent", "البراز الأسود القطراني قد يدل على نزيف بالجهاز الهضمي ويحتاج تقييمًا طبيًا عاجلًا.",
+        "Black tarry stool can indicate gastrointestinal bleeding and needs urgent medical assessment.", "niddk",
+    ),
+]
+
+EXTRA_RED_RULE_DETAILS_V3 = {
+    "heat-stroke-pattern": {
+        "description_ar": "ضربة الحر قد تسبب اضطرابًا في الوعي أو تشنجًا أو فقدان الوعي وتعد حالة طبية طارئة.",
+        "description_en": "Heat stroke can cause altered mental status, seizures, or loss of consciousness and is a medical emergency.",
+        "action_ar": "اتصل بخدمات الطوارئ فورًا، وانقل الشخص لمكان أبرد وابدأ التبريد الآمن أثناء انتظار المساعدة.",
+        "action_en": "Contact emergency services immediately, move the person to a cooler area, and begin safe cooling while help arrives.",
+        "url": "https://www.cdc.gov/niosh/heat-stress/about/illnesses.html",
+    },
+    "sudden-hearing-loss": {
+        "description_ar": "فقدان السمع المفاجئ، غالبًا في أذن واحدة، قد يكون فقدانًا عصبيًا حسيًا مفاجئًا ويحتاج تقييمًا سريعًا.",
+        "description_en": "Sudden hearing loss, often in one ear, may be sudden sensorineural hearing loss and needs prompt evaluation.",
+        "action_ar": "اطلب تقييمًا طبيًا عاجلًا اليوم ولا تنتظر عودة السمع تلقائيًا.",
+        "action_en": "Seek urgent same-day medical evaluation and do not wait for hearing to return on its own.",
+        "url": "https://www.nidcd.nih.gov/health/sudden-deafness",
+    },
+    "gi-bleeding-black-stool": {
+        "description_ar": "البراز الأسود اللزج أو القطراني قد يحدث مع نزيف من الجزء العلوي للجهاز الهضمي.",
+        "description_en": "Black sticky or tarry stool can occur with bleeding from the upper gastrointestinal tract.",
+        "action_ar": "اطلب تقييمًا طبيًا عاجلًا، وخاصة مع دوخة أو إغماء أو قيء دموي.",
+        "action_en": "Seek urgent medical assessment, especially with dizziness, fainting, or vomiting blood.",
+        "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/gastrointestinal-bleeding/symptoms-causes",
+    },
+}

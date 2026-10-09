@@ -1,0 +1,76 @@
+{
+  "id": "/",
+  "name": "SymptoSense — مساعدك لفهم الأعراض",
+  "short_name": "SymptoSense",
+  "description": "SymptoSense — bilingual educational health support / مساعد صحي توعوي ثنائي اللغة.",
+  "start_url": "/ar/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7FAFC",
+  "theme_color": "#287FC1",
+  "categories": [
+    "medical",
+    "health"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "تحليل الأعراض",
+      "short_name": "تحليل الأعراض",
+      "url": "/ar/chat?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "الأدوية",
+      "short_name": "الأدوية",
+      "url": "/ar/meds?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "الطوارئ",
+      "short_name": "الطوارئ",
+      "url": "/ar/emergency?source=pwa",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl"
+}

@@ -1,0 +1,98 @@
+name: CI
+
+# Every push and pull request must pass the regression suite. To make this BLOCK merging, enable
+# Settings -> Branches -> Branch protection -> "Require status checks to pass" and select: tests, browser.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Release check (syntax, secrets, invariants)
+        run: python release_check.py
+      - name: Interaction audit (buttons, links, fetch contracts)
+        run: python tools/full_interaction_audit.py
+      - name: Unit / regression tests (isolated per file)
+        run: tools/ci_run_tests.sh 4
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Browser tests (event bridge, emergency stop, full chat flow)
+        env:
+          WEB_SECRET: ci-secret-that-is-longer-than-thirty-two-characters
+          SESSION_COOKIE_SECURE: "0"
+          SYMPTOSENSE_DISABLE_BACKUP_SCHEDULER: "1"
+          DB_PATH: ${{ runner.temp }}/e2e.db
+        run: python -m pytest -q -p no:cacheprovider test_interaction_bridge_data_actions.py test_e2e_emergency_stop_browser.py test_e2e_full_flow_browser.py
+      - name: Page audits (admin + profile)
+        run: |
+          python tools/admin_ui_audit.py --out audit-out/admin
+          python tools/profile_ui_audit.py --out audit-out/profile
+          python tools/perf_a11y_audit.py --out audit-out/perf_a11y
+          python tools/print_audit.py --out audit-out/print
+      - name: Responsive audit (all sizes, both languages)
+        run: |
+          python tools/mobile_audit.py --sizes all --lang ar --out audit-out/mobile_ar
+          python tools/mobile_audit.py --sizes all --lang en --out audit-out/mobile_en
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-screenshots
+          path: audit-out
+          retention-days: 7
+
+  # Intentionally separate and NOT part of the normal merge gate: production readiness is blocked until clinical sign-off
+  # (clinical_signoff.json). Run it manually (Actions -> CI -> Run workflow) before a health launch.
+  production-gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: Strict release check (fails until every clinical area is reviewed)
+        env:
+          RELEASE_TARGET: production
+        run: python release_check.py

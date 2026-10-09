@@ -1,0 +1,484 @@
+"""Production-stabilization smoke, authorization, search and medication tests."""
+import os
+import re
+import source_bundle
+import subprocess
+import tempfile
+import unittest
+from unittest import mock
+from datetime import datetime, timezone
+from pathlib import Path
+
+_TEMP=tempfile.TemporaryDirectory(prefix="symptosense-stabilization-")
+os.environ.pop("DATABASE_URL",None)
+os.environ["DB_PATH"]=str(Path(_TEMP.name)/"stabilization.sqlite3")
+os.environ["WEB_SECRET"]="stabilization-test-secret-more-than-32-characters"
+os.environ["SITE_URL"]="http://localhost"
+os.environ["SESSION_COOKIE_SECURE"]="0"
+
+import db
+import medical_knowledge
+import medication_push
+import medication_warnings
+import platform_v2
+import analysis_core
+import advanced_features
+import webapp
+
+
+class StabilizationTest(unittest.TestCase):
+    @staticmethod
+    def _contrast_ratio(foreground, background):
+        """Return the WCAG relative-luminance contrast ratio for two hex colors."""
+        def luminance(color):
+            channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+            linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+        first, second = luminance(foreground), luminance(background)
+        return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+
+    @classmethod
+    def setUpClass(cls):
+        webapp.app.config.update(TESTING=True)
+        db.init_db(); medical_knowledge.init_schema(); medication_push.init_schema(); medication_warnings.init_schema(); platform_v2.init_schema()
+        # The real app only marks itself "ready" for /health and /healthz once
+        # _initialize_core_runtime_services() finishes in run_webapp()'s
+        # background startup thread -- which pytest never runs. Tests call
+        # db.init_db() etc. directly above instead, so the database genuinely
+        # is ready; without this, every route test would see /health and
+        # /healthz report 503 even though nothing is actually broken.
+        webapp._STARTUP_CORE_STATE["ready"] = True
+        webapp._STARTUP_CORE_STATE["failed"] = False
+
+    def client(self,lang="en"):
+        c=webapp.app.test_client(); c.set_cookie("lang",lang,domain="localhost"); return c
+
+    def verified_user(self,email="stability-user@example.test"):
+        existing=db.get_ss_user_by_email(email)
+        if existing:return int(existing["id"])
+        uid,error=db.create_ss_user(email,"Stability User","StrongPassword1!")
+        self.assertIsNone(error)
+        conn=db._conn(); conn.execute("UPDATE ss_users SET email_verified=1,email_verified_at=? WHERE id=?",(datetime.now(timezone.utc).isoformat(),uid)); conn.commit(); conn.close()
+        return int(uid)
+
+    def login_session(self,c,uid):
+        with c.session_transaction() as session: session["ss_user_id"]=int(uid)
+
+    def test_public_route_smoke_has_no_404_or_500(self):
+        c=self.client("en")
+        routes=["/","/home","/about-us","/privacy","/terms","/sources","/chat","/blood","/meds","/firstaid","/tips","/relax","/emergency","/checkin","/search","/calculators","/login","/register","/forgot-password","/manifest.webmanifest","/service-worker.js","/icons/icon-192.png","/icons/about-us-phone.webp","/static/images/about-hero.webp","/static/images/about-story.webp","/static/images/symptosense-social-preview.png"]
+        for route in routes:
+            with self.subTest(route=route):
+                response=c.get(route,follow_redirects=False)
+                self.assertNotIn(response.status_code,{404,500,502,503})
+                response.close()
+
+    def test_active_bottom_navigation_meets_wcag_aa_contrast(self):
+        self.assertIn('.ss-bnav a.on { color: #0F5FB0; background: var(--primary-light); }', webapp.BASE_CSS)
+        self.assertGreaterEqual(self._contrast_ratio("#0F5FB0", "#EAF4FF"), 4.5)
+
+    def test_active_bottom_navigation_meets_wcag_aa_contrast_dark_mode(self):
+        self.assertIn('.ss-bnav a.on { background: #1E3A5F; color: #60A5FA; }', webapp.BASE_CSS)
+        self.assertGreaterEqual(self._contrast_ratio("#60A5FA", "#1E3A5F"), 4.5)
+
+    def test_pwa_install_offer_is_not_shown_on_first_visit(self):
+        html = self.client("en").get("/home").get_data(as_text=True)
+        self.assertIn("return visits > 1", html)
+        self.assertIn("window.setTimeout(function () { show(mode); }, 8000)", html)
+        self.assertNotIn("deferredPrompt = event;\n    show('native');", html)
+
+    def test_pwa_icon_has_week_cache_control(self):
+        response = self.client("en").get("/icons/icon-192.png")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("Cache-Control"), "public, max-age=604800")
+        response.close()
+
+    def test_csp_starts_in_report_only_mode(self):
+        response = self.client("en").get("/home")
+        policy = response.headers.get("Content-Security-Policy", "")
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("object-src 'none'", policy)
+        self.assertNotIn("Content-Security-Policy-Report-Only", response.headers)
+
+    def test_sentry_scrubber_removes_sensitive_context(self):
+        event = {
+            "message": "RuntimeError",
+            "request": {"data": {"symptoms": "private"}, "headers": {"Authorization": "secret"}},
+            "user": {"email": "private@example.test"},
+            "breadcrumbs": [{"message": "private"}],
+            "extra": {"token": "secret"},
+            "contexts": {"health": {"history": "private"}},
+        }
+        cleaned = webapp._scrub_sentry_event(event)
+        self.assertEqual(cleaned, {"message": "RuntimeError"})
+        self.assertIn("request", event)
+
+    def test_fallback_diagnostic_does_not_log_exception_contents(self):
+        with mock.patch.dict(os.environ, {"SENTRY_DSN": "https://test@example.test/1"}):
+            with mock.patch("sentry_sdk.init", side_effect=RuntimeError("PRIVATE_HEALTH_OR_SECRET")):
+                with self.assertLogs("webapp", level="WARNING") as captured:
+                    self.assertFalse(webapp._configure_error_monitoring())
+        diagnostic = "\n".join(captured.output)
+        self.assertIn("_configure_error_monitoring", diagnostic)
+        self.assertNotIn("PRIVATE_HEALTH_OR_SECRET", diagnostic)
+        self.assertNotIn("example.test", diagnostic)
+
+    def test_all_static_get_routes_avoid_server_errors(self):
+        c=self.client("en")
+        routes=sorted({rule.rule for rule in webapp.app.url_map.iter_rules() if "GET" in rule.methods and "<" not in rule.rule and rule.rule!="/static/<path:filename>"})
+        self.assertGreaterEqual(len(routes),70)
+        for route in routes:
+            with self.subTest(route=route):
+                response=c.get(route,follow_redirects=False)
+                self.assertNotIn(response.status_code,{500,502,503})
+                response.close()
+
+    def test_private_routes_and_admin_authorization(self):
+        guest=self.client()
+        for route in ["/profile","/history","/my-results","/health-report","/admin"]:
+            response=guest.get(route)
+            self.assertIn(response.status_code,{302,401})
+        uid=self.verified_user(); user=self.client(); self.login_session(user,uid)
+        self.assertEqual(user.get("/admin").status_code,403)
+        admin_rules=[r.rule for r in webapp.app.url_map.iter_rules() if r.rule.startswith("/api/admin/") and "GET" in r.methods and "<" not in r.rule]
+        for route in admin_rules:
+            with self.subTest(route=route):
+                response=user.get(route)
+                self.assertEqual(response.status_code,403)
+
+    def test_search_arabic_english_empty_and_no_result(self):
+        c=self.client()
+        for term,lang in [("صداع","ar"),("headache","en")]:
+            payload=c.get("/api/search",query_string={"q":term,"lang":lang}).get_json()
+            self.assertTrue(payload["ok"]); self.assertTrue(payload["result"]); self.assertTrue(payload["result"].get("sources"))
+        no_match=c.get("/api/search",query_string={"q":"not-in-medical-kb","lang":"en"}).get_json()
+        self.assertTrue(no_match["ok"])
+        self.assertEqual(no_match["result"].get("key"),"free_health_query")
+        self.assertEqual(no_match["result"].get("sources"),[])
+        self.assertTrue(c.get("/api/search",query_string={"q":"","lang":"en"}).get_json()["suggestions"])
+
+    def test_medication_database_search_and_reminder_crud(self):
+        c=self.client()
+        for term in ("Paracetamol","باراسيتامول"):
+            payload=c.get("/api/drug",query_string={"name":term}).get_json()
+            self.assertTrue(payload["ok"]); self.assertTrue(payload["result"]); self.assertTrue(payload["name"])
+        self.assertIsNone(c.get("/api/drug",query_string={"name":"not-a-real-medicine"}).get_json()["result"])
+        self.assertEqual(c.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]}).status_code,401)
+        uid=self.verified_user("reminder-user@example.test"); self.login_session(c,uid)
+        consent=c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        self.assertEqual(consent.status_code,200)
+        created=c.post("/api/meds/plan",json={"med_name":"Paracetamol","dose":"500 mg","times":["08:00"],"frequency":"daily","start_date":"2026-08-30","timezone":"Asia/Riyadh"})
+        self.assertEqual(created.status_code,200); pid=created.get_json()["id"]
+        plans=c.get("/api/meds/plan").get_json()["plans"]; self.assertEqual(plans[0]["med_name"],"Paracetamol")
+        updated=c.put(f"/api/meds/plan/{pid}",json={"med_name":"Paracetamol","dose":"500 mg","times":["09:00"],"frequency":"daily","start_date":"2026-08-30","timezone":"Asia/Riyadh"})
+        self.assertEqual(updated.status_code,200)
+        self.assertEqual(c.delete(f"/api/meds/plan/{pid}").status_code,200)
+
+    def test_login_throttle_uses_only_pseudonymous_keys(self):
+        email="rate-limit-user@example.test"; origin="192.0.2.10"
+        self.assertTrue(platform_v2.login_attempt_allowed(email,origin))
+        for _ in range(10): platform_v2.record_login_attempt(email,origin,False)
+        self.assertFalse(platform_v2.login_attempt_allowed(email,origin))
+        conn=db._conn(); row=conn.execute("SELECT key_hash FROM ss_auth_rate_limits LIMIT 1").fetchone(); conn.close()
+        self.assertIsNotNone(row); self.assertNotIn("rate-limit-user",row[0]); self.assertNotIn(origin,row[0])
+        platform_v2.record_login_attempt(email,origin,True)
+        self.assertTrue(platform_v2.login_attempt_allowed(email,origin))
+
+    def test_database_integrity_and_required_tables(self):
+        conn=db._conn()
+        tables={row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        required={"ss_users","ss_email_verifications","ss_password_resets","ss_login_activity","ss_auth_rate_limits","med_plans"}
+        self.assertFalse(required-tables)
+        self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(),[])
+        conn.close()
+
+    def test_core_inline_javascript_parses_and_no_translation_keys_leak(self):
+        c=self.client("en")
+        for route in ["/","/search","/meds","/about-us","/login","/register","/chat"]:
+            html=c.get(route).get_data(as_text=True)
+            self.assertNotRegex(html,r">\s*(?:prereview_title|prereview_sub|auth_error|verification_required)\s*<")
+            for index,script in enumerate(re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>",html,re.S|re.I)):
+                if not script.strip(): continue
+                checked=subprocess.run(["node","--check"],input=script,text=True,capture_output=True)
+                self.assertEqual(checked.returncode,0,f"{route} script {index}: {checked.stderr}")
+
+    def test_about_visual_assets_social_metadata_and_readme_links(self):
+        project_root=Path(__file__).resolve().parent
+        for lang,direction,name in (("ar","rtl","ريماس حميد السلمي"),("en","ltr","Remas Hameed Alsolami")):
+            c=self.client(lang); response=c.get("/about-us"); html=response.get_data(as_text=True)
+            self.assertEqual(response.status_code,200)
+            self.assertIn(f'<html lang="{lang}" dir="{direction}">',html)
+            self.assertIn(name,html)
+            self.assertIn('class="au-inline-visual"',html)
+            self.assertIn('class="au-story-map"',html)
+            self.assertIn('au-live-frame',html)
+            self.assertNotIn('/static/images/about-hero.webp',html)
+            self.assertNotIn('/static/images/about-story.webp',html)
+            self.assertNotIn('/icons/about-us-phone.webp',html)
+            self.assertNotIn('remas.jpg',html)
+            self.assertNotIn('photo placeholder',html.lower())
+            self.assertNotIn('Technologies',html)
+            self.assertNotIn('PostgreSQL / SQLite',html)
+            self.assertIn('prefers-reduced-motion:reduce',html)
+        legacy=self.client("en").get("/about",follow_redirects=False)
+        self.assertEqual(legacy.status_code,302)
+        self.assertTrue(legacy.headers["Location"].endswith("/about-us"))
+        home=self.client("en").get("/home").get_data(as_text=True)
+        expected="http://localhost/static/images/symptosense-social-preview.png"
+        self.assertIn(f'<meta property="og:image" content="{expected}">',home)
+        self.assertIn('<meta property="og:url" content="http://localhost/home">',home)
+        self.assertIn('<meta name="twitter:card" content="summary_large_image">',home)
+        readme=(project_root/"README.md").read_text(encoding="utf-8")
+        relative_links=re.findall(r'!?(?:\[[^\]]*\])\((?!https?://|mailto:|#)([^)]+)\)',readme)
+        missing=[]
+        for link in relative_links:
+            clean=link.split("#",1)[0].strip().strip("<>")
+            if clean and not (project_root/clean).resolve().exists(): missing.append(clean)
+        self.assertEqual(missing,[],f"Broken README asset links: {missing}")
+
+    def test_premium_visual_system_and_home_assets(self):
+        project_root=Path(__file__).resolve().parent
+        for lang,direction in (("ar","rtl"),("en","ltr")):
+            html=self.client(lang).get("/home").get_data(as_text=True)
+            self.assertIn(f'<html lang="{lang}" dir="{direction}">',html)
+            self.assertIn("PREMIUM",webapp.PREMIUM_POLISH_CSS.upper())
+            self.assertIn("--ss-space-8:64px",html)
+            self.assertIn("@media(max-width:1180px)",html)
+            self.assertIn("@media(min-width:1181px)",html)
+            self.assertIn('class="ss-hero-demo"',html)
+            self.assertNotIn('/static/images/about-hero.webp',html)
+            self.assertIn('class="ss-trust-row"',html)
+            self.assertNotIn('SymptoSense V2</span>',html)
+            self.assertNotIn('class="hh-globe"',html)
+        self.assertTrue((project_root/"static/images/about-hero.webp").is_file())
+        self.assertLess((project_root/"static/images/about-hero.webp").stat().st_size,200_000)
+        architecture=(project_root/"docs"/"architecture"/"architecture_diagram.svg").read_text(encoding="utf-8")
+        self.assertIn("AI Explanation",architecture)
+        self.assertIn("Groq API",architecture)
+
+    def test_analysis_validation_does_not_return_server_error(self):
+        c=self.client("en")
+        response=c.post("/api/analyze",json={"lang":"en","symptoms":[]})
+        self.assertIn(response.status_code,{400,403})
+        self.assertLess(response.status_code,500)
+
+    def test_arabic_numbness_is_extracted_from_knowledge_base(self):
+        result=advanced_features.smart_extract_symptoms("أشعر بتنميل في المفاصل", "ar")
+        slugs={item.get("slug") for item in result.get("found",[])}
+        self.assertIn("numbness",slugs)
+        self.assertEqual(result.get("confidence"),"high")
+
+    def test_numbness_location_clarification_and_broader_disease_base(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True) + "\n" + source_bundle.chat_view_text()
+        self.assertIn("أين تشعر بالتنميل أو الخدر؟",html)
+        self.assertIn("هل بدأ التنميل فجأة في جهة واحدة",html)
+        self.assertIn("تنميل اليدين أو الأصابع",html)
+        normalized=medical_knowledge.normalize_symptoms(["تنميل اليدين"],"ar")
+        matches=medical_knowledge.match_diseases(normalized.get("canonical",[]),"ar",limit=10)
+        disease_slugs={item.get("slug") for item in matches}
+        self.assertIn("carpal-tunnel-syndrome",disease_slugs)
+        self.assertIn("peripheral-neuropathy",disease_slugs)
+        diseases={item.get("slug") for item in medical_knowledge.list_entities("diseases",False)}
+        self.assertTrue({"sciatica","acute-sinusitis","acute-bronchitis","food-poisoning"}.issubset(diseases))
+
+    def test_every_selectable_symptom_has_specific_or_generic_followup(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True) + "\n" + source_bundle.chat_view_text()
+        for question in (
+            "هل بدأ ألم الصدر فجأة", "هل يوجد قيء متكرر", "هل التعب شديد ومفاجئ",
+            "هل المفصل متورم", "هل توجد حمى مقاسة", "هل توجد صعوبة تنفس أو تورم",
+            "هل تشعر بألم في العين", "هل بدأ الصداع", "هل لديك تيبس في الرقبة",
+            "هل يوجد دم مع السعال", "هل فقدت الوعي", "هل يزداد ضيق التنفس",
+            "هل هناك تورم أو حرارة في الساق", "هل الألم شديد جدًا", "هل تجد صعوبة في البلع",
+        ):
+            self.assertIn(question,html)
+        self.assertIn("if(!matched) clarQueue.push(genericClarForSymptom(s))",html)
+        self.assertIn("أين تشعر بهذا العرض أو في أي جزء من الجسم يظهر؟",html)
+
+    def test_symptom_selection_exposes_clear_next_step(self):
+        c=self.client("ar"); c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        html=c.get("/chat").get_data(as_text=True) + "\n" + source_bundle.chat_view_text()
+        self.assertIn("التالي: مدة الأعراض",html)
+        self.assertIn("appendStartBtn();",html)
+        self.assertIn("s.disabled = !state.symptoms.length",html)
+        self.assertIn("askDuration();",html)
+        self.assertIn("[٠-٩]",html)
+        self.assertIn("[۰-۹]",html)
+        self.assertIn("document.body.classList.add('ss-chat-page')",html)
+        self.assertIn("state.step === 'age' ? 'numeric'",html)
+        self.assertIn("body.ss-chat-page .asst-fab",webapp.BASE_CSS + webapp.V2_CSS + webapp.PREMIUM_POLISH_CSS)
+        self.assertIn("تم اعتماد وصفك كما كتبته",html)
+        self.assertIn("concat([raw])",html)
+
+    def test_symptom_next_button_requires_selection_and_opens_duration(self):
+        client = self.client("ar")
+        client.post("/api/consent/preferences", json={"service_usage": True, "analytics_research": False})
+        html = client.get("/chat").get_data(as_text=True) + "\n" + source_bundle.chat_view_text()
+        functions = re.findall(r"    function (?:appendStartBtn|beginAssessment)\(\) \{.*?\n    \}", html, re.S)
+        self.assertEqual(len(functions), 2)
+        script = """
+        const assert = require('node:assert/strict');
+        let LANG = 'ar', state = {symptoms: []}, qualityReturnKey = null;
+        let button, durationCalls = 0;
+        const document = {createElement: () => ({setAttribute(k,v){this[k]=v;}})};
+        const optsEl = {appendChild: b => {button=b;}};
+        const add = () => {}, TT = x => x, clearOpts = () => {};
+        const askDuration = () => {durationCalls++;};
+        """ + "\n".join(functions) + """
+        appendStartBtn();
+        assert.equal(button.disabled, true);
+        button.onclick();
+        assert.equal(durationCalls, 0);
+        state.symptoms = ['صداع'];
+        appendStartBtn();
+        assert.equal(button.disabled, false);
+        assert.equal(button['aria-disabled'], 'false');
+        assert.equal(button.textContent, 'التالي: مدة الأعراض');
+        button.onclick();
+        assert.equal(durationCalls, 1);
+        LANG = 'en';
+        appendStartBtn();
+        assert.equal(button.textContent, 'Next: symptom duration');
+        """
+        checked = subprocess.run(["node", "-"], input=script, text=True, capture_output=True)
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+
+    def test_memory_is_owner_only_even_when_personalization_is_disabled(self):
+        owner = self.verified_user("memory-owner@example.test")
+        other = self.verified_user("memory-other@example.test")
+        db.save_health_profile(owner, {"extra_info": "OWNER_PRIVATE_SENTINEL"})
+        db.save_health_profile(other, {"extra_info": "OTHER_PRIVATE_SENTINEL"})
+        db.save_privacy_settings(owner, {
+            "use_in_assistant": False, "use_in_analysis": False,
+            "use_in_calculators": False, "save_chat_history": False,
+        })
+        guest = self.client()
+        self.assertEqual(guest.get("/memory").status_code, 302)
+        client = self.client()
+        self.login_session(client, owner)
+        response = client.get("/memory", query_string={"user_id": other, "uid": other})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("no-store", response.headers["Cache-Control"])
+        self.assertIn("OWNER_PRIVATE_SENTINEL", response.get_data(as_text=True))
+        self.assertNotIn("OTHER_PRIVATE_SENTINEL", response.get_data(as_text=True))
+        self.login_session(client, other)
+        html = client.get("/memory", query_string={"user_id": owner}).get_data(as_text=True)
+        self.assertIn("OTHER_PRIVATE_SENTINEL", html)
+        self.assertNotIn("OWNER_PRIVATE_SENTINEL", html)
+
+    def test_install_prompt_does_not_auto_cover_analysis(self):
+        self.assertIn("window.location.pathname !== '/home'",webapp.PAGE_FRAME)
+
+    def test_red_flags_keep_urgent_priority_without_forced_withholding_copy(self):
+        result=analysis_core.run_analysis({"user_id":"red-flag-test","age":30,"gender":"female","symptoms":["severe chest pain","difficulty breathing"],"duration":"now","severity":5,"conditions":"","medications":"","notes":""},lang="en")
+        self.assertEqual(result.get("urgency"),"high")
+        self.assertTrue(result.get("emergency"))
+        self.assertNotIn("withheld",result.get("possible_conditions","").lower())
+        self.assertIn("urgent",result.get("simple_explanation","").lower())
+
+    def test_red_flag_preserves_grounded_matches_when_available(self):
+        bundle = {
+            "normalization": {"canonical": [], "unmatched": []},
+            "matches": [{
+                "name_ar": "حالة قلبية محتملة", "name_en": "Possible cardiac condition",
+                "match_level": "moderate",
+                "matched_symptoms": [{"name_ar": "ألم الصدر", "name_en": "Chest pain"}],
+                "recommended_next_step": "اطلب تقييمًا طبيًا.", "sources": [],
+            }],
+            "sources": [],
+            "risk": {"level": "low", "label": "Low", "reasons": [], "emergency": False},
+            "last_updated": None,
+        }
+        with mock.patch.object(analysis_core.medical_knowledge, "knowledge_bundle", return_value=bundle):
+            result = analysis_core.run_analysis({
+                "user_id": "red-flag-grounded", "age": 30, "gender": "female",
+                "symptoms": ["severe chest pain", "difficulty breathing"],
+                "duration": "now", "severity": 5, "conditions": "",
+                "medications": "", "notes": "",
+            }, lang="en")
+        self.assertEqual(result.get("urgency"), "high")
+        self.assertTrue(result.get("emergency"))
+        self.assertEqual(result.get("knowledge_matches", [])[0].get("name_en"), "Possible cardiac condition")
+        self.assertIn("Possible cardiac condition", result.get("possible_conditions", ""))
+        self.assertEqual(result.get("recommendations"), [])
+
+    def test_analysis_and_reminder_idor_is_denied(self):
+        owner_id=self.verified_user("idor-owner@example.test"); attacker_id=self.verified_user("idor-attacker@example.test")
+        owner_key=f"account:{owner_id}"; record_id=db.save_record(owner_key,"en",30,"female",["headache"],"1 day",2,"low")
+        db.save_result(owner_key,record_id,{"symptoms":["headache"],"risk_level":"low"})
+        attacker=self.client(); self.login_session(attacker,attacker_id)
+        self.assertEqual(attacker.get(f"/api/analysis/{record_id}").status_code,404)
+        self.assertEqual(attacker.delete(f"/api/analysis/{record_id}").status_code,404)
+        owner=self.client(); self.login_session(owner,owner_id)
+        owner.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        created=owner.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]}).get_json()["id"]
+        attacker.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        self.assertEqual(attacker.put(f"/api/meds/plan/{created}",json={"med_name":"Changed","times":["09:00"]}).status_code,403)
+        self.assertEqual(attacker.delete(f"/api/meds/plan/{created}").status_code,404)
+
+    def test_sensitive_double_actions_are_safe(self):
+        uid=self.verified_user("double-action@example.test"); c=self.client(); self.login_session(c,uid)
+        c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":False})
+        pid=c.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]}).get_json()["id"]
+        self.assertEqual(c.delete(f"/api/meds/plan/{pid}").status_code,200)
+        self.assertEqual(c.delete(f"/api/meds/plan/{pid}").status_code,200)
+        self.assertTrue(db.claim_push_delivery("https://push.invalid/one",pid,"2026-08-30","08:00"))
+        self.assertFalse(db.claim_push_delivery("https://push.invalid/one",pid,"2026-08-30","08:00"))
+
+    def test_privacy_consent_withdrawal_and_health_delete(self):
+        uid=self.verified_user("privacy-test@example.test"); c=self.client(); self.login_session(c,uid)
+        enabled=c.post("/api/consent/preferences",json={"service_usage":True,"analytics_research":True}).get_json()
+        self.assertTrue(enabled["consent"]["analytics_research"])
+        withdrawn=c.post("/api/privacy/withdraw-analytics").get_json()
+        self.assertFalse(withdrawn["consent"]["analytics_research"])
+        c.post("/api/meds/plan",json={"med_name":"Paracetamol","times":["08:00"]})
+        deleted=c.post("/api/privacy/delete-health-data")
+        self.assertEqual(deleted.status_code,200)
+        self.assertEqual(c.get("/api/meds/plan").get_json()["plans"],[])
+        self.assertIsNotNone(db.get_ss_user(uid))
+
+    def test_error_pages_and_security_request_id(self):
+        c=self.client("en"); missing=c.get("/definitely-not-a-route")
+        self.assertEqual(missing.status_code,404); self.assertIn("Page not found",missing.get_data(as_text=True))
+        self.assertTrue(missing.headers.get("X-Request-ID")); self.assertEqual(missing.headers.get("X-Frame-Options"),"DENY")
+
+    def test_search_failure_is_generic_and_has_request_id(self):
+        c=self.client("en")
+        with mock.patch.object(webapp.health_search,"search_health",side_effect=RuntimeError("database password must never leak")):
+            failed=c.get("/api/search",query_string={"q":"headache","lang":"en"})
+        self.assertEqual(failed.status_code,500)
+        payload=failed.get_json(); self.assertFalse(payload["ok"])
+        self.assertNotIn("database password",payload["error"])
+        self.assertEqual(payload["request_id"],failed.headers["X-Request-ID"])
+
+    def test_analysis_pdf_export_returns_real_pdf(self):
+        uid=self.verified_user("pdf-export@example.test"); c=self.client("ar"); self.login_session(c,uid)
+        owner_key=f"account-{uid}"
+        record_id=db.save_record(owner_key,"ar",22,"f",["صداع","غثيان"],"1-3 أيام",2,"low")
+        db.save_result(owner_key,record_id,{
+            "lang":"ar","age":22,"gender":"f","symptoms":["صداع","غثيان"],
+            "duration":"1-3 أيام","severity":2,"urgency":"low","risk_level":"low",
+            "risk_label":"خطورة منخفضة","data_quality":{"score":100,"level_label":"ممتاز"},
+            "knowledge_matches":[{"name_ar":"الصداع النصفي","score":"توافق مرتفع"}],
+            "recommendations":[{"tip":"راقب تطور الأعراض."}],
+            "danger_signs":"","home_care":"","medical_sources":[]
+        })
+        response=c.get(f"/api/analyze/export/{record_id}")
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(response.headers.get("Content-Type","").startswith("application/pdf"))
+        self.assertTrue(response.data.startswith(b"%PDF"))
+        self.assertGreater(len(response.data),1000)
+
+    def test_medications_has_iphone_home_screen_install_guidance(self):
+        uid=self.verified_user("iphone-install@example.test"); c=self.client("ar"); self.login_session(c,uid)
+        html=c.get("/meds").get_data(as_text=True)
+        self.assertIn('id="iosInstallCard"',html)
+        self.assertIn('onclick="pwaRequestInstall()"',html)
+        self.assertIn('خطوة إضافية على iPhone',html)
+        self.assertIn("display-mode: standalone",html)
+        self.assertIn("window.pwaRequestInstall",html)
+
+
+if __name__=="__main__": unittest.main(verbosity=2)

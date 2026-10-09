@@ -1,0 +1,1465 @@
+
+<!DOCTYPE html>
+<html lang="__LANG__" dir="__DIR__">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="symptosense-csrf" content="__USER_CSRF__">
+<script>
+(function(){
+  var originalFetch = window.fetch;
+  if (!originalFetch) return;
+  window.fetch = function(input, init){
+    init = init ? Object.assign({}, init) : {};
+    var method = String(init.method || (input && input.method) || 'GET').toUpperCase();
+    if (!['POST','PUT','PATCH','DELETE'].includes(method)) return originalFetch(input, init);
+    try {
+      var raw = (typeof input === 'string') ? input : ((input && input.url) || '');
+      var u = new URL(raw, window.location.href);
+      if (u.origin === window.location.origin) {
+        var meta = document.querySelector('meta[name="symptosense-csrf"]');
+        var token = meta ? meta.content : '';
+        if (token) {
+          var headers = new Headers(init.headers || (input && input.headers) || {});
+          if (!headers.has('X-CSRF-Token')) headers.set('X-CSRF-Token', token);
+          init.headers = headers;
+        }
+      }
+    } catch (_) {}
+    return originalFetch(input, init);
+  };
+})();
+</script>
+<script src="/static/js/interaction-bridge.js?v=__ASSET_VERSION__"></script>
+<script src="/static/js/safety-notice.js?v=__ASSET_VERSION__" defer></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/brand-icon.svg">
+<link rel="stylesheet" href="/static/css/design-system.css?v=__ASSET_VERSION__">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SymptoSense">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>__TITLE__</title>
+<meta name="description" content="__DESC__">
+<meta name="keywords" content="__KEYWORDS__">
+<meta name="robots" content="__ROBOTS__">
+__GSC_TAG__
+<link rel="canonical" href="__CANONICAL__">
+__HREFLANG__
+<meta property="og:title" content="__TITLE__">
+<meta property="og:description" content="__DESC__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SymptoSense — Understand your symptoms and know your next step">
+<meta property="og:url" content="__CANONICAL__">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SymptoSense">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="__TITLE__">
+<meta name="twitter:description" content="__DESC__">
+<meta name="twitter:image" content="__OG_IMAGE__">
+<meta name="theme-color" content="#1565c0">
+<link rel="stylesheet" href="/assets/app-shell-v112.css?v=267">
+<style>__EXTRA_CSS__</style>
+<style>
+.asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1565c0, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
+[dir="rtl"] .asst-fab { left: 22px; right: auto; }
+.asst-fab .asst-fab-ic { font-size: 24px; line-height: 1; }
+.asst-fab .asst-fab-lb { letter-spacing: .2px; }
+.asst-fab.pulse { animation: asstPulse 2.6s infinite; }
+.asst-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(25,118,210,.42); }
+@keyframes asstPulse { 0%,100% { box-shadow: 0 12px 30px rgba(25,118,210,.35); } 50% { box-shadow: 0 12px 42px rgba(25,118,210,.55); } }
+.asst-panel { position: fixed; bottom: 96px; left: 22px; z-index: 999; width: 400px; max-width: calc(100vw - 24px); height: min(78vh, 600px); display: none; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 22px; box-shadow: 0 24px 70px rgba(25,118,210,.26); overflow: hidden; }
+[dir="rtl"] .asst-panel { left: 22px; right: auto; }
+.asst-panel.open { display: flex; }
+/* Lock the document behind the assistant. Only the assistant body may scroll. */
+html.ss-assistant-open { overflow: hidden !important; overscroll-behavior: none; }
+body.ss-assistant-open { overflow: hidden !important; overscroll-behavior: none; }
+body.ss-assistant-open::after { content: ""; position: fixed; inset: 0; z-index: 998; background: rgba(18,59,112,.14); pointer-events: auto; }
+.asst-panel, .asst-fab { isolation: isolate; }
+.asst-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.asst-head { background: linear-gradient(120deg, var(--primary-dark), #1565c0); color: #FFFFFF; padding: 14px 16px; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.asst-head .asst-back { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex: 0 0 auto; }
+.asst-head-tx { flex: 1; min-width: 0; }
+.asst-head-tx b { font-size: 15px; display: block; }
+.asst-sub { font-size: 12px; opacity: .85; margin-top: 2px; }
+.asst-head > button:last-child { background: rgba(255,255,255,.16); color: #FFF; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 14px; cursor: pointer; flex: 0 0 auto; }
+.asst-body { flex: 1; overflow-y: auto; padding: 14px; background: var(--bg-page); }
+.asst-msg { border-radius: 14px; padding: 10px 14px; margin: 6px 0; font-size: 14px; line-height: 1.7; max-width: 94%; word-break: break-word; }
+.asst-user { background: #1565c0; color: #FFF; margin-left: auto; }
+[dir="rtl"] .asst-user { margin-left: 0; margin-right: auto; }
+.asst-bot { background: var(--bg-card); border: 1px solid var(--border-card); color: var(--text-body); }
+.asst-opts { display: grid; gap: 10px; margin: 10px 0 6px; }
+.asst-opt { display: flex; align-items: center; gap: 12px; text-align: start; background: var(--bg-card); border: 1.5px solid var(--border-card); border-radius: 16px; padding: 12px 14px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 12px rgba(25,118,210,.05); transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease; }
+.asst-opt:hover { transform: translateY(-2px); border-color: #1565c0; box-shadow: 0 8px 20px rgba(25,118,210,.14); }
+.asst-opt .ao-ic { font-size: 24px; flex: 0 0 auto; }
+.asst-opt .ao-tx { min-width: 0; }
+.asst-opt .ao-t { display: block; font-size: 14.5px; font-weight: 800; color: var(--primary-dark); }
+.asst-opt .ao-d { display: block; font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-top: 2px; }
+.asst-qs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.asst-chip { border: 1px solid var(--border-card); background: var(--bg-card); color: var(--primary-dark); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.asst-chip:hover { background: var(--primary-light); }
+.asst-emerg { background: #FEE2E2; border: 1px solid #FCA5A5; color: #7F1D1D; border-radius: 12px; padding: 10px 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; }
+.asst-emerg a { color: #B91C1C; font-weight: 800; }
+.asst-foot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border-card); background: var(--bg-card); flex: 0 0 auto; }
+.asst-inp { flex: 1; border: 1px solid var(--border-card); border-radius: 12px; padding: 10px 14px; font-size: 14px; font-family: inherit; }
+.asst-foot button { border: none; border-radius: 12px; background: #1565c0; color: #FFF; padding: 0 16px; font-size: 15px; cursor: pointer; }
+.asst-mh-btn { background: var(--primary-light) !important; color: var(--primary-dark) !important; font-size: 12px !important; white-space: nowrap; padding: 0 10px !important; }
+.asst-disc { font-size: 11px; color: var(--text-muted); text-align: center; padding: 7px; background: var(--primary-light); border-top: 1px dashed var(--border-card); flex: 0 0 auto; }
+.asst-panel.asst-mh { background: var(--bg-card); border-color: var(--border-card); }
+.asst-panel.asst-mh .asst-head { background: linear-gradient(120deg, var(--primary-dark), var(--primary)); }
+.asst-panel.asst-mh .asst-body { background: var(--bg-page); }
+.asst-panel.asst-mh .asst-bot { background: var(--bg-card); border-color: var(--border-card); color: var(--text-body); font-size: 15px; }
+.asst-panel.asst-mh .asst-user { background: var(--primary); }
+.asst-panel.asst-mh .asst-opt { border-color: var(--border-card); box-shadow: none; }
+.asst-panel.asst-mh .asst-opt:hover { border-color: var(--primary); box-shadow: 0 8px 20px rgba(25,118,210,.14); }
+.asst-panel.asst-mh .asst-opt .ao-t { color: var(--primary-dark); }
+.asst-panel.asst-mh .asst-chip { border-color: var(--border-card); color: var(--primary-dark); background: var(--bg-card); }
+.asst-panel.asst-mh .asst-chip:hover { background: var(--primary-light); }
+.asst-panel.asst-mh .mh-tool-chip.urgent-tool { border-color:#FCA5A5; color:#B91C1C; background:#FFF7F7; }
+.asst-panel.asst-mh .mh-tool-chip.urgent-tool:hover { background:#FEE2E2; }
+.mh-checkin-card{margin:10px 0;padding:13px;border:1px solid var(--border-card);border-radius:15px;background:#fff}.mh-checkin-card b{color:var(--primary-dark)}.mh-checkin-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.mh-checkin-row button{border:1px solid var(--border-card);background:var(--bg-card);color:var(--primary-dark);border-radius:999px;padding:7px 10px;font-weight:700}.mh-plan-box{margin-top:10px;padding:11px;border-radius:12px;background:var(--primary-light);color:var(--text-body);line-height:1.7}.mh-plan-box ol{margin:6px 18px 0}.mh-plan-save{margin-top:9px;border:0;border-radius:10px;padding:8px 11px;background:var(--primary);color:#fff;font-weight:800}.mh-plan-note{display:block;margin-top:6px;font-size:11px;color:var(--text-muted)}
+.mh-urgent-card { margin-top:10px; }
+.mh-call-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.mh-call-row a { flex:1 1 140px; text-align:center; text-decoration:none; padding:9px 12px; border-radius:10px; background:#B91C1C; color:#fff!important; font-weight:800; }
+.mh-call-row a:last-child { background:#1565c0; }
+.asst-panel.asst-mh .asst-foot { background: var(--bg-card); }
+.asst-panel.asst-mh .asst-foot button { background: var(--primary); }
+.asst-panel.night-calm { background: #0F1729; border-color: #1E293B; }
+.asst-panel.night-calm .asst-head { background: linear-gradient(120deg, #123B70, #1565c0); }
+.asst-panel.night-calm .asst-body { background: #0F1729; }
+.asst-panel.night-calm .asst-bot { background: #123B70; border-color: #1565c0; color: #EAF4FF; font-size: 15px; }
+.asst-panel.night-calm .asst-user { background: #1565c0; }
+.asst-panel.night-calm .asst-opt { border-color: #1565c0; background: #123B70; color: #B8D8F8; }
+.asst-panel.night-calm .asst-opt:hover { border-color: #64B5F6; background: #1565c0; }
+.asst-panel.night-calm .asst-opt .ao-t { color: #EAF4FF; }
+.asst-panel.night-calm .asst-chip { border-color: #1565c0; color: #B8D8F8; background: #123B70; }
+.asst-panel.night-calm .asst-chip:hover { background: #1565c0; }
+.asst-panel.night-calm .asst-foot { background: #0F1729; }
+.asst-panel.night-calm .asst-foot button { background: #1565c0; }
+.asst-panel.night-calm .asst-inp { background: #123B70; border-color: #1565c0; color: #EAF4FF; }
+.asst-breath { text-align: center; margin: 12px auto; width: 118px; height: 118px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; }
+.asst-br-0 { background: radial-gradient(circle, #64B5F6, #1565c0); animation: brIn 4s ease-in-out infinite; }
+.asst-br-1 { background: radial-gradient(circle, #1565c0, #1565C0); animation: brHold 7s ease-in-out infinite; }
+.asst-br-2 { background: radial-gradient(circle, #123B70, #0D47A1); animation: brOut 8s ease-in-out infinite; }
+@keyframes brIn { 0% { transform: scale(.72); } 100% { transform: scale(1.05); } }
+@keyframes brHold { 0%,100% { transform: scale(1.05); } 50% { transform: scale(1.08); } }
+@keyframes brOut { 0% { transform: scale(1.05); } 100% { transform: scale(.72); } }
+@media (prefers-reduced-motion: reduce) { .asst-fab.pulse, .asst-br-0, .asst-br-1, .asst-br-2, .ss-bnav a, .ss-completion .bar-fill-green, .welcome-card { animation: none !important; transition: none !important; } }
+.asst-fb { display: flex; gap: 6px; align-items: center; margin: 2px 0 6px; }
+.asst-fb-btn { border: 1px solid var(--border-card); background: var(--bg-card); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.asst-fb-btn:hover { background: var(--primary-light); border-color: var(--border-card); }
+.asst-fb-ok { font-size: 12px; color: var(--primary); font-weight: 700; }
+@media (max-width: 560px) {
+  .asst-panel { bottom: calc(var(--bnav-h) + var(--safe-bottom)); left: 0; right: 0; width: 100%; max-width: none; height: min(76dvh, 620px); border-radius: 22px 22px 0 0; }
+  [dir="rtl"] .asst-panel { left: 0; right: 0; }
+  .asst-fab { bottom: calc(var(--bnav-h) + var(--safe-bottom) + 14px); left: auto; right: 14px; width: 52px; height: 52px; padding: 0; border-radius: 50%; justify-content: center; }
+  [dir="rtl"] .asst-fab { left: auto; right: 14px; }
+  .asst-fab .asst-fab-ic { font-size: 22px; }
+  .asst-fab .asst-fab-lb { display: none; }
+}
+.expl-bg { position: fixed; inset: 0; z-index: 1001; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; padding: 18px; }
+.expl-bg.open { display: flex; }
+.expl-modal { background: var(--bg-card); border-radius: 20px; max-width: 560px; width: 100%; max-height: 86vh; overflow-y: auto; padding: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+.expl-modal .ex-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.expl-modal .ex-title { font-size: 19px; font-weight: 800; color: var(--primary-dark); }
+.expl-modal .ex-close { border: none; background: var(--primary-light); color: var(--text-body); border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; }
+.ex-levels { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+.ex-level { flex: 1; min-width: 130px; border: 2px solid var(--border-card); background: var(--bg-card); border-radius: 14px; padding: 12px; text-align: center; cursor: pointer; font-family: inherit; transition: all .2s; }
+.ex-level.on { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 6px 16px rgba(25,118,210,.14); }
+.ex-level .lv-ic { font-size: 22px; }
+.ex-level .lv-t { font-size: 13px; font-weight: 800; color: var(--primary-dark); margin-top: 4px; }
+.ex-explain { background: var(--primary-light); border: 1px solid var(--border-card); border-radius: 12px; padding: 14px; font-size: 14.5px; line-height: 1.9; color: var(--text-body); min-height: 90px; }
+.ex-assist-row { margin-top: 14px; text-align: center; }
+.asst-modal-bg { position: fixed; inset: 0; z-index: 1002; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; padding: 18px; }
+.asst-modal-bg.open { display: flex; }
+.asst-modal { background: var(--bg-card); border-radius: 18px; max-width: 480px; width: 100%; padding: 20px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+.asst-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; color: var(--primary-dark); font-size: 16px; }
+.asst-modal-head button { border: none; background: var(--primary-light); color: var(--text-body); border-radius: 50%; width: 30px; height: 30px; font-size: 13px; cursor: pointer; }
+.asst-reasons { display: flex; flex-direction: column; gap: 8px; }
+.asst-reason { border: 1px solid var(--border-card); background: var(--primary-light); border-radius: 12px; padding: 11px 14px; font-size: 14px; cursor: pointer; font-family: inherit; text-align: start; color: var(--text-body); }
+.asst-reason:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.pwa-install { position: fixed; z-index: 1300; left: 50%; bottom: calc(var(--bnav-h) + var(--safe-bottom) + 14px); transform: translateX(-50%); width: min(520px, calc(100vw - 24px)); display: none; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; background: #fff; color: #123B70; border: 1px solid #DCEBFA; box-shadow: 0 18px 48px rgba(18,59,112,.22); }
+/* V71: keep the install prompt away from the home CTAs on desktop. */
+@media (min-width: 900px) {
+  .pwa-install { left: 22px; right: auto; bottom: 22px; transform: none; width: min(390px, calc(100vw - 44px)); padding: 12px; }
+  [dir="rtl"] .pwa-install { left: 22px; right: auto; }
+  .pwa-install-copy { font-size: 12px; }
+}
+.pwa-install.show { display: flex; }
+.pwa-install-icon { width: 48px; height: 48px; border-radius: 13px; flex: 0 0 auto; }
+.pwa-install-copy { flex: 1; font-size: 13px; line-height: 1.6; font-weight: 700; }
+.pwa-install-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.pwa-install button { border: 0; border-radius: 10px; padding: 9px 12px; min-height: 40px; font-family: inherit; font-weight: 800; cursor: pointer; }
+.pwa-install .pwa-primary { background: #1565c0; color: #fff; }
+.pwa-install .pwa-later { background: #EAF4FF; color: #123B70; }
+@media (min-width: 1501px) { .pwa-install { bottom: 22px; } }
+@media (max-width: 480px) { .pwa-install { align-items: flex-start; } .pwa-install-actions { flex-direction: column; } }
+.ss-skip-link{position:fixed;inset-inline-start:12px;top:8px;z-index:99999;transform:translateY(-150%);background:#fff;color:#123B70;border:2px solid #1565c0;border-radius:10px;padding:10px 14px;font-weight:800;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.ss-skip-link:focus{transform:none}
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #0B69C7!important;outline-offset:3px!important}
+@media (pointer:coarse){button,.btn,input,select,textarea,.ss-bnav a{min-height:44px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.ss-offline-banner{position:fixed;z-index:10050;top:10px;left:50%;transform:translate(-50%,-140%);width:min(620px,calc(100% - 24px));display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-radius:15px;background:#7F1D1D;color:#fff;border:1px solid rgba(255,255,255,.25);box-shadow:0 16px 38px rgba(127,29,29,.24);transition:transform .22s ease}.ss-offline-banner.show{transform:translate(-50%,0)}.ss-offline-banner b{font-size:12px}.ss-offline-banner small{display:block;color:#FECACA;font-size:9.5px;margin-top:2px}.ss-offline-banner a{flex:none;min-height:36px;display:inline-flex;align-items:center;padding:0 11px;border-radius:10px;background:#fff;color:#7F1D1D;font-weight:900;font-size:10px;text-decoration:none}@media(max-width:520px){.ss-offline-banner{top:7px;align-items:flex-start}.ss-offline-banner a{min-height:34px;padding:0 9px}}
+</style>
+</head>
+<body class="__BODY_CLASS__">
+<a class="ss-skip-link" href="#main-content">__SKIP_TO_CONTENT__</a>
+<div class="ss-offline-banner" id="ssOfflineBanner" role="status" aria-live="polite"><div><b>__OFFLINE_TITLE__</b><small>__OFFLINE_SUB__</small></div><a href="/offline">__OFFLINE_OPEN__</a></div>
+<script>(function(){const b=document.getElementById('ssOfflineBanner');if(!b)return;function sync(){b.classList.toggle('show',!navigator.onLine);}window.addEventListener('online',sync);window.addEventListener('offline',sync);sync();})();</script>
+<div class="pwa-install" id="pwaInstall" role="dialog" aria-live="polite" aria-label="Install SymptoSense">
+  <img class="pwa-install-icon" src="/icons/icon-192.png" alt="">
+  <div class="pwa-install-copy" id="pwaInstallText"></div>
+  <div class="pwa-install-actions">
+    <button class="pwa-primary" id="pwaInstallBtn" type="button"></button>
+    <button class="pwa-later" id="pwaLaterBtn" type="button"></button>
+  </div>
+</div>
+<script>
+function setLang(l) {
+  document.cookie = 'lang=' + l + ';path=/;max-age=31536000;SameSite=Lax';
+  try { localStorage.setItem('ss_lang', l); } catch(e) {}
+  location.href = (l === 'ar') ? '/home' : '/home';
+}
+function toggleDD(ev) {
+  ev.stopPropagation();
+  const current = ev.currentTarget ? ev.currentTarget.closest('.dd') : null;
+  const menu = current ? current.querySelector('.dd-menu') : null;
+  if (!menu) return;
+  const willOpen = !menu.classList.contains('open');
+  document.querySelectorAll('.dd-menu.open').forEach(function(other) {
+    other.classList.remove('open');
+    const trigger = other.parentElement ? other.parentElement.querySelector('button[aria-haspopup="menu"]') : null;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  });
+  menu.classList.toggle('open', willOpen);
+  ev.currentTarget.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+}
+document.addEventListener('click', function(ev) {
+  if (ev.target.closest('.dd')) return;
+  document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
+  document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
+});
+document.addEventListener('keydown', function(ev) {
+  if (ev.key !== 'Escape') return;
+  document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
+  document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
+});
+(function(){
+  var p = location.pathname;
+  var bnav = document.getElementById('ssBnav');
+  if (!bnav) return;
+  var links = bnav.querySelectorAll('a');
+  links.forEach(function(a){
+    var h = a.getAttribute('href');
+    if (h && p.indexOf(h) === 0 && h !== '#') a.classList.add('on');
+    else if (h === '/home' && p === '/') a.classList.add('on');
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.export-status').forEach(function(el){el.setAttribute('role','status');el.setAttribute('aria-live','polite')});
+  document.querySelectorAll('.auth-error').forEach(function(el){el.setAttribute('role','alert');el.setAttribute('aria-live','assertive')});
+  document.querySelectorAll('input,select,textarea').forEach(function(el){
+    el.addEventListener('invalid',function(){this.setAttribute('aria-invalid','true')});
+    ['input','change'].forEach(function(evt){el.addEventListener(evt,function(){if(this.checkValidity())this.removeAttribute('aria-invalid')})});
+  });
+});
+</script>
+__NAV__
+<div class="container" id="main-content" tabindex="-1"__MAIN_ROLE__>
+__MAIN_H1__
+__BODY__
+</div>
+__FOOTER__
+<nav class="ss-bnav" id="ssBnav" aria-label="__MAIN_NAV_LABEL__">
+  <a href="/home" class="bn-home" aria-label="__BNAV_HOME__"><span class="bn-icon" aria-hidden="true">🏠</span><span>__BNAV_HOME__</span></a>
+  <a href="/chat" class="bn-chat" aria-label="__BNAV_CHAT__"><span class="bn-icon" aria-hidden="true">🩺</span><span>__BNAV_CHAT__</span></a>
+  <a href="/home?assistant=mh" class="bn-psych" data-assistant-mode="mh" aria-label="__BNAV_PSYCH__"><span class="bn-icon" aria-hidden="true">🧠</span><span>__BNAV_PSYCH__</span></a>
+  <a href="/profile" class="bn-profile" aria-label="__BNAV_PROFILE__"><span class="bn-icon" aria-hidden="true">👤</span><span>__BNAV_PROFILE__</span></a>
+</nav>
+<button type="button" class="asst-fab pulse" id="asstFab" title="__AST_TITLE__" aria-label="__AST_TITLE__" aria-expanded="false" aria-controls="asstPanel"><span class="asst-fab-ic">🤖</span><span class="asst-fab-lb">__AST_TITLE__</span></button>
+<div class="asst-panel" id="asstPanel" role="dialog" aria-modal="true" aria-labelledby="asstHeadT">
+  <div class="asst-head">
+    <button type="button" class="asst-back" id="asstBack" style="display:none;" aria-label="__AST_BACK_LABEL__">↩</button>
+    <div class="asst-head-tx"><b id="asstHeadT">🤖 __AST_TITLE__</b><div class="asst-sub" id="asstSubT">__AST_SUB__</div></div>
+    <button type="button" id="asstCloseBtn" aria-label="__AST_CLOSE_LABEL__">✕</button>
+  </div>
+  <div class="asst-body" id="asstBody">
+    <div class="asst-msg asst-bot" id="asstGreet">__AST_GREET__</div>
+    <div class="asst-opts" id="asstOpts"></div>
+    <div class="asst-qs" id="asstQs"></div>
+  </div>
+  <div class="asst-foot">
+    <input class="asst-inp" id="asstInput" placeholder="__AST_PH__" autocomplete="off">
+    <button type="button" id="asstSendBtn" aria-label="__AST_SEND_LABEL__">➤</button>
+  </div>
+  <label class="asst-disc" id="asstCtxRow" style="display:block"><input type="checkbox" id="asstUseData"> __AST_CTX__</label>
+  <div class="asst-disc">__AST_DISC__</div>
+</div>
+<div class="expl-bg" id="explBg">
+  <div class="expl-modal">
+    <div class="ex-head"><div class="ex-title" id="exTitle"></div><button type="button" class="ex-close" id="explCloseBtn">✕</button></div>
+    <div class="ex-levels" id="exLevels"></div>
+    <div class="ex-explain" id="exBody"></div>
+    <div class="ex-assist-row"><button type="button" class="btn pri" id="exAssist">🤖 __AST_EXPLAIN_ASK__</button></div>
+  </div>
+</div>
+<div class="asst-modal-bg" id="asstModalBg">
+  <div class="asst-modal">
+    <div class="asst-modal-head"><b id="asstModalTitle"></b><button type="button" id="asstModalCloseBtn">✕</button></div>
+    <div class="asst-reasons" id="asstModalReasons"></div>
+  </div>
+</div>
+<script>
+var ASST_T = __AST_T__;
+function asstTT(k) { return ASST_T[k] || k; }
+var asstPageCtx = '';
+var asstMhMode = false;
+var asstQuestionMode = false;
+var asstBrTimer = null, asstBrPhase = 0;
+var asstLockedScrollY = 0;
+var asstBodyLockState = null;
+function asstSetCtx(k) { asstPageCtx = k || ''; }
+function asstIsTouchViewport() {
+  return window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+function asstFocusInput() {
+  /* iOS Safari may move the whole viewport when focus() is called programmatically.
+     Auto-focus only on desktop/fine-pointer devices; mobile users can tap the field. */
+  if (asstIsTouchViewport() || window.innerWidth <= 768) return;
+  var inp = document.getElementById('asstInput');
+  if (!inp) return;
+  try { inp.focus({preventScroll:true}); } catch (e) { inp.focus(); }
+}
+function asstLockPage() {
+  if (document.body.classList.contains('ss-assistant-open')) return;
+  asstLockedScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+  asstBodyLockState = {
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width
+  };
+  document.documentElement.classList.add('ss-assistant-open');
+  document.body.classList.add('ss-assistant-open');
+  document.body.style.position = 'fixed';
+  document.body.style.top = (-asstLockedScrollY) + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+function asstUnlockPage() {
+  if (!document.body.classList.contains('ss-assistant-open')) return;
+  document.documentElement.classList.remove('ss-assistant-open');
+  document.body.classList.remove('ss-assistant-open');
+  var st = asstBodyLockState || {};
+  document.body.style.position = st.position || '';
+  document.body.style.top = st.top || '';
+  document.body.style.left = st.left || '';
+  document.body.style.right = st.right || '';
+  document.body.style.width = st.width || '';
+  asstBodyLockState = null;
+  /* Restore the exact pre-open position without animation. */
+  window.scrollTo(0, asstLockedScrollY);
+}
+function asstToggle() {
+  var p = document.getElementById('asstPanel');
+  var f = document.getElementById('asstFab');
+  var open = p.classList.toggle('open');
+  f.querySelector('.asst-fab-ic').textContent = open ? '✕' : '🤖';
+  f.querySelector('.asst-fab-lb').textContent = open ? asstTT('asst_close') : asstTT('asst_title');
+  f.setAttribute('aria-expanded', open ? 'true' : 'false');
+  f.setAttribute('aria-label', open ? asstTT('asst_close') : asstTT('asst_title'));
+  if (open) {
+    asstLockPage();
+    asstShowMain();
+    asstFocusInput();
+  } else {
+    asstBreathStop();
+    asstUnlockPage();
+  }
+}
+function asstGreeting() {
+  var c = asstPageCtx;
+  if (c === 'sug') return asstTT('asst_calc_sug_greet');
+  if (c === 'bmi') return asstTT('asst_calc_bmi_greet');
+  if (c === 'fluids') return asstTT('asst_calc_fluids_greet');
+  if (c === 'cal') return asstTT('asst_calc_cal_greet');
+  if (c === 'dose') return asstTT('asst_calc_dose_greet');
+  if (c === 'calc') return asstTT('asst_calc_greet');
+  return asstTT('asst_greet');
+}
+function asstChips() {
+  var c = asstPageCtx;
+  if (asstMhMode) return [asstTT('asst_mh_calm_chip'), asstTT('asst_mh_ground_chip'), asstTT('asst_mh_urgent_chip')];
+  if (c === 'sug') return [asstTT('asst_q_sug1'), asstTT('asst_q_sug2'), asstTT('asst_q_sug3')];
+  if (c === 'bmi') return [asstTT('asst_q_bmi1'), asstTT('asst_q_bmi2'), asstTT('asst_q_bmi3')];
+  if (c === 'fluids') return [asstTT('asst_q_fluids1')];
+  if (c === 'cal') return [asstTT('asst_q_cal1')];
+  if (c === 'dose') return [asstTT('asst_q_dose1')];
+  if (c === 'calc') return [asstTT('asst_q_calc1'), asstTT('asst_q_calc2'), asstTT('asst_q_calc3')];
+  return [asstTT('asst_q1'), asstTT('asst_q2'), asstTT('asst_q3'), asstTT('asst_q4')];
+}
+function asstMainOpts() {
+  return [
+    { ic: '🩺', t: asstTT('asst_opt_symp'), d: asstTT('asst_opt_symp_d'), act: 'go', k: 'symp' },
+    { ic: '🧠', t: asstTT('asst_opt_mh'), d: asstTT('asst_opt_mh_d'), act: 'mh', k: '' },
+    { ic: '💊', t: asstTT('asst_opt_drug'), d: asstTT('asst_opt_drug_d'), act: 'go', k: 'drug' },
+    { ic: '🧪', t: asstTT('asst_opt_blood'), d: asstTT('asst_opt_blood_d'), act: 'go', k: 'blood' },
+    { ic: '❓', t: asstTT('asst_opt_q'), d: asstTT('asst_opt_q_d'), act: 'go', k: 'q' }
+  ];
+}
+function asstMhOpts() {
+  /* Start with conversational intents, not symptom/diagnosis categories. This
+     makes the space feel like a real chat while keeping safety logic intact. */
+  return [
+    { ic: '🫂', t: asstTT('asst_mh_o_anx'), d: asstTT('asst_mh_o_anx_d'), act: 'ask', k: 'vent' },
+    { ic: '💭', t: asstTT('asst_mh_o_sad'), d: asstTT('asst_mh_o_sad_d'), act: 'ask', k: 'sort' },
+    { ic: '🌿', t: asstTT('asst_mh_o_str'), d: asstTT('asst_mh_o_str_d'), act: 'ask', k: 'calm_chat' },
+    { ic: '😴', t: asstTT('asst_mh_o_slp'), d: asstTT('asst_mh_o_slp_d'), act: 'ask', k: 'sleep' },
+    { ic: '🧠', t: asstTT('asst_mh_o_tho'), d: asstTT('asst_mh_o_tho_d'), act: 'ask', k: 'thoughts' },
+    { ic: '🤍', t: asstTT('asst_mh_o_lon'), d: asstTT('asst_mh_o_lon_d'), act: 'ask', k: 'loneliness' },
+    { ic: '😤', t: asstTT('asst_mh_o_ang'), d: asstTT('asst_mh_o_ang_d'), act: 'ask', k: 'anger' },
+    { ic: '💬', t: asstTT('asst_mh_o_oth'), d: asstTT('asst_mh_o_oth_d'), act: 'ask', k: 'other' },
+    { ic: '🌙', t: asstTT('asst_mh_opt_night'), d: asstTT('asst_mh_opt_night_d'), act: 'night', k: 'calm' }
+  ];
+}
+function asstRenderOpts() {
+  var box = document.getElementById('asstOpts');
+  if (!box) return;
+  var arr = asstMhMode ? asstMhOpts() : asstMainOpts();
+  box.replaceChildren();
+  arr.forEach(function(o) {
+    var button = document.createElement('button');
+    button.type = 'button'; button.className = 'asst-opt';
+    var icon = document.createElement('span'); icon.className = 'ao-ic'; icon.textContent = o.ic;
+    var copy = document.createElement('span'); copy.className = 'ao-tx';
+    var title = document.createElement('span'); title.className = 'ao-t'; title.textContent = o.t;
+    var description = document.createElement('span'); description.className = 'ao-d'; description.textContent = o.d;
+    copy.append(title, description); button.append(icon, copy);
+    button.addEventListener('click', function(){ asstOptClick(o.act, o.k); });
+    box.appendChild(button);
+  });
+}
+function asstShowMain() {
+  if (asstQuestionMode) {
+    var conversation = document.getElementById('asstBody');
+    if (conversation) conversation.scrollTop = conversation.scrollHeight;
+    return;
+  }
+  var g = document.getElementById('asstGreet');
+  if (g) {
+    var msgs = document.querySelectorAll('#asstBody .asst-msg:not(#asstGreet)');
+    if (msgs.length === 0) { g.textContent = asstGreeting(); g.style.whiteSpace = 'pre-line'; }
+  }
+  if (!asstMhMode) {
+    asstQuestionMode = false;
+    var back = document.getElementById('asstBack');
+    if (back) back.style.display = 'none';
+    var inp = document.getElementById('asstInput');
+    if (inp) inp.placeholder = asstTT('asst_ph');
+    var opts = document.getElementById('asstOpts');
+    var qs = document.getElementById('asstQs');
+    if (opts) opts.style.display = '';
+    if (qs) qs.style.display = '';
+  }
+  asstRenderOpts();
+  asstInitQs();
+}
+function asstInitQs() {
+  var qs = document.getElementById('asstQs');
+  if (!qs) return;
+  qs.innerHTML = asstChips().map(function(q) {
+    var qq = q.replace(/["'\\]/g, '');
+    return '<button type="button" class="asst-chip" data-ss-click="asstChipClick" data-ss-args="' + ssArgs([qq]) + '">' + q + '</button>';
+  }).join('');
+}
+function asstRestoreModeHistory(isMh) {
+  var body = document.getElementById('asstBody');
+  if (!body) return;
+  body.textContent = '';
+  var greet = document.createElement('div');
+  greet.className = 'asst-msg asst-bot';
+  greet.id = 'asstGreet';
+  greet.textContent = isMh ? asstTT('asst_mh_greet') : asstGreeting();
+  greet.style.whiteSpace = 'pre-line';
+  body.appendChild(greet);
+  var hist = [];
+  try { hist = JSON.parse(sessionStorage.getItem(isMh ? 'asst_hist_mh' : 'asst_hist') || '[]'); } catch(e) {}
+  hist.slice(-12).forEach(function(item) {
+    if (!item || !item.content) return;
+    var msg = document.createElement('div');
+    msg.className = 'asst-msg ' + (item.role === 'user' ? 'asst-user' : 'asst-bot');
+    msg.textContent = String(item.content);
+    body.appendChild(msg);
+  });
+  var opts = document.createElement('div'); opts.className = 'asst-opts'; opts.id = 'asstOpts'; body.appendChild(opts);
+  var qs = document.createElement('div'); qs.className = 'asst-qs'; qs.id = 'asstQs'; body.appendChild(qs);
+  body.scrollTop = body.scrollHeight;
+}
+function asstChipClick(txt) {
+  if (asstMhMode && txt === asstTT('asst_mh_calm_chip')) { asstMhAction('calm'); return; }
+  if (asstMhMode && txt === asstTT('asst_mh_ground_chip')) { asstMhAction('ground'); return; }
+  if (asstMhMode && txt === asstTT('asst_mh_urgent_chip')) { asstMhAction('urgent'); return; }
+  asstAsk(txt);
+}
+function asstEnterMH() {
+  asstMhMode = true;
+  asstRestoreModeHistory(true);
+  document.getElementById('asstPanel').classList.add('asst-mh');
+  document.getElementById('asstHeadT').textContent = asstTT('asst_mh_title');
+  document.getElementById('asstSubT').textContent = asstTT('asst_mh_sub');
+  document.getElementById('asstBack').style.display = '';
+  document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
+  var g = document.getElementById('asstGreet');
+  if (g) { g.textContent = asstTT('asst_mh_greet'); g.style.whiteSpace = 'pre-line'; }
+  asstRenderOpts();
+  asstInitQs();
+}
+function asstBackMain() {
+  asstBreathStop();
+  asstQuestionMode = false;
+  asstMhMode = false;
+  nightCalmMode = false;
+  document.getElementById('asstPanel').classList.remove('asst-mh');
+  document.getElementById('asstPanel').classList.remove('night-calm');
+  document.getElementById('asstHeadT').textContent = '🤖 ' + asstTT('asst_title');
+  document.getElementById('asstSubT').textContent = asstTT('asst_sub');
+  document.getElementById('asstBack').style.display = 'none';
+  document.getElementById('asstInput').placeholder = asstTT('asst_ph');
+  asstRestoreModeHistory(false);
+  asstShowMain();
+}
+function openAsstGeneral() {
+  var p = document.getElementById('asstPanel');
+  if (!p.classList.contains('open')) asstToggle();
+  asstBackMain();
+}
+function asstEnterHealthQuestion() {
+  if (asstQuestionMode) { asstFocusInput(); return; }
+  asstMhMode = false;
+  var panel = document.getElementById('asstPanel');
+  panel.classList.remove('asst-mh', 'night-calm');
+  asstQuestionMode = true;
+  var body = document.getElementById('asstBody');
+  // Replace the chooser with a real conversation entrance, not a selected
+  // card or a simulated user message. Preserve saved conversation history.
+  asstRestoreModeHistory(false);
+  var opts = document.getElementById('asstOpts');
+  var qs = document.getElementById('asstQs');
+  if (opts) opts.style.display = 'none';
+  if (qs) qs.style.display = 'none';
+  var back = document.getElementById('asstBack');
+  if (back) back.style.display = '';
+  var inp = document.getElementById('asstInput');
+  if (inp) inp.placeholder = asstTT('asst_q_ph');
+  document.getElementById('asstHeadT').textContent = '❓ ' + asstTT('asst_opt_q');
+  var greeting = document.getElementById('asstGreet');
+  if (greeting) {
+    greeting.textContent = asstTT('asst_q_prompt');
+    greeting.setAttribute('role', 'status');
+  }
+  if (body) body.scrollTop = 0;
+  asstFocusInput();
+}
+function asstOptClick(act, k) {
+  if (act === 'mh') { asstEnterMH(); return; }
+  if (act === 'night') { asstEnterNightCalm(); return; }
+  if (act === 'ask') { asstMhAction(k); return; }
+  if (k === 'symp') { location.href = '/chat'; return; }
+  if (k === 'drug') { location.href = '/meds'; return; }
+  if (k === 'blood') { location.href = '/blood'; return; }
+  if (k === 'calc') { location.href = '/calculators'; return; }
+  if (k === 'q') { asstEnterHealthQuestion(); return; }
+}
+function asstMhAction(k) {
+  if (k === 'calm') {
+    asstBreathStart();
+    asstMhMsg(asstTT('asst_mh_calm_msg'));
+    asstRenderMhToolsBar();
+    asstFocusInput();
+    return;
+  }
+  if (k === 'ground') {
+    asstBreathStop();
+    asstMhMsg(asstTT('asst_mh_ground_msg'));
+    asstRenderMhToolsBar();
+    asstFocusInput();
+    return;
+  }
+  if (k === 'urgent') {
+    asstBreathStop();
+    asstMhUrgentSupport();
+    return;
+  }
+  if (k === 'plan') {
+    asstBreathStop();
+    asstMhShowSavedPlan();
+    return;
+  }
+  var send = {
+    'vent': asstTT('asst_mh_send_anx'),
+    'sort': asstTT('asst_mh_send_sad'),
+    'calm_chat': asstTT('asst_mh_send_str'),
+    'sleep': asstTT('asst_mh_send_slp'),
+    'thoughts': asstTT('asst_mh_send_tho'),
+    'loneliness': asstTT('asst_mh_send_lon'),
+    'anger': asstTT('asst_mh_send_ang'),
+    'other': asstTT('asst_mh_send_oth')
+  }[k] || asstTT('asst_mh_send_oth');
+  asstSendContextText(send);
+}
+function asstRenderMhToolsBar() {
+  if (!asstMhMode) return;
+  var qs = document.getElementById('asstQs');
+  if (!qs) return;
+  qs.textContent = '';
+  [
+    ['🌿', asstTT('asst_mh_calm_short'), 'calm'],
+    ['🧭', asstTT('asst_mh_ground_short'), 'ground'],
+    ['📝', document.documentElement.lang==='en'?'My plan':'خطتي', 'plan'],
+    ['🚨', asstTT('asst_mh_urgent_short'), 'urgent']
+  ].forEach(function(item) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'asst-chip mh-tool-chip' + (item[2]==='urgent'?' urgent-tool':'');
+    b.textContent = item[0] + ' ' + item[1];
+    b.addEventListener('click', function(){ asstMhAction(item[2]); });
+    qs.appendChild(b);
+  });
+}
+function asstMhUrgentSupport() {
+  var body = document.getElementById('asstBody');
+  if (!body) return;
+  var d = document.createElement('div');
+  d.className = 'asst-emerg mh-urgent-card';
+  var isEn = document.documentElement.lang === 'en';
+  d.innerHTML = '<b>' + (isEn ? 'Your safety comes first.' : 'سلامتك أولًا.') + '</b><br>' +
+    (isEn
+      ? 'If you may hurt yourself or you are not sure you can stay safe, do not stay alone. Move away from anything you could use to hurt yourself, stay with someone you trust, and contact emergency help now.'
+      : 'إذا كنت قد تؤذي نفسك أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك. ابتعد عن أي وسيلة أذى، وخلك مع شخص تثق به وتواصل مع المساعدة الآن.') +
+    '<div class="mh-call-row"><a href="tel:997">🚑 ' + (isEn ? 'Ambulance 997' : 'الإسعاف 997') + '</a>' +
+    '<a href="tel:911">🚨 ' + (isEn ? 'Unified emergency 911' : 'الطوارئ الموحدة 911') + '</a>' +
+    '<a href="tel:937">🩺 ' + (isEn ? 'MOH 937' : 'وزارة الصحة 937') + '</a></div>' +
+    '<div style="margin-top:9px"><a href="/emergency" style="font-weight:800;text-decoration:underline;color:#163B5C">' +
+      (isEn ? 'Open emergency numbers page' : 'فتح صفحة أرقام الطوارئ') + '</a></div>';
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+var nightCalmMode = false;
+var nightCalmStep = 0;
+function asstEnterNightCalm() {
+  nightCalmMode = true;
+  nightCalmStep = 0;
+  asstMhMode = true;
+  document.getElementById('asstPanel').classList.add('asst-mh');
+  document.getElementById('asstPanel').classList.add('night-calm');
+  document.getElementById('asstHeadT').textContent = asstTT('night_calm_title');
+  document.getElementById('asstSubT').textContent = asstTT('night_calm_greet');
+  document.getElementById('asstBack').style.display = '';
+  document.getElementById('asstInput').placeholder = asstTT('asst_mh_ph');
+  var body = document.getElementById('asstBody');
+  body.textContent = '';
+  asstMhMsg(asstTT('night_calm_greet'));
+  setTimeout(function(){
+    addOptsToBody([
+      {label: asstTT('night_calm_opt_calm'), fn: function(){ nightCalmAction('calm'); }},
+      {label: asstTT('night_calm_opt_listen'), fn: function(){ nightCalmAction('listen'); }},
+      {label: asstTT('night_calm_opt_think'), fn: function(){ nightCalmAction('think'); }},
+      {label: asstTT('night_calm_opt_sleep'), fn: function(){ nightCalmAction('sleep'); }}
+    ]);
+  }, 400);
+}
+function nightCalmAction(choice) {
+  clearNightOpts();
+  if (choice === 'calm') {
+    asstMhMsg(asstTT('night_calm_calm_reply'));
+    setTimeout(function(){
+      asstMhMsg(asstTT('night_calm_calm_step'));
+      asstBreathStart();
+      setTimeout(function(){
+        addOptsToBody([{label: asstTT('night_calm_next'), fn: function(){
+          clearNightOpts(); asstBreathStop();
+          asstMhMsg(LANG==='ar' ? 'كيف تحس الآن؟ 🤍' : 'How are you feeling now? 🤍');
+          addOptsToBody([
+            {label: LANG==='ar' ? '🌿 أهدأ شوي' : '🌿 A bit calmer', fn: function(){ clearNightOpts(); asstMhMsg(LANG==='ar' ? 'هذا يسعدني 🤍 خذ وقتك.' : 'That makes me happy 🤍 Take your time.'); }},
+            {label: LANG==='ar' ? '💭 مازالت الأفكار كثيرة' : '💭 Still have racing thoughts', fn: function(){ clearNightOpts(); nightCalmAction('think'); }},
+            {label: LANG==='ar' ? '🫂 أبي أتكلم' : '🫂 I want to talk', fn: function(){ clearNightOpts(); nightCalmAction('listen'); }}
+          ]);
+        }}]);
+      }, 12000);
+    }, 1000);
+  } else if (choice === 'listen') {
+    asstMhMsg(asstTT('night_calm_listen_reply'));
+    asstFocusInput();
+  } else if (choice === 'think') {
+    asstMhMsg(asstTT('night_calm_think_reply'));
+    asstFocusInput();
+  } else if (choice === 'sleep') {
+    asstMhMsg(asstTT('night_calm_sleep_reply'));
+    setTimeout(function(){
+      addOptsToBody([
+        {label: asstTT('night_calm_sleep_option1') || '🫂 Talk about my day', fn: function(){ clearNightOpts(); asstSendContextText(LANG==='ar' ? 'أبي أتكلم عن يومي' : 'I want to talk about my day'); }},
+        {label: asstTT('night_calm_sleep_option2') || '🌿 Calming session', fn: function(){ clearNightOpts(); nightCalmAction('calm'); }},
+        {label: asstTT('night_calm_sleep_option3') || '💭 Empty my thoughts', fn: function(){ clearNightOpts(); nightCalmAction('think'); }},
+        {label: asstTT('night_calm_sleep_option4') || '🤍 Something simple', fn: function(){ clearNightOpts(); asstMhMsg(LANG==='ar' ? 'خلّها بسيطة الليلة 🤍 خفف الإضاءة، ابعد الشاشة دقائق، وخذ زفيرًا هادئًا أطول من الشهيق بدون حبس النفس.' : 'Keep it simple tonight 🤍 Dim the lights, step away from the screen for a few minutes, and use a gentle exhale that is a little longer than the inhale without holding your breath.'); }}
+      ]);
+    }, 500);
+  }
+}
+function clearNightOpts() {
+  var existing = document.querySelectorAll('.night-opts');
+  existing.forEach(function(el){ el.remove(); });
+}
+function addOptsToBody(items) {
+  var body = document.getElementById('asstBody');
+  var div = document.createElement('div');
+  div.className = 'night-opts';
+  div.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:8px 0;';
+  items.forEach(function(item){
+    var btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:14px 16px;border:2px solid #DCEBFA;border-radius:14px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;text-align:' + (LANG==='ar' ? 'right' : 'left') + ';color:#40566F;transition:all .2s;min-height:48px;';
+    btn.textContent = item.label;
+    btn.onmouseover = function(){ this.style.borderColor='#1565c0'; this.style.background='#EAF4FF'; };
+    btn.onmouseout = function(){ this.style.borderColor='#DCEBFA'; this.style.background='#fff'; };
+    btn.onclick = item.fn;
+    div.appendChild(btn);
+  });
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function openAsstMH() {
+  var p = document.getElementById('asstPanel');
+  if (!p.classList.contains('open')) asstToggle();
+  asstEnterMH();
+}
+function asstMhMsg(text) {
+  var body = document.getElementById('asstBody');
+  var d = document.createElement('div');
+  d.className = 'asst-msg asst-bot';
+  d.textContent = text;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+function asstBreathStart() {
+  asstBreathStop();
+  asstBrPhase = 0;
+  var b = document.getElementById('asstBreath');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'asstBreath';
+    var body = document.getElementById('asstBody');
+    body.appendChild(b);
+  }
+  b.style.display = '';
+  /* Gentle 4-in / 6-out rhythm. No breath-hold: easier to tolerate during
+     anxiety or panic and less likely to make a distressed user feel trapped. */
+  var phases = [
+    {label: asstTT('asst_br_in'), ms: 4000, cls: 0},
+    {label: asstTT('asst_br_out'), ms: 6000, cls: 2}
+  ];
+  function step() {
+    var ph = phases[asstBrPhase % phases.length];
+    b.textContent = ph.label;
+    b.className = 'asst-breath asst-br-' + ph.cls;
+    asstBrPhase++;
+    asstBrTimer = setTimeout(step, ph.ms);
+  }
+  step();
+}
+function asstBreathStop() {
+  if (asstBrTimer) { clearTimeout(asstBrTimer); asstBrTimer = null; }
+  var b = document.getElementById('asstBreath');
+  if (b) b.style.display = 'none';
+}
+function asstSay(text) {
+  var body = document.getElementById('asstBody');
+  var d = document.createElement('div');
+  d.className = 'asst-msg asst-user';
+  d.textContent = text;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+function asstTyping(on) {
+  var body = document.getElementById('asstBody');
+  var t = document.getElementById('asstTyp');
+  if (on) {
+    t = document.createElement('div');
+    t.id = 'asstTyp';
+    t.className = 'asst-msg asst-bot';
+    t.textContent = '...';
+    body.appendChild(t);
+    body.scrollTop = body.scrollHeight;
+  } else if (t) { t.remove(); }
+}
+var lastReplyText = '';
+function asstReply(text, flags) {
+  lastReplyText = text;
+  var body = document.getElementById('asstBody');
+  var d = document.createElement('div');
+  d.className = 'asst-msg asst-bot';
+  d.textContent = text;
+  body.appendChild(d);
+  if (flags && flags.length) {
+    var a = document.createElement('div');
+    a.className = 'asst-emerg';
+    var isMentalSafety = flags.some(function(f){ return f === 'mental_health_crisis' || f === 'mental_health_safety_check'; });
+    if (isMentalSafety) {
+      var isEn = document.documentElement.lang === 'en';
+      a.innerHTML = '<b>' + (isEn ? 'Immediate support' : 'مساعدة فورية') + '</b>' +
+        '<div class="mh-call-row"><a href="tel:997">🚑 ' + (isEn ? 'Ambulance 997' : 'الإسعاف 997') + '</a>' +
+        '<a href="tel:911">🚨 ' + (isEn ? 'Unified emergency 911' : 'الطوارئ الموحدة 911') + '</a>' +
+        '<a href="tel:937">🩺 ' + (isEn ? 'MOH 937' : 'وزارة الصحة 937') + '</a></div>' +
+        '<div style="margin-top:8px"><a href="/emergency">' + (isEn ? 'Emergency numbers page' : 'صفحة أرقام الطوارئ') + '</a></div>';
+    } else {
+      a.innerHTML = asstTT('asst_emerg_txt') + ' <b>997</b><br><a href="/emergency">' + asstTT('asst_emerg_btn') + '</a>';
+    }
+    body.appendChild(a);
+  }
+  var fb = document.createElement('div');
+  fb.className = 'asst-fb';
+  fb.innerHTML = '<button type="button" class="asst-fb-btn" data-ss-click="asstFb" data-ss-args="[&quot;$this&quot;,1]">👍 ' + asstTT('asst_fb_good') + '</button>' +
+    '<button type="button" class="asst-fb-btn" data-ss-click="asstFb" data-ss-args="[&quot;$this&quot;,2]">😐 ' + asstTT('asst_fb_partial') + '</button>' +
+    '<button type="button" class="asst-fb-btn" data-ss-click="asstFb" data-ss-args="[&quot;$this&quot;,0]">👎 ' + asstTT('asst_fb_bad') + '</button>';
+  body.appendChild(fb);
+  if (asstMhMode && !(flags && flags.length)) asstMhMaybeCheckin();
+  body.scrollTop = body.scrollHeight;
+}
+function asstMhPlanFromHistory(){
+  var isEn=document.documentElement.lang==='en',hist=[];try{hist=JSON.parse(sessionStorage.getItem('asst_hist_mh')||'[]')}catch(e){}
+  var text=hist.filter(x=>x&&x.role==='user').map(x=>String(x.content||'').toLowerCase()).join(' '),steps=[];
+  if(/نوم|أرق|انام|أنام|sleep|insomnia/.test(text)) steps.push(isEn?'For tonight: dim lights and reduce stimulation for 20 minutes before bed.':'لليلة: خفف الإضاءة والتنبيه والشاشة لمدة 20 دقيقة قبل النوم.');
+  else if(/قلق|هلع|خوف|توتر|anx|panic|worr|stress/.test(text)) steps.push(isEn?'Use one minute of gentle 4-in / 6-out breathing or 5-4-3-2-1 grounding.':'استخدم دقيقة من تنفس هادئ 4 شهيق / 6 زفير أو تمرين 5-4-3-2-1.');
+  else steps.push(isEn?'Choose one small action you can complete in the next 10 minutes.':'اختر خطوة صغيرة واحدة تقدر تنجزها خلال 10 دقائق القادمة.');
+  if(/وحد|محد يفهم|حزن|ضايق|lonely|alone|sad|down/.test(text)) steps.push(isEn?'Send one simple message to a trusted person: “I need someone to listen for a bit.”':'أرسل رسالة بسيطة لشخص تثق به: «محتاج أحد يسمعني شوي».');
+  else steps.push(isEn?'Write the strongest thought in one sentence, then separate what you can act on now from what can wait.':'اكتب أقوى فكرة في جملة واحدة، ثم افصل بين شيء تقدر تتصرف فيه الآن وشيء يقدر ينتظر.');
+  steps.push(isEn?'If this keeps affecting sleep, study/work, or daily life, consider speaking with a qualified professional.':'إذا استمر الشعور ويؤثر على النوم أو الدراسة/العمل أو الحياة اليومية، فكر في التحدث مع مختص مؤهل.');
+  return steps;
+}
+function asstMhMaybeCheckin(){
+  var hist=[];try{hist=JSON.parse(sessionStorage.getItem('asst_hist_mh')||'[]')}catch(e){}
+  if(hist.filter(x=>x&&x.role==='user').length<2||sessionStorage.getItem('ss_mh_checkin_shown')==='1')return;
+  sessionStorage.setItem('ss_mh_checkin_shown','1');var body=document.getElementById('asstBody');if(!body)return;var isEn=document.documentElement.lang==='en';
+  var card=document.createElement('div');card.className='mh-checkin-card';card.innerHTML='<b>'+(isEn?'Before we continue, how do you feel right now?':'قبل ما نكمل، كيف تحس الآن؟')+'</b><div class="mh-checkin-row"><button type="button" data-mh="better">'+(isEn?'A little better':'أفضل شوي')+'</button><button type="button" data-mh="same">'+(isEn?'About the same':'نفس الشيء')+'</button><button type="button" data-mh="worse">'+(isEn?'Worse':'أسوأ')+'</button></div>';
+  card.querySelectorAll('[data-mh]').forEach(function(b){b.onclick=function(){asstMhFinishCheckin(b.dataset.mh,card)}});body.appendChild(card);body.scrollTop=body.scrollHeight;
+}
+function asstMhFinishCheckin(choice,card){
+  var isEn=document.documentElement.lang==='en',steps=asstMhPlanFromHistory();
+  var lead=choice==='better'?(isEn?'Good—keep the next step small.':'ممتاز، خل الخطوة الجاية بسيطة.'):choice==='same'?(isEn?'That is okay. We can keep it simple and practical.':'عادي، نخليها بسيطة وعملية.'): (isEn?'I’m sorry it feels worse. If you feel unsafe or might hurt yourself, use urgent support now.':'آسف أن الشعور صار أسوأ. إذا كنت غير آمن أو ممكن تؤذي نفسك، استخدم الدعم العاجل الآن.');
+  var plan='<div class="mh-plan-box"><b>'+(isEn?'A short plan for now':'خطة قصيرة الآن')+'</b><ol>'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol><button class="mh-plan-save" type="button">'+(isEn?'Save this plan on this device':'حفظ الخطة على هذا الجهاز')+'</button><span class="mh-plan-note">'+(isEn?'Saved locally on this device only; it is not added to research data.':'تُحفظ محليًا على هذا الجهاز فقط ولا تُضاف لبيانات البحث.')+'</span></div>';
+  card.innerHTML='<b>'+lead+'</b>'+plan+(choice==='worse'?'<div class="mh-checkin-row"><button type="button" data-ss-click="asstMhUrgentSupport">🚨 '+(isEn?'Urgent support':'دعم عاجل')+'</button></div>':'');
+  card.querySelector('.mh-plan-save').onclick=function(){localStorage.setItem('ss_mh_plan_v1',JSON.stringify({saved_at:new Date().toISOString(),steps:steps}));this.textContent=isEn?'✓ Saved on this device':'✓ تم الحفظ على هذا الجهاز';this.disabled=true};
+}
+function asstMhShowSavedPlan(){
+  var isEn=document.documentElement.lang==='en',body=document.getElementById('asstBody'),saved=null;try{saved=JSON.parse(localStorage.getItem('ss_mh_plan_v1')||'null')}catch(e){};if(!body)return;var d=document.createElement('div');d.className='mh-checkin-card';if(!saved||!Array.isArray(saved.steps)){d.textContent=isEn?'No saved wellbeing plan on this device yet.':'ما فيه خطة نفسية محفوظة على هذا الجهاز حتى الآن.';}else{d.innerHTML='<b>'+(isEn?'My saved plan':'خطتي المحفوظة')+'</b><div class="mh-plan-box"><ol>'+saved.steps.map(x=>'<li>'+String(x).replace(/[<>&]/g,'')+'</li>').join('')+'</ol><span class="mh-plan-note">'+(isEn?'Saved: ':'تم الحفظ: ')+String(saved.saved_at||'').slice(0,10)+'</span></div>';}body.appendChild(d);body.scrollTop=body.scrollHeight;
+}
+function asstFb(btn, rating) {
+  var bar = btn.closest('.asst-fb');
+  if (!bar || bar.dataset.done) return;
+  if (rating === 0) {
+    asstOpenReasons(bar);
+    return;
+  }
+  bar.dataset.done = '1';
+  var ok = document.createElement('span');
+  ok.className = 'asst-fb-ok';
+  ok.textContent = asstTT('asst_fb_thanks');
+  bar.textContent = '';
+  bar.appendChild(ok);
+  fetch('/api/assistant/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating: rating, reason: null }) })
+    .then(function() {}).catch(function() {});
+}
+function asstOpenReasons(bar) {
+  document.getElementById('asstModalTitle').textContent = asstTT('asst_fb_title');
+  var reasons = [
+    ['unclear', asstTT('asst_fr1')], ['too_long', asstTT('asst_fr2')],
+    ['not_answered', asstTT('asst_fr3')], ['need_more', asstTT('asst_fr4')],
+    ['not_relevant', asstTT('asst_fr5')], ['other', asstTT('asst_fr6')]
+  ];
+  var box = document.getElementById('asstModalReasons');
+  box.textContent = '';
+  reasons.forEach(function(item) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'asst-reason'; b.textContent = item[1];
+    b.addEventListener('click', function(){ asstSendFb(item[0]); });
+    box.appendChild(b);
+  });
+  asstModalBar = bar;
+  document.getElementById('asstModalBg').classList.add('open');
+}
+var asstModalBar = null;
+function asstSendFb(reason) {
+  var bar = asstModalBar;
+  asstCloseModal();
+  if (bar) {
+    bar.dataset.done = '1';
+    bar.textContent = '';
+    var ok = document.createElement('span');
+    ok.className = 'asst-fb-ok';
+    ok.textContent = asstTT('asst_fb_sent');
+    bar.appendChild(ok);
+  }
+  fetch('/api/assistant/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating: 0, reason: reason.slice(0, 120) }) })
+    .then(function() {}).catch(function() {});
+}
+function asstCloseModal() {
+  document.getElementById('asstModalBg').classList.remove('open');
+}
+function asstOpenWithContext(topic) {
+  var q = String(topic || '').trim();
+  if (!q) return;
+  /* Keep the exact search question visible in the conversation.  This avoids
+     silently rewriting a user's wording and makes the “ask assistant” action
+     feel like a continuation of the search page. */
+  asstSendContextText(q);
+}
+function asstSendContextText(fullText) {
+  var q = String(fullText || '').trim();
+  if (!q) return;
+  var p = document.getElementById('asstPanel');
+  var inp = document.getElementById('asstInput');
+  if (!p || !inp) return;
+  if (!p.classList.contains('open')) asstToggle();
+  inp.value = q;
+  /* Defer one frame so mobile layout/focus work completes before send. */
+  window.requestAnimationFrame(function(){
+    var liveInput = document.getElementById('asstInput');
+    if (!liveInput) return;
+    liveInput.value = q;
+    asstSend();
+  });
+}
+function openExplain(term) {
+  var bg = document.getElementById('explBg');
+  document.getElementById('exTitle').textContent = '✨ ' + asstTT('sea_explain_title') + ': ' + term;
+  document.getElementById('exBody').textContent = '...';
+  document.getElementById('exLevels').textContent = '';
+  document.getElementById('exAssist').style.display = 'none';
+  bg.classList.add('open');
+  fetch('/api/explain?term=' + encodeURIComponent(term) + '&lang=' + (document.documentElement.lang === 'en' ? 'en' : 'ar'))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok || !d.result) { document.getElementById('exBody').textContent = asstTT('sea_noexplain'); return; }
+      var items = [['very_simple', '🟢'], ['basic', '🔵'], ['advanced', '🟣']];
+      var lh = '';
+      items.forEach(function(item, i) {
+        lh += '<button type="button" class="ex-level' + (i === 0 ? ' on' : '') + '" data-lv="' + item[0] + '" data-ss-click="showLv" data-ss-args="[&quot;$this&quot;]">' +
+          '<div class="lv-ic">' + item[1] + '</div><div class="lv-t">' + asstTT('lv_' + item[0]) + '</div></button>';
+      });
+      document.getElementById('exLevels').innerHTML = lh;
+      document.getElementById('exBody').textContent = d.result.levels.very_simple;
+      document.getElementById('exAssist').style.display = '';
+    }).catch(function() { document.getElementById('exBody').textContent = asstTT('sea_noexplain'); });
+}
+function showLv(btn) {
+  document.querySelectorAll('.ex-level').forEach(function(x) { x.classList.remove('on'); });
+  btn.classList.add('on');
+  var term = document.getElementById('exTitle').textContent.split(': ').slice(1).join(': ');
+  fetch('/api/explain?term=' + encodeURIComponent(term) + '&lang=' + (document.documentElement.lang === 'en' ? 'en' : 'ar'))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok || !d.result) return;
+      document.getElementById('exBody').textContent = d.result.levels[btn.dataset.lv] || '';
+    }).catch(function() {});
+}
+function closeExplain() { document.getElementById('explBg').classList.remove('open'); }
+function askAboutTerm() {
+  var term = document.getElementById('exTitle').textContent.split(': ').slice(1).join(': ');
+  closeExplain();
+  if (typeof asstOpenWithContext === 'function') asstOpenWithContext(term);
+}
+function asstShowServices(svs) {
+  var qs = document.getElementById('asstQs');
+  qs.innerHTML = svs.map(function(s) {
+    return '<button type="button" class="asst-chip" data-ss-click="ssGoto" data-ss-args="' + ssArgs([s.url]) + '">' + s.label + '</button>';
+  }).join('');
+}
+function asstShowSources(sources) {
+  if (!sources || !sources.length) return;
+  var body = document.getElementById('asstBody');
+  if (!body) return;
+  var wrap = document.createElement('div');
+  wrap.className = 'asst-source-list';
+  var title = document.createElement('b');
+  title.textContent = document.documentElement.lang === 'en' ? '📚 Medical sources' : '📚 المصادر الطبية';
+  wrap.appendChild(title);
+  sources.forEach(function(source) {
+    var href = source.reference_url || source.official_url || source.url;
+    if (typeof href !== 'string' || !href.startsWith('https://')) return;
+    var link = document.createElement('a');
+    link.className = 'asst-chip'; link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    link.textContent = source.title || source.source_name || source.organization || (document.documentElement.lang === 'en' ? 'View source' : 'عرض المصدر');
+    wrap.appendChild(link);
+  });
+  if (wrap.children.length > 1) {
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+  }
+}
+function asstAsk(q) {
+  document.getElementById('asstInput').value = q;
+  asstSend();
+}
+function asstMhOfflineReply(text) {
+  var lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+  var low = (text || '').toLowerCase();
+  var passiveAr = ['أتمنى ما أصحى','اتمنى ما اصحى','ودي أختفي','ودي اختفي','تعبت من الحياة','الكل أفضل بدوني','الكل افضل بدوني','ما عاد أقدر أكمل','ما عاد اقدر اكمل'];
+  var passiveEn = ["wish i wouldn't wake up",'wish i would not wake up','wish i could disappear','better off without me',"can't go on",'cannot go on','tired of life'];
+  if ((lang === 'ar' ? passiveAr : passiveEn).some(function(p){ return low.indexOf(p) !== -1; })) {
+    return lang === 'ar'
+      ? 'هذا الكلام يدل أن الحمل عليك ثقيل جدًا، وأحتاج أتأكد من سلامتك: هل تفكر الآن في إيذاء نفسك أو إنهاء حياتك؟ إذا نعم، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك واتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن، وللاستشارة الصحية تواصل مع وزارة الصحة 937.'
+      : "That sounds painfully heavy, and I want to check your safety: are you thinking about hurting yourself or ending your life right now? If yes, or if you're not sure you can stay safe, don't stay alone—call 997 or the unified emergency number 911 now; the Ministry of Health is available on 937 for health support.";
+  }
+  if (lang === 'ar') {
+    if (low.includes('ألم صدر شديد') || low.includes('الم صدر شديد') || low.includes('ضيق تنفس شديد') || low.includes('إغماء') || low.includes('اغماء')) return 'لا نفترض أن هذا قلق فقط. إذا كان عندك ألم صدر شديد، صعوبة شديدة في التنفس، إغماء أو عرض جسدي جديد وقوي، اتصل بالإسعاف 997 الآن.';
+    if (low.includes('قلق اجتماعي') || low.includes('أتوتر قدام الناس') || low.includes('اتوتر قدام الناس') || low.includes('أخاف من الناس') || low.includes('اخاف من الناس')) return 'التوتر قدام الناس يخلي عقلك يراقب كل كلمة كأنها اختبار. جرّب هدفًا أصغر: موقف اجتماعي قصير واحد وركّز على الشخص أو الموضوع بدل مراقبة نفسك. وش الأصعب عندك: الكلام، التجمعات، أو الخوف من حكم الناس؟';
+    if (low.includes('تسويف') || low.includes('ما أقدر أبدأ') || low.includes('ما اقدر ابدا') || low.includes('متراكم علي') || low.includes('متراكمة علي')) return 'إذا الشيء متراكم، البداية نفسها تصير أصعب. افتح المطلوب واختر أصغر جزء واشتغل عليه 10 دقائق فقط. إذا كتبت لي الشيء المتراكم عليك أساعدك نقسمه لأول 3 خطوات.';
+    if (low.includes('أفكار ملحة') || low.includes('افكار ملحه') || low.includes('أفكار مزعجة') || low.includes('افكار مزعجه') || low.includes('وسواس')) return 'الفكرة المزعجة مو حقيقة ولا أمر لازم تنفذه. سمّها «فكرة مزعجة» وخلك مع شيء حقيقي قدامك الآن بدل الدخول في جدال طويل معها. اللي يزعجك أكثر محتوى الفكرة، أو تكرارها؟';
+    if (low.includes('محتارة') || low.includes('محتار') || low.includes('ما أعرف أقرر') || low.includes('ما اعرف اقرر')) return 'لا تحتاج قرارًا مثاليًا 100%. حط خيارين فقط، وتحت كل واحد أهم فائدة وأهم خسارة وشيء تقدر تتراجع عنه. وش القرار اللي محتار فيه؟';
+    if (low.includes('ما أقدر أقول لا') || low.includes('ما اقدر اقول لا') || low.includes('حدود') || low.includes('أرضي الناس') || low.includes('ارضي الناس')) return 'قول «لا» ما يحتاج يكون قاسي. جملة قصيرة مثل «ما أقدر ألتزم بهذا الآن» تكفي بدون تبرير طويل. إذا كتبت لي الموقف أساعدك نصيغ رد يحافظ على حدودك.';
+    if (low.includes('أبي خطة') || low.includes('ابي خطة') || low.includes('أبغى خطة') || low.includes('ابغى خطة')) return 'نخليها عملية: حدد الشيء الأكثر إلحاحًا، اختر خطوة واحدة مدتها 10 دقائق، وبعدها فقط قرر الخطوة التالية. اكتب المشكلة بجملة وأنا أرتبها لك إلى خطوات صغيرة.';
+    if (low.includes('قلق') || low.includes('خايف') || low.includes('خوف') || low.includes('هلع')) return 'القلق أو الهلع ممكن يكون مخيفًا. ثبت قدميك على الأرض وخذ زفيرًا أبطأ من الشهيق، أو جرّب تثبيت 5-4-3-2-1. وش أقوى شيء تحسه الآن: فكرة، موقف، أو إحساس في جسمك؟';
+    if (low.includes('حزن') || low.includes('حزين') || low.includes('ضايق') || low.includes('ضيقة')) return 'واضح أن في ثِقل عليك. ما تحتاج ترتب كل شيء الآن؛ خذها بخطوة صغيرة، وإذا تقدر خلك قريبًا من شخص ترتاح له. هل هذا الشعور بدأ بعد موقف معين أو مستمر من فترة؟';
+    if (low.includes('نوم') || low.includes('أرق') || low.includes('انام') || low.includes('أنام')) return 'قلة النوم مرهقة. خفف الإضاءة والشاشة ولا تجبر نفسك على النوم. هل المشكلة في بداية النوم، أو أنك تصحى كثيرًا؟';
+    if (low.includes('ضغط') || low.includes('متوتر') || low.includes('مضغوط') || low.includes('اختبار') || low.includes('جامعة')) return 'الضغط لما يتراكم يصير كل شيء عاجل. اختر شيء واحد فقط الآن: مهمة صغيرة، شيء تأجله، أو 10 دقائق راحة. وش أكثر شيء مستنزفك؟';
+    if (low.includes('وحيد') || low.includes('وحدة') || low.includes('محد يفهمني')) return 'الوحدة مؤلمة. إذا فيه شخص واحد ترتاح له، ما تحتاج تشرح كل شيء؛ رسالة بسيطة مثل «محتاج أحد يسمعني شوي» تكفي كبداية. هل هذا الإحساس جديد أو من فترة؟';
+    if (low.includes('غضب') || low.includes('معصب') || low.includes('عصبي')) return 'إذا الغضب مرتفع، خذ مسافة قصيرة قبل أي رد، وارخِ فكك ويديك وخذ زفيرًا بطيئًا. وش الشيء اللي صار قبل ما يرتفع غضبك؟';
+    return 'أنا معك هنا 🤍 ما تحتاج ترتب كلامك. اكتب اللي صار أو أكثر شعور حاضر عندك الآن، ونفككه خطوة بخطوة بدون تشخيص أو حكم.';
+  }
+  if (low.includes('severe chest pain') || low.includes('severe shortness of breath') || low.includes('faint')) return "Don't assume this is only anxiety. If you have severe chest pain, severe breathing difficulty, fainting, or a strong new physical symptom, call 997 now.";
+  if (low.includes('social anxiety') || low.includes('nervous around people') || low.includes('afraid to talk to people')) return "Social situations can make you monitor every word like a test. Try one smaller goal: one short interaction while putting your attention on the person or topic instead of yourself. What is hardest: speaking, groups, or fear of judgment?";
+  if (low.includes('procrastin') || low.includes("can't start") || low.includes('cannot start') || low.includes('piling up')) return "When things pile up, starting can feel harder than the task. Open it, choose the smallest visible piece, and work on only that for 10 minutes. Tell me what is piled up and I can break it into the first three steps.";
+  if (low.includes('intrusive thought') || low.includes('unwanted thought') || low.includes('obsessive thought')) return "An unwanted thought is not a fact or a command. Label it as an intrusive thought and bring your attention back to something concrete around you instead of debating it. Is the content more distressing, or the repetition?";
+  if (low.includes("can't decide") || low.includes('cannot decide') || low.includes('hard decision')) return "You do not need perfect certainty. Put the two main options side by side and write one benefit, one cost, and one reversible part for each. What decision are you stuck on?";
+  if (low.includes("can't say no") || low.includes('cannot say no') || low.includes('people pleasing') || low.includes('boundaries')) return "Saying no does not have to be harsh. A short line like 'I can't commit to that right now' can be enough without a long explanation. Tell me the situation and I can help word the boundary.";
+  if (low.includes('give me a plan') || low.includes('i need a plan') || low.includes('step by step')) return "Let's make it practical: name the most urgent problem, choose one 10-minute action, then decide the next step only after that one is done. Give me the problem in one sentence and I'll structure it.";
+  if (low.includes('anx') || low.includes('panic') || low.includes('worr')) return "Anxiety or panic can feel frightening. Plant your feet on the floor and make your exhale a little slower than your inhale, or try 5-4-3-2-1 grounding. What feels strongest right now: a thought, a situation, or a body sensation?";
+  if (low.includes('sad') || low.includes('down')) return "It sounds heavy right now. You don't need to organize everything first. Did this start after something specific, or has it been building for a while?";
+  if (low.includes('sleep') || low.includes('insomnia')) return "Poor sleep is exhausting. Dim the lights, reduce stimulation, and don't force sleep. Is the main problem falling asleep, or waking repeatedly?";
+  if (low.includes('lonely') || low.includes('alone')) return "Loneliness can hurt. If there's one safe person you trust, a simple “I need someone to listen for a bit” is enough to start. Has this been there for a while?";
+  if (low.includes('angry') || low.includes('anger')) return "If anger is high, step away briefly before reacting, unclench your jaw and hands, and slow your exhale. What happened just before the anger rose?";
+  return "I'm here with you 🤍 You don't need perfect words. Tell me what happened or name the strongest feeling right now, and we can unpack it one step at a time without judgment.";
+}
+
+function asstNormalizeMentalSafetyText(value) {
+  return String(value || '').toLowerCase()
+    .replace(/[ً-ٰٟـ]/g, '')
+    .replace(/[أإآ]/g, 'ا').replace(/ؤ/g, 'و').replace(/[ئى]/g, 'ي')
+    .replace(/[.,!?؟،؛:(){}"“”]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+function asstMentalCrisisDetected(value) {
+  var low = asstNormalizeMentalSafetyText(value);
+  if (!low) return false;
+  var safe = [
+    'ما ابي اموت','ما ابغى اموت','ما ودي اموت','لا اريد الموت','ما اريد الموت',
+    'ما افكر بالانتحار','ما افكر في الانتحار','ما راح انتحر','لن انتحر',
+    "i don't want to die",'i do not want to die','i am not suicidal',"i'm not suicidal",'im not suicidal',
+    'i am not thinking about suicide',"i'm not thinking about suicide",'not thinking about suicide',
+    "i won't kill myself",'i will not kill myself'
+  ];
+  safe.forEach(function(p){ low = low.split(asstNormalizeMentalSafetyText(p)).join(' '); });
+  low = low.replace(/\s+/g, ' ').trim();
+  var phrases = [
+    'اقتل نفسي','بقتل نفسي','راح اقتل نفسي','اوذي نفسي','اذي نفسي','اضر بنفسي','اجرح نفسي',
+    'ابي اموت','ابغى اموت','ودي اموت','نفسي اموت','اريد الموت','اتمنى اموت','لا اريد العيش',
+    'ما ابي اعيش','ما ابغى اعيش','ما عاد ابي اعيش','انهي حياتي','اخلص من حياتي',
+    'ابي انتحر','ابغى انتحر','ودي انتحر','افكر انتحر','افكر بالانتحار','افكر في الانتحار',
+    'ناوي انتحر','ناويه انتحر','راح انتحر','سوف انتحر','بنتحر','اخطط للانتحار','عندي خطه للانتحار','عندي خطه انتحر','مخطط انتحر',
+    'ما اقدر اضمن نفسي','مو ضامن نفسي','مو ضامنه نفسي','اخاف اوذي نفسي','ما اقدر ابقي امن','مو متاكد اقدر ابقي امن',
+    'اتمني ما اصحي','يا ليتني ما اصحي','ودي ما اصحي','اتمني اختفي','ودي اختفي','الكل افضل بدوني','الناس افضل بدوني','مالي داعي اعيش',
+    'kill myself','i will kill myself',"i'll kill myself",'i am going to kill myself',"i'm going to kill myself",
+    'i want to die','i wanna die','wish i were dead',"don't want to live",'do not want to live',
+    "don't want to be alive",'do not want to be alive','end my life','take my own life','i am suicidal',"i'm suicidal",'im suicidal',
+    'suicidal thoughts','thinking about suicide','thinking of suicide','i have a suicide plan','i have a plan to kill myself','planning to kill myself',
+    'i want to hurt myself','i want to harm myself',"i'm going to hurt myself",'self harm','self-harm','cut myself',
+    "can't keep myself safe",'cannot keep myself safe','not sure i can stay safe',"afraid i'll hurt myself",'afraid i will hurt myself',
+    "wish i wouldn't wake up",'wish i would not wake up',"don't want to wake up",'better off without me','everyone would be better off without me','no point in living',
+  ];
+  if (phrases.some(function(p){ return low.indexOf(asstNormalizeMentalSafetyText(p)) !== -1; })) return true;
+  return ['انتحار','الانتحار','افكار انتحاريه','ايذاء النفس','suicide','suicidal','self harm','self-harm'].indexOf(low) !== -1;
+}
+function asstOtherHarmDetected(value) {
+  var low = asstNormalizeMentalSafetyText(value);
+  if (!low) return false;
+  var phrases = [
+    'ابي اقتل احد','ابغى اقتل احد','بقتل احد','راح اقتل احد','ابي اوذي احد','ابغى اوذي احد',
+    'ابي اقتله','ابغى اقتله','بقتله','راح اقتله','ابي اذبحه','ابي اضربه','باذيه',
+    'i want to kill someone',"i'm going to kill someone",'i am going to kill someone',
+    'i want to hurt someone',"i'm going to hurt someone",'i am going to hurt someone',
+    'i want to kill him','i want to kill her',"i'm going to kill him", "i'm going to kill her"
+  ];
+  return phrases.some(function(p){ return low.indexOf(asstNormalizeMentalSafetyText(p)) !== -1; });
+}
+function asstMentalSafetyFollowupDetected(value) {
+  var panel = document.getElementById('asstPanel');
+  var inMh = !!asstMhMode || !!(panel && panel.classList.contains('asst-mh'));
+  if (!inMh) return false;
+  var cur = asstNormalizeMentalSafetyText(value);
+  var affirmatives = ['نعم','ايوه','ايه','اي','صح','صحيح','يمكن','ممكن','مو متاكد','مو متاكده','ما ادري','لا اقدر اضمن',
+    'yes','yeah','yep','i am','i do','maybe','possibly','not sure',"i'm not sure",'im not sure'];
+  if (affirmatives.indexOf(cur) === -1) return false;
+  var hist = [];
+  try { hist = JSON.parse(sessionStorage.getItem('asst_hist_mh') || '[]'); } catch(e) {}
+  var prev = '';
+  for (var i = hist.length - 1; i >= 0; i--) {
+    if (hist[i] && hist[i].role === 'assistant') { prev = asstNormalizeMentalSafetyText(hist[i].content || ''); break; }
+  }
+  if (!prev) return false;
+  var markers = ['هل تفكر الان في ايذاء نفسك','او انهاء حياتك','هل انت امن','تقدر تبقي امن',
+    'are you thinking about hurting yourself','are you thinking about ending your life','can you stay safe','are you safe right now'];
+  return markers.some(function(m){ return prev.indexOf(asstNormalizeMentalSafetyText(m)) !== -1; });
+}
+function asstRenderMentalCrisisCard(kind) {
+  var lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+  var harmMsg;
+  if (kind === 'other') {
+    harmMsg = lang === 'ar'
+      ? '🚨 إذا تحس أنك ممكن تؤذي شخصًا الآن، ابتعد عنه فورًا وابتعد عن أي سلاح أو وسيلة أذى. اتصل بالطوارئ الموحدة 911 الآن، وإذا كان أحد يحتاج إسعافًا عاجلًا فاتصل بـ997. خلك مع شخص تثق به يساعد يحافظ على سلامة الجميع.'
+      : '🚨 If you think you may hurt someone now, move away from that person and from any weapon or means of harm. Call the unified emergency number 911 now; call 997 too if anyone needs urgent medical help. Stay with someone you trust who can help keep everyone safe.';
+  } else {
+    harmMsg = lang === 'ar'
+      ? '🚨 سلامتك أهم شيء الآن. إذا كنت تفكر في إيذاء نفسك أو إنهاء حياتك، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك. ابتعد عن أي وسيلة أذى وخلك مع شخص تثق به. اتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن، وللاستشارة الصحية على مدار الساعة تواصل مع وزارة الصحة على 937.'
+      : '🚨 Your safety comes first. If you are thinking about hurting yourself or ending your life, or you are not sure you can stay safe, do not stay alone. Move away from means of harm and stay with someone you trust. Call ambulance services on 997 or the unified emergency number 911 now; the Ministry of Health is available on 937 for 24/7 health support.';
+  }
+  var harmBtns = '<div class="mh-call-row">' +
+    '<a href="tel:997">🚑 ' + (lang === 'ar' ? 'الإسعاف 997' : 'Ambulance 997') + '</a>' +
+    '<a href="tel:911">🚨 ' + (lang === 'ar' ? 'الطوارئ الموحدة 911' : 'Unified emergency 911') + '</a>' +
+    '<a href="tel:937">🩺 ' + (lang === 'ar' ? 'وزارة الصحة 937' : 'MOH 937') + '</a></div>' +
+    '<div style="margin-top:8px"><a href="/emergency" style="font-weight:800;text-decoration:underline;color:#163B5C">' +
+      (lang === 'ar' ? 'عرض صفحة أرقام الطوارئ' : 'Open emergency numbers page') + '</a></div>';
+  var d = document.createElement('div');
+  d.className = 'asst-msg asst-bot asst-emerg';
+  d.innerHTML = harmMsg + harmBtns;
+  document.getElementById('asstBody').appendChild(d);
+  document.getElementById('asstBody').scrollTop = document.getElementById('asstBody').scrollHeight;
+}
+
+function asstSend() {
+  var inp = document.getElementById('asstInput');
+  if (!inp) return;
+  var text = String(inp.value || '').trim();
+  if (!text) return;
+  inp.value = '';
+  asstSay(text);
+  if (asstOtherHarmDetected(text)) {
+    asstRenderMentalCrisisCard('other');
+    return;
+  }
+  if (asstMentalCrisisDetected(text) || asstMentalSafetyFollowupDetected(text)) {
+    asstRenderMentalCrisisCard('self');
+    return;
+  }
+  /* Capture the mode at SEND time. Do not rely on the mutable global while
+     the network request is pending: on mobile a UI/back/toggle event can
+     otherwise make a mental-health request fall through to the general-health
+     offline message. The panel class is a second source of truth for safety. */
+  var panelNow = document.getElementById('asstPanel');
+  var requestIsMh = !!asstMhMode || !!(panelNow && panelNow.classList.contains('asst-mh'));
+  var histKey = requestIsMh ? 'asst_hist_mh' : 'asst_hist';
+  var hist = [];
+  try { hist = JSON.parse(sessionStorage.getItem(histKey) || '[]'); } catch(e) {}
+  hist.push({ role: 'user', content: text });
+  hist = hist.slice(-8);
+  try { sessionStorage.setItem(histKey, JSON.stringify(hist)); } catch(e) {}
+  asstTyping(true);
+  fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: hist, lang: document.documentElement.lang === 'en' ? 'en' : 'ar', mode: requestIsMh ? 'mh' : '', use_my_data: !requestIsMh && !!(document.getElementById('asstUseData') && document.getElementById('asstUseData').checked) }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      asstTyping(false);
+      if (d.consent_required) {
+        location.href = d.consent_url || '/consent?next=/assistant';
+        return;
+      }
+      if (d.ok) {
+        var answer = String(d.answer || '').trim();
+        /* A mental-health conversation must never show the generic health
+           fallback ("try symptom analysis / see a doctor"). This also protects
+           older/stale backend responses during a rolling Railway deploy. */
+        var wrongMentalFallback = /لا أستطيع الرد|لا استطيع الرد|تحليل الأعراض|تحليل الأعراض|راجع الطبيب عند الحاجة|can't reply right now|cannot reply right now|symptom analysis page|symptom check/i.test(answer);
+        if (requestIsMh && (!answer || wrongMentalFallback)) {
+          answer = asstMhOfflineReply(text);
+        }
+        asstReply(answer, d.emergency_flags || []);
+        if (requestIsMh) asstRenderMhToolsBar();
+        hist.push({ role: 'assistant', content: answer });
+        try { sessionStorage.setItem(histKey, JSON.stringify(hist.slice(-16))); } catch(e) {}
+        if (!requestIsMh && d.services && d.services.length) asstShowServices(d.services);
+        if (!requestIsMh && d.medical_sources && d.medical_sources.length) asstShowSources(d.medical_sources);
+      } else if (requestIsMh) {
+        asstReply(asstMhOfflineReply(text));
+        asstRenderMhToolsBar();
+      } else {
+        asstReply(asstTT('asst_offline'));
+      }
+    })
+    .catch(function() {
+      asstTyping(false);
+      asstReply(requestIsMh ? asstMhOfflineReply(text) : asstTT('asst_offline'));
+      if (requestIsMh) asstRenderMhToolsBar();
+    });
+}
+(function bindAssistantComposer(){
+  var input = document.getElementById('asstInput');
+  var sendBtn = document.getElementById('asstSendBtn');
+  if (sendBtn && !sendBtn.dataset.bound) {
+    sendBtn.dataset.bound = '1';
+    sendBtn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      asstSend();
+    });
+  }
+  if (input && !input.dataset.bound) {
+    input.dataset.bound = '1';
+    input.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter' && !ev.shiftKey) {
+        ev.preventDefault();
+        asstSend();
+      }
+    });
+  }
+})();
+(function bindGlobalAssistantControls(){
+  function bindClick(id, fn){
+    var el=document.getElementById(id);
+    if(!el || el.dataset.ssDirectBound==='1') return;
+    el.dataset.ssDirectBound='1';
+    el.addEventListener('click', function(ev){ ev.preventDefault(); fn(ev); });
+  }
+  bindClick('asstFab', function(){ asstToggle(); });
+  bindClick('asstBack', function(){ asstBackMain(); });
+  bindClick('asstCloseBtn', function(){ asstToggle(); });
+  bindClick('explCloseBtn', function(){ closeExplain(); });
+  bindClick('exAssist', function(){ askAboutTerm(); });
+  bindClick('asstModalCloseBtn', function(){ asstCloseModal(); });
+  var explBg=document.getElementById('explBg');
+  if(explBg && explBg.dataset.ssDirectBound!=='1'){
+    explBg.dataset.ssDirectBound='1';
+    explBg.addEventListener('click', function(ev){ if(ev.target===explBg) closeExplain(); });
+  }
+  var modalBg=document.getElementById('asstModalBg');
+  if(modalBg && modalBg.dataset.ssDirectBound!=='1'){
+    modalBg.dataset.ssDirectBound='1';
+    modalBg.addEventListener('click', function(ev){ if(ev.target===modalBg) asstCloseModal(); });
+  }
+  document.querySelectorAll('[data-assistant-mode="mh"]').forEach(function(link){
+    if(link.dataset.ssDirectBound==='1') return;
+    link.dataset.ssDirectBound='1';
+    link.addEventListener('click', function(ev){
+      if(typeof openAsstMH==='function'){ ev.preventDefault(); openAsstMH(); }
+    });
+  });
+})();
+asstInitQs();
+try {
+  var requestedAssistant = new URLSearchParams(window.location.search).get('assistant');
+  if (requestedAssistant === 'general' || requestedAssistant === 'mh') {
+    window.setTimeout(function(){
+      if (requestedAssistant === 'mh') openAsstMH(); else openAsstGeneral();
+    }, 0);
+  }
+} catch(e) {}
+</script>
+<!-- Smart Context Modal -->
+<div class="ss-modal-overlay" id="smartCtxModal">
+  <div class="ss-modal">
+    <div style="font-size:36px;margin-bottom:8px;">✨</div>
+    <h3 id="smartCtxTitle">✨ استخدام معلوماتي المحفوظة؟</h3>
+    <p id="smartCtxDesc">لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.</p>
+    <div class="ss-modal-list" id="smartCtxList" style="display:none;">
+      <span id="smartCtxFields"></span>
+    </div>
+    <div class="ss-modal-list" id="smartCtxMissingRow" style="display:none;margin-top:8px;border-color:#FDE68A;background:#FFFBEB;">
+      <span id="smartCtxMissing"></span>
+    </div>
+    <div class="ss-modal-btns">
+      <button type="button" class="ss-modal-btn primary" id="smartCtxUse">✨ استخدام معلوماتي</button>
+      <button type="button" class="ss-modal-btn secondary" id="smartCtxManual">إدخال المعلومات يدويًا</button>
+      <button type="button" class="ss-modal-btn tertiary" id="smartCtxSkip">تخطي</button>
+    </div>
+  </div>
+</div>
+<script>
+var smartCtxCallback = null;
+var smartCtxProfile = null;
+var smartCtxUserInfo = null;
+function smartCtxShow(profile, callback, userInfo) {
+  smartCtxProfile = profile;
+  smartCtxCallback = callback;
+  smartCtxUserInfo = userInfo || null;
+  var modal = document.getElementById('smartCtxModal');
+  if (!modal || !profile) { if (callback) callback('manual'); return; }
+  var availFields = [];
+  var missingFields = [];
+  if (profile.display_name) availFields.push('👤 ' + (LANG === 'ar' ? 'الاسم: ' : 'Name: ') + profile.display_name);
+  else missingFields.push('👤 ' + (LANG === 'ar' ? 'الاسم' : 'Name'));
+  var hasAge = profile.age || profile.dob;
+  if (hasAge) availFields.push('🎂 ' + (LANG === 'ar' ? 'العمر: ' : 'Age: ') + (profile.age || profile.dob));
+  else missingFields.push('🎂 ' + (LANG === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'));
+  if (profile.gender) {
+    var pg = String(profile.gender || '').toLowerCase();
+    var pgLabel = (pg === 'male' || pg === 'm') ? (LANG === 'ar' ? 'ذكر' : 'Male')
+      : ((pg === 'female' || pg === 'f') ? (LANG === 'ar' ? 'أنثى' : 'Female')
+      : (LANG === 'ar' ? 'غير محدد' : 'Other / not specified'));
+    availFields.push('⚧ ' + (LANG === 'ar' ? 'الجنس: ' : 'Gender: ') + pgLabel);
+  } else missingFields.push('⚧ ' + (LANG === 'ar' ? 'الجنس' : 'Gender'));
+  if (profile.height) availFields.push('📏 ' + (LANG === 'ar' ? 'الطول: ' : 'Height: ') + profile.height + ' cm');
+  else missingFields.push('📏 ' + (LANG === 'ar' ? 'الطول' : 'Height'));
+  if (profile.weight) availFields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن: ' : 'Weight: ') + profile.weight + ' kg');
+  else missingFields.push('⚖️ ' + (LANG === 'ar' ? 'الوزن' : 'Weight'));
+  if (profile.medications) availFields.push('💊 ' + (LANG === 'ar' ? 'الأدوية: ' : 'Medications: ') + profile.medications);
+  if (profile.allergies) availFields.push('⚠️ ' + (LANG === 'ar' ? 'الحساسية: ' : 'Allergies: ') + profile.allergies);
+  if (profile.health_conditions) availFields.push('🩺 ' + (LANG === 'ar' ? 'الحالات الصحية: ' : 'Health Conditions: ') + profile.health_conditions);
+  var listEl = document.getElementById('smartCtxList');
+  var fieldsEl = document.getElementById('smartCtxFields');
+  var missingEl = document.getElementById('smartCtxMissing');
+  var missingRow = document.getElementById('smartCtxMissingRow');
+  if (availFields.length && listEl && fieldsEl) {
+    listEl.style.display = 'block';
+    fieldsEl.innerHTML = '<div style="font-size:12px;color:#0B9F50;font-weight:700;margin-bottom:4px;">✅ ' + (LANG==='ar' ? 'المعلومات المحفوظة:' : 'Saved information:') + '</div>' + availFields.join('<br>');
+  } else if (listEl) {
+    listEl.style.display = 'none';
+  }
+  if (missingFields.length && missingEl && missingRow) {
+    missingRow.style.display = 'block';
+    missingEl.innerHTML = '<div style="font-size:12px;color:#D97706;font-weight:700;margin-bottom:4px;">⚠️ ' + (LANG==='ar' ? 'معلومات ناقصة:' : 'Missing information:') + '</div>' + missingFields.join('<br>') + '<div style="margin-top:6px;font-size:11px;color:#92400E;">' + (LANG==='ar' ? 'يمكنك إضافتها لاحقاً من صفحة الملف الشخصي' : 'You can add these later from your profile page') + '</div>';
+  } else if (missingRow) {
+    missingRow.style.display = 'none';
+  }
+  var titleEl = document.getElementById('smartCtxTitle');
+  if (titleEl) titleEl.textContent = LANG === 'ar' ? '✨ استخدام معلومات ملفك الصحي' : '✨ Use your health profile';
+  var descEl = document.getElementById('smartCtxDesc');
+  if (descEl) descEl.textContent = LANG === 'ar' ? 'سيتم استخدام معلوماتك المحفوظة في التحليل الطبي' : 'Your saved info will be used in the medical analysis';
+  modal.classList.add('open');
+}
+function smartCtxAction(action) {
+  var modal = document.getElementById('smartCtxModal');
+  if (modal) modal.classList.remove('open');
+  if (smartCtxCallback) smartCtxCallback(action);
+  smartCtxCallback = null;
+}
+(function bindSmartContextControls(){
+  [['smartCtxUse','use'],['smartCtxManual','manual'],['smartCtxSkip','skip']].forEach(function(pair){
+    var el=document.getElementById(pair[0]);
+    if(el && el.dataset.ssDirectBound!=='1'){
+      el.dataset.ssDirectBound='1';
+      el.addEventListener('click', function(){ smartCtxAction(pair[1]); });
+    }
+  });
+})();
+</script>
+<script>
+(function () {
+  var deferredPrompt = null;
+  var box = document.getElementById('pwaInstall');
+  var text = document.getElementById('pwaInstallText');
+  var installBtn = document.getElementById('pwaInstallBtn');
+  var laterBtn = document.getElementById('pwaLaterBtn');
+  var isArabic = document.documentElement.lang === 'ar';
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function recentlyDismissed() {
+    try {
+      var value = Number(localStorage.getItem('ss_pwa_dismissed') || 0);
+      return value && (Date.now() - value < 7 * 24 * 60 * 60 * 1000);
+    } catch (e) { return false; }
+  }
+  function hasReturnedBefore() {
+    try {
+      var visits = Number(localStorage.getItem('ss_pwa_visits') || 0) + 1;
+      localStorage.setItem('ss_pwa_visits', String(visits));
+      return visits > 1;
+    } catch (e) { return false; }
+  }
+  var canOfferInstall = hasReturnedBefore();
+  function offerAfterDelay(mode) {
+    if (!canOfferInstall || (window.location.pathname !== '/' && window.location.pathname !== '/home')) return;
+    window.setTimeout(function () { show(mode); }, 8000);
+  }
+  function show(mode, force) {
+    if (!box || isStandalone() || (!force && recentlyDismissed())) return;
+    box.dataset.mode = mode;
+    if (mode === 'ios') {
+      text.textContent = isArabic
+        ? 'لتثبيت SymptoSense: افتح قائمة المشاركة ⬆️ ثم اختر «إضافة إلى الشاشة الرئيسية».'
+        : 'To install SymptoSense, tap Share ⬆️ then “Add to Home Screen”.';
+      installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
+    } else if (mode === 'native') {
+      text.textContent = isArabic
+        ? 'ثبّت تطبيق SymptoSense على جهازك للوصول إليه بسرعة.'
+        : 'Install SymptoSense on your device for quick access.';
+      installBtn.textContent = isArabic ? 'تثبيت' : 'Install';
+    } else {
+      text.textContent = isArabic
+        ? 'من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق».'
+        : 'From your browser menu, choose “Add to Home Screen” or “Install app”.';
+      installBtn.textContent = isArabic ? 'حسنًا' : 'Got it';
+    }
+    laterBtn.textContent = isArabic ? 'لاحقًا' : 'Later';
+    box.classList.add('show');
+  }
+
+  window.pwaDismiss = function () {
+    if (box) box.classList.remove('show');
+    try { localStorage.setItem('ss_pwa_dismissed', String(Date.now())); } catch (e) {}
+  };
+  window.pwaInstallNow = async function () {
+    if (box && (box.dataset.mode === 'ios' || box.dataset.mode === 'manual')) {
+      box.classList.remove('show');
+      return;
+    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (e) {}
+    deferredPrompt = null;
+    if (box) box.classList.remove('show');
+  };
+  window.pwaRequestInstall = async function () {
+    if (isStandalone()) return;
+    var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isiOS) { show('ios', true); return; }
+    if (deferredPrompt) { await window.pwaInstallNow(); return; }
+    show('manual', true);
+  };
+  if (installBtn && installBtn.dataset.ssDirectBound !== '1') {
+    installBtn.dataset.ssDirectBound = '1';
+    installBtn.addEventListener('click', function(){ window.pwaInstallNow(); });
+  }
+  if (laterBtn && laterBtn.dataset.ssDirectBound !== '1') {
+    laterBtn.dataset.ssDirectBound = '1';
+    laterBtn.addEventListener('click', function(){ window.pwaDismiss(); });
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js?v=__ASSET_VERSION__', { scope: '/' }).catch(function () {});
+    });
+  }
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    deferredPrompt = event;
+    offerAfterDelay('native');
+  });
+  window.addEventListener('appinstalled', function () {
+    if (box) box.classList.remove('show');
+  });
+  window.addEventListener('load', function () {
+    var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isiOS && !isStandalone()) offerAfterDelay('ios');
+  });
+})();
+</script>
+</body>
+</html>

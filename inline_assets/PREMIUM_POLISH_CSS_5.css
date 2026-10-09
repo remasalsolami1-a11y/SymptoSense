@@ -1,0 +1,58 @@
+
+/* ===== Mobile symptom picker — clean non-overlapping layout 2026-09-14 ===== */
+@media (max-width:900px){
+  /* The blue header must scroll naturally; a sticky header was covering the
+     question/summary while the user moved through the symptom grid. */
+  body.ss-chat-page .chat-head{
+    position:relative!important;top:auto!important;z-index:12!important;
+    flex:0 0 auto!important;box-shadow:none!important;
+  }
+  body.ss-chat-page .ss-flow{position:relative!important;top:auto!important;z-index:11!important}
+  body.ss-chat-page .chat-wrap{
+    scroll-padding-top:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+  }
+
+  /* Give the active question a clear breathing space before the choices. */
+  body.ss-chat-page .chat-body:not(.result-mode){padding:14px 12px 0!important}
+  body.ss-chat-page .step-focus-card{
+    margin:0!important;padding:14px 14px 12px!important;border-radius:16px 16px 0 0!important;
+  }
+  body.ss-chat-page .step-focus-question{font-size:17px!important;line-height:1.55!important}
+  body.ss-chat-page .step-focus-answer{
+    display:block!important;width:100%!important;border-radius:11px!important;
+    margin-top:9px!important;padding:8px 10px!important;
+  }
+
+  /* On the symptom-selection step, the previous age/gender accordion made
+     the screen look crowded. The selected symptoms already appear in the
+     current-step card, so hide only that duplicated accordion here. */
+  body.ss-chat-page[data-chat-step="symptoms"] .step-answer-summary{display:none!important}
+
+  body.ss-chat-page .chat-options.symptom-picker{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    margin:0 12px 14px!important;padding:11px 10px 18px!important;gap:10px!important;
+    max-height:none!important;overflow:visible!important;
+    border-radius:0 0 16px 16px!important;
+  }
+  body.ss-chat-page .chat-options.symptom-picker .opt{
+    min-height:58px!important;padding:10px 8px!important;border-radius:14px!important;
+    font-size:14px!important;line-height:1.45!important;font-weight:800!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+  }
+  body.ss-chat-page .chat-options.symptom-picker .opt.sel{
+    box-shadow:inset 0 0 0 1px rgba(40,127,193,.18)!important;
+  }
+
+  /* Keep Continue as part of the content rather than a floating sticky bar. */
+  body.ss-chat-page .chat-options.symptom-picker .start-btn{
+    position:static!important;top:auto!important;z-index:auto!important;grid-column:1/-1!important;
+    order:-1!important;min-height:54px!important;margin:0 0 2px!important;border-radius:14px!important;
+    box-shadow:0 5px 14px rgba(40,127,193,.12)!important;
+  }
+  body.ss-chat-page .chat-options.symptom-picker #relBlock{grid-column:1/-1!important}
+  body.ss-chat-page #chatSafetyNote{margin-bottom:14px!important}
+}
+@media (max-width:360px){
+  body.ss-chat-page .chat-options.symptom-picker{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  body.ss-chat-page .chat-options.symptom-picker .opt{min-height:54px!important;font-size:13px!important;padding:8px 6px!important}
+}

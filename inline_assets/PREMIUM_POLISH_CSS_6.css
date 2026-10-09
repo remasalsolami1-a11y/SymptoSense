@@ -1,0 +1,162 @@
+
+/* ===== iPhone / small-phone symptom layout — consolidated final override 2026-09-15 =====
+   This is intentionally the last mobile rule-set. It neutralizes older, competing
+   questionnaire overrides without changing desktop/tablet logic or analysis behavior. */
+@media (max-width:640px){
+  body.ss-chat-page{
+    --bnav-h:58px;
+    height:100svh!important;min-height:100svh!important;max-height:100svh!important;
+    overflow:hidden!important;background:#F3F8FC!important;
+  }
+
+  /* One reliable scroll surface above the fixed bottom navigation. */
+  body.ss-chat-page .container{
+    width:100%!important;max-width:none!important;
+    height:calc(100svh - var(--bnav-h) - var(--safe-bottom))!important;
+    min-height:0!important;max-height:none!important;
+    margin:0!important;padding:0!important;
+    overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;
+    background:#F3F8FC!important;
+  }
+  body.ss-chat-page .chat-wrap{
+    width:100%!important;min-height:100%!important;height:auto!important;max-height:none!important;
+    margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+    overflow:visible!important;background:#F3F8FC!important;
+  }
+
+  /* Compact one-row app header: title + family + accessibility. */
+  body.ss-chat-page .chat-head{
+    position:relative!important;top:auto!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(88px,29vw) 44px!important;
+    grid-template-rows:auto!important;
+    align-items:center!important;gap:8px!important;
+    min-height:68px!important;padding:9px 12px!important;
+    background:#1f6fae!important;box-shadow:none!important;
+  }
+  body.ss-chat-page .chat-head .avatar{display:none!important}
+  body.ss-chat-page .chat-head>div:nth-child(2){grid-column:1!important;grid-row:1!important;min-width:0!important}
+  body.ss-chat-page .chat-head h3{font-size:15.5px!important;line-height:1.2!important;margin:0!important;white-space:nowrap!important}
+  body.ss-chat-page .chat-head p{
+    max-width:100%!important;margin:3px 0 0!important;font-size:10.5px!important;line-height:1.3!important;
+    white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  }
+  body.ss-chat-page #profileSwitcher{
+    grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;
+    margin:0!important;display:block!important;
+  }
+  body.ss-chat-page #famSelect{
+    width:100%!important;max-width:none!important;min-width:0!important;
+    height:44px!important;min-height:44px!important;margin:0!important;padding:5px 8px!important;
+    border-radius:11px!important;font-size:11.5px!important;line-height:1.2!important;
+    background:rgba(255,255,255,.14)!important;color:#fff!important;
+    border:1px solid rgba(255,255,255,.30)!important;box-shadow:none!important;
+    text-overflow:ellipsis!important;
+  }
+  body.ss-chat-page .chat-access{grid-column:3!important;grid-row:1!important;position:relative!important;margin:0!important}
+  body.ss-chat-page .chat-access>summary{
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+    padding:0!important;border-radius:11px!important;display:grid!important;place-items:center!important;
+    font-size:0!important;line-height:1!important;
+    border:1px solid rgba(255,255,255,.30)!important;background:rgba(255,255,255,.14)!important;
+  }
+  body.ss-chat-page .chat-access>summary::before{content:'🔊';font-size:18px!important;line-height:1!important}
+  body.ss-chat-page .chat-access-menu{top:calc(100% + 6px)!important;inset-inline-end:0!important;width:min(205px,78vw)!important}
+
+  /* Progress stays compact and readable instead of becoming a second header. */
+  body.ss-chat-page .ss-flow{
+    position:relative!important;top:auto!important;z-index:5!important;
+    padding:8px 12px 9px!important;background:#fff!important;border-bottom:1px solid #DCE8F0!important;
+  }
+  body.ss-chat-page .ss-flow-copy{font-size:10.5px!important;line-height:1.25!important;margin-bottom:5px!important}
+  body.ss-chat-page .ss-flow-track{height:5px!important}
+
+  /* Active question: one compact grouped card, no detached giant stage. */
+  body.ss-chat-page #chatBody:not(.result-mode),
+  body.ss-chat-page .chat-body:not(.result-mode){
+    display:block!important;height:auto!important;min-height:0!important;max-height:none!important;
+    overflow:visible!important;background:transparent!important;
+    padding:clamp(24px,4.5svh,42px) 14px 0!important;
+  }
+  body.ss-chat-page #chatBody .step-focus-card{
+    width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;
+    margin:0!important;padding:15px 15px 11px!important;
+    border:1px solid #D4E5EF!important;border-bottom:0!important;
+    border-radius:18px 18px 0 0!important;background:#fff!important;
+    box-shadow:0 7px 20px rgba(27,75,111,.055)!important;
+  }
+  body.ss-chat-page .step-focus-kicker{font-size:11px!important;line-height:1.25!important;margin-bottom:5px!important}
+  body.ss-chat-page #chatBody .step-focus-question{
+    font-size:17px!important;line-height:1.55!important;font-weight:850!important;color:#173C63!important;
+  }
+  body.ss-chat-page .step-focus-answer{font-size:11.5px!important;margin-top:7px!important;padding:6px 9px!important}
+
+  /* Text answer and option answer blocks attach directly to the question card. */
+  body.ss-chat-page #chatInput{
+    position:relative!important;inset:auto!important;
+    display:flex;align-items:stretch!important;gap:8px!important;
+    width:auto!important;height:auto!important;min-height:0!important;
+    margin:0 14px 14px!important;padding:10px 11px 12px!important;
+    border:1px solid #D4E5EF!important;border-top:0!important;
+    border-radius:0 0 18px 18px!important;background:#fff!important;
+    box-shadow:0 7px 20px rgba(27,75,111,.055)!important;
+  }
+  body.ss-chat-page #chatInput[style*="display:none"]{display:none!important}
+  body.ss-chat-page #chatInput input{
+    flex:1 1 auto!important;width:auto!important;min-width:0!important;
+    height:48px!important;min-height:48px!important;padding:10px 12px!important;
+    border-radius:12px!important;font-size:16px!important;background:#fff!important;
+  }
+  body.ss-chat-page #chatInput button{
+    flex:0 0 auto!important;min-width:72px!important;width:auto!important;
+    height:48px!important;min-height:48px!important;padding:0 15px!important;
+    border-radius:12px!important;font-size:13px!important;font-weight:800!important;
+  }
+  body.ss-chat-page #chatOptions,
+  body.ss-chat-page #chatOptions.symptom-picker{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+    margin:0 14px 14px!important;padding:10px!important;gap:8px!important;
+    border:1px solid #D4E5EF!important;border-top:0!important;border-radius:0 0 18px 18px!important;
+    background:#fff!important;box-shadow:0 7px 20px rgba(27,75,111,.055)!important;
+  }
+  body.ss-chat-page #chatOptions:empty{display:none!important}
+  body.ss-chat-page .chat-wrap.report-mode #chatOptions{display:none!important}
+  body.ss-chat-page #chatOptions .opt{
+    min-height:48px!important;height:auto!important;padding:9px 8px!important;
+    border-radius:12px!important;font-size:13.5px!important;line-height:1.4!important;
+  }
+  body.ss-chat-page #chatOptions.symptom-picker .opt{min-height:50px!important;font-size:13px!important}
+
+  /* The first two short steps should feel balanced, not stuck to the top. */
+  body.ss-chat-page[data-chat-step="age"] #chatBody:not(.result-mode),
+  body.ss-chat-page[data-chat-step="gender"] #chatBody:not(.result-mode){
+    padding-top:clamp(30px,5.5svh,52px)!important;
+  }
+
+  /* Smaller fixed navigation with safe-area support. */
+  body.ss-chat-page .ss-bnav{
+    display:flex!important;height:calc(var(--bnav-h) + var(--safe-bottom))!important;
+    padding:4px 0 var(--safe-bottom)!important;align-items:stretch!important;
+    background:rgba(255,255,255,.985)!important;
+  }
+  body.ss-chat-page .ss-bnav a{
+    flex:1 1 0!important;max-width:none!important;min-width:0!important;min-height:50px!important;
+    padding:4px 2px!important;gap:1px!important;border-radius:0!important;
+    font-size:9px!important;line-height:1.15!important;
+  }
+  body.ss-chat-page .ss-bnav a .bn-icon{font-size:19px!important;line-height:1!important}
+  body.ss-chat-page .ss-bnav a.on{background:transparent!important;color:#0F5FB0!important}
+
+  body.ss-chat-page #chatSafetyNote{margin:8px 14px 12px!important;font-size:10.5px!important;line-height:1.55!important}
+}
+
+@media (max-width:360px){
+  body.ss-chat-page .chat-head{grid-template-columns:minmax(0,1fr) 82px 40px!important;padding-inline:10px!important;gap:6px!important}
+  body.ss-chat-page .chat-head p{display:none!important}
+  body.ss-chat-page .chat-access>summary{width:40px!important;min-width:40px!important}
+  body.ss-chat-page #chatBody:not(.result-mode),body.ss-chat-page .chat-body:not(.result-mode){padding-inline:10px!important}
+  body.ss-chat-page #chatInput,body.ss-chat-page #chatOptions,body.ss-chat-page #chatOptions.symptom-picker{margin-inline:10px!important}
+  body.ss-chat-page #chatOptions,body.ss-chat-page #chatOptions.symptom-picker{grid-template-columns:1fr!important}
+}
