@@ -1,7 +1,7 @@
-const CACHE_NAME = 'symptosense-shell-v273';
+const CACHE_NAME = 'symptosense-shell-v274';
 const APP_SHELL = [
   '/offline', '/static/css/offline.css?v=193', '/static/js/offline.js?v=193',
-  '/assets/app-shell-v112.css?v=273',
+  '/assets/app-shell-v112.css?v=274',
   '/static/images/body-map-front-v241.png', '/static/images/body-front-v245.webp', '/static/images/body-back-v245.webp',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/favicon.ico', '/brand-icon.svg'
 ];

@@ -1,7 +1,0 @@
-تحديث 273 — توحيد الألوان والخطوط
-1) انسخي محتوى الـzip فوق المجلد الداخلي: SymptoSense-V247-clean-for-git\SymptoSense
-2) PowerShell داخل المجلد الداخلي SymptoSense:
-   git add -A
-   git commit -m "V273 unify colors and fonts"
-   git push
-(بدون --force)
