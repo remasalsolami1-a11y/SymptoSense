@@ -26,7 +26,7 @@ def _pdf_report(result, lang="ar"):
     application font. No medical values are recalculated here: this function
     only formats the data already stored for the analysis.
     """
-    import html as _html
+    import html as _html, pdf_report_extras as _pre
     try:
         import fitz
     except ImportError as exc:
@@ -168,7 +168,7 @@ def _pdf_report(result, lang="ar"):
         "age":"العمر", "gender":"الجنس", "conditions":"الاحتمالات المحتملة", "now":"ماذا أفعل الآن؟",
         "warnings":"علامات تستدعي الانتباه", "home":"الرعاية المنزلية", "doctor":"أسئلة للطبيب",
         "sources":"المصادر الطبية", "none":"لم يتم تحديد معلومات إضافية ضمن هذا القسم.",
-        "disclaimer":"هذه النتيجة توعوية ولا تقدم تشخيصًا طبيًا، ولا تغني عن استشارة مختص صحي عند الحاجة.",
+        "disclaimer":_pre.DISCLAIMER_AR,
         "generated":"تاريخ إنشاء التقرير",
     } if ar else {
         "title":"Symptom Analysis Report", "subtitle":"SymptoSense - Educational health summary",
@@ -177,7 +177,7 @@ def _pdf_report(result, lang="ar"):
         "age":"Age", "gender":"Gender", "conditions":"Possible conditions", "now":"What should I do now?",
         "warnings":"Warning signs", "home":"Home care", "doctor":"Questions for your clinician",
         "sources":"Medical sources", "none":"No additional information was provided for this section.",
-        "disclaimer":"This result is educational and does not provide a medical diagnosis or replace professional medical advice when needed.",
+        "disclaimer":_pre.DISCLAIMER_EN,
         "generated":"Report generated",
     })
 
@@ -188,19 +188,19 @@ def _pdf_report(result, lang="ar"):
 
     direction = "rtl" if ar else "ltr"
     align = "right" if ar else "left"
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    generated = "\u2066" + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC") + "\u2069"
     html_doc = f"""<!doctype html>
 <html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box}} body{{font-family:sans-serif;color:#23384A;font-size:10.5pt;line-height:1.55;direction:{direction};text-align:{align};}}
 h1{{font-size:22pt;color:#163B5C;margin:0 0 4px}} h2{{font-size:14pt;color:#163B5C;margin:0 0 10px}} p{{margin:4px 0 8px}}
 .header{{border-bottom:2px solid #DCE8F0;padding-bottom:14px;margin-bottom:16px}} .muted{{color:#566a7d}} .card{{border:1px solid #DCE8F0;border-radius:12px;padding:14px;margin:0 0 12px;background:#FFFFFF}}
 .summary{{background:#F3F9FD}} .risk{{font-size:16pt;font-weight:700;color:#163B5C}} .pill{{display:inline-block;border:1px solid #DCE8F0;border-radius:999px;padding:2px 8px;font-size:8.5pt;color:#566a7d}}
-.grid{{display:flex;flex-wrap:wrap;gap:8px}} .field{{width:48%;border:1px solid #E4EDF3;border-radius:9px;padding:8px}} .field b{{display:block;color:#566a7d;font-size:8.5pt;margin-bottom:2px}}
+.grid{{display:flex;flex-wrap:wrap;gap:8px}} .field{{width:100%;border:1px solid #E4EDF3;border-radius:9px;padding:8px}} .field b{{display:block;color:#566a7d;font-size:8.5pt;margin-bottom:2px}}
 .condition,.source{{border:1px solid #E4EDF3;border-radius:9px;padding:10px;margin:7px 0}} .condition-head{{display:flex;justify-content:space-between;gap:8px;align-items:center}} .condition-source{{font-size:8.7pt;color:#49677D;margin-top:6px}} .condition-source a,.source a{{color:#1f6fae;text-decoration:none}} .source small{{display:block;color:#566a7d;margin-top:3px}}
 ul{{margin:4px 0 0;padding-{'right' if ar else 'left'}:20px}} li{{margin:3px 0}} .disclaimer{{border:1px solid #EFDAA7;background:#FFF8E7;border-radius:10px;padding:10px;color:#6F531B;margin-top:15px}}
 </style></head><body>
 <div class="header"><h1>{esc(labels['title'])}</h1><p class="muted">{esc(labels['subtitle'])}</p><p class="muted">{esc(labels['generated'])}: {esc(generated)}</p></div>
-<div class="card summary"><h2>{esc(labels['summary'])}</h2><div class="risk">{esc(labels['risk'])}: {esc(risk_label)}</div><p><b>{esc(labels['quality'])}:</b> {esc(data_quality_text())}</p></div>
+<div class="card summary"><h2>{esc(labels['summary'])}</h2><div class="risk">{esc(labels['risk'])}: {esc(risk_label)}</div><p><b>{esc(labels['quality'])}:</b> {esc(data_quality_text())}</p></div>{_pre.sections(result, ar)}
 <div class="card"><h2>{esc(labels['entered'])}</h2><div class="grid">
 <div class="field"><b>{esc(labels['symptoms'])}</b>{esc(symptom_text)}</div>
 <div class="field"><b>{esc(labels['duration'])}</b>{esc(result.get('duration'))}</div>

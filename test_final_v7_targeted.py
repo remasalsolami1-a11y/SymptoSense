@@ -106,8 +106,8 @@ class FinalV7TargetedRegressionTests(unittest.TestCase):
 
     def test_source_strip_uses_translated_moh_token_not_fixed_arabic_label(self):
         text = source_bundle.webapp_text()
-        badge = '<span class="ss-source-badge"><i>🇸🇦</i>__MOH__</span>'
-        old_badge = '<span class="ss-source-badge"><i>🇸🇦</i>وزارة الصحة</span>'
+        badge = '<span class="ss-source-badge">__MOH__</span>'
+        old_badge = '<span class="ss-source-badge">وزارة الصحة</span>'
         self.assertIn(badge, text)
         self.assertNotIn(old_badge, text)
         self.assertIn('"__MOH__": bi("وزارة الصحة", "Saudi MOH")', text)

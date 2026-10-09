@@ -659,12 +659,15 @@
       if (status) { status.hidden = true; status.textContent = ''; }
       if (btn) { btn.disabled = true; btn.textContent = LANG==='ar' ? '⏳ جاري تجهيز التقرير…' : '⏳ Preparing report…'; }
       try {
-        let response = recordId ? await fetch('/api/analyze/export/'+encodeURIComponent(String(recordId)), {credentials:'same-origin'}) : null;
+        // The report is built from the result currently shown (plus the user's follow-up answers); the saved record is only a fallback.
+        const exportBody = JSON.stringify({result:Object.assign({}, lastResult||{}, {followup_answers:(typeof differentialAnswers!=='undefined'&&Array.isArray(differentialAnswers))?differentialAnswers.slice(0,20):[]}),lang:LANG});
+        let response = lastResult ? await fetch('/api/analyze/export-current', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:exportBody}) : null;
         let type = response ? (response.headers.get('content-type') || '').toLowerCase() : '';
-        if (!response || !response.ok || !type.includes('application/pdf')) {
-          response = await fetch('/api/analyze/export-current', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({result:lastResult||{},lang:LANG})});
+        if ((!response || !response.ok || !type.includes('application/pdf')) && recordId) {
+          response = await fetch('/api/analyze/export/'+encodeURIComponent(String(recordId)), {credentials:'same-origin'});
           type = (response.headers.get('content-type') || '').toLowerCase();
         }
+        if (!response) { response = await fetch('/api/analyze/export-current', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:exportBody}); type = (response.headers.get('content-type') || '').toLowerCase(); }
         if (!response.ok || !type.includes('application/pdf')) {
           let message = LANG==='ar' ? 'تعذر تجهيز التقرير حاليًا. حاول مرة أخرى.' : 'Unable to prepare the report right now. Please try again.';
           try { const data = await response.json(); if (data && data.error) message = data.error; } catch(e) {}

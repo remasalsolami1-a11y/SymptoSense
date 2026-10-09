@@ -141,7 +141,7 @@ def login():
     create_action=create_action.replace("__NEXT__",escape(next_param)).replace("__CREATE__",vals["__CREATE__"])
     vals["__CREATE_ACTION__"]=create_action
     for k,v in vals.items(): body=body.replace(k,v)
-    return _page(t["title_login"],body)
+    return _page(t["title_login"],body,desc="سجّل الدخول إلى حسابك في SymptoSense للوصول إلى ملفك الصحي ونتائجك المحفوظة." if lang=="ar" else "Sign in to your SymptoSense account to access your health file and saved results.")
 
 
 @route("/register", methods=["GET", "POST"])
@@ -189,7 +189,7 @@ def register():
     accept=(f'أوافق على <a class="auth-legal-link" href="{privacy_url}" target="_blank" rel="noopener noreferrer">سياسة الخصوصية</a> و<a class="auth-legal-link" href="{terms_url}" target="_blank" rel="noopener noreferrer">شروط الاستخدام</a>' if lang=="ar" else f'I agree to the <a class="auth-legal-link" href="{privacy_url}" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and <a class="auth-legal-link" href="{terms_url}" target="_blank" rel="noopener noreferrer">Terms of Use</a>')
     vals={"__H__":t["register_h"],"__SUB__":"أنشئ حسابك، ثم تحقّق من بريدك الإلكتروني قبل تسجيل الدخول." if lang=="ar" else "Create your account, then verify your email before signing in.","__NAME__":t["register_name"],"__EMAIL__":t["register_email"],"__PASS__":t["register_pass"],"__CONFIRM__":t["register_confirm"],"__BTN__":t["register_btn"],"__HASACCT__":t["register_hasaccount"],"__LOGIN__":t["register_login"],"__ACCEPT__":accept,"__NEXT__":escape(next_param),"__CSRF__":_auth_csrf_token(),"__ERR_CLASS__":"show" if error else "","__ERR__":error or ""}
     for k,v in vals.items(): body=body.replace(k,v)
-    return _page(t["title_register"],body)
+    return _page(t["title_register"],body,desc="أنشئ حسابًا في SymptoSense لحفظ ملفك الصحي ونتائجك وإدارتها بخصوصية." if lang=="ar" else "Create a SymptoSense account to save and manage your health file and results privately.")
 
 
 @route("/verify-email", methods=["GET", "POST"])

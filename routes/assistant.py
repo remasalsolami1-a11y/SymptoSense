@@ -633,7 +633,7 @@ def api_export_current_pdf():
             "data_quality", "knowledge_matches", "possible_conditions", "recommendations", "danger_signs",
             "when_to_seek_care", "home_care", "questions_for_doctor", "medical_sources",
         }
-        export_result = {key: raw.get(key) for key in allowed if key in raw}
+        from pdf_report_extras import prepare_export as _prep; export_result = _prep(raw, allowed)
         # Bound nested client data before sending it to the PDF renderer.
         packed = json.dumps(export_result, ensure_ascii=False)
         if len(packed.encode("utf-8")) > 350_000:

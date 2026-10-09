@@ -111,4 +111,13 @@ html body .ss-condition-head{display:flex!important;flex-direction:row!important
 html body .ss-condition-head .ss-condition-name{flex:1 1 0!important;min-width:0!important;overflow-wrap:anywhere!important;line-height:1.5!important}
 html body .ss-condition-head .ss-match{flex:0 0 auto!important;align-self:flex-start!important;white-space:nowrap!important;font-size:12px!important;padding:5px 10px!important}
 html body .ss-condition-why,html body .ss-condition-source{overflow-wrap:anywhere}
+/* V275: English home sections follow LTR (they were hard-coded RTL) */
+html[dir="ltr"] body.ss-home-page :is(.ss-strength,.ss-section-head,.ss-tools-head,.ss-how-head,.ss-how-flow){direction:ltr!important}
+html[dir="ltr"] body.ss-home-page :is(.ss-section-head,.ss-how-head){text-align:left!important}
+html[dir="ltr"] body.ss-home-page .ss-how-step:not(:last-child):after{content:"›"!important;left:auto!important;right:-13px!important}
+/* V276: reference organisations as unified text names (no emoji/icons) */
+html body .ss-knowledge .ss-sources-logos{direction:ltr!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;justify-content:stretch!important;max-width:760px;margin-inline:auto}
+html body .ss-knowledge .ss-source-badge{display:flex!important;align-items:center!important;justify-content:center!important;min-height:44px;padding:8px 12px!important;background:#fff;border:1px solid #D9E8F4;border-radius:14px;color:#123B70!important;font-size:13px!important;font-weight:800!important;letter-spacing:.02em;text-align:center;line-height:1.3;white-space:normal}
+html body .ss-knowledge .ss-source-badge i{display:none!important}
+@media (max-width:560px){html body .ss-knowledge .ss-sources-logos{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body .ss-knowledge .ss-source-badge{font-size:12px!important}}
 """

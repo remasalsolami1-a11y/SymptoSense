@@ -68,7 +68,7 @@ def test_competition_runtime_fallbacks_are_resilient():
     assert 'def _followup_local_answer' in WEB
     assert '"fallback": True' in WEB
     assert '@app.route("/api/analyze/export-current", methods=["POST"])' in WEB
-    assert "body:JSON.stringify({result:lastResult||{},lang:LANG})" in WEB
+    assert "/api/analyze/export-current" in WEB and "followup_answers" in WEB and "lang:LANG" in WEB
 
 def test_assistant_modes_are_visually_separated_and_links_are_real():
     assert 'function asstRestoreModeHistory(isMh)' in WEB

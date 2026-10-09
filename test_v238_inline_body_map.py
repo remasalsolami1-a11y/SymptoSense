@@ -25,6 +25,6 @@ def test_mobile_method_switcher_is_compact_not_large_cards():
     assert "min-height:48px!important" in CSS
 
 def test_v238_cache_bust():
-    assert "/assets/app-shell-v112.css?v=274" in WEB
-    assert "symptosense-app-shell-v112-v274" in WEB
+    assert "/assets/app-shell-v112.css?v=276" in WEB
+    assert "symptosense-app-shell-v112-v276" in WEB
     assert versioning.SW_CACHE in SW
