@@ -1,6 +1,6 @@
 {
-  "delivery_revision": "V273",
-  "test_files": 232,
+  "delivery_revision": "V274",
+  "test_files": 233,
   "safety_regression_cases": 11,
   "note": "V228 rebuilds the interactive body map with a clearer clinical illustration, labeled connected regions, compact mobile method tabs, and iPhone Safari dvh/safe-area handling while preserving symptom-analysis logic.",
   "deployment_fix": "Arabic medication pages no longer dump long English label text; source-grounded summaries are cached, with an Arabic-only safe fallback if translation is unavailable."

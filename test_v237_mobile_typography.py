@@ -8,10 +8,10 @@ SW = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 CSS = (ROOT / "app-shell-v111.css").read_text(encoding="utf-8")
 
 def test_v237_cache_bust_is_consistent():
-    assert "/assets/app-shell-v112.css?v=273" in WEB
-    assert "symptosense-app-shell-v112-v273" in WEB
+    assert "/assets/app-shell-v112.css?v=274" in WEB
+    assert "symptosense-app-shell-v112-v274" in WEB
     assert versioning.SW_CACHE in SW
-    assert "'/assets/app-shell-v112.css?v=273'" in SW
+    assert "'/assets/app-shell-v112.css?v=274'" in SW
 
 def test_symptom_method_labels_are_bounded_on_iphone():
     for src in (WEB, CSS):
