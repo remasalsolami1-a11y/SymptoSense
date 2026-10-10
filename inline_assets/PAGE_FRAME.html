@@ -64,7 +64,7 @@ __HREFLANG__
 <meta name="twitter:description" content="__DESC__">
 <meta name="twitter:image" content="__OG_IMAGE__">
 <meta name="theme-color" content="#1565c0">
-<link rel="stylesheet" href="/assets/app-shell-v112.css?v=277">
+<link rel="stylesheet" href="/assets/app-shell-v112.css?v=279">
 <style>__EXTRA_CSS__</style>
 <style>
 .asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1565c0, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
@@ -210,8 +210,8 @@ body.ss-assistant-open::after { content: ""; position: fixed; inset: 0; z-index:
 </head>
 <body class="__BODY_CLASS__">
 <a class="ss-skip-link" href="#main-content">__SKIP_TO_CONTENT__</a>
-<div class="ss-offline-banner" id="ssOfflineBanner" role="status" aria-live="polite" aria-hidden="true"><div><b>__OFFLINE_TITLE__</b><small>__OFFLINE_SUB__</small></div><a href="/offline">__OFFLINE_OPEN__</a></div>
-<script>(function(){const b=document.getElementById('ssOfflineBanner');if(!b)return;function sync(){b.classList.toggle('show',!navigator.onLine);b.setAttribute('aria-hidden',navigator.onLine?'true':'false');}window.addEventListener('online',sync);window.addEventListener('offline',sync);sync();})();</script>
+<div class="ss-offline-banner" id="ssOfflineBanner" role="status" aria-live="polite" hidden><div><b>__OFFLINE_TITLE__</b><small>__OFFLINE_SUB__</small></div><a href="/offline">__OFFLINE_OPEN__</a></div>
+<script>(function(){const b=document.getElementById('ssOfflineBanner');if(!b)return;function sync(){b.classList.toggle('show',!navigator.onLine);b.hidden=navigator.onLine;}window.addEventListener('online',sync);window.addEventListener('offline',sync);sync();})();</script>
 <div class="pwa-install" id="pwaInstall" role="dialog" aria-live="polite" aria-label="Install SymptoSense">
   <img class="pwa-install-icon" src="/icons/icon-192.png" alt="">
   <div class="pwa-install-copy" id="pwaInstallText"></div>

@@ -22,6 +22,7 @@ _SEVERE_CHEST_EXTRA = (
     "ألم شديد في صدري", "الم قوي في صدري", "وجع شديد في صدري", "وجع قوي في صدري",
     "صدري يعورني مرة", "صدري يعورني كثير", "صدري يعورني بقوة",
     "صدري يوجعني مرة", "صدري يوجعني كثير", "صدري يوجعني بقوة",
+    "crushing chest pressure", "crushing pressure in my chest",
     "ضغط قوي على صدري", "ضغط شديد على صدري", "ضغط قوي على الصدر",
     "كأن شي جاثم على صدري", "كان احد جالس على صدري", "حجر على صدري",
     "intense chest pain", "chest pain is severe", "severe pain in my chest",
@@ -45,6 +46,7 @@ _SWEATING = ("عرق بارد", "تعرق", "اتعرق", "أتعرق", "عرق�
 _BREATHING_EXTRA = (
     "نفسي مقطوع", "مقطوع نفسي", "نفسي ضايق مرة", "ما اقدر اخذ نفس", "ما أقدر آخذ نفس",
     "ما اقدر آخذ نفسي", "ما اقدر اخذ نفسي", "مو قادر اتنفس", "ماني قادر اتنفس", "مب قادر اتنفس",
+    "نفسي ضايق جدا", "نفسي ضايق جدًا", "نفسي ضايق كثير", "can't breathe", "cant breathe", "can barely breathe", "cannot get air",
     "احس اني اختنق", "أحس إني أختنق", "اختنق", "ما اقدر اشهق",
     "gasping for air", "can't catch my breath", "cannot catch my breath", "unable to breathe",
     "not able to breathe", "choking",
@@ -57,6 +59,7 @@ _BREATHING_MILD = (
 
 _UNCONSCIOUS_EXTRA = (
     "فاقد الوعي", "فاقدة الوعي", "فقد الوعي", "غاب عن الوعي", "غايب عن الوعي",
+    "اغمي علي", "أغمي علي", "اغمى علي", "فقدت الوعي", "فقدت وعيي", "غبت عن الوعي",
     "مغمى عليه", "مغمى عليها", "مغمي عليه", "مغمي عليها", "أغمي عليه", "اغمي عليها",
     "collapsed",
 )
@@ -68,6 +71,7 @@ _UNRESPONSIVE_EXTRA = (
 )
 
 _STROKE_LIMB_EXTRA = (
+    "لا اقدر احرك يدي", "لا أقدر أحرك يدي", "لا استطيع تحريك يدي", "لا اقدر احرك رجلي", "لا أقدر أحرك رجلي",
     "ما اقدر احرك يدي", "ما أقدر أحرك يدي", "ما اقدر احرك رجلي", "ما أقدر أحرك رجلي",
     "ما اقدر احرك ذراعي", "ما أقدر أحرك ذراعي", "ما اقدر احرك نص جسمي", "ما اقدر احرك النص",
     "يدي ما تتحرك", "رجلي ما تتحرك", "نص جسمي مخدر", "نص جسمي ضعيف", "نصف جسمي مخدر",
@@ -115,6 +119,10 @@ _SELF_HARM_EXTRA = (
     "أفكر في الانتحار", "افكر انتحر", "أفكر أنهي حياتي", "افكر انهي حياتي", "أنهي حياتي", "انهي حياتي",
     "إنهاء حياتي", "انهاء حياتي", "أفكر في إنهاء حياتي", "انوي الانتحار", "أبي أقتل نفسي", "ابغى اقتل نفسي",
     "اتمنى اموت", "أتمنى لو أموت",
+    "ودي اختفي من الدنيا", "ودي أختفي من الدنيا", "ابي اختفي من الدنيا", "ابي أختفي من الدنيا",
+    "اختفي من الحياة", "أختفي من الحياة",
+    "أفكر أأذي نفسي", "افكر اأذي نفسي", "ابي اأذي نفسي", "ابي أأذي نفسي", "أبي أأذي نفسي",
+    "want to disappear from", "ending it all", "ending my life", "tired of life", "hurt myself",
     "suicidal", "thinking of suicide", "think about suicide", "commit suicide", "want to die", "wanna die",
     "wish i was dead", "wish i were dead", "end my life", "end it all", "take my own life", "better off dead",
     "no reason to live", "don't want to live", "do not want to live",
@@ -143,7 +151,7 @@ _OVERDOSE_EXTRA = (
 
 _THUNDERCLAP_HEADACHE = (
     "أسوأ صداع في حياتي", "اسوأ صداع مريت فيه", "أقوى صداع في حياتي", "صداع مفاجئ شديد",
-    "صداع مفاجئ وقوي", "صداع شديد ومفاجئ", "صداع قوي فجأة", "صداع مثل الصاعقة",
+    "صداع مفاجئ وقوي", "صداع شديد ومفاجئ", "صداع شديد مفاجئ", "صداع قوي ومفاجئ", "صداع شديد جدا ومفاجئ", "صداع قوي فجأة", "صداع مثل الصاعقة",
     "worst headache of my life", "worst headache ever", "thunderclap headache",
     "sudden severe headache", "sudden worst headache",
 )
@@ -341,7 +349,7 @@ def evaluate(patient, lang="ar"):
         add("stroke_pattern", "أعراض عصبية مفاجئة قد توافق نمط السكتة الدماغية", "Sudden focal neurological symptoms that may match a stroke pattern")
 
     if anyp(
-        "فقدان مفاجئ للرؤية", "فقدان مفاجئ للنظر", "ما اشوف فجأة", "ما أشوف فجأة",
+        "فقدان مفاجئ للرؤية", "فقدان مفاجئ للنظر", "suddenly cannot see", "suddenly can't see", "cannot see suddenly", "ما اشوف فجأة", "ما أشوف فجأة",
         "sudden vision loss", "suddenly lost vision",
     ):
         add("sudden_vision_loss", "فقدان مفاجئ للرؤية", "Sudden vision loss")

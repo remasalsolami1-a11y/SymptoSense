@@ -519,7 +519,7 @@ def home_page():
       "__HOW_TITLE__": bi("كيف يعمل SymptoSense؟", "How does SymptoSense work?"), "__HOW_SUB__": bi("من الأعراض إلى خطوة تالية واضحة في أربع مراحل.", "From symptoms to a clear next step in four stages."), "__HOW1__": bi("أدخل الأعراض", "Enter symptoms"), "__HOW1S__": bi("صف ما تشعر به والمعلومات الأساسية.", "Describe what you feel and the basics."), "__HOW2__": bi("تحليل ذكي", "Smart analysis"), "__HOW2S__": bi("نستخدم أسئلة متابعة وقواعد سلامة.", "Follow-up questions and safety rules."), "__HOW3__": bi("احصل على النتائج", "Get results"), "__HOW3S__": bi("تعرف على مستوى الخطورة والتفسيرات المحتملة غير التشخيصية.", "See the risk level and non-diagnostic possible explanations."), "__HOW4__": bi("اتخذ الخطوة المناسبة", "Take the next step"), "__HOW4S__": bi("إرشادات واضحة مدعومة بمصادر موثوقة.", "Clear guidance supported by trusted sources."),
       "__SRC_H__": bi("من الجهات المرجعية", "From reference organizations"), "__SRC_P__": bi("معلوماتنا مبنية على جهات ومراجع طبية عالمية موثوقة.", "Our information is supported by reputable medical organizations and references."),
     }
-    for k,v in repl.items(): body = body.replace(k,v)
+    for k,v in repl.items(): body = body.replace(k,v) if ar else body.replace(k,v).replace("←","→")
     return _page(_t("title_landing"), body, extra_css=HOME_CSS)
 
 
@@ -531,7 +531,7 @@ def about_us_page():
     body = """
     <main class="about-us-page au-polished" aria-labelledby="aboutUsTitle">
       <section class="au-section au-hero au-reveal"><div class="au-split">
-        <div class="au-text"><span class="au-kicker">01 · __ABOUT__</span><h1 id="aboutUsTitle">__HELLO__</h1><p class="au-role">Data Science Student &amp; Creator of SymptoSense</p><div class="au-copy"><p>__INTRO__</p></div></div>
+        <div class="au-text"><span class="au-kicker">01 · __ABOUT__</span><h1 id="aboutUsTitle">__HELLO__</h1><p class="au-role">__ROLE__</p><div class="au-copy"><p>__INTRO__</p></div></div>
         <div class="au-visual" role="img" aria-label="__HERO_ALT__"><div class="au-inline-visual"><span class="au-inline-core">S</span><span class="au-inline-node au-n1">📊</span><span class="au-inline-node au-n2">🧠</span><span class="au-inline-node au-n3">🩺</span><span class="au-inline-node au-n4">✦</span></div></div>
       </div></section>
 
@@ -557,7 +557,7 @@ def about_us_page():
     </main>"""
     replacements = {
         "__ABOUT__": bi("عن ريماس", "About Remas"),
-        "__HELLO__": bi("مرحبًا، أنا ريماس حميد السلمي 👋", "Hi, I'm Remas Hameed Alsolami 👋"),
+        "__ROLE__": bi("طالبة علم بيانات ومنشئة SymptoSense", "Data Science Student & Creator of SymptoSense"), "__HELLO__": bi("مرحبًا، أنا ريماس حميد السلمي 👋", "Hi, I'm Remas Hameed Alsolami 👋"),
         "__INTRO__": bi("أنا ريماس حميد السلمي، طالبة في تخصص علوم البيانات وتحليلها، وشغوفة ببناء الحلول التقنية التي تحمل أثرًا حقيقيًا في حياة الناس.", "I am Remas Hameed Alsolami, a Data Science and Analytics student who is passionate about building technology solutions that make a genuine difference in people's lives."),
         "__HERO_ALT__": bi("رسم تجريدي يجمع الرعاية الصحية والبيانات والذكاء الاصطناعي", "An abstract visual combining healthcare, data, and artificial intelligence"),
         "__STORY_ALT__": bi("رسم يوضح انتقال الفكرة عبر البيانات والذكاء الاصطناعي إلى تجربة صحية رقمية", "An illustration showing an idea becoming a digital health experience through data and AI"),
@@ -854,7 +854,7 @@ def sources_page():
     for source in sources:
         slug = source.get("slug") or ""
         raw_name = english_names.get(slug) if not ar else None
-        name = escape(raw_name or source.get("source_name") or source.get("organization") or "")
+        name = escape(raw_name or __import__("source_names").display(source, ar))
         description = escape((source.get("description_ar") if ar else source.get("description_en")) or "")
         url = escape(source.get("official_url") or "", quote=True)
         raw_type = source.get("source_type") or "trusted"
@@ -890,7 +890,7 @@ def sources_page():
     body = '<main class="v2-info-page" style="max-width:1040px"><section><h1>📚 %s</h1><p>%s</p></section>%s<section><h2>%s</h2><p>%s</p></section><div class="v2-source-grid">%s</div></main>' % (
         title,
         ("نعرض المصادر الطبية الموثقة المستخدمة في قاعدة المعرفة، مع مراجع مباشرة مرتبطة بالتفسيرات عندما تكون متاحة." if ar else "We show verified medical sources used by the knowledge base, with direct references linked to interpretations when available."),
-        summary + (
+        summary + ('' and (
             '<section><h2>%s</h2><div class="card"><strong>%s</strong><p class="muted" style="margin-top:8px">%s</p></div></section>' % (
                 ("ما الذي أُضيف في V75؟" if ar else "What was added in V75?"),
                 (("+%s أعراض جديدة في V75 · البحث الصحي يطابق مكتبة الأعراض النشطة ويجمع عدة أعراض في بحث واحد" % release_symptoms_added) if ar else ("+%s new symptom concepts in V75 · Health Search matches the active symptom library and combines multiple symptoms in one query" % release_symptoms_added)),
@@ -902,7 +902,7 @@ def sources_page():
                 (("روابط الحالة–العرض: 715 → %s (+%s) · أسماء ومرادفات البحث: 1,876 → %s (+%s)" % (int(stats.get("total_relationships") or 0), relationship_growth, search_term_entries, search_term_growth)) if ar else ("Condition–symptom links: 715 → %s (+%s) · searchable name/alias entries: 1,876 → %s (+%s)" % (int(stats.get("total_relationships") or 0), relationship_growth, search_term_entries, search_term_growth))),
                 (("أضيف في V76 مفهوم شائع مستقل (%s)، ودُمج مفهوم مكرر واحد، وحُلّت %s تعارضات تطابق حرفي في المرادفات. بقيت الحالات والمصادر والمواضيع التفصيلية عند %s حالة، %s مصدرًا، و%s موضوعًا لأن التحديث ركّز على جودة مكتبة الأعراض لا تضخيم الأرقام." % (v76_symptoms_added, int(stats.get("v76_alias_collisions_resolved") or 0), int(stats.get("active_diseases") or 0), len(sources), search_topics)) if ar else ("V76 added %s distinct common symptom concept, merged one duplicate concept, and resolved %s exact alias collisions. Conditions, sources, and detailed topics remain at %s, %s, and %s because this audit focused on library quality rather than inflating counts." % (v76_symptoms_added, int(stats.get("v76_alias_collisions_resolved") or 0), int(stats.get("active_diseases") or 0), len(sources), search_topics))),
             )
-        ),
+        )),
         "الجهات والمراجع" if ar else "Organizations and references",
         "تتضمن القائمة مصادر حكومية ودولية وإرشادية وتخصصية، مرتبة حسب أولوية المصدر." if ar else "The list includes governmental, international, guideline, and specialty sources, ordered by source priority.",
         cards,

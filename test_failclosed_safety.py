@@ -47,7 +47,7 @@ def test_no_silent_swallow_in_safety_modules():
                 if re.match(r"(pass|continue|return\b)", nxt) and "log" not in nxt:
                     bad.append(f"{name}:{i + 1}")
     # Known, reviewed non-safety-critical fallbacks (normalisation helpers returning "unknown"/"no match").
-    allowed = {"redflag_screen.py:113"}
+    allowed = {"redflag_screen.py:125"}
     assert [b for b in bad if b not in allowed] == []
 
 

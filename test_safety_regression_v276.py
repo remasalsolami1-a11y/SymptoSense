@@ -18,6 +18,10 @@ EMERGENCY_CASES = [
     ("ar", ["ضعف مفاجئ في الجانب الأيمن من الجسم"]), ("ar", ["فقدان مفاجئ للرؤية"]), ("ar", ["ما اقدر اتنفس"]),
     ("ar", ["صدري يعورني بقوة"]), ("ar", ["الم بالصدر شديد وينتشر للذراع"]), ("ar", ["ضيق نفس شديد جدا ما اقدر اتنفس"]),
     ("ar", ["التواء مفاجئ في الوجه وصعوبة الكلام"]), ("ar", ["ما اشوف فجأة"]),
+    ("ar", ["اغمي علي"]), ("ar", ["فقدت الوعي"]), ("ar", ["نفسي ضايق جدا"]), ("ar", ["لا اقدر احرك يدي اليمنى فجأة"]),
+    ("en", ["cant breathe"]), ("en", ["suddenly cannot see"]), ("en", ["crushing chest pressure"]),
+    ("ar", ["ودي أختفي من الدنيا"]), ("ar", ["أفكر أأذي نفسي"]),
+    ("en", ["I feel like ending it all"]),
     ("en", ["severe chest pain"]), ("en", ["severe shortness of breath"]), ("en", ["fainted and lost consciousness"]),
     ("en", ["passed out"]), ("en", ["sudden weakness on one side of the body"]), ("en", ["sudden loss of vision"]),
     ("en", ["I can't breathe"]), ("en", ["face drooping and slurred speech"]), ("en", ["chest pain", "ضيق نفس"]),
@@ -25,11 +29,10 @@ EMERGENCY_CASES = [
 
 # Observed gaps (current engine returns "medium / review", not an emergency). NOT fixed here on purpose.
 KNOWN_GAPS = [
-    ("ar", ["اغمي علي"]), ("ar", ["فقدت الوعي"]), ("ar", ["نفسي ضايق جدا"]), ("ar", ["وجع في الصدر"]),
-    ("ar", ["لا اقدر احرك يدي اليمنى فجأة"]),
-    ("en", ["cant breathe"]), ("en", ["hard to breathe"]), ("en", ["chest pian"]), ("en", ["chset pain severe"]),
-    ("en", ["suddenly cannot see"]), ("en", ["crushing chest pressure"]),
+    ("en", ["chset pain severe"]),
 ]
+# Plain "chest pain" / "hard to breathe" are ask-first by design (red-flag screens),
+# not immediate emergencies; they are asserted in test_credibility_v278.py.
 
 ABSOLUTE_REASSURANCE = ["لا يوجد أي خطر", "لا خطر", "no risk at all", "nothing to worry about", "completely safe", "no danger at all"]
 

@@ -242,6 +242,9 @@ def detail(kind: str, slug: str, lang: str):
     if not item: return None
     ar = lang != "en"; esc = lambda s: html_lib.escape(str(s or ""), quote=True); suf = "_ar" if ar else "_en"; prefix = "/ar" if ar else "/en"
     name = item.get("name" + suf) or slug; description = item.get("description" + suf) or ""
+    if kind != "disease":
+        import symptom_page_safety as _sps
+        description = _sps.description(description, name, ar)
     page_title = name; meta_desc = description[:155] if description else name
     def block(la,le,value):
         if not value: return ""
@@ -259,6 +262,10 @@ def detail(kind: str, slug: str, lang: str):
     if kind=="disease":
         body_parts += [block("الأسباب الشائعة","Common causes",item.get("common_causes"+suf)),block("عوامل الخطورة","Risk factors",item.get("risk_factors"+suf)),block("علامات الخطر — اطلب رعاية عاجلة","Red flags — seek urgent care",item.get("red_flags"+suf)),block("الخطوة التالية المقترحة","Suggested next step",item.get("recommended_next_step"+suf))]
     else:
+        _sb, _ss = _sps.banner_and_section(slug, ar, prefix)
+        if _sb: body_parts.insert(0, _sb)
+        if _ss: body_parts.append(_ss)
+        if slug in _sps.STRONG: body_parts.append(_sps.details_section(slug, ar))
         body_parts.append(block("علامات الخطر المرتبطة","Related red flags",item.get("red_flags"+suf)))
         guidance=symptom_guidance.ensure_for_symptom(int(item.get("id"))) or {}
         questions=guidance.get("followup_questions_ar" if ar else "followup_questions_en") or []
@@ -270,7 +277,7 @@ def detail(kind: str, slug: str, lang: str):
     source_cards=[]
     for src in sources:
         url=src.get("reference_url") or src.get("official_url") or "#"; title=src.get("reference_title_ar" if ar else "reference_title_en") or src.get("source_name") or src.get("organization")
-        source_cards.append(f'<a class="hl-source" href="{esc(url)}" target="_blank" rel="noopener noreferrer"><b>{esc(src.get("source_name") or src.get("organization"))}</b><span>{esc(title)}</span></a>')
+        source_cards.append(f'<a class="hl-source" href="{esc(url)}" target="_blank" rel="noopener noreferrer"><b>{esc(__import__("source_names").display(src, ar))}</b><span>{esc(title)}</span></a>')
     reviewed = item.get("last_updated") or item.get("updated_at") or next((x.get("last_verified") for x in sources if x.get("last_verified")), None) or "—"
     source_note = '<p class="hl-source-ok">✓ '+esc("تتضمن الصفحة مصادر سعودية وعالمية داعمة للمحتوى." if ar else "At least one verified Saudi source and one independent global source are linked.")+'</p>'
     body_parts.append(f'<section class="ss-card"><div class="hl-review"><h2>{esc("المصادر والمراجعة" if ar else "Sources & review")}</h2><span>{esc("آخر مراجعة: " if ar else "Last reviewed: ")}{esc(str(reviewed)[:10])}</span></div><div class="hl-sources">{"".join(source_cards)}</div>{source_note}</section>')

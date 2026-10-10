@@ -82,7 +82,7 @@ def get_season(lang="ar"):
         code = "winter"
     else:
         code = "summer"
-    label = "🍂 الشتاء / Winter" if code == "winter" else "☀️ الصيف / Summer"
+    label = ("🍂 الشتاء" if code == "winter" else "☀️ الصيف") if lang == "ar" else ("🍂 Winter" if code == "winter" else "☀️ Summer")
     tips = SEASONAL_TIPS[code].get(lang, SEASONAL_TIPS[code]["ar"])
     return code, label, tips
 

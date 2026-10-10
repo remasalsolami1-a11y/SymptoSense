@@ -1,7 +1,0 @@
-V276: جهات مرجعية نصية، SEO، تحسين PDF، اختبارات سلامة، (يشمل V275: بطاقة التغطية + اتجاه LTR في الإنجليزية).
-فكّي الضغط في مجلد مؤقت ثم:
-robocopy "<مجلد التحديث>" "<المجلد الداخلي SymptoSense>" /E /XD .git
-git status   (لازم بدون deleted)
-git add -A
-git commit -m "V276 sources, SEO, PDF report, safety regression tests"
-git push

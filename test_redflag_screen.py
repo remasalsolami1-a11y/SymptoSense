@@ -87,4 +87,4 @@ def test_client_calls_screens_before_differential_and_blocks_on_emergency():
     src = source_bundle.chat_view_text()
     assert "startRedflagScreens" in src and "/api/analyze/redflag-next" in src
     assert src.index("else startRedflagScreens();") < src.index("async function startDifferentialQuestions")
-    assert "sc.tier === 'emergency'" in src and "showEmergency(clarEmergencyResult(sc.flag))" in src
+    assert "sc.tier === 'emergency'" in src and "showEmergency(clarEmergencyResult(sc.flag, sc.id))" in src

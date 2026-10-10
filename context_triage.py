@@ -46,7 +46,7 @@ _DIZZY = _rx(r"(?:دوخ\w*|دوار|دايخ\w*|دخت|يدوخ|اغماء|اغ
 _SHOULDER = _rx(r"(?:الم|وجع)\s*(?:في\s*)?(?:ال)?(?:كتف|اكتاف)\w*", r"shoulder")
 _PREG_BLEED = _rx(r"(?:نزيف|نزول\s*دم|بقع\s*دم|دم\s*(?:من|في)\s*(?:ال)?(?:مهبل|رحم)|spotting|bleeding)")
 _HEAD_SEVERE = _rx(r"(?:صداع)\s*\w*\s*(?:شديد|قوي|حاد|مره|وايد|جامد)\w*", r"(?:شديد|قوي|حاد)\w*\s*صداع", r"severe\s+headache")
-_VISION_BLUR = _rx(r"(?:زغلله|زغللت|رؤي\w*\s*(?:مشوش|ضبابي)\w*|نظري\s*(?:مشوش|ضبابي)|اشوف\s*(?:ضبابي|نقاط|ومض)\w*|blurr?ed\s+vision|seeing\s+spots|flashing)")
+_VISION_BLUR = _rx(r"تشوش\s*(?:في\s*)?(?:ال)?(?:رؤي\w*|نظر\w*|روي\w*)", r"(?:زغلله|زغللت|رؤي\w*\s*(?:مشوش|ضبابي)\w*|نظري\s*(?:مشوش|ضبابي)|اشوف\s*(?:ضبابي|نقاط|ومض)\w*|blurr?ed\s+vision|seeing\s+spots|flashing)")
 _UPPER_ABD = _rx(r"(?:الم|وجع)\s*(?:في\s*)?(?:اعلى|فوق)\s*(?:ال)?بطن", r"(?:الم|وجع)\s*(?:في\s*)?(?:ال)?(?:معده|فم\s*المعده)", r"upper\s+abdom\w*|epigastric")
 _FACE_SWELL = _rx(r"تورم\s*(?:ال)?(?:وجه|يدين|اليدين)", r"face\s+swelling|swollen\s+face")
 

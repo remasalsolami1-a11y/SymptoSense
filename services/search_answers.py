@@ -121,7 +121,7 @@ def _pdf_report(result, lang="ar"):
             direct_source = item_sources[0] if item_sources and isinstance(item_sources[0], dict) else None
         direct_source_html = ""
         if direct_source:
-            source_name = direct_source.get("source_name") or direct_source.get("organization") or direct_source.get("name") or ""
+            source_name = __import__("source_names").display(direct_source, ar)
             source_title = (direct_source.get("reference_title_ar") if ar else direct_source.get("reference_title_en")) or direct_source.get("reference_title_en") or direct_source.get("reference_title_ar") or source_name
             source_url = direct_source.get("reference_url") or direct_source.get("official_url") or direct_source.get("url") or ""
             source_scope = str(direct_source.get("source_scope") or "")
@@ -155,7 +155,7 @@ def _pdf_report(result, lang="ar"):
     for src in (result.get("medical_sources") or []):
         if not isinstance(src, dict):
             continue
-        name = src.get("source_name") or src.get("organization") or src.get("name") or ("مصدر طبي" if ar else "Medical source")
+        name = __import__("source_names").display(src, ar, "مصدر طبي" if ar else "Medical source")
         title = (src.get("reference_title_ar") if ar else src.get("reference_title_en")) or src.get("reference_title_en") or src.get("reference_title_ar") or ""
         source_url = src.get("reference_url") or src.get("official_url") or src.get("url") or ""
         source_link = ('<small><a href="%s">%s</a></small>' % (esc(source_url), esc(title or name))) if source_url else (('<small>%s</small>' % esc(title)) if title else '')

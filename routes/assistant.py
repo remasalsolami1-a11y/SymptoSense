@@ -531,7 +531,7 @@ def api_analyze():
             "worse": patient.get("pattern_worse") or "",
             "relief": patient.get("pattern_relief") or "",
         }
-        result["demo_mode"] = bool(demo_mode)
+        result["demo_mode"] = bool(demo_mode); __import__("source_names").localize(result, lang); __import__("guest_trials").save(_data_user_id(), lang, patient, result, demo_mode, _analytics_consent_ok(), _research_consent_ok())
         if result.get("record_id"):
             try:
                 privacy_features.set_record_consent_eligibility(int(result["record_id"]), _analytics_consent_ok(), _research_consent_ok())

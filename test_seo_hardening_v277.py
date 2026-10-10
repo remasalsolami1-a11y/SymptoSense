@@ -52,7 +52,7 @@ def test_about_title_contains_platform_name():
 
 def test_hidden_banner_and_modal_are_hidden_from_assistive_tech_until_shown():
     h = _get("/ar/about").get_data(as_text=True)
-    assert 'id="ssOfflineBanner" role="status" aria-live="polite" aria-hidden="true"' in h
+    assert 'id="ssOfflineBanner" role="status" aria-live="polite" hidden' in h
     assert re.search(r'id="smartCtxModal"[^>]*aria-hidden="true"', h)
     assert "setAttribute('aria-hidden','false')" in h
 

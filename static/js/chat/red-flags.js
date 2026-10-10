@@ -28,14 +28,14 @@
         {label:TT('clar_yes'), fn:function(){
           add(TT('clar_yes'),'user');
           if (state.redflag_yes.indexOf(sc.id) === -1) state.redflag_yes.push(sc.id);
-          if (sc.tier === 'emergency') { addHtml('<div class="warn">🚨 ' + esc(sc.flag) + '</div>', 'bot'); showEmergency(clarEmergencyResult(sc.flag)); return; }
+          if (sc.tier === 'emergency') { addHtml('<div class="warn">🚨 ' + esc(sc.flag) + '</div>', 'bot'); showEmergency(clarEmergencyResult(sc.flag, sc.id)); return; }
           state.notes += (state.notes?' ':'') + sc.flag;
           startRedflagScreens();
         }},
         {label:TT('clar_no'), fn:function(){ add(TT('clar_no'),'user'); startRedflagScreens(); }}
       ]);
     }
-    function clarEmergencyResult(label) {
+    function clarEmergencyResult(label, screenId) {
       var ar = LANG === 'ar';
       return {
         ok:true, emergency:true, emergency_flags:[label], urgency:'high',
@@ -45,7 +45,7 @@
         possible_conditions: ar ? 'لن يُعرض اسم حالة محددة لأن علامة الخطر لها الأولوية.' : 'No condition is named because a red flag takes priority.',
         recommendations: [], danger_signs: label,
         when_to_seek_care: ar ? 'اطلب الرعاية الطارئة الآن. في السعودية رقم الإسعاف 997.' : 'Seek emergency care now. In Saudi Arabia, ambulance service is 997.',
-        home_care:'', medication_guidance:'', questions_for_doctor:'', safety_engine:{rule_ids:['clarification_red_flag'], flags:[label]}
+        home_care:'', medication_guidance:'', questions_for_doctor:'', safety_engine:{rule_ids:[screenId === 'mh_selfharm' ? 'self_harm_risk' : (screenId === 'fv_infant' ? 'infant_fever_under_3m' : 'clarification_red_flag')], flags:[label]}
       };
     }
     var emLockedEls = [];

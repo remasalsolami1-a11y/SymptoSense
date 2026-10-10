@@ -359,7 +359,7 @@ SYMPTOMS = [
     ("high-blood-pressure-symptoms", "أعراض ارتفاع ضغط الدم", "High blood pressure symptoms", "cardiovascular", ["ضغطي عالي", "ارتفاع الضغط"], ["high blood pressure symptoms"]),
     ("irregular-heartbeat", "عدم انتظام ضربات القلب", "Irregular heartbeat", "cardiovascular", ["نبض غير منتظم", "قلبي يتقطع"], ["irregular heartbeat", "arrhythmia"]),
     ("anxiety", "قلق", "Anxiety", "mental-health", ["توتر", "قلق شديد", "عصبيه زايده", "عصبية زايدة"], ["anxiety", "feeling anxious"]),
-    ("low-mood", "مزاج منخفض", "Low mood", "mental-health", ["حزن", "مزاجي تعبان", "اكتئاب"], ["low mood", "sadness", "feeling down"]),
+    ("low-mood", "مزاج منخفض", "Low mood", "mental-health", ["حزن", "مزاجي تعبان", "اكتئاب", "تعبت من كل شي", "تعبت من كل شيء", "ماني قادر اكمل", "ماني قادر أكمل", "ودي اختفي", "ودي أختفي", "احس اني عبء", "أحس أني عبء على الكل", "الكل احسن بدوني", "الكل أحسن بدوني", "ما فيه امل", "ما في أمل", "يائس", "تعبت من الحياة", "زهقت من الحياة", "كرهت حياتي"], ["low mood", "sadness", "feeling down", "tired of everything", "want to disappear", "feeling hopeless", "hopeless", "i am a burden", "everyone is better off without me"]),
     ("panic-attack", "نوبة هلع", "Panic attack", "mental-health", ["نوبه هلع", "نوبة هلع", "خوف مفاجئ شديد"], ["panic attack"]),
     ("irritability", "تهيج وعصبية", "Irritability", "mental-health", ["عصبيه", "عصبية", "سرعة انفعال"], ["irritability", "easily angered"]),
     ("difficulty-concentrating", "صعوبة التركيز", "Difficulty concentrating", "mental-health", ["صعوبة التركيز", "تشتت الانتباه"], ["difficulty concentrating", "poor focus"]),

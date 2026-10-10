@@ -304,7 +304,7 @@ def community_dashboard():
     cards = []
     for item in (stats.get("comments") or []):
         comment = redact_public_comment(item.get("comment"))
-        if not comment:
+        if not comment or not __import__("public_feedback").acceptable(comment):
             continue
         rating = int(item.get("rating") or 0)
         rating = rating if 1 <= rating <= 5 else 0
@@ -323,7 +323,7 @@ def community_dashboard():
         "No feedback has been approved for public display yet. Private feedback remains private."
     )
     avg = stats.get("average_5") or 0
-    avg_text = ("%.1f/5" % avg) if stats.get("ratings") else "—/5"
+    avg_text = ("%.1f/5" % avg) if __import__("public_feedback").avg_visible(stats.get("ratings")) else "—/5"
     body = '''
     <main class="community-page">
       <section class="community-hero"><span>📊</span><h1>__TITLE__</h1><p>__SUB__</p></section>
@@ -337,7 +337,7 @@ def community_dashboard():
         "__USERS__": str(stats.get("users", 0)), "__USERS_L__": bi("مستخدمون مسجلون", "registered users"),
         "__AVG__": avg_text, "__AVG_L__": bi("متوسط التقييم", "average rating"),
         "__RATINGS__": str(stats.get("ratings", 0)), "__RATINGS_L__": bi("إجمالي التقييمات", "total ratings"),
-        "__COMMENT_COUNT__": str(stats.get("comment_count", 0)), "__COMMENT_COUNT_L__": bi("تعليق منشور", "published comments"),
+        "__COMMENT_COUNT__": str(len(cards)), "__COMMENT_COUNT_L__": bi("تعليق منشور", "published comments"),
         "__COMMENTS_H__": bi("آراء المستخدمين", "User reviews"),
         "__COMMENTS_P__": bi("تعليقات المستخدمين الذين وافقوا على نشر آرائهم، وتظهر جميعها باسم مستخدم مجهول دون بيانات الحساب.", "Comments from users who agreed to public sharing, displayed as Anonymous user without account details."),
         "__TRY__": bi("جرّب تحليل الأعراض", "Try symptom analysis"), "__COMMENTS__": comments_html,
@@ -345,7 +345,7 @@ def community_dashboard():
     }
     for k, v in repl.items(): body = body.replace(k, v)
     css = '''.community-page{width:min(1040px,100%);margin:auto;display:grid;gap:20px}.community-hero{text-align:center;padding:34px 20px;border-radius:24px;background:linear-gradient(135deg,#F6FBFE,#ECF6FC);border:1px solid #D7E7F0}.community-hero>span{font-size:38px}.community-hero h1{margin:8px 0;color:#123B70;font-size:clamp(27px,4vw,42px)}.community-hero p{margin:0;color:#60788B}.community-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.community-kpis article{padding:24px;border:1px solid #DCE8F0;border-radius:20px;background:#fff;text-align:center}.community-kpis strong{display:block;color:#1f6fae;font-size:clamp(26px,4vw,38px)}.community-kpis span{color:#60788B;font-weight:700}.community-section{padding:24px;border:1px solid #DCE8F0;border-radius:22px;background:#fff}.community-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}.community-head h2{margin:0;color:#123B70}.community-head p{margin:5px 0 0;color:#60788B}.community-comments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.community-comment{padding:18px;border-radius:17px;background:#F8FCFE;border:1px solid #DCE8F0}.community-comment-head{display:flex;align-items:center;gap:10px}.community-anon-avatar{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:50%;background:#EAF4FF;font-size:20px}.community-anon-meta{display:grid;gap:2px}.community-anon-meta strong{font-size:14px;color:#123B70}.community-stars{color:#E2A63B;letter-spacing:2px;font-size:16px}.community-comment p{line-height:1.8;color:#29485F;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}.community-comment small,.community-privacy{color:#718899}.community-empty{grid-column:1/-1;padding:28px;text-align:center;color:#718899;background:#F8FCFE;border-radius:16px}.community-privacy{text-align:center}@media(max-width:700px){.community-hero{padding:26px 16px}.community-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.community-kpis article{padding:18px 10px;border-radius:17px}.community-kpis strong{font-size:clamp(24px,8vw,32px)}.community-kpis span{font-size:12px}.community-comments{grid-template-columns:1fr}.community-head{align-items:flex-start;flex-direction:column}.community-head .btn{width:100%;text-align:center}.community-section{padding:18px 14px}}@media(max-width:330px){.community-kpis{grid-template-columns:1fr}}'''
-    return _page(bi("آراء مستخدمي SymptoSense", "SymptoSense User Reviews"), body, extra_css=css)
+    return _page(bi("آراء مستخدمي SymptoSense", "SymptoSense User Reviews"), body, desc=bi("تعليقات مستخدمي SymptoSense التي وافق أصحابها على نشرها، دون عرض هوياتهم أو بياناتهم الصحية.", "SymptoSense user comments shared with their authors' permission, without identities or health data."), extra_css=css)
 
 
 @route('/health-library')
@@ -392,8 +392,8 @@ def trust():
         '__SUB__': bi('صفحة واحدة توضح حدود SymptoSense وما يميّزه تقنيًا، مع أرقام حية تُقرأ مباشرة من قاعدة البيانات والقاعدة المعرفية وملفات الاختبار وقت فتح الصفحة.', "One page that makes SymptoSense's boundaries and technical strengths visible, with live counts read at page load from the database, knowledge base, and test suite."),
         '__UPDATED__': bi('آخر تحديث حي', 'Live snapshot'),
         '__TIME__': html_lib.escape(snap['generated_at']),
-        '__K1__': str(snap['quality']['automated_checks']),
-        '__K1L__': bi('اختبار/فحص آلي', 'automated checks'),
+        '__K1__': __import__('trust_metrics').kpi(snap['quality'], ar)[0],
+        '__K1L__': __import__('trust_metrics').kpi(snap['quality'], ar)[1],
         '__K2__': str(snap['knowledge']['verified_sources']),
         '__K2L__': bi('مصدر طبي موثوق', 'verified medical sources'),
         '__K3__': str(snap['knowledge']['red_flag_rules']),
@@ -419,7 +419,7 @@ def trust():
         '__WHY4__': bi('مراقبة المصادر الطبية', 'Medical source monitoring'),
         '__WHY4P__': bi('المصادر الطبية الموثقة تُراجع وتُراقب آليًا حتى لا تبقى الثقة مدفونة داخل الكود فقط.', 'Verified medical sources are tracked so trust is not buried in the codebase only.'),
         '__WHY5__': bi('اختبارات آلية مستمرة', 'Continuous automated checks'),
-        '__WHY5P__': bi('توجد %s فحصًا/اختبارًا آليًا عبر %s ملفًا، لتقليل الانحدارات واكتشاف المشاكل مبكرًا.' % (str(snap['quality']['automated_checks']), str(snap['quality']['test_files'])), 'There are %s automated checks across %s test file(s), helping catch regressions early.' % (str(snap['quality']['automated_checks']), str(snap['quality']['test_files']))),
+        '__WHY5P__': __import__('trust_metrics').sentence(snap['quality'], ar),
         '__WHY6__': bi('عربي + English', 'Arabic + English'),
         '__WHY6P__': bi('المنصة مبنية ثنائية اللغة من البداية مع مراعاة RTL/LTR لتكون أوضح للمستخدمين وللعرض أمام الحكام.', 'The platform is bilingual by design with RTL/LTR support, making it clearer for users and judges.'),
         '__COV_TITLE__': bi('تغطية القاعدة المعرفية', 'Knowledge-base coverage'),
@@ -1037,7 +1037,7 @@ def sitemap_xml():
     pages = [
         "/", "/search", "/calculators", "/meds",
         "/emergency", "/firstaid", "/tips", "/relax", "/about",
-        "/how-we-work", "/community-dashboard", "/health-trends",
+        "/how-we-work", "/health-trends",
         "/health-library", "/privacy", "/terms",
     ]
     core_priority = {"/": 1.0, "/chat": 0.9, "/blood": 0.9, "/how-we-work": 0.8, "/about": 0.8}

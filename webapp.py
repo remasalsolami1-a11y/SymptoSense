@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v277")
+    response.set_etag("symptosense-app-shell-v112-v279")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2139,7 +2139,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
     private_noindex = {
         "/health-record", "/profile", "/family", "/checkin", "/safeid", "/settings", "/manage",
         "/memory", "/health-command-center", "/privacy-center", "/consent", "/login", "/register",
-        "/verify-email", "/forgot-password", "/competition", "/competition-dashboard", "/innovation-lab", "/safety-lab"
+        "/verify-email", "/forgot-password", "/competition", "/community-dashboard", "/competition-dashboard", "/innovation-lab", "/safety-lab"
     }
     robots_directive = (
         "noindex, follow, noarchive"
@@ -4569,7 +4569,7 @@ followup.register(app, api_login_required, _data_user_id, _lang, _mk_error)
 import vitals
 vitals.register(app, login_required, api_login_required, _data_user_id, _page, _lang, _mk_error)
 import redflag_screen
-redflag_screen.register(app, _service_consent_ok, _consent_required_json, _mk_error)
+redflag_screen.register(app, _service_consent_ok, _consent_required_json, _mk_error); __import__("feedback_moderation").register(app, _admin_page_gate, _admin_csrf_token, _admin_session_valid, _admin_allowed, _page, _lang)
 
 def _sanitize_analysis_notes_for_safety(value):
     """Remove negated follow-up question text before deterministic triage.

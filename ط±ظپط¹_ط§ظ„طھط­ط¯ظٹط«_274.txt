@@ -1,6 +1,0 @@
-V274 — ترجمة أزرار نافذة «استخدام معلوماتي المحفوظة» في النسخة الإنجليزية
-فك الضغط فوق المجلد الداخلي SymptoSense (استبدال الملفات)، ثم:
-git add -A
-git commit -m "V274 translate saved-info modal in English"
-git push
-(بدون --force). الـ Dockerfile فيه سطر ECR الصحيح.

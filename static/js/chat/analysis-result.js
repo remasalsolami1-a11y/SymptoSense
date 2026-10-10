@@ -444,7 +444,7 @@
           let directSource = '';
           if (condSource) {
             const curl = condSource.reference_url || condSource.official_url || '';
-            const cname = condSource.source_name || condSource.organization || '';
+            const cname = (LANG==='en' && /[\u0600-\u06FF]/.test(condSource.source_name||'') && condSource.organization) || condSource.source_name || condSource.organization || '';
             if (curl && cname) {
               const sourceTitle = LANG==='ar' ? (condSource.reference_title_ar || condSource.reference_title_en || cname) : (condSource.reference_title_en || condSource.reference_title_ar || cname);
               const verifiedAt = condSource.last_verified || condSource.source_last_verified || '';
@@ -531,7 +531,7 @@
         sources.forEach(function(src){
           const url = src.reference_url || src.official_url || '';
           const title = LANG==='ar' ? (src.reference_title_ar || src.reference_title_en || '') : (src.reference_title_en || src.reference_title_ar || '');
-          const label = src.source_name || src.organization || 'Source';
+          const label = (LANG==='en' && /[\u0600-\u06FF]/.test(src.source_name||'') && src.organization) || src.source_name || src.organization || 'Source';
           const org = src.organization && src.organization !== label ? src.organization : '';
           const typeMap = {government:['جهة حكومية','Government health authority'],international_organization:['منظمة صحية دولية','International health organization'],national_health_service:['خدمة صحية وطنية','National health service'],academic_medical_institution:['مؤسسة طبية أكاديمية','Academic medical institution'],other_trusted_source:['مصدر صحي موثوق','Trusted health source']};
           const typePair = typeMap[String(src.source_type)] || [LANG==='ar'?'مصدر صحي موثوق':'Trusted health source', LANG==='ar'?'مصدر صحي موثوق':'Trusted health source'];

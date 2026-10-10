@@ -34,7 +34,7 @@ ARG ALLOW_UNSIGNED_CLINICAL=0
 # must not take the whole production service offline because one optional JSON
 # fixture was omitted.
 RUN set -eu; \
-    echo "SymptoSense Railway build profile: V277"; \
+    echo "SymptoSense Railway build profile: V279"; \
     python -m pip check; \
     python -m py_compile railway_entrypoint.py railway_runtime.py webapp.py lab_intake.py blood_test.py; \
     for f in railway.json requirements.txt railway_entrypoint.py railway_runtime.py webapp.py lab_intake.py blood_test.py chat_view.py site_info_view.py service-worker.js manifest.webmanifest; do \
@@ -51,7 +51,7 @@ RUN set -eu; \
     else \
       python tools/signoff.py check --strict || { echo "ERROR: clinical sign-off pending; see clinical_signoff.json (override only deliberately: --build-arg ALLOW_UNSIGNED_CLINICAL=1)" >&2; exit 1; }; \
     fi; \
-    echo "SymptoSense V277 production build validation passed"
+    echo "SymptoSense V279 production build validation passed"
 
 EXPOSE 5000
 

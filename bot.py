@@ -1112,7 +1112,7 @@ async def _send_blood_report(message, context, entries, age):
             if abnormal:
                 spoken = tx["blood_voice_seedoctor"] + " " + "، ".join(
                     (r["name_ar"] if lang == "ar" else r["name_en"])
-                    + (" منخفض" if r["status"] == "low" else " مرتفع") for r in abnormal
+                    + ((" منخفض" if r["status"] == "low" else " مرتفع") if lang == "ar" else (" low" if r["status"] == "low" else " high")) for r in abnormal
                 )
             else:
                 spoken = tx["blood_voice_normal"]

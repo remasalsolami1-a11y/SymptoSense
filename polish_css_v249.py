@@ -39,6 +39,7 @@ body.ss-em-open{overflow:hidden}
 .f-tg,.f-tg:hover,.footer .f-tg,.footer .f-tg:hover{background:#1b66a3!important;color:#fff!important}
 .footer .f-love b,.footer .f-brand span{color:#1F6FAE!important}
 /* V261 legibility floor: no UI text under 12px (safety banner, step label, bottom-nav labels, chat sub-title) */
+body #ssOfflineBanner[hidden]{display:none!important}
 body #ssOfflineBanner small{font-size:12.5px!important;line-height:1.6!important}
 body #ssOfflineBanner a{font-size:13px!important;min-height:44px;display:inline-flex;align-items:center}
 body.ss-chat-page #headP{font-size:12px!important;color:#fff!important}
@@ -120,4 +121,15 @@ html body .ss-knowledge .ss-sources-logos{direction:ltr!important;display:grid!i
 html body .ss-knowledge .ss-source-badge{display:flex!important;align-items:center!important;justify-content:center!important;min-height:44px;padding:8px 12px!important;background:#fff;border:1px solid #D9E8F4;border-radius:14px;color:#123B70!important;font-size:13px!important;font-weight:800!important;letter-spacing:.02em;text-align:center;line-height:1.3;white-space:normal}
 html body .ss-knowledge .ss-source-badge i{display:none!important}
 @media (max-width:560px){html body .ss-knowledge .ss-sources-logos{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body .ss-knowledge .ss-source-badge{font-size:12px!important}}
+/* V279: English hero follows LTR; arrows/labels in English */
+html[dir="ltr"] body.ss-home-page .ss-home-hero{direction:ltr!important}
+html[dir="ltr"] body.ss-home-page :is(.ss-hero-copy,.ss-hero-copy h1,.ss-hero-copy p,.ss-hero-actions,.ss-trust-row){text-align:left!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-kicker{justify-content:flex-start!important}
+html[dir="ltr"] body.ss-home-page :is(.ss-hero-copy,.ss-hero-copy *,.ss-trust-row,.ss-trust-row *,.ss-trust-safety-link,.ss-hero-demo,.ss-hero-demo *){direction:ltr!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-copy{grid-column:1!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-demo{grid-column:2!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-demo .ss-demo-note{display:none!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-lead{margin-left:0!important;margin-right:auto!important}
+html[dir="ltr"] body.ss-home-page .ss-hero-demo :is(.ss-result-top,.ss-result-risk,.ss-possible-card,.ss-result-row){text-align:left!important}
+html[lang="en"] body.ss-home-page .ss-result-top strong:after{content:" · Illustrative example"!important}
 """
