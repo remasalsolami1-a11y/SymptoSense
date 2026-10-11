@@ -538,7 +538,17 @@ def _self_harm_support(safety, lang):
             "ويمكنك الاتصال بالصحة 937 أو بمركز الاستشارات النفسية 920033360.")
 
 
-def emergency_result(safety, lang="ar"):
+def emergency_result(safety, lang="ar", patient=None):
+    result = _emergency_result_base(safety, lang)
+    try:
+        import emergency_explain
+        result["risk_reasons"], result["why_result"] = emergency_explain.reasons(safety, lang, patient)
+    except (ImportError, TypeError, ValueError, KeyError):
+        pass
+    return result
+
+
+def _emergency_result_base(safety, lang="ar"):
     flags = list(safety.get("flags") or [])
     if lang == "en":
         return {

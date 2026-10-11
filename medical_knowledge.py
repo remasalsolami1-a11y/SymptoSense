@@ -115,6 +115,39 @@ def _columns(c, table):
     return {r[1] for r in c.fetchall()}
 
 
+def _canon(o):
+    """Order-stable form (sets have per-process ordering)."""
+    if isinstance(o, (set, frozenset)):
+        return sorted((_canon(x) for x in o), key=repr)
+    if isinstance(o, dict):
+        return {repr(k): _canon(v) for k, v in sorted(o.items(), key=lambda kv: repr(kv[0]))}
+    if isinstance(o, (list, tuple)):
+        return [_canon(x) for x in o]
+    return o
+
+
+def _seed_fingerprint():
+    """Hash of every module-level seed table (other modules extend them at import)."""
+    import hashlib
+    global _FP_CACHE
+    if _FP_CACHE:
+        return _FP_CACHE  # _seed() appends to SOURCES, so compute once, before the first seed
+    h = hashlib.sha256()
+    for name in sorted(globals()):
+        if name.isupper() and isinstance(globals()[name], (list, tuple, dict)):
+            h.update(name.encode()); h.update(repr(_canon(globals()[name])).encode("utf-8", "replace"))
+    try:
+        with open(__file__, "rb") as fh:
+            h.update(fh.read())
+    except OSError:
+        pass
+    _FP_CACHE = h.hexdigest()
+    return _FP_CACHE
+
+
+_FP_CACHE = ""
+
+
 def init_schema():
     """Create the knowledge schema and idempotently load the verified starter set."""
     global _READY_KEY
@@ -238,7 +271,18 @@ def init_schema():
             ):
                 if col not in rf_cols:
                     c.execute(f"ALTER TABLE mk_red_flags ADD COLUMN {col} {ddl}")
-            _seed(c)
+            # The starter set is idempotent but costs ~5,000 statements. Run it
+            # only when the seed content changed (new release), not on every
+            # process start: on a remote PostgreSQL that made the first page
+            # after each restart take many seconds.
+            c.execute("CREATE TABLE IF NOT EXISTS mk_seed_state (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL)")
+            fp = _seed_fingerprint()
+            c.execute("SELECT fingerprint FROM mk_seed_state WHERE id=" + db.PH, ("seed",))
+            row = c.fetchone()
+            if not row or row[0] != fp:
+                _seed(c)
+                c.execute("DELETE FROM mk_seed_state WHERE id=" + db.PH, ("seed",))
+                c.execute("INSERT INTO mk_seed_state (id,fingerprint) VALUES (" + db.PH + "," + db.PH + ")", ("seed", fp))
             conn.commit()
             _READY_KEY = db._database_identity()
         finally:
@@ -1584,6 +1628,12 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
             neg_ids = {int(row[0]) for row in c.fetchall() if str(row[1]) in negative_slugs}
         c.execute("SELECT id,slug,name_ar,name_en,description_ar,description_en,severity,red_flags_ar,red_flags_en,recommended_next_step_ar,recommended_next_step_en,last_updated,sex_applicability,min_age,max_age,pregnancy_relevant FROM mk_diseases WHERE status='active'")
         diseases = c.fetchall()
+        # One query for all relations instead of one per disease (was ~160 round
+        # trips per analysis, which is slow on a remote PostgreSQL).
+        c.execute("SELECT disease_id,symptom_id,weight,typicality,notes_ar,notes_en FROM mk_disease_symptoms WHERE status='active' ORDER BY id")
+        _rels_by_disease = {}
+        for _r in c.fetchall():
+            _rels_by_disease.setdefault(int(_r[0]), []).append(_r[1:])
         out=[]
         for row in diseases:
             if not _condition_is_eligible(sex_applicability=row[12], gender=gender, age=age, canonical=canonical):
@@ -1592,8 +1642,7 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
             if parsed_age is not None and ((row[13] is not None and parsed_age < int(row[13])) or (row[14] is not None and parsed_age > int(row[14]))):
                 continue
             did=int(row[0])
-            c.execute(f"SELECT symptom_id,weight,typicality,notes_ar,notes_en FROM mk_disease_symptoms WHERE disease_id={db.PH} AND status='active'",(did,))
-            rels=c.fetchall()
+            rels=_rels_by_disease.get(did, [])
             total=sum(max(float(r[1] or 0),0) for r in rels) or 1
             matched=[r for r in rels if int(r[0]) in ids]
             matched=_dedupe_matched_by_concept(matched, ids)

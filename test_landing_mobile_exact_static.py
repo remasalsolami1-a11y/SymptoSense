@@ -15,7 +15,7 @@ def test_mobile_landing_uses_current_competition_structure():
     block = _welcome_block()
     required = [
         'first-lang-logo-mark',
-        'Your Health, Smarter',
+        'A clearer next step for your health', 'خطوة أوضح لصحتك',
         'افهم أعراضك<em>واعرف خطوتك التالية</em>',
         'Understand your symptoms<em>and know your next step</em>',
         '<span data-copy="ar" lang="ar" dir="rtl">اختر لغتك للبدء</span>',

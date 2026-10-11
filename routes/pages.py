@@ -1031,40 +1031,7 @@ def robots_txt():
 
 @route("/sitemap.xml")
 def sitemap_xml():
-    base = _site_url().rstrip("/")
-    # Canonical public pages only. Legacy unprefixed pages are 301 redirects and
-    # never appear here, preventing duplicate language/indexation signals.
-    pages = [
-        "/", "/search", "/calculators", "/meds",
-        "/emergency", "/firstaid", "/tips", "/relax", "/about",
-        "/how-we-work", "/health-trends",
-        "/health-library", "/privacy", "/terms",
-    ]
-    core_priority = {"/": 1.0, "/chat": 0.9, "/blood": 0.9, "/how-we-work": 0.8, "/about": 0.8}
-    rows = []
-    for suffix in pages:
-        ar_path = "/ar/" if suffix == "/" else "/ar" + suffix
-        en_path = "/en/" if suffix == "/" else "/en" + suffix
-        priority = core_priority.get(suffix, 0.7)
-        for lang, loc_path in (("ar", ar_path), ("en", en_path)):
-            loc = html_lib.escape(base + loc_path, quote=True)
-            ar_href = html_lib.escape(base + ar_path, quote=True)
-            en_href = html_lib.escape(base + en_path, quote=True)
-            rows.append(
-                '  <url><loc>%s</loc>'
-                '<xhtml:link rel="alternate" hreflang="ar" href="%s"/>'
-                '<xhtml:link rel="alternate" hreflang="en" href="%s"/>'
-                '<xhtml:link rel="alternate" hreflang="x-default" href="%s"/>'
-                '<priority>%.1f</priority></url>'
-                % (loc, ar_href, en_href, (html_lib.escape(base, quote=True) + "/") if suffix == "/" else ar_href, priority)
-            )
-    xml = (
-        '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n%s\n</urlset>\n'
-        % "\n".join(rows)
-    )
-    response = Response(xml, mimetype="application/xml")
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    response = Response(__import__("seo_extras").sitemap_xml(_site_url()), mimetype="application/xml"); response.headers["Cache-Control"] = "public, max-age=3600"
     return response
 
 

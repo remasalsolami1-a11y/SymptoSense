@@ -13,6 +13,9 @@ reaches the code that saves a record or touches consent/user data.
 """
 from __future__ import annotations
 
+import copy
+import time
+
 import analysis_core
 
 _DEMO_PATIENT = {
@@ -32,7 +35,18 @@ _DEMO_PATIENT = {
 }
 
 
+_CACHE: dict = {}
+_TTL = 600  # seconds; the demo is fixed, so recomputing it per page view only costs time
+
+
 def demo_analysis_result(lang: str = "ar") -> dict:
+    """Return the demo result, cached briefly: rendering /chat used to run a
+    full analysis (160+ database queries) on every page view."""
+    now = time.time()
+    hit = _CACHE.get(lang)
+    if hit and now - hit[0] < _TTL:
+        return copy.deepcopy(hit[1])
     result = analysis_core.run_analysis(dict(_DEMO_PATIENT), lang=lang)
     result["demo_mode"] = True
+    _CACHE[lang] = (now, copy.deepcopy(result))
     return result

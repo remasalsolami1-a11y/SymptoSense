@@ -28,16 +28,22 @@
         {label:TT('clar_yes'), fn:function(){
           add(TT('clar_yes'),'user');
           if (state.redflag_yes.indexOf(sc.id) === -1) state.redflag_yes.push(sc.id);
-          if (sc.tier === 'emergency') { addHtml('<div class="warn">🚨 ' + esc(sc.flag) + '</div>', 'bot'); showEmergency(clarEmergencyResult(sc.flag, sc.id)); return; }
+          if (sc.tier === 'emergency') { addHtml('<div class="warn">🚨 ' + esc(sc.flag) + '</div>', 'bot'); showEmergency(clarEmergencyResult(sc.flag, sc.id, sc)); return; }
           state.notes += (state.notes?' ':'') + sc.flag;
           startRedflagScreens();
         }},
         {label:TT('clar_no'), fn:function(){ add(TT('clar_no'),'user'); startRedflagScreens(); }}
       ]);
     }
-    function clarEmergencyResult(label, screenId) {
+    function clarEmergencyResult(label, screenId, sc) {
       var ar = LANG === 'ar';
+      var q = sc && sc.question ? String(sc.question) : '';
+      var why = sc && sc.reason ? String(sc.reason) : '';
+      var msg = ar
+        ? (q ? 'أجبتَ «نعم» على سؤال: «' + q + '». ' : 'اختيارك في الأسئلة التوضيحية طابق علامة الخطر. ') + (why ? why + ' ' : '') + 'لذلك توقفنا عن الأسئلة ومطابقة الأمراض، لأن هذه العلامة لها الأولوية.'
+        : (q ? 'You answered “Yes” to: “' + q + '”. ' : 'Your choice in the follow-up questions matched a red flag. ') + (why ? why + ' ' : '') + 'So we stopped the questions and condition matching, because this red flag takes priority.';
       return {
+        risk_reasons:[{name:label, message:msg, risk_level:'urgent', slug:'red-flag'}], why_result: msg,
         ok:true, emergency:true, emergency_flags:[label], urgency:'high',
         urgency_ar: ar ? 'طوارئ' : undefined, urgency_text: ar ? undefined : 'Emergency', confidence:'high',
         personal_note: ar ? 'طابقت إجابتك علامة خطر في مسار الأسئلة التوضيحية.' : 'Your answer matched a red flag during the follow-up questions.',

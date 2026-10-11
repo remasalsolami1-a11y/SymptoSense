@@ -117,6 +117,7 @@ _QUERY_TOKEN_HINTS_EN = [
 ]
 
 
+@lru_cache(maxsize=65536)
 def normalize(text: str, lang: str = "ar") -> str:
     s = unicodedata.normalize("NFKC", str(text or "")).strip().lower()
     s = _ARABIC_DIACRITICS.sub("", s)
@@ -133,6 +134,7 @@ def normalize(text: str, lang: str = "ar") -> str:
     return _SPACE.sub(" ", s).strip()
 
 
+@lru_cache(maxsize=65536)
 def normalize_basic(text: str) -> str:
     s = unicodedata.normalize("NFKC", str(text or "")).strip().lower()
     s = _ARABIC_DIACRITICS.sub("", s)

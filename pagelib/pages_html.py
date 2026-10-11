@@ -54,13 +54,18 @@ def welcome_page():
     body.ss-welcome-page .fl-art{position:absolute;left:0;width:100%;pointer-events:none;z-index:0;display:block;}
     body.ss-welcome-page .fl-art-top{top:0;height:300px;}
     body.ss-welcome-page .fl-art-bot{bottom:0;height:190px;}
-    body.ss-welcome-page .first-lang-shell{position:relative!important;z-index:1;width:min(100%,430px)!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;padding:max(36px,calc(env(safe-area-inset-top) + 24px)) 20px max(14px,env(safe-area-inset-bottom))!important;box-sizing:border-box!important;}
+    body.ss-welcome-page .first-lang-shell{position:relative!important;z-index:1;width:min(100%,430px)!important;min-height:100vh!important;min-height:100dvh!important;margin:0 auto!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;padding:max(30px,calc(env(safe-area-inset-top) + 18px)) 20px max(14px,env(safe-area-inset-bottom))!important;box-sizing:border-box!important;}
     body.ss-welcome-page .first-lang-card{flex:1 1 auto!important;width:100%!important;min-height:0!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;text-align:center!important;position:static!important;overflow:visible!important;}
     body.ss-welcome-page .first-lang-card::before,body.ss-welcome-page .first-lang-card::after{content:none!important;display:none!important;}
     body.ss-welcome-page .first-lang-logo-mark{width:68px!important;height:68px!important;margin:0 auto 6px!important;filter:drop-shadow(0 8px 16px rgba(36,142,243,.14));}
     body.ss-welcome-page .first-lang-logo-mark svg{display:block;width:100%;height:100%;overflow:visible;}
     body.ss-welcome-page .first-lang-brand{margin:0!important;font-family:'Poppins','Tajawal','Segoe UI',sans-serif!important;font-size:27px!important;line-height:1.15!important;font-weight:700!important;letter-spacing:-.4px!important;direction:ltr!important;background:linear-gradient(98deg,#0A376D 0%,#123B70 32%,#0E678C 56%,#11919D 78%,#18A7A5 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;}
     body.ss-welcome-page .first-lang-slogan{margin:4px 0 0!important;color:var(--fl-body)!important;font:500 12.5px/1.3 'Poppins','Tajawal',sans-serif!important;letter-spacing:.14em!important;text-transform:none!important;direction:ltr!important;}
+    body.ss-welcome-page .first-lang-slogan{display:flex!important;flex-direction:column!important;align-items:center!important;gap:0!important;margin:1px 0 0!important;text-align:center!important;max-width:100%!important;letter-spacing:0!important;direction:ltr!important;}
+    body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:4px!important;}
+    @media (max-height:660px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:3px!important;}}
+    body.ss-welcome-page .first-lang-slogan .ss-tag-ar{font:600 13px/1.2 'Tajawal','Segoe UI',Tahoma,sans-serif!important;letter-spacing:0!important;color:var(--fl-body)!important;}
+    body.ss-welcome-page .first-lang-slogan .ss-tag-en{font:500 12px/1.15 'Poppins','Tajawal',sans-serif!important;letter-spacing:.02em!important;color:var(--fl-body)!important;opacity:.9;}
     body.ss-welcome-page .first-lang-headline-ar,body.ss-welcome-page .first-lang-headline-en,
     body.ss-welcome-page .first-lang-desc-ar,body.ss-welcome-page .first-lang-desc-en,
     body.ss-welcome-page .first-lang-select-title [data-copy],
@@ -194,7 +199,7 @@ def welcome_page():
             </svg>
           </div>
           <h1 class="first-lang-brand ss-brand-gradient" lang="en">SymptoSense</h1>
-          <p class="first-lang-slogan" lang="en">Your Health, Smarter</p>
+          <p class="first-lang-slogan"><span class="ss-tag-ar" lang="ar" dir="rtl">خطوة أوضح لصحتك</span><span class="ss-tag-en" lang="en" dir="ltr">A clearer next step for your health</span></p>
           <p class="first-lang-headline-ar" lang="ar" dir="rtl">افهم أعراضك<em>واعرف خطوتك التالية</em></p>
           <p class="first-lang-headline-en" lang="en">Understand your symptoms<em>and know your next step</em></p>
           <div class="first-lang-copy">
@@ -647,7 +652,7 @@ def privacy_page():
     }
     for key, value in values.items():
         body = body.replace(key, value)
-    return _page(values["__TITLE__"], body)
+    return _page(values["__TITLE__"], __import__("legal_terms").extend_privacy(body, ar))
 
 
 

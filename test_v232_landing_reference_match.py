@@ -14,7 +14,7 @@ def _welcome_block():
 def test_v232_reference_layout_content():
     block = _welcome_block()
     for token in [
-        'first-lang-logo-mark', 'SymptoSense', 'Your Health, Smarter',
+        'first-lang-logo-mark', 'SymptoSense', 'A clearer next step for your health', 'خطوة أوضح لصحتك',
         'افهم أعراضك<em>واعرف خطوتك التالية</em>',
         'Understand your symptoms<em>and know your next step</em>',
         '>ع</span>', '>EN</span>', '>SA</span>' if False else 'first-lang-chip',

@@ -10,7 +10,7 @@ PROC = (ROOT / 'Procfile').read_text(encoding='utf-8')
 
 
 def test_public_sitemap_is_strict_and_language_prefixed():
-    block = WEB.split('@app.route("/sitemap.xml")', 1)[1].split('@app.route("/api/stats")', 1)[0]
+    block = WEB.split('@app.route("/sitemap.xml")', 1)[1].split('@app.route("/api/stats")', 1)[0] + (ROOT / 'seo_extras.py').read_text(encoding='utf-8')
     for page in ('"/health-library"', '"/about"', '"/how-we-work"', '"/privacy"', '"/terms"'):
         assert page in block
     for forbidden in ('admin', 'safeid', 'profile', 'health-record', 'competition-dashboard', 'share/', 'reset-password'):

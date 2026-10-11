@@ -236,3 +236,108 @@ def test_english_has_no_arabic_leaks_v279():
     res = {"source": "وزارة الصحة السعودية", "items": [{"source_name": "الصحة العالمية", "organization": "WHO"}]}
     source_names.localize(res, "en")
     assert not ar.search(str(res)), res
+
+
+def test_seo_and_library_v280(tmp_path, monkeypatch):
+    import re, seo_extras, library_regroup
+    assert seo_extras.indexable("/health-library/disease/gout")
+    assert not seo_extras.indexable("/health-library/symptom/headache")
+    assert not seo_extras.indexable("/health-library/disease/")
+    assert library_regroup.OVERRIDE["ear-pain"] == "ear"
+    assert library_regroup.OVERRIDE["kidney-stones"] == "urinary"
+    assert library_regroup.OVERRIDE["pain-during-sex"] == "womens_health"
+    xml = seo_extras.sitemap_xml("https://example.org")
+    assert "/ar/chat" not in xml and "/ar/blood" not in xml
+    assert xml.count("<url>") == xml.count("<lastmod>")
+    assert re.search(r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>", xml)
+    js = seo_extras.condition_jsonld({"last_updated": "2026-10-10", "symptoms": []}, "X</script>", "d", "/u", True, [])
+    assert "</script>X" not in js and js.count("</script>") == 1
+
+
+def test_terms_and_privacy_extended_v280():
+    import legal_terms
+    t = legal_terms.extend_terms("<main></main>", True)
+    for w in ("حدود المسؤولية", "القانون الحاكم", "الحد الأدنى للعمر", "تعديل الشروط"):
+        assert w in t
+    assert "PDPL" in legal_terms.extend_privacy("<main></main>", False)
+    assert "حماية البيانات الشخصية" in legal_terms.extend_privacy("<main></main>", True)
+
+
+def test_knowledge_seed_runs_once_and_demo_is_cached_v281(monkeypatch):
+    import medical_knowledge as mk, demo_analysis, analysis_core
+    mk.init_schema()
+    calls = []
+    monkeypatch.setattr(mk, "_seed", lambda c: calls.append(1))
+    monkeypatch.setattr(mk, "_READY_KEY", None)
+    mk.init_schema()  # simulates a fresh worker process on an already-seeded DB
+    assert calls == [], "seed must be skipped when its fingerprint is unchanged"
+    monkeypatch.setattr(mk, "_seed_fingerprint", lambda: "changed")
+    monkeypatch.setattr(mk, "_READY_KEY", None)
+    mk.init_schema()
+    assert calls == [1], "seed must rerun when the seed content changes"
+    n = []
+    real = analysis_core.run_analysis
+    monkeypatch.setattr(analysis_core, "run_analysis", lambda *a, **k: (n.append(1), real(*a, **k))[1])
+    demo_analysis._CACHE.clear()
+    a = demo_analysis.demo_analysis_result("en"); a["x"] = 1
+    b = demo_analysis.demo_analysis_result("en")
+    assert len(n) == 1 and "x" not in b and b["demo_mode"] is True
+
+
+def test_emergency_result_explains_why_v282():
+    import safety_engine
+    patient = {"symptoms": ["ألم في الصدر"], "notes": "شديد وينتشر لذراعي"}
+    ev = safety_engine.evaluate(patient, lang="ar")
+    assert ev["emergency"]
+    res = safety_engine.emergency_result(ev, lang="ar", patient=patient)
+    assert res["risk_reasons"], "emergency result must say why"
+    first = res["risk_reasons"][0]
+    assert first["name"] in ev["flags"] and "ألم في الصدر" in first["message"] and "شديد وينتشر" in first["message"]
+    assert len(first["message"]) > 60 and res["why_result"]
+    en = safety_engine.emergency_result(safety_engine.evaluate({"symptoms": ["chest pain"], "notes": "crushing and spreading to my arm"}, lang="en"), lang="en",
+                                        patient={"symptoms": ["chest pain"], "notes": "crushing"})
+    import re
+    assert not re.search("[؀-ۿ]", str(en["risk_reasons"]))
+    # without patient context it still explains (no crash)
+    assert safety_engine.emergency_result(ev, lang="ar")["risk_reasons"]
+
+
+def test_hot_paths_are_not_repeated_work_v283(monkeypatch):
+    import medication_warnings as mw, medical_knowledge as mk, search_engine_v2 as se, snapshot_cache, db
+    mw.init_schema()
+    seen = []
+    real = db._conn
+    monkeypatch.setattr(db, "_conn", lambda *a, **k: (seen.append(1), real(*a, **k))[1])
+    mw.init_schema()
+    assert not seen, "medication seed must not rerun on every lookup"
+    assert se.normalize.cache_info().maxsize and se.normalize_basic.cache_info().maxsize
+    calls = []
+    f = snapshot_cache.cached(lambda: (calls.append(1), {"a": [1]})[1], ttl=60)
+    x = f(); x["a"].append(2)
+    assert f() == {"a": [1]} and len(calls) == 1
+    mk.init_schema()
+    n = []
+    class C:
+        def __init__(s, c): s.c = c
+        def execute(s, q, *a):
+            n.append(q); return s.c.execute(q, *a)
+        def __getattr__(s, k): return getattr(s.c, k)
+    class K:
+        def __init__(s, c): s.c = c
+        def cursor(s): return C(s.c.cursor())
+        def __getattr__(s, k): return getattr(s.c, k)
+    conn = K(real())
+    syms = [{"symptom_id": i, "slug": "s%d" % i, "name_ar": "x", "name_en": "x", "canonical_slug": "s%d" % i} for i in range(1, 40)]
+    mk.match_diseases(syms, "ar", 3, conn=conn)
+    assert sum("FROM mk_disease_symptoms" in q for q in n) == 1
+
+
+def test_language_screen_tagline_v284():
+    import re
+    from pathlib import Path
+    src = Path(__file__).with_name("pagelib").joinpath("pages_html.py").read_text(encoding="utf-8")
+    assert "Your Health, Smarter" not in src
+    m = re.search(r'<p class="first-lang-slogan">(.*?)</p>', src)
+    assert m
+    ar, en = m.group(1).find("خطوة أوضح لصحتك"), m.group(1).find("A clearer next step for your health")
+    assert 0 <= ar < en, "Arabic first, English below"

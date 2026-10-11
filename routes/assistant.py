@@ -301,7 +301,7 @@ def api_analyze_safety_check():
         if safety.get("emergency"):
             decision_log.record("emergency", safety.get("rule_ids"), lang, "safety_check")
         if safety.get("emergency"):
-            payload["result"] = safety_engine.emergency_result(safety, lang=lang)
+            payload["result"] = safety_engine.emergency_result(safety, lang=lang, patient=patient)
         return jsonify(payload)
     except Exception as exc:
         return _mk_error(exc, 500)
@@ -485,7 +485,7 @@ def api_analyze():
         # normal assessment and return urgent guidance immediately.
         pre_safety = safety_engine.evaluate(patient, lang=lang)
         if pre_safety.get("emergency"):
-            result = safety_engine.emergency_result(pre_safety, lang=lang)
+            result = safety_engine.emergency_result(pre_safety, lang=lang, patient=patient)
             # V212: authenticated emergency assessments must be persisted too.
             # Previously the deterministic safety short-circuit returned before
             # analysis_core.run_analysis(), so those symptom trials could be absent

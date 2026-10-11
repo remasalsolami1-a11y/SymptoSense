@@ -296,7 +296,16 @@ def medication_source_policy(sources):
     clinical={str(x.get("provider") or "").lower() for x in src if x.get("role")=="clinical" and x.get("verified")}
     return {"ok": bool(local and len(clinical)>=2), "has_local":local, "clinical_provider_count":len(clinical), "source_count":len(src)}
 
+_READY_KEY = None
+
+
 def init_schema():
+    # Idempotent but ~2,000 statements: run once per process/database. It used
+    # to run on every medication lookup (every search request).
+    global _READY_KEY
+    key = db._database_identity()
+    if _READY_KEY == key:
+        return
     db.init_db()
     conn = db._conn()
     try:
@@ -370,5 +379,6 @@ def init_schema():
                 else:
                     c.execute(f"INSERT OR IGNORE INTO medical_medication_sources(medication_id,provider,source_role,url,verified,last_verified) VALUES({','.join([db.PH]*6)})", (med_id,provider,role,url,1,now[:10]))
         conn.commit()
+        _READY_KEY = key
     finally:
         conn.close()

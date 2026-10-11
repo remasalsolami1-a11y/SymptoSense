@@ -19,7 +19,7 @@ import symptom_guidance
 
 _CATEGORY_ORDER = [
     "pain", "respiratory", "digestive", "neurological", "cardiovascular",
-    "skin", "eye", "musculoskeletal", "womens_health", "mental-health", "general",
+    "skin", "eye", "ear", "mouth", "urinary", "musculoskeletal", "womens_health", "mental-health", "general",
 ]
 
 _USAGE_SCHEMA_READY = None
@@ -184,6 +184,7 @@ def index(lang: str) -> str:
     for kind, items in (("disease", diseases), ("symptom", symptoms)):
         for item in items:
             cat = cats.get(item.get("category_id"), {"slug": "general", "name_ar": "أعراض عامة", "name_en": "General"})
+            cat = __import__("library_regroup").apply(item["slug"], cat, cats)
             by_cat.setdefault(cat["slug"], {"cat": cat, "items": []})["items"].append((kind, item))
     ordered_slugs = [s for s in _CATEGORY_ORDER if s in by_cat] + [s for s in by_cat if s not in _CATEGORY_ORDER]
     title = "مكتبة SymptoSense الصحية" if ar else "SymptoSense Health Library"
@@ -253,6 +254,7 @@ def detail(kind: str, slug: str, lang: str):
     kind_label = (("حالة طبية" if ar else "Medical condition") if kind=="disease" else ("عرض" if ar else "Symptom"))
     body_parts=[f'<section class="ss-card" style="text-align:center"><span class="ss-badge">{esc(kind_label)}</span><h1>{esc(name)}</h1><p>{esc(description)}</p></section>']
     cats=_categories(); cat=cats.get(item.get("category_id"), {"slug":"general"})
+    cat=__import__("library_regroup").apply(slug, cat, cats)
     system=medical_taxonomy.category_system(cat.get("slug") or "general", "ar" if ar else "en")
     mapping=medical_taxonomy.approved_mapping(kind, int(item.get("id")))
     map_bits=[esc(system.get("label"))]
@@ -273,6 +275,9 @@ def detail(kind: str, slug: str, lang: str):
             lis="".join(f'<li>{esc(q)}</li>' for q in questions[:5])
             body_parts.append(f'<section class="ss-card"><h2>{esc("أسئلة تساعد على توضيح الصورة" if ar else "Questions that help clarify the picture")}</h2><ol class="hl-q">{lis}</ol></section>')
         body_parts.append(block("متى أطلب تقييمًا طبيًا؟","When should I seek medical care?",guidance.get("when_to_seek_care_ar" if ar else "when_to_seek_care_en")))
+    if kind=="disease":
+        import seo_extras as _seo
+        body_parts.append(_seo.related_symptoms(item, ar, prefix))
     sources = item.get("sources") or []
     source_cards=[]
     for src in sources:
@@ -284,6 +289,8 @@ def detail(kind: str, slug: str, lang: str):
     disclaimer=("هذه الصفحة توعوية عامة ولا تُغني عن استشارة طبية. إذا كانت أعراضك شديدة أو مقلقة، تواصل مع مختص صحي." if ar else "This page is general educational information, not a medical consultation. If symptoms are severe or worrying, contact a healthcare professional.")
     body_parts.append(f'<section class="ss-card" style="text-align:center"><a class="ss-btn ss-btn-primary" href="{prefix}/chat">{esc("افحص أعراضك الآن ←" if ar else "Check your symptoms now →")}</a><p class="ss-muted" style="font-size:12px;margin-top:10px">{esc(disclaimer)}</p></section>')
     body=f'''<main class="container" style="max-width:780px;padding-top:24px;padding-bottom:60px"><div class="ss-stack">{"".join(body_parts)}<p style="text-align:center"><a href="{prefix}/health-library">{esc("← رجوع للمكتبة" if ar else "← Back to the library")}</a></p></div><style>.hl-review{{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}}.hl-review h2{{margin:0}}.hl-review span{{font-size:12px;color:#6b7e8d}}.hl-sources{{display:grid;gap:8px;margin-top:12px}}.hl-source{{display:grid;gap:2px;text-decoration:none;border:1px solid #d9e8f1;border-radius:12px;padding:10px 12px;background:#f8fbfd;color:#36586d}}.hl-source b{{color:#176f9e}}.hl-source span{{font-size:12px}}.hl-source-gap{{margin-top:10px;padding:10px;border-radius:11px;background:#fff9ec;color:#755a18;font-size:12px;line-height:1.7}}.hl-source-ok{{margin-top:10px;padding:10px;border-radius:11px;background:#eef9f3;color:#246746;font-size:12px;line-height:1.7}}.hl-q{{line-height:1.9;padding-inline-start:22px}}.hl-tax small{{color:#6b7e8d}}</style></main>'''
+    if kind=="disease":
+        body += __import__("seo_extras").condition_jsonld(item, name, meta_desc, f"{prefix}/health-library/disease/{slug}", ar, sources)
     return page_title, meta_desc, body
 
 

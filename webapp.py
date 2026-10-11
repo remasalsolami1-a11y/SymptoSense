@@ -1506,7 +1506,7 @@ def production_security_headers(response):
         )
         if response.mimetype == "text/html" and (bool(_ss_user_id()) or logical_path.startswith(private_index_prefixes)):
             response.headers.setdefault("X-Robots-Tag", "noindex, nofollow, noarchive")
-    if logical_path.startswith("/health-library/"):
+    if logical_path.startswith("/health-library/") and not __import__("seo_extras").indexable(logical_path):
         # SEO-only: detail pages stay usable inside SymptoSense but should not
         # appear as standalone Google results. Keep crawling allowed so Google
         # can see this noindex directive and follow internal links.
@@ -2143,7 +2143,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
     }
     robots_directive = (
         "noindex, follow, noarchive"
-        if logical_path.startswith("/health-library/") or logical_path in private_noindex
+        if (logical_path.startswith("/health-library/") and not __import__("seo_extras").indexable(logical_path)) or logical_path in private_noindex
         else "index, follow"
     )
     base = _site_url()
@@ -2218,7 +2218,6 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>{safe_title}</title>
 <meta name="description" content="{safe_desc}">
-<meta name="keywords" content="{safe_keywords}">
 <meta name="robots" content="{robots_directive}">
 {gsc_tag}
 <link rel="canonical" href="{canonical}">
@@ -2289,7 +2288,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__AST_EXPLAIN_ASK__", ast["asst_explain_ask"])
         .replace("__AST_T__", _json_for_script(ast, ensure_ascii=False))
         .replace("__MAIN_ROLE__", "" if re.search(r'<main\b|role="main"', body) else ' role="main"')
-        .replace("__MAIN_H1__", "" if re.search(r"<h1\b", body) else '<h1 class="sr-only">%s</h1>' % safe_title)
+        .replace("__MAIN_H1__", "" if re.search(r"<h1\b", body) else '<h1 class="sr-only">%s</h1>' % re.sub(r"\s*[|\-–—]\s*SymptoSense\s*$", "", safe_title))
         .replace("__BODY__", body)
         .replace("__ASSET_VERSION__", html_lib.escape(STATIC_ASSET_VERSION, quote=True))
     )
@@ -2587,7 +2586,7 @@ def terms_page():
     }
     for key, value in values.items():
         body = body.replace(key, value)
-    return _page(title, body)
+    return _page(title, __import__("legal_terms").extend_terms(body, ar))
 
 def contact_page():
     ar = _lang() == "ar"
@@ -3207,6 +3206,7 @@ def _public_trust_snapshot():
         'privacy_note': 'Aggregate counts only; no personal health text, emails, names, or chat content is exposed on this page.',
     }
 
+_public_trust_snapshot = __import__("snapshot_cache").cached(_public_trust_snapshot)
 @app.route('/api/trust-snapshot', methods=['GET'])
 def api_trust_snapshot():
     try:
