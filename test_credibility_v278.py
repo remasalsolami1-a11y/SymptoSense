@@ -341,3 +341,16 @@ def test_language_screen_tagline_v284():
     assert m
     ar, en = m.group(1).find("خطوة أوضح لصحتك"), m.group(1).find("A clearer next step for your health")
     assert 0 <= ar < en, "Arabic first, English below"
+
+
+def test_v285_phone_welcome_layout_is_phone_only():
+    import welcome_phone
+    css = welcome_phone.CSS
+    # every rule lives inside a phone media query; desktop/tablet CSS untouched
+    assert css.startswith("@media (max-width:600px)")
+    assert "first-lang-panel" in css and "backdrop-filter" in css
+    assert "min-height:900px" in css  # decorative preview only on tall phones
+    import webapp
+    html = webapp.app.test_client().get("/").get_data(as_text=True)
+    assert 'class="first-lang-panel"' in html and "backdrop-filter" in html
+    assert html.count('id="languageOptions"') == 1 and html.count('id="languageTitle"') == 1

@@ -61,12 +61,18 @@ def welcome_page():
     body.ss-welcome-page .first-lang-logo-mark svg{display:block;width:100%;height:100%;overflow:visible;}
     body.ss-welcome-page .first-lang-brand{margin:0!important;font-family:'Poppins','Tajawal','Segoe UI',sans-serif!important;font-size:27px!important;line-height:1.15!important;font-weight:700!important;letter-spacing:-.4px!important;direction:ltr!important;background:linear-gradient(98deg,#0A376D 0%,#123B70 32%,#0E678C 56%,#11919D 78%,#18A7A5 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;}
     body.ss-welcome-page .first-lang-slogan{margin:4px 0 0!important;color:var(--fl-body)!important;font:500 12.5px/1.3 'Poppins','Tajawal',sans-serif!important;letter-spacing:.14em!important;text-transform:none!important;direction:ltr!important;}
-    body.ss-welcome-page .first-lang-slogan{display:flex!important;flex-direction:column!important;align-items:center!important;gap:2px!important;margin:4px 0 0!important;text-align:center!important;max-width:100%!important;letter-spacing:0!important;direction:ltr!important;}
-    body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:10px!important;}
-    @media (min-width:700px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:7px!important;}}
-    @media (max-width:699px) and (max-height:760px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:6px!important;}body.ss-welcome-page .first-lang-slogan{margin-top:3px!important;gap:2px!important;}body.ss-welcome-page .first-lang-logo-mark{margin-bottom:4px!important;}}
-    @media (max-height:660px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:4px!important;}}
-    html body.ss-welcome-page .first-lang-card .first-lang-benefits{margin-top:4px!important;}
+    body.ss-welcome-page .first-lang-slogan{display:flex!important;flex-direction:column!important;align-items:center!important;gap:3px!important;margin:6px 0 0!important;text-align:center!important;max-width:100%!important;letter-spacing:0!important;direction:ltr!important;}
+    body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:16px!important;line-height:1.22!important;}
+    @media (min-width:700px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:14px!important;}}
+    @media (min-width:700px) and (min-height:1000px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:16px!important;}}
+    @media (max-width:699px) and (max-height:760px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:16px!important;}body.ss-welcome-page .first-lang-slogan{margin-top:9px!important;}body.ss-welcome-page .first-lang-logo-mark{margin-bottom:5px!important;}}
+    @media (max-height:660px){body.ss-welcome-page .first-lang-card .first-lang-headline-ar,body.ss-welcome-page .first-lang-card .first-lang-headline-en{margin-top:14px!important;}}
+    html body.ss-welcome-page .first-lang-card .first-lang-benefits{margin-top:9px!important;}
+    html body.ss-welcome-page .first-lang-card .first-lang-headline-en{font-size:clamp(12px,3.3vw,17px)!important;line-height:1.3!important;white-space:nowrap!important;margin-top:8px!important;}
+    html body.ss-welcome-page .first-lang-card .first-lang-headline-en em{display:inline!important;}
+    html body.ss-welcome-page .first-lang-card .first-lang-headline-en em::before{content:" ";white-space:pre;}
+    @media (max-width:339px){html body.ss-welcome-page .first-lang-card .first-lang-headline-en{white-space:normal!important;}}
+    html body.ss-welcome-page .first-lang-card .first-lang-copy{margin-top:17px!important;}
     body.ss-welcome-page .first-lang-slogan .ss-tag-ar{font:600 13px/1.2 'Tajawal','Segoe UI',Tahoma,sans-serif!important;letter-spacing:0!important;color:var(--fl-body)!important;}
     body.ss-welcome-page .first-lang-slogan .ss-tag-en{font:500 12px/1.15 'Poppins','Tajawal',sans-serif!important;letter-spacing:.02em!important;color:var(--fl-body)!important;opacity:.9;}
     body.ss-welcome-page .first-lang-headline-ar,body.ss-welcome-page .first-lang-headline-en,
@@ -135,7 +141,7 @@ def welcome_page():
       body.ss-welcome-page .first-lang-headline-ar{font-size:36px!important;}
       body.ss-welcome-page .first-lang-headline-en{font-size:26px!important;}
     }
-    body.ss-welcome-page .fl-preview{display:none;}body.ss-welcome-page .fl-preview [data-copy]{display:none!important;}
+    body.ss-welcome-page .first-lang-panel{display:contents;}body.ss-welcome-page .fl-preview{display:none;}body.ss-welcome-page .fl-preview [data-copy]{display:none!important;}
     body.ss-welcome-page .first-lang--ar .fl-preview [data-copy="ar"],body.ss-welcome-page .first-lang--en .fl-preview [data-copy="en"]{display:inline!important;}
     @media (min-width:980px){
       body.ss-welcome-page .first-lang-shell{width:min(100%,1180px)!important;padding:56px 40px 28px!important;}
@@ -209,6 +215,7 @@ def welcome_page():
             <p class="first-lang-desc-ar" lang="ar" dir="rtl">مساعد صحي ذكي يساعدك على فهم أعراضك والحصول على معلومات صحية عامة، دون تقديم تشخيص طبي.</p>
             <p class="first-lang-desc-en" lang="en">A smart health assistant to help you understand your symptoms and get general health information, not a medical diagnosis.</p>
           </div>
+          <div class="first-lang-panel">
           <p class="first-lang-select-title" id="languageTitle" tabindex="-1">
             <span data-copy="ar" lang="ar" dir="rtl">اختر لغتك للبدء</span>
             <span data-copy="en" lang="en">Choose your language</span>
@@ -224,6 +231,7 @@ def welcome_page():
               <span class="first-lang-label" lang="en">English</span>
               <span class="lang-arrow" aria-hidden="true">__ARROW__</span>
             </a>
+          </div>
           </div>
           <section class="first-lang-benefits" aria-labelledby="firstLangBenefitsTitle">
             <h2 id="firstLangBenefitsTitle" class="ss-sr-only">SymptoSense benefits</h2>
@@ -288,7 +296,7 @@ def welcome_page():
     body = body.replace("__HTML_LANG__", ui_lang)
     body = body.replace("__TERMS_URL__", html_lib.escape(_localized_url("/terms", ui_lang), quote=True))
     body = body.replace("__PRIVACY_URL__", html_lib.escape(_localized_url("/privacy", ui_lang), quote=True))
-    body = body.replace("__BILINGUAL_CSS__", inline_assets.text("WELCOME_BILINGUAL_CSS.css"))
+    body = body.replace("__BILINGUAL_CSS__", inline_assets.text("WELCOME_BILINGUAL_CSS.css") + __import__("welcome_phone").CSS)
     if not is_ar:  # browser language only decides which card comes first (and so the tab order)
         a, b = body.index('<a class="first-lang-option" data-lang="ar"'), body.index('<a class="first-lang-option" data-lang="en"')
         e = body.index('</div>', b)
