@@ -101,7 +101,12 @@ def test_doctor_card_css_single_deployed_content():
 
 def test_language_picker_separates_disclaimer_and_uses_source_grounded_claim():
     assert 'مصادر طبية موثوقة' in WEB
-    assert 'SymptoSense يقدم معلومات وإرشادًا أوليًا ولا يشخّص الحالات الطبية.' in WEB
-    block = WEB[WEB.index('def welcome_page():'):WEB.index('@app.route("/language/<code>"')]
-    benefits = block[block.index('first-lang-benefits'):block.index('first-lang-leaf')]
-    assert '<b lang="ar" dir="rtl">للتوعية فقط</b>' not in benefits
+    import tempfile, os
+    os.environ.setdefault("DB_PATH", tempfile.mkdtemp() + "/v217.db")
+    import webapp
+    html = webapp.app.test_client().get("/welcome", follow_redirects=True).get_data(as_text=True)
+    benefits = html[html.index('class="first-lang-benefits"'):]
+    benefits = benefits[:benefits.index('first-lang-legal')] if 'first-lang-legal' in benefits else benefits[:3000]
+    # "Guidance, not diagnosis" is now a benefit tile in both languages, and the old "for awareness only" tile is gone.
+    assert 'إرشاد لا تشخيص' in benefits and 'Guidance, not diagnosis' in benefits
+    assert 'للتوعية فقط' not in benefits

@@ -445,7 +445,7 @@ def api_register():
         password=data.get("password") or ""; confirm=data.get("confirm",password) or ""
         if password!=confirm: return jsonify({"ok":False,"error":"password_mismatch"}),400
         if len(password)<8: return jsonify({"ok":False,"error":"password_too_short"}),400
-        if "accept_terms" in data and data.get("accept_terms") is not True: return jsonify({"ok":False,"error":"terms_required"}),400
+        if data.get("accept_terms") is not True: return jsonify({"ok":False,"error":"terms_required"}),400
         user_id,err=db.create_ss_user(email,name,password)
         if not user_id:
             if err == "email_exists":

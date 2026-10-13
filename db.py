@@ -2662,6 +2662,62 @@ def delete_member(user_id, member_id):
     finally:
         conn.close()
 
+def _table_exists(c, name):
+    if USE_POSTGRES:
+        c.execute("SELECT 1 FROM information_schema.tables WHERE table_name = %s", (name,))
+    else:
+        c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,))
+    return c.fetchone() is not None
+
+
+def delete_record_dependents(c, owner, record_ids):
+    """Delete everything that hangs off the given analysis ids (same owner only). Uses the caller's cursor/transaction."""
+    ids = [int(i) for i in record_ids]
+    for start in range(0, len(ids), 200):
+        chunk = ids[start:start + 200]
+        marks = ",".join([PH] * len(chunk))
+        for table in ("results", "feedback", "followups", "symptom_followups", "symptom_relief_logs"):
+            if _table_exists(c, table):
+                c.execute(f"DELETE FROM {table} WHERE user_hash={PH} AND record_id IN ({marks})", (owner, *chunk))
+        if _table_exists(c, "ss_analysis_links"):
+            c.execute(f"DELETE FROM ss_analysis_links WHERE user_hash={PH} AND (previous_record_id IN ({marks}) OR current_record_id IN ({marks}))",
+                      (owner, *chunk, *chunk))
+
+
+def delete_member_data_rows(c, owner, mid):
+    """Delete one family member's health data on the caller's cursor/transaction (no commit): analyses with their
+    results, follow-ups, relief logs and feedback, CBC tests and vitals. Returns how many analyses were removed."""
+    c.execute(f"SELECT id FROM records WHERE user_hash={PH} AND member_id={PH}", (owner, int(mid)))
+    ids = [r[0] for r in c.fetchall()]
+    delete_record_dependents(c, owner, ids)
+    for table in ("records", "blood_tests", "vitals"):
+        if _table_exists(c, table):
+            c.execute(f"DELETE FROM {table} WHERE user_hash={PH} AND member_id={PH}", (owner, int(mid)))
+    return len(ids)
+
+
+def delete_member_data(user_id, member_id):
+    """Standalone version: ONE transaction; any failure rolls everything back and is raised to the caller."""
+    conn = _conn()
+    done = False
+    try:
+        removed = delete_member_data_rows(conn.cursor(), _hash_user(user_id), member_id)
+        conn.commit()
+        done = True
+        return {"records": removed}
+    finally:
+        if not done:
+            conn.rollback()
+        conn.close()
+
+
+def _med_owner(user_id):
+    """Medication tables are keyed by the numeric account id; family/health data by "account-<id>".
+    Accept either so family pages and the medication engine always read the same rows."""
+    text = str(user_id)
+    return text[8:] if text.startswith("account-") and text[8:].isdigit() else user_id
+
+
 def save_med_plan(user_id, member_id, med_name, times, dose="", days=None, start_date=None, frequency="daily"):
     import json as _json
     conn = _conn()
@@ -2670,7 +2726,7 @@ def save_med_plan(user_id, member_id, med_name, times, dose="", days=None, start
         c.execute(
             f"INSERT INTO med_plans (user_hash, member_id, med_name, dose, times, frequency, start_date, days, active, created) "
             f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH},{PH},1,{PH})",
-            (_hash_user(user_id), int(member_id or 0), med_name, dose or "",
+            (_hash_user(_med_owner(user_id)), int(member_id or 0), med_name, dose or "",
              _json.dumps(times, ensure_ascii=False), frequency,
              start_date or datetime.now(timezone.utc).date().isoformat(),
              int(days) if days else None,
@@ -2694,13 +2750,13 @@ def list_med_plans(user_id, member_id=None, active_only=False):
             c.execute(
                 f"SELECT id, member_id, med_name, dose, times, frequency, start_date, days, active, created "
                 f"FROM med_plans WHERE user_hash={PH} ORDER BY id",
-                (_hash_user(user_id),),
+                (_hash_user(_med_owner(user_id)),),
             )
         else:
             c.execute(
                 f"SELECT id, member_id, med_name, dose, times, frequency, start_date, days, active, created "
                 f"FROM med_plans WHERE user_hash={PH} AND member_id={PH} ORDER BY id",
-                (_hash_user(user_id), int(member_id)),
+                (_hash_user(_med_owner(user_id)), int(member_id)),
             )
         rows = c.fetchall()
     finally:
@@ -2729,32 +2785,65 @@ def delete_med_plan(user_id, plan_id):
         c = conn.cursor()
         c.execute(
             f"UPDATE med_plans SET active=0 WHERE user_hash={PH} AND id={PH}",
-            (_hash_user(user_id), int(plan_id)),
+            (_hash_user(_med_owner(user_id)), int(plan_id)),
         )
         conn.commit()
     finally:
         conn.close()
 
 
+def lock_dose(c, owner, plan_id):
+    """Start the critical section for one plan's dose state. `owner` is the hashed medication owner.
+
+    PostgreSQL: row lock on the plan (FOR UPDATE) so concurrent log/snooze/delete calls for the plan queue up.
+    SQLite: BEGIN IMMEDIATE takes the single write lock before anything is read (other writers wait on the busy timeout).
+    Must be the first statement of the transaction; the lock is released by commit/rollback."""
+    if USE_POSTGRES:
+        c.execute(f"SELECT id FROM med_plans WHERE id={PH} AND user_hash={PH} FOR UPDATE", (int(plan_id), owner))
+    else:
+        c.execute("BEGIN IMMEDIATE")
+
+
+def dose_status(c, owner, plan_id, log_date, log_time):
+    c.execute(f"SELECT status FROM med_logs WHERE user_hash={PH} AND plan_id={PH} AND log_date={PH} AND log_time={PH}",
+              (owner, int(plan_id), log_date, log_time))
+    row = c.fetchone()
+    return row[0] if row else None
+
+
+def cancel_pending_snoozes(c, owner, plan_id, log_date, log_time):
+    if _table_exists(c, "med_snoozes"):
+        c.execute(f"UPDATE med_snoozes SET status='cancelled' WHERE user_hash={PH} AND plan_id={PH} AND log_date={PH} AND log_time={PH} AND status='pending'",
+                  (owner, int(plan_id), log_date, log_time))
+
+
+def write_dose_log(c, owner, member_id, plan_id, log_date, log_time, status):
+    # Tenant-scoped replacement of the occurrence row.
+    c.execute(f"DELETE FROM med_logs WHERE user_hash={PH} AND plan_id={PH} AND log_date={PH} AND log_time={PH}",
+              (owner, int(plan_id), log_date, log_time))
+    c.execute(f"INSERT INTO med_logs (user_hash, member_id, plan_id, log_date, log_time, status, created) VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH})",
+              (owner, int(member_id or 0), int(plan_id), log_date, log_time, status, datetime.now(timezone.utc).isoformat()))
+
+
 def log_med_status(user_id, member_id, plan_id, log_date, log_time, status):
-    owner = _hash_user(user_id)
-    conn = _conn()
+    """Record a dose outcome atomically with the reminder state.
+
+    One transaction under the plan lock: read the current state, refuse to turn a `taken` dose into `snoozed`
+    (PermissionError("reminder_already_taken")), cancel pending snoozes when the dose is taken/skipped, write the log."""
+    owner = _hash_user(_med_owner(user_id))
+    conn = _conn(); done = False
     try:
         c = conn.cursor()
-        # Keep occurrence replacement tenant-scoped even if a stale/corrupt row
-        # happens to reuse the same plan/date/time tuple.
-        c.execute(
-            f"DELETE FROM med_logs WHERE user_hash={PH} AND plan_id={PH} AND log_date={PH} AND log_time={PH}",
-            (owner, int(plan_id), log_date, log_time),
-        )
-        c.execute(
-            f"INSERT INTO med_logs (user_hash, member_id, plan_id, log_date, log_time, status, created) "
-            f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH})",
-            (owner, int(member_id or 0), int(plan_id), log_date, log_time, status,
-             datetime.now(timezone.utc).isoformat()),
-        )
-        conn.commit()
+        lock_dose(c, owner, plan_id)
+        if status == "snoozed" and dose_status(c, owner, plan_id, log_date, log_time) == "taken":
+            raise PermissionError("reminder_already_taken")
+        if status in ("taken", "skipped"):
+            cancel_pending_snoozes(c, owner, plan_id, log_date, log_time)
+        write_dose_log(c, owner, member_id, plan_id, log_date, log_time, status)
+        conn.commit(); done = True
     finally:
+        if not done:
+            conn.rollback()
         conn.close()
 
 
@@ -2766,19 +2855,19 @@ def get_med_logs(user_id, plan_id=None, log_date=None):
             c.execute(
                 f"SELECT plan_id, log_date, log_time, status FROM med_logs "
                 f"WHERE user_hash={PH} AND plan_id={PH} AND log_date={PH}",
-                (_hash_user(user_id), int(plan_id), log_date),
+                (_hash_user(_med_owner(user_id)), int(plan_id), log_date),
             )
         elif log_date is not None:
             c.execute(
                 f"SELECT plan_id, log_date, log_time, status FROM med_logs "
                 f"WHERE user_hash={PH} AND log_date={PH}",
-                (_hash_user(user_id), log_date),
+                (_hash_user(_med_owner(user_id)), log_date),
             )
         else:
             c.execute(
                 f"SELECT plan_id, log_date, log_time, status FROM med_logs "
                 f"WHERE user_hash={PH}",
-                (_hash_user(user_id),),
+                (_hash_user(_med_owner(user_id)),),
             )
         rows = c.fetchall()
     finally:
@@ -2818,6 +2907,14 @@ def med_adherence(user_id, member_id=None, days=7):
     plans = list_med_plans(user_id, member_id=member_id, active_only=False)
     if not plans:
         return {"percent": None, "taken": 0, "expected": 0, "days": days}
+    owner = _med_owner(user_id)
+    if str(owner).isdigit():
+        # One definition of adherence for every window: the reminder engine (counts only days the plan is scheduled).
+        import medication_email
+        span = max(1, min(90, int(days)))
+        sm = medication_email.reminder_calendar(int(owner), member_id, span)["summary"]
+        return {"percent": sm["adherence"] if sm["scheduled"] else None, "taken": sm["taken"],
+                "expected": sm["scheduled"], "days": span}
     logs = get_med_logs(user_id)
     log_keys = {(l["plan_id"], l["log_date"], l["log_time"]): l["status"] for l in logs}
     today = datetime.now(timezone.utc).date()

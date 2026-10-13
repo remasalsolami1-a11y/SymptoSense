@@ -1965,7 +1965,7 @@ def evaluate_risk(canonical, raw_symptoms=None, notes="", severity=1, age=None, 
     level="urgent" if any(h["risk_level"]=="urgent" for h in hits) else ("review" if hits else "low")
     if level=="low" and (severity>=4 or (age and age>=65 and bool(slugs & {"shortness-of-breath","chest-pain","fever","dehydration"}))):
         level="review"
-        hits.append({"slug":"clinical-review","name":"تقييم طبي" if lang=="ar" else "Medical review","risk_level":"review","message":"شدة الأعراض أو عوامل العمر تستدعي تقييمًا طبيًا." if lang=="ar" else "Symptom severity or age factors warrant medical review."})
+        hits.append(__import__("risk_explain").review_hit(severity, age, canonical, raw_symptoms, lang))
     labels={"ar":{"low":"🟢 خطورة منخفضة","review":"🟡 يحتاج مراجعة طبية","urgent":"🔴 يحتاج رعاية عاجلة"},"en":{"low":"🟢 Low risk","review":"🟡 Needs medical review","urgent":"🔴 Urgent"}}
     return {"level":level,"label":labels["en" if lang=="en" else "ar"][level],"reasons":hits,"emergency":level=="urgent"}
 

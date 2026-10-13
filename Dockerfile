@@ -49,7 +49,7 @@ RUN set -eu; \
       echo "WARNING: clinical sign-off gate OVERRIDDEN by ALLOW_UNSIGNED_CLINICAL=1"; \
       date -u +%Y-%m-%dT%H:%M:%SZ > .clinical_bypass; \
     else \
-      python tools/signoff.py check --strict || { echo "ERROR: clinical sign-off pending; see clinical_signoff.json (override only deliberately: --build-arg ALLOW_UNSIGNED_CLINICAL=1)" >&2; exit 1; }; \
+      python signoff_cli.py check --strict || { echo "ERROR: clinical sign-off pending; see clinical_signoff.json (override only deliberately: --build-arg ALLOW_UNSIGNED_CLINICAL=1)" >&2; exit 1; }; \
     fi; \
     echo "SymptoSense V279 production build validation passed"
 

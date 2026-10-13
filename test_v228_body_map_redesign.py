@@ -7,11 +7,12 @@ CSS = (ROOT / 'static' / 'css' / 'app-shell-v111.css').read_text(encoding='utf-8
 
 
 def test_v228_uses_detailed_clinical_svg_instead_of_old_simple_silhouette():
-    assert 'smart-body-svg v228' in CHAT
-    assert 'linearGradient id="skinFront"' in CHAT
-    assert 'linearGradient id="torsoSoft"' in CHAT
-    assert 'body-zone-glow' in CHAT
-    assert 'viewBox="0 0 320 680"' in CHAT
+    # V245 replaced the hand-drawn gradient SVG with an anatomical illustration (webp) under an SVG layer of tappable zones.
+    assert 'class="bm-art"' in CHAT and 'BM_ART' in CHAT and 'preserveAspectRatio="xMidYMid meet"' in CHAT
+    assert 'body-front-v245' in CHAT and 'body-back-v245' in CHAT
+    for name in ('body-front-v245.webp', 'body-back-v245.webp'):
+        assert (ROOT / 'static' / 'images' / name).is_file()
+    assert 'linearGradient id="skinFront"' not in CHAT       # the old simple silhouette is gone
 
 
 def test_v228_keeps_front_back_and_labeled_connected_zones():
@@ -48,7 +49,7 @@ def test_v228_preserves_symptom_selection_and_free_text_flow():
     assert 'data-body-other-input' in CHAT
     assert 'data-body-other-submit' in CHAT
     assert 'وش تحس في هذا المكان؟' in CHAT
-    assert 'extractSmartSymptoms(value)' in CHAT
+    assert 'extractSmartSymptoms(value, selectedRegion || null)' in CHAT
 
 
 def test_v228_does_not_add_disease_names_to_body_map_layer():

@@ -21,6 +21,8 @@ body.ss-chat-page .ss-quality-score,body.ss-chat-page a.ss-step-source{color:#1F
 .em-card h3,.em-card>p,.em-card .em-icon{text-align:center}
 .em-card .em-icon{margin-inline:auto}
 .em-card .em-flags,.em-card .em-btns{justify-content:center}
+.em-card .em-why{margin:0 0 16px;padding:12px 14px;border-radius:14px;background:#FFF7F7;border:1px solid #FECACA;text-align:start;color:#7F1D1D}.ss-risk-why{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#FFFBEB;border:1px solid #FDE68A;color:#4B3A06;text-align:start}.ss-risk-why b{display:block;font-size:13.5px;margin-bottom:4px}.ss-risk-why p{margin:3px 0 0;font-size:13.5px;line-height:1.7}
+.em-card .em-why-t{font-weight:800;font-size:14px;margin-bottom:6px;color:#991B1B}.em-card .em-why p{margin:4px 0 0;font-size:13.5px;line-height:1.7;color:#4B1D1D}
 .em-call-main{font-size:18px!important;min-height:54px;display:inline-flex;align-items:center;padding:0 26px!important;animation:emPulse 1.6s ease-in-out infinite}
 .em-call-alt{background:#7F1D1D!important}
 .em-back{background:#B91C1C!important}
@@ -126,8 +128,10 @@ html[dir="ltr"] body.ss-home-page .ss-home-hero{direction:ltr!important}
 html[dir="ltr"] body.ss-home-page :is(.ss-hero-copy,.ss-hero-copy h1,.ss-hero-copy p,.ss-hero-actions,.ss-trust-row){text-align:left!important}
 html[dir="ltr"] body.ss-home-page .ss-hero-kicker{justify-content:flex-start!important}
 html[dir="ltr"] body.ss-home-page :is(.ss-hero-copy,.ss-hero-copy *,.ss-trust-row,.ss-trust-row *,.ss-trust-safety-link,.ss-hero-demo,.ss-hero-demo *){direction:ltr!important}
+@media(min-width:768px){
 html[dir="ltr"] body.ss-home-page .ss-hero-copy{grid-column:1!important}
 html[dir="ltr"] body.ss-home-page .ss-hero-demo{grid-column:2!important}
+}
 html[dir="ltr"] body.ss-home-page .ss-hero-demo .ss-demo-note{display:none!important}
 html[dir="ltr"] body.ss-home-page .ss-hero-lead{margin-left:0!important;margin-right:auto!important}
 html[dir="ltr"] body.ss-home-page .ss-hero-demo :is(.ss-result-top,.ss-result-risk,.ss-possible-card,.ss-result-row){text-align:left!important}

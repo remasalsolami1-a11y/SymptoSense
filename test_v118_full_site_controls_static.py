@@ -34,9 +34,10 @@ def test_all_literal_inline_calls_are_allowlisted():
 
 def test_mobile_body_sheet_close_has_direct_binding():
     for source in (CHAT, CHAT_MIRROR):
-        assert "data-close-body-sheet" in source
-        assert "sheet.querySelector('[data-close-body-sheet]')" in source
-        assert "closeBtn.addEventListener('click'" in source
+        # The body map is an inline pane now: switching the method tab closes it through closeBodyMapSheet().
+        assert "function closeBodyMapSheet()" in source
+        assert "document.body.classList.remove('symptom-sheet-open')" in source
+        assert re.search(r"closeBodyMapSheet\(\);\s*symptomInputMethod=method\.dataset\.symptomMethod", source)
 
 def test_admin_lab_actions_have_server_fallbacks():
     assert 'href="/admin/analysis-trials"' in DASH

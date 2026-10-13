@@ -158,6 +158,11 @@ def init_schema():
                 )
             """)
             c.execute("CREATE INDEX IF NOT EXISTS idx_med_snooze_due ON med_snoozes(status,due_at_utc)")
+            # At most one pending snooze per dose, enforced by the database (concurrent presses cannot double-notify).
+            c.execute("UPDATE med_snoozes SET status='cancelled' WHERE status='pending' AND id < (SELECT MAX(s2.id) FROM med_snoozes s2 "
+                      "WHERE s2.user_hash=med_snoozes.user_hash AND s2.plan_id=med_snoozes.plan_id AND s2.log_date=med_snoozes.log_date "
+                      "AND s2.log_time=med_snoozes.log_time AND s2.status='pending')")
+            c.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_med_snooze_pending ON med_snoozes(user_hash,plan_id,log_date,log_time) WHERE status='pending'")
 
             c.execute(f"""
                 CREATE TABLE IF NOT EXISTS med_email_actions (
@@ -349,7 +354,7 @@ def save_plan(user_id, data: dict, plan_id: int | None = None) -> int:
         member = int(data.get("member_id") or 0)
     except (TypeError, ValueError):
         raise ValueError("invalid_member")
-    if member < 0 or (member and not db.get_member(user_id, member)):
+    if member < 0 or (member and not db.get_member("account-%s" % user_id, member)):
         raise ValueError("invalid_member")
     days = data.get("days")
     if days in (None, ""):
@@ -424,6 +429,36 @@ def list_plans(user_id, member_id=None, active_only=True) -> list[dict]:
     } for r in rows]
 
 
+def delete_plan_rows(c, uid, uh, pid):
+    """Write the tombstone and hard-delete one plan with everything attached, on the caller's cursor/transaction."""
+    now = _now()
+    c.execute(
+        f"SELECT 1 FROM med_plan_tombstones WHERE user_hash={PH} AND plan_id={PH}",
+        (uh, pid),
+    )
+    if c.fetchone():
+        c.execute(
+            f"UPDATE med_plan_tombstones SET deleted_at={PH} WHERE user_hash={PH} AND plan_id={PH}",
+            (now, uh, pid),
+        )
+    else:
+        c.execute(
+            f"INSERT INTO med_plan_tombstones(user_hash,plan_id,deleted_at) VALUES({PH},{PH},{PH})",
+            (uh, pid, now),
+        )
+
+    # The UI confirms that deleting a reminder also removes its reminder
+    # history. This avoids retaining health-event data after an explicit
+    # delete without the user knowing.
+    c.execute(f"DELETE FROM medication_reminders WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
+    c.execute(f"DELETE FROM med_snoozes WHERE plan_id={PH} AND user_hash={PH}", (pid, uh))
+    c.execute(f"DELETE FROM med_email_actions WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
+    c.execute(f"DELETE FROM med_email_deliveries WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
+    c.execute(f"DELETE FROM med_telegram_deliveries WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
+    c.execute(f"DELETE FROM med_logs WHERE plan_id={PH} AND user_hash={PH}", (pid, uh))
+    c.execute(f"DELETE FROM med_plans WHERE id={PH} AND user_hash={PH}", (pid, uh))
+
+
 def delete_plan(user_id, plan_id):
     """Permanently remove one owned medication reminder plan and its history.
 
@@ -447,32 +482,7 @@ def delete_plan(user_id, plan_id):
             )
             return bool(c.fetchone())
 
-        now = _now()
-        c.execute(
-            f"SELECT 1 FROM med_plan_tombstones WHERE user_hash={PH} AND plan_id={PH}",
-            (uh, pid),
-        )
-        if c.fetchone():
-            c.execute(
-                f"UPDATE med_plan_tombstones SET deleted_at={PH} WHERE user_hash={PH} AND plan_id={PH}",
-                (now, uh, pid),
-            )
-        else:
-            c.execute(
-                f"INSERT INTO med_plan_tombstones(user_hash,plan_id,deleted_at) VALUES({PH},{PH},{PH})",
-                (uh, pid, now),
-            )
-
-        # The UI confirms that deleting a reminder also removes its reminder
-        # history. This avoids retaining health-event data after an explicit
-        # delete without the user knowing.
-        c.execute(f"DELETE FROM medication_reminders WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
-        c.execute(f"DELETE FROM med_snoozes WHERE plan_id={PH} AND user_hash={PH}", (pid, uh))
-        c.execute(f"DELETE FROM med_email_actions WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
-        c.execute(f"DELETE FROM med_email_deliveries WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
-        c.execute(f"DELETE FROM med_telegram_deliveries WHERE plan_id={PH} AND user_id={PH}", (pid, uid))
-        c.execute(f"DELETE FROM med_logs WHERE plan_id={PH} AND user_hash={PH}", (pid, uh))
-        c.execute(f"DELETE FROM med_plans WHERE id={PH} AND user_hash={PH}", (pid, uh))
+        delete_plan_rows(c, uid, uh, pid)
         conn.commit()
     except Exception:
         conn.rollback()
@@ -578,17 +588,35 @@ def schedule_snooze(user_id, plan_id, _member_id, log_date, log_time, minutes=No
         mins = 10
     tz = ZoneInfo(valid_timezone(plan.get("timezone") or settings.get("timezone")))
     d = date.fromisoformat(str(log_date)[:10]); h, m = map(int, str(log_time).split(":", 1))
-    due = datetime(d.year, d.month, d.day, h, m, tzinfo=tz).astimezone(timezone.utc) + timedelta(minutes=mins)
-    uh = db._hash_user(user_id); now = _now(); conn = db._conn(); c = conn.cursor()
-    try:
-        c.execute(
-            f"INSERT INTO med_snoozes(user_hash,plan_id,member_id,log_date,log_time,due_at_utc,minutes,status,created_at) VALUES({','.join([PH]*9)})",
-            (uh, int(plan_id), int(plan.get("member_id") or 0), str(log_date), str(log_time), due.isoformat(), mins, "pending", now),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-    db.log_med_status(user_id, int(plan.get("member_id") or 0), int(plan_id), str(log_date), str(log_time), "snoozed")
+    # Count the delay from the moment of the press when the dose time has already passed, so the due time is never in the past.
+    base = max(datetime(d.year, d.month, d.day, h, m, tzinfo=tz).astimezone(timezone.utc), datetime.now(timezone.utc))
+    due = base + timedelta(minutes=mins)
+    uh = db._hash_user(db._med_owner(user_id)); now = _now()
+    for attempt in (1, 2):
+        conn = db._conn(); c = conn.cursor(); done = False
+        try:
+            # One transaction under the plan lock: check "taken" -> replace the pending snooze -> write the "snoozed" log.
+            # A concurrent "taken" either committed first (we refuse here) or waits and then cancels our pending snooze.
+            db.lock_dose(c, uh, plan_id)
+            if db.dose_status(c, uh, plan_id, str(log_date), str(log_time)) == "taken":
+                raise PermissionError("reminder_already_taken")
+            db.cancel_pending_snoozes(c, uh, plan_id, str(log_date), str(log_time))  # one active snooze per dose: "later" again replaces it
+            c.execute(
+                f"INSERT INTO med_snoozes(user_hash,plan_id,member_id,log_date,log_time,due_at_utc,minutes,status,created_at) VALUES({','.join([PH]*9)})",
+                (uh, int(plan_id), int(plan.get("member_id") or 0), str(log_date), str(log_time), due.isoformat(), mins, "pending", now),
+            )
+            db.write_dose_log(c, uh, int(plan.get("member_id") or 0), plan_id, str(log_date), str(log_time), "snoozed")
+            conn.commit(); done = True
+        except db.DB_ERRORS:
+            # Safety net (the lock normally prevents it): a unique-index clash or busy database is retried once.
+            if attempt == 2:
+                raise
+        finally:
+            if not done:
+                conn.rollback()
+            conn.close()
+        if done:
+            break
     return mins
 
 
@@ -931,6 +959,27 @@ def send_due_emails(now_utc: datetime | None = None) -> dict:
         return {"sent": sent, "failed": failed, "skipped": skipped, "telegram_sent": telegram_sent, "telegram_failed": telegram_failed, "telegram_skipped": telegram_skipped, "scanned": scanned, "due_candidates": due_candidates, "grace_seconds": grace_seconds, "locked": False, "provider": email_provider_status()["provider"]}
     finally:
         _release_cycle_lock(lock)
+
+
+def peek_email_action(raw_token: str) -> dict:
+    """Read-only: report the action/lang of a still-valid token without consuming it."""
+    init_schema(); th = _token_hash(raw_token or ""); now = datetime.now(timezone.utc)
+    conn = db._conn(); c = conn.cursor()
+    try:
+        c.execute(f"SELECT lang,action,expires_at,consumed_at FROM med_email_actions WHERE token_hash={PH}", (th,)); r = c.fetchone()
+    finally:
+        conn.close()
+    if not r or r[3]:
+        raise PermissionError("invalid_action_token")
+    try:
+        exp = datetime.fromisoformat(str(r[2]).replace("Z", "+00:00"))
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+    except ValueError:
+        raise PermissionError("action_token_expired")
+    if exp < now:
+        raise PermissionError("action_token_expired")
+    return {"action": r[1], "lang": r[0]}
 
 
 def handle_email_action(raw_token: str) -> dict:

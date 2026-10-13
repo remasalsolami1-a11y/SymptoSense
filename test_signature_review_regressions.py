@@ -117,9 +117,11 @@ def integration_check():
     assert all(x.get('effectiveDateTime') for x in obs)
     assert next(x for x in obs if 'valueString' in x)['valueString'] == 'own symptom'
     meds = [x for x in resources if x['resourceType'] == 'MedicationStatement']
-    assert len(meds) == 1 and meds[0]['medicationCodeableConcept']['text'] == 'own symptom medication'
+    # Medication rows are keyed by the numeric account id; "account-<id>" and "<id>" are the same owner for them.
+    assert {m['medicationCodeableConcept']['text'] for m in meds} == {'own symptom medication', 'other channel symptom medication'}
     text = json.dumps(response.json)
-    assert 'family symptom' not in text and 'other channel' not in text and 'other account' not in text
+    assert 'family symptom' not in text and 'other account' not in text
+    assert 'other channel symptom"' not in text.replace('other channel symptom medication', '')
     conn = db._conn(); conn.execute("UPDATE ss_users SET status='disabled' WHERE id=?", (uid,)); conn.commit(); conn.close()
     assert client.get('/api/v1/fhir/export').status_code == 401
     # A disabled account must not manage credentials through an old session.

@@ -2088,6 +2088,7 @@ def family_page():
       <div class="muted" style="font-size:13px;margin-top:6px;">__INTRO__</div>
       <div class="fam-grid" id="famGrid"><div class="muted">...</div></div>
     </div>
+    <div id="famArchive"></div><script src="/static/js/family-ops.js" defer></script><script src="/static/js/family-archive.js" defer></script>
     <div class="card" style="margin-top:14px;text-align:center;">
       <h3 style="color:#123B70;margin-top:0">__INVITE_TITLE__</h3>
       <p class="muted" style="font-size:13px;">__INVITE_SUB__</p>
@@ -2180,11 +2181,12 @@ def family_page():
         box.innerHTML = h;
       }).catch(()=>{ document.getElementById('famGrid').innerHTML = '<div class="warn">' + TT('fam_err') + '</div>'; });
     }
+    function ssCsrf() { const m = document.querySelector('meta[name="symptosense-csrf"]'); return m ? String(m.content || '') : ''; }
     function saveFam() {
       const name = document.getElementById('fName').value.trim();
       const msg = document.getElementById('famMsg');
       if (!name) { msg.textContent = TT('fam_name'); msg.style.color = '#B91C1C'; return; }
-      fetch('/api/family', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      fetch('/api/family', {method:'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token': ssCsrf()}, body: JSON.stringify({
         relation: rel, name: name,
         age: document.getElementById('fAge').value.trim(),
         gender: document.getElementById('fGender').value,
@@ -2317,11 +2319,13 @@ def family_detail_page(mid):
       <h3 style="color:#123B70;">__TL__</h3>
       <div id="timeline" style="margin-top:10px;"><div class="muted">...</div></div>
     </div>
+    <div id="famDelete" data-mid="__MID__"></div><script src="/static/js/family-ops.js" defer></script><script src="/static/js/family-delete.js" defer></script>
     <script>
     const T = __PT__;
     const LANG = "__LANG__";
     const MID = __MID__;
     const MEMNAME = __MEMNAME_JS__;
+    function ssCsrf() { const m = document.querySelector('meta[name="symptosense-csrf"]'); return m ? String(m.content || '') : ''; }
     function TT(k) { return T[k] || k; }
     function esc(s) { const div=document.createElement('div'); div.textContent=s||''; return div.innerHTML; }
     function todayStr() { const d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
@@ -2334,9 +2338,9 @@ def family_detail_page(mid):
         mine.forEach(p => {
           h += '<div class="rc-title">' + esc(p.med_name) + (p.dose ? ' <span class="muted">(' + esc(p.dose) + ')</span>' : '') + '</div>';
           p.times.forEach(tm => {
-            const st = p.status[tm] || '';
+            const st = ((p.logs || p.status || {})[tm]) || '';
             let btn = '';
-            if (st) { btn = '<span class="mini-btn done">' + TT('fam_today_logged') + '</span>'; }
+            if (st && st !== 'snoozed') { btn = '<span class="mini-btn done">' + TT('fam_today_logged') + '</span>'; }
             else {
               btn = '<span class="mini-btn tk" data-ss-click="logMed" data-ss-args="' + ssArgs([p.id, tm, 'taken']) + '">' + TT('fam_take') + '</span>' +
                     '<span class="mini-btn sk" data-ss-click="logMed" data-ss-args="' + ssArgs([p.id, tm, 'skipped']) + '">' + TT('fam_skip') + '</span>' +
@@ -2349,16 +2353,18 @@ def family_detail_page(mid):
       }).catch(()=>{});
     }
     function logMed(pid, tm, st) {
-      fetch('/api/meds/log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-        plan_id: pid, time: tm, status: st, member_id: MID, date: todayStr()
-      })}).then(r=>r.json()).then(()=>{ loadPlans(); refreshAdh(); });
+      const en = document.documentElement.lang === 'en', msg = document.getElementById('planMsg'), later = st === 'deferred';  // "later" = snooze
+      const say = (ok, ar, e) => { if (msg) { msg.textContent = en ? e : ar; msg.style.color = ok ? '#1F6FAE' : '#B91C1C'; } };
+      const body = later ? {plan_id: pid, time: tm, date: todayStr()} : {plan_id: pid, time: tm, status: st, member_id: MID, date: todayStr()};
+      fetch(later ? '/api/meds/snooze' : '/api/meds/log', {method:'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token': ssCsrf()}, body: JSON.stringify(body)})
+        .then(r => r.json().catch(() => ({})).then(d => r.ok && d.ok !== false ? true : d.error === 'reminder_already_taken' ? 'taken' : false)).then(ok => { if (ok === 'taken') { say(false, 'سُجّلت هذه الجرعة كمأخوذة بالفعل.', 'This dose is already marked as taken.'); loadPlans(); refreshAdh(); return; } say(ok, later ? '⏰ تم تأجيل التذكير.' : '✅ تم التسجيل.', later ? '⏰ Reminder postponed.' : '✅ Logged.'); if (ok) { loadPlans(); refreshAdh(); } else say(false, 'تعذر الحفظ، حاول مرة أخرى.', 'Could not save, please try again.'); })
+        .catch(() => say(false, 'تعذر الاتصال بالخادم.', 'Could not reach the server.'));
     }
     function refreshAdh() {
       fetch('/api/meds/weekly?member=' + MID).then(r=>r.json()).then(d=>{
         if (d.ok && d.percent !== null && d.percent !== undefined) {
-          document.querySelector('.adh-fill').style.width = d.percent + '%';
-          const el = document.querySelector('.adh-bar').previousElementSibling;
-          el.querySelector('b').textContent = TT('fam_week_adh').replace('%s', d.percent);
+          document.querySelector('.adh-fill').style.width = d.percent + '%'; const bs = document.querySelector('.adh-bar').previousElementSibling.querySelectorAll('b');  // label + number: update both
+          bs[0].textContent = TT('fam_week_adh').replace('%s%', d.percent + '%').replace('%s', d.percent).replace(/[: ]+$/, ''); if (bs[1]) bs[1].textContent = d.percent + '%';
         }
       }).catch(()=>{});
     }
@@ -2368,7 +2374,7 @@ def family_detail_page(mid):
       const msg = document.getElementById('planMsg');
       const times = tval.split(/[,،\\s]+/).filter(Boolean);
       if (!name || !times.length) { msg.textContent = TT('fam_name'); msg.style.color='#B91C1C'; return; }
-      fetch('/api/meds/plan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      fetch('/api/meds/plan', {method:'POST', headers:{'Content-Type':'application/json', 'X-CSRF-Token': ssCsrf()}, body: JSON.stringify({
         member_id: MID, med_name: name, dose: document.getElementById('pDose').value.trim(),
         times: times, days: document.getElementById('pDays').value || null
       })}).then(r=>r.json()).then(d=>{
@@ -2409,7 +2415,7 @@ def family_detail_page(mid):
         ("__ANA__", t["fam_add_analysis"]), ("__CBC__", t["fam_add_cbc"]), ("__BACK__", t["fam_back"]),
         ("__LASTANA__", t["fam_last_analysis"]), ("__ANA_TXT__", html_lib.escape(str(ana_txt), quote=True)),
         ("__LASTCBC__", t["fam_last_cbc"]), ("__CBC_TXT__", html_lib.escape(str(cbc_txt), quote=True)),
-        ("__ADH__", t["fam_week_adh"]), ("__ADH_PCT__", (str(adh) + "%") if adh is not None else t["fam_no_adherence"]),
+        ("__ADH__", t["fam_week_adh"].replace("%s%", "%g%%" % adh if adh is not None else "").replace("%s", "%g" % adh if adh is not None else "").rstrip(": ")), ("__ADH_PCT__", (str(adh) + "%") if adh is not None else t["fam_no_adherence"]),
         ("__ADH_W__", str(int(adh)) if adh is not None else "0"),
         ("__MEDSREG__", t["fam_meds_reg"]), ("__MEDS_TXT__", html_lib.escape(str(meds_txt), quote=True)),
         ("__PLANT__", t["fam_plan_title"]), ("__PLANSUB__", html_lib.escape(str(t["fam_plan_sub"] % member_name), quote=True)),

@@ -6,6 +6,7 @@ register_routes() (transitional; see ARCHITECTURE_AR.md).
 """
 from routes import _inject
 from flask import jsonify
+from flask import make_response
 from flask import redirect
 from flask import request
 from services.medication_service import MEDS_API_REVISION, MedicationError, MedicationService
@@ -73,10 +74,21 @@ def meds():
     return meds_page()
 
 
-@route("/meds/email-action/<token>")
+@route("/meds/email-action/<token>", methods=["GET", "POST"])
 def meds_email_action(token):
-    """One-time action link from a medication reminder email."""
+    """One-time action link from a medication reminder email.
+
+    GET only shows a confirmation page (scanners/prefetchers must not change
+    data); the POST button runs the action.
+    """
     try:
+        if request.method == "GET":
+            info = medication_email.peek_email_action(str(token or ""))
+            page = __import__("med_email_confirm").render(str(token), str(info.get("action")), "en" if info.get("lang") == "en" else "ar")
+            resp = make_response(page)
+            resp.headers["Cache-Control"] = "no-store"
+            resp.headers["Referrer-Policy"] = "no-referrer"
+            return resp
         result = medication_email.handle_email_action(str(token or ""))
         lang = "en" if result.get("lang") == "en" else "ar"
         state = "taken" if result.get("status") == "taken" else "snoozed"
@@ -142,7 +154,7 @@ def api_meds_snooze():
     if not _service_consent_ok(): return _consent_required_json("/meds")
     try:
         return jsonify(service.snooze(_medication_user_id(), request.get_json(silent=True)))
-    except PermissionError: return _forbidden()
+    except PermissionError as exc: return (jsonify({"ok": False, "error": "reminder_already_taken"}), 409) if "already_taken" in str(exc) else _forbidden()  # taken wins
     except (TypeError, ValueError): return jsonify({"ok": False, "error": "invalid_reminder"}), 400
     except Exception as exc: return _mk_error(exc)
 

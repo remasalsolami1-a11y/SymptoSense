@@ -10,8 +10,10 @@ def test_quick_pick_is_progressive_disclosure():
     assert 'symptomOptionsExpanded' in CHAT
 
 def test_three_entry_methods_explain_their_difference():
-    for text in ('وش تحس؟','وين تحس؟','وصفك الكامل'):
+    for text in ('اختيار سريع', 'من الجسم', 'اكتب بنفسك'):   # short tab labels replaced the long explanatory ones
         assert text in CHAT
+    for method in ('pick', 'body', 'describe'):
+        assert 'data-symptom-method="%s"' % method in CHAT
     assert 'symptom-method-copy' in CHAT
 
 def test_body_map_supports_precise_subregions_and_free_text():

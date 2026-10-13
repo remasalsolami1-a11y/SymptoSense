@@ -52,7 +52,7 @@ def test_only_two_font_stacks_are_used_in_site_css():
     allowed = {re.sub(r'[\s"\']', '', s) for s in (AR, LAT)}
     bad = {}
     for f in _sources():
-        t = Path(f).read_text(encoding='utf-8', errors='ignore')
+        t = re.sub(r'@font-face\s*\{[^}]*\}', '', Path(f).read_text(encoding='utf-8', errors='ignore'))  # @font-face declares a family, it is not a stack
         for m in re.finditer(r"font-family\s*:\s*([^;}{<]+)", t):
             s = m.group(1).replace('!important', '').strip()
             first = s.split(',')[0].strip().strip('"\'').lower()

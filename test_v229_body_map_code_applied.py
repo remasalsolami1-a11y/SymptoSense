@@ -7,13 +7,13 @@ CSS=(ROOT/'app-shell-v111.css').read_text(encoding='utf-8')
 
 def test_body_map_is_real_code_not_raster_mockup():
     assert 'function renderBodySilhouette(view)' in CHAT
-    assert '<svg class="smart-body-svg v228"' in CHAT
+    assert '<svg class="bm-svg"' in CHAT       # real SVG layer (tappable zones) over the illustration, not a flat picture
     assert 'data-body-zone' in CHAT
     assert 'showBodyZone' in CHAT
 
 def test_modal_matches_selected_mobile_design():
-    assert "'اختر المنطقة'" in CHAT
-    assert 'اضغط على الجزء الذي تشعر فيه بأعراض' in CHAT
+    assert 'أين تشعر بالعرض؟' in CHAT
+    assert 'اضغط على المكان الأقرب لما تشعر به' in CHAT
     assert 'أمام الجسم' in CHAT and 'خلف الجسم' in CHAT
     assert 'smart-body-selection-note' in CHAT
 

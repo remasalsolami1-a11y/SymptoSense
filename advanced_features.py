@@ -189,10 +189,7 @@ def delete_user_analysis(user_key: str, record_id: int) -> bool:
     try:
         c.execute(f"SELECT 1 FROM records WHERE id={PH} AND user_hash={PH} AND COALESCE(member_id,0)=0", (rid,owner))
         if not c.fetchone(): return False
-        c.execute(f"DELETE FROM results WHERE record_id={PH} AND user_hash={PH}", (rid,owner))
-        c.execute(f"DELETE FROM feedback WHERE record_id={PH} AND user_hash={PH}", (rid,owner))
-        c.execute(f"DELETE FROM followups WHERE record_id={PH} AND user_hash={PH}", (rid,owner))
-        c.execute(f"DELETE FROM ss_analysis_links WHERE user_hash={PH} AND (previous_record_id={PH} OR current_record_id={PH})", (owner,rid,rid))
+        db.delete_record_dependents(c, owner, [rid])
         c.execute(f"DELETE FROM records WHERE id={PH} AND user_hash={PH}", (rid,owner))
         conn.commit(); return True
     finally: conn.close()

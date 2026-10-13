@@ -67,4 +67,4 @@ def test_compact_mobile_controls_keep_touch_targets_and_readable_copy():
     assert "V69 final home/mobile legibility + touch-target pass" in WEB
     assert ".ss-hero-primary,.ss-hero-secondary,.ss-hero-demo-cta,.ss-core-open{min-height:44px!important}" in WEB
     assert "body.ss-chat-page .quick-symptom-chip{min-height:44px!important" in WEB
-    assert "body.ss-welcome-page .first-lang-benefit small{font-size:9.5px!important" in WEB
+    assert "first-lang-benefit b{font-size:12.5px" in WEB   # welcome benefit labels stay readable (>=12px)

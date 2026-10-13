@@ -25,7 +25,7 @@ DASHBOARD_HTML = r"""
 <script src="/static/js/mini-charts.js?v={{ asset_version }}"></script>
 <script src="/static/js/interaction-bridge.js?v={{ asset_version }}" defer></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&family=Poppins:wght@400;600;700&display=swap');
+@import url('/static/css/fonts.css');
 :root{--p:#1565c0;--pd:#123B70;--pl:#EAF4FF;--sky:#64B5F6;--bg:#F5F9FF;--card:#fff;--line:#DCEBFA;--text:#40566F;--muted:#5F7185;--green:#166534;--greenbg:#ECFDF5;--yellow:#92400E;--yellowbg:#FFFBEB;--red:#991B1B;--redbg:#FEF2F2}
 *{box-sizing:border-box;margin:0;padding:0;min-width:0}body{font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}button,input,select,textarea{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}html[dir='ltr'] body{font-family:'Poppins','Tajawal','Segoe UI',sans-serif}html[dir='rtl'] body{font-family:'Tajawal','Segoe UI',Tahoma,sans-serif}
 .top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px clamp(14px,3vw,34px)}

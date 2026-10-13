@@ -27,7 +27,7 @@ def test_every_zone_can_fall_back_to_free_text():
     assert 'اكتب وش تحس في هذه المنطقة بطريقتك.' in CHAT
     assert 'data-body-other-input' in CHAT
     assert 'data-body-other-submit' in CHAT
-    assert 'extractSmartSymptoms(value)' in CHAT
+    assert 'extractSmartSymptoms(value, selectedRegion || null)' in CHAT   # the free text is parsed together with the tapped region
 
 
 def test_body_zone_is_ui_specific_and_preserves_backend_region_model():

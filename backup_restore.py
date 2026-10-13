@@ -28,7 +28,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 import db
 
@@ -132,6 +132,47 @@ def _safe_db_identity(url: str) -> str:
     return hashlib.sha256((url or "").strip().encode("utf-8")).hexdigest()
 
 
+def _live_db_identity(url: str) -> tuple:
+    """Identity of the database a URL really reaches, asked of the server itself with ONE query every role may run.
+
+    Two different strings (localhost vs 127.0.0.1, a socket path, a proxy alias, ?options) can name one database, so
+    comparing URL text is not a safety check. The identity is (server start time, database name, database OID): a fresh
+    cluster can reuse the same name and OID, but not the same postmaster start time to the microsecond. Nothing here
+    depends on the role's privileges (pg_control_system() does, and mixing it with a fallback made one database look
+    like two), and any missing part raises instead of guessing.
+    """
+    import psycopg2
+    conn = psycopg2.connect(url, connect_timeout=10)
+    try:
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("SELECT pg_postmaster_start_time()::text, current_database(), "
+                    "(SELECT oid::bigint FROM pg_database WHERE datname = current_database())")
+        row = cur.fetchone()
+    finally:
+        conn.close()
+    if not row or any(part in (None, "") for part in row):
+        raise RuntimeError("The server did not report a complete database identity")
+    return (str(row[0]), str(row[1]), int(row[2]))
+
+
+def _ensure_not_production(target: str) -> None:
+    """Refuse a restore-test target that is, or cannot be proven not to be, the production database."""
+    if _safe_db_identity(target) == _safe_db_identity(db.DATABASE_URL):
+        raise RuntimeError("RESTORE_TEST_DATABASE_URL must never point to the production database")
+    try:
+        production = _live_db_identity(db.DATABASE_URL)
+        candidate = _live_db_identity(target)
+        # Production is read twice: a server restart between the reads would change its start time and make the same
+        # database look different, so an unstable identity is treated as "cannot prove it".
+        if _live_db_identity(db.DATABASE_URL) != production:
+            raise RuntimeError("The production database identity changed while it was being checked; refusing to restore")
+    except db.DB_ERRORS as exc:
+        raise RuntimeError("Could not verify that RESTORE_TEST_DATABASE_URL is a different database; refusing to restore") from exc
+    if candidate == production:
+        raise RuntimeError("RESTORE_TEST_DATABASE_URL reaches the production database through a different address; refusing to restore")
+
+
 def _redacted_db_label(url: str) -> str:
     try:
         p = urlsplit(url)
@@ -151,11 +192,26 @@ def _tool(name: str) -> str:
     return found
 
 
+def _pg_env(url: str) -> dict:
+    """Split postgresql://user:pass@host:port/db?sslmode=... into the PG* variables libpq reads."""
+    parts = urlsplit(url)
+    env = {"PGDATABASE": unquote(parts.path.lstrip("/"))}
+    for key, value in (("PGHOST", parts.hostname), ("PGPORT", parts.port), ("PGUSER", unquote(parts.username or "")),
+                       ("PGPASSWORD", unquote(parts.password or ""))):
+        if value:
+            env[key] = str(value)
+    ssl = dict(parse_qsl(parts.query)).get("sslmode")
+    if ssl:
+        env["PGSSLMODE"] = ssl
+    return env
+
+
 def _run(cmd: list[str], *, db_url: str | None = None, timeout: int = 900) -> subprocess.CompletedProcess:
     env = os.environ.copy()
     if db_url:
-        # Keep credentials out of command-line arguments/process listings.
-        env["PGDATABASE"] = db_url
+        # Keep credentials out of command-line arguments/process listings. libpq does NOT expand a URL placed in
+        # PGDATABASE (pg_dump then falls back to the local socket and fails), so hand it over as discrete PG* variables.
+        env.update(_pg_env(db_url))
     return subprocess.run(cmd, env=env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
 
 
@@ -329,8 +385,7 @@ def restore_test() -> dict:
             target = (os.environ.get("RESTORE_TEST_DATABASE_URL") or "").strip()
             if not target:
                 raise RuntimeError("RESTORE_TEST_DATABASE_URL is required for a PostgreSQL restore test")
-            if _safe_db_identity(target) == _safe_db_identity(db.DATABASE_URL):
-                raise RuntimeError("RESTORE_TEST_DATABASE_URL must never point to the production database")
+            _ensure_not_production(target)
             pg_restore = _tool("pg_restore")
             _run([
                 pg_restore, "--dbname=", "--clean", "--if-exists", "--no-owner", "--no-privileges",

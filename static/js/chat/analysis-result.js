@@ -333,6 +333,13 @@
       h += '<section class="ss-report-card ss-report-summary">'
         + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>'
         + '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
+      // Why this risk level — visible right under the badge for every non-low result (server: emergency_explain.py / risk_explain.py).
+      if (u !== 'low') {
+        const whyMsgs = [];
+        riskReasons.forEach(function(r){ const m = r && (r.message || r.description); if (m && whyMsgs.indexOf(m) < 0) whyMsgs.push(String(m)); });
+        if (!whyMsgs.length && d.why_result && u === 'high') whyMsgs.push(String(d.why_result));
+        if (whyMsgs.length) h += '<div class="ss-risk-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا المستوى؟':'Why this risk level?')+'</b>'+whyMsgs.map(function(m){return '<p>'+esc(m)+'</p>';}).join('')+'</div>';
+      }
       if (hasQScore) {
         h += '<div class="ss-quality"><div class="ss-quality-top"><strong>'+esc(LANG==='ar'?'اكتمال المعلومات المدخلة':'Information completeness')+'</strong><span class="ss-quality-score">'+qScore+'%'+(qLabel?' — '+esc(qLabel):'')+'</span></div><div class="ss-quality-track" aria-hidden="true"><div class="ss-quality-fill" style="width:'+qScore+'%"></div></div></div>';
       }

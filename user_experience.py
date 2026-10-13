@@ -77,3 +77,4 @@ def register(app, current_user_id, data_user_id_getter, consent_ok, consent_requ
         })
 
     app.register_blueprint(bp)
+    __import__("family_archive").register(app, current_user_id, data_user_id_getter, consent_ok, consent_required_json)

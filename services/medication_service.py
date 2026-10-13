@@ -52,7 +52,7 @@ class MedicationService:
 
     # -- plans ---------------------------------------------------------------------------------------------------
     def _label_members(self, uid, plans):
-        members = {m["id"]: m["name"] for m in db.list_members(uid)}
+        members = {m["id"]: m["name"] for m in db.list_members("account-%s" % uid)}
         for plan in plans:
             plan["member_name"] = members.get(plan["member_id"], self._t("me_short") if plan["member_id"] == 0 else "")
         return plans

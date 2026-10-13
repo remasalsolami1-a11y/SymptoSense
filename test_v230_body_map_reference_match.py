@@ -18,7 +18,7 @@ def test_reference_layout_has_selection_tray_and_next_action():
 
 def test_body_map_stays_interactive_not_static_image():
     assert 'renderBodySilhouette(view)' in CHAT
-    assert '<svg class="smart-body-svg v228"' in CHAT
+    assert '<svg class="bm-svg"' in CHAT and 'class="bm-art"' in CHAT       # SVG layer over the illustration
     assert 'data-body-zone' in CHAT
 
 def test_ios_safari_fit_and_mobile_controls():

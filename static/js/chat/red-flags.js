@@ -92,6 +92,11 @@
       const ov = document.getElementById('emOverlay');
       const cat = emCategory(d);
       const list = (d.emergency_flags || []).map(function(f){ return '<span class="em-chip">🚨 ' + esc(f) + '</span>'; }).join('');
+      // Why this alert appeared: matched red flag + what the person entered (server: emergency_explain.py).
+      var whyItems = [];
+      (Array.isArray(d.risk_reasons) ? d.risk_reasons : []).forEach(function(r){ var m = r && (r.message || r.why || r.reason); if (m && whyItems.indexOf(m) < 0) whyItems.push(String(m)); });
+      if (!whyItems.length && d.why_result) whyItems.push(String(d.why_result));
+      const whyHtml = whyItems.length ? '<div class="em-why" data-em-why><div class="em-why-t">' + esc(TT('em_why_t')) + '</div>' + whyItems.map(function(m){ return '<p>' + esc(m) + '</p>'; }).join('') + '</div>' : '';
       var steps = [];
       if (cat === 'selfharm') {
         steps = ['em_sh1','em_sh2','em_sh3'];
@@ -116,7 +121,7 @@
       ov.setAttribute('aria-modal', 'true');
       ov.setAttribute('aria-labelledby', 'emTitle');
       ov.setAttribute('aria-describedby', 'emSub');
-      ov.innerHTML = '<div class="em-card" data-em-cat="' + cat + '"><div class="em-icon">🚑</div><h3 id="emTitle">' + esc(TT('em_t')) + '</h3><p id="emSub">' + esc(TT('em_sub')) + '</p><div class="em-flags">' + list + '</div>' +
+      ov.innerHTML = '<div class="em-card" data-em-cat="' + cat + '"><div class="em-icon">🚑</div><h3 id="emTitle">' + esc(TT('em_t')) + '</h3><p id="emSub">' + esc(TT('em_sub')) + '</p><div class="em-flags">' + list + '</div>' + whyHtml +
         '<div class="em-btns"><a class="em-call em-call-main" data-em-callbtn href="tel:' + escAttr(String(TT('em_num')||'').replace(/[^0-9+]/g,'')) + '">' + esc(TT('em_call')) + ' ' + esc(TT('em_num')) + '</a>' + extraCall + '</div>' +
         stepsHtml +
         '<div class="em-num" role="button" tabindex="0" data-em-copy title="' + escAttr(TT('em_copy')) + '">☎️ ' + esc(TT('em_num')) + '</div>' +

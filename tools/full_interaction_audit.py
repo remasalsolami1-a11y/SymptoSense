@@ -196,6 +196,7 @@ def main() -> int:
         "runSourceMonitor", "jcReset", "asstFab", "asstBack", "asstCloseBtn", "explCloseBtn",
         "exAssist", "asstModalCloseBtn", "smartCtxUse", "smartCtxManual", "smartCtxSkip",
         "pwaInstallBtn", "pwaLaterBtn",
+        "hideWeak",  # feedback_moderation.py: delegated click handler matching e.target.id
     }
     for p in files:
         source = p.read_text(encoding="utf-8", errors="ignore")
@@ -272,6 +273,8 @@ def main() -> int:
             line = source.count("\n", 0, m.start()) + 1
             href = attr(tag, "href")
             if not href:
+                if ".index(" in source.splitlines()[line - 1]:
+                    continue  # a Python string used as a search needle, not rendered markup
                 # Dynamic test/fixture markup is excluded; runtime anchors should always navigate.
                 failures.append(f"anchor without href: {p.relative_to(ROOT)}:{line}")
                 continue

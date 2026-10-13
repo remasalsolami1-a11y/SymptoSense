@@ -13,6 +13,7 @@ from flask import request
 from flask import url_for
 import advanced_features
 import db
+import input_utils
 import logging
 import privacy_features
 
@@ -253,9 +254,9 @@ def api_family_one(mid):
         uid = _data_user_id()
         if not db.get_member(uid, mid):
             return jsonify({"ok": False, "error": "family_member_not_found"}), 404
-        if request.method == "DELETE":
-            db.delete_member(uid, mid)
-            return jsonify({"ok": True})
+        if request.method == "DELETE":  # one transaction: medications + (optional) health data + member row; archive if records are kept
+            done = __import__("family_archive").delete_member(uid, _ss_user_id(), mid, request.args.get("delete_data") == "1")
+            return jsonify({"ok": True}) if done else (jsonify({"ok": False, "error": "family_member_not_found"}), 404)  # lost a race: already deleted
         if not _service_consent_ok(): return _consent_required_json("/family")
         try:
             payload = _family_member_payload(request.get_json(force=True))
@@ -395,8 +396,8 @@ def api_checkin():
         if not _service_consent_ok():
             return _consent_required_json("/checkin")
         try:
-            data = request.get_json(force=True) or {}
-            rating = int(data.get("rating"))
+            data = request.get_json(force=True, silent=True) or {}
+            rating = input_utils.parse_rating(data.get("rating") if isinstance(data, dict) else None) or 0   # bad input -> 400, never 500
             if rating < 1 or rating > 5:
                 return jsonify({"ok": False, "error": "التقييم من 1 إلى 5" if _lang() == "ar" else "Rating must be from 1 to 5"}), 400
             day = str(data.get("date") or "").strip()
@@ -442,15 +443,15 @@ def api_checkin():
 def api_feedback():
     # Feedback is an explicit user submission, separate from optional analytics consent.
     try:
-        data = request.get_json(force=True) or {}
-        try:
-            rating = int(data.get("rating"))
-        except (TypeError, ValueError, OverflowError):
-            logging.getLogger(__name__).debug("Handled exception in api_feedback; fallback applied (handler 17024)")
+        data = request.get_json(force=True, silent=True)
+        data = data if isinstance(data, dict) else {}
+        rating = input_utils.parse_rating(data.get("rating"))
+        if rating is None:
             return jsonify({"ok": False, "error": "rating_must_be_1_to_5"}), 400
-        if rating < 1 or rating > 5:
-            return jsonify({"ok": False, "error": "rating_must_be_1_to_5"}), 400
-        comment = (data.get("comment") or "").strip()[:500]
+        comment = data.get("comment")
+        if comment is not None and not isinstance(comment, str):
+            return jsonify({"ok": False, "error": "invalid_comment"}), 400
+        comment = (comment or "").replace("\x00", "").strip()[:500]
         public_comment = bool(data.get("public_comment")) and bool(comment)
         allowed_reasons = {"clear", "helpful", "too_short", "too_long", "unclear", "not_relevant", "missing_detail", "other"}
         reason_code = str(data.get("reason_code") or "").strip().lower() or None
@@ -463,9 +464,8 @@ def api_feedback():
         record_id = None
         raw_record_id = data.get("record_id")
         if raw_record_id not in (None, "", 0, "0"):
-            try:
-                candidate_id = int(raw_record_id)
-            except (TypeError, ValueError):
+            candidate_id = input_utils.parse_int(raw_record_id, 1, 2**31 - 1)
+            if candidate_id is None:
                 return jsonify({"ok": False, "error": "invalid_record_id"}), 400
             if _ss_user_id():
                 if not db.get_record_owned(_data_user_id(), candidate_id):

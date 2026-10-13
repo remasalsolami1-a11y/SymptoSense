@@ -9,8 +9,8 @@ CSS_B = (ROOT / 'app-shell-v111.css').read_text(encoding='utf-8')
 
 
 def test_body_method_opens_map_directly_on_mobile():
-    assert "if(symptomInputMethod==='body')" in CHAT_A
-    assert "openBodyMapSheet(state.body_region_primary||null)" in CHAT_A
+    assert "else if (symptomInputMethod === 'body') showMobileBodyLauncher();" in CHAT_A   # choosing "body" opens the map pane at once
+    assert "openBodyMapSheet(state.body_region_primary||null)" in CHAT_A                    # editing the location reopens it on the chosen region
 
 
 def test_body_zone_shows_common_symptom_language():

@@ -846,7 +846,7 @@ def protect_sensitive_user_api_csrf():
     protected_prefixes = (
         "/api/health-profile", "/api/privacy/", "/api/family", "/api/safeid",
         "/api/meds/plan", "/api/meds/log", "/api/meds/snooze",
-        "/api/meds/settings", "/api/handoff/", "/api/checkin",
+        "/api/meds/settings", "/api/meds/telegram", "/api/handoff/", "/api/checkin",
         "/api/account/delete", "/api/chat-history/clear", "/api/user/preferences",
         "/api/analysis/", "/api/profile", "/api/analyze", "/api/blood",
         "/api/assistant/feedback", "/api/feedback", "/api/relief-log", "/api/smart-followup",
@@ -2213,9 +2213,9 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="SymptoSense">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="/static/fonts/tajawal-arabic-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/poppins-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/css/fonts.css?v={html_lib.escape(STATIC_ASSET_VERSION, quote=True)}">
 <title>{safe_title}</title>
 <meta name="description" content="{safe_desc}">
 <meta name="robots" content="{robots_directive}">

@@ -49,4 +49,4 @@ def test_production_gate_blocks_pending_signoff_unless_explicitly_overridden(mon
 
 def test_dockerfile_enforces_the_signoff_gate():
     docker = _t("Dockerfile")
-    assert "tools/signoff.py check --strict" in docker and "ARG ALLOW_UNSIGNED_CLINICAL=0" in docker
+    assert "signoff_cli.py check --strict" in docker and "ARG ALLOW_UNSIGNED_CLINICAL=0" in docker

@@ -64,7 +64,7 @@ def check_release_tree_hygiene() -> None:
     bad = []
     for path in ROOT.rglob("*"):
         rel = path.relative_to(ROOT)
-        if path.is_dir() and path.name in {"__pycache__", ".pytest_cache"}:
+        if path.is_dir() and path.name in {"__pycache__", ".pytest_cache", ".ruff_cache"}:
             bad.append(str(rel) + "/")
         elif path.is_file() and (path.suffix in {".pyc", ".pyo"} or path.name in {".DS_Store"}):
             bad.append(str(rel))
@@ -96,6 +96,15 @@ def check_json_files() -> None:
             fail(f"{rel} is invalid JSON: {type(exc).__name__}")
 
 
+def count_test_files() -> int:
+    """Number of test_*.py files in the source tree. They live in the project root (a tests/ folder, if one is ever
+    added, is counted too); a tree without any (e.g. the Docker image) returns 0, which skips the metrics comparison."""
+    names = {p.name for p in ROOT.glob("test_*.py")}
+    if (ROOT / "tests").is_dir():
+        names |= {p.name for p in (ROOT / "tests").glob("test_*.py")}
+    return len(names)
+
+
 def check_runtime_competition_assets() -> None:
     """Keep competition evidence available after tests/ is excluded by Docker."""
     metrics_path = ROOT / "release_metrics.json"
@@ -112,7 +121,7 @@ def check_runtime_competition_assets() -> None:
     expected_safety = int(metrics.get("safety_regression_cases") or 0)
     if expected_safety != len(safety):
         fail(f"release_metrics safety_regression_cases={expected_safety} but runtime fixture has {len(safety)}")
-    source_test_files = len(list((ROOT / "tests").glob("test_*.py"))) if (ROOT / "tests").exists() else 0
+    source_test_files = count_test_files()
     metric_test_files = int(metrics.get("test_files") or 0)
     if source_test_files and metric_test_files != source_test_files:
         fail(f"release_metrics test_files={metric_test_files} but source tree has {source_test_files}")

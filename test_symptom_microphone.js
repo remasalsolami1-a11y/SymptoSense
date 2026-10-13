@@ -3,7 +3,7 @@ const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert/strict');
 const path = require('path');
-const source = fs.readFileSync(path.join(__dirname, 'views/chat_view.py'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, 'static/js/chat/assistant.js'), 'utf8');
 const code = source.slice(source.indexOf('    let symptomMicRec = null;'), source.indexOf('    function startSpeechRecognition()'));
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function fixture(extra = {}) {

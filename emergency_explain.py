@@ -2,6 +2,8 @@
 which red flag matched, what the person entered that triggered it, and why that
 pattern needs urgent care. Display only; it never changes the safety decision."""
 
+import re
+
 _WHY = {
     "severe_chest_pain": ("الألم أو الضغط الشديد في الصدر قد يكون من أعراض مشكلة قلبية أو رئوية حادة، ولا يمكن استبعادها دون فحص عاجل.",
                           "Severe chest pain or pressure can be a sign of an acute heart or lung problem that cannot be ruled out without urgent examination."),
@@ -42,9 +44,14 @@ _GENERIC = ("هذه العلامة من العلامات التي لا يُنت�
             "This is a sign for which symptom analysis should not delay care, because delay could be dangerous.")
 
 
+def _clean(x):
+    x = re.sub(r"[^\w\s\-/,.()'\u0600-\u06FF]", " ", str(x or ""), flags=re.UNICODE).replace("_", " ")
+    return " ".join(x.split())
+
+
 def _inputs(patient, ar):
     patient = patient or {}
-    syms = [str(s).strip() for s in (patient.get("symptoms") or []) if str(s).strip()][:5]
+    syms = [c for c in (_clean(s) for s in (patient.get("symptoms") or [])) if c][:5]
     notes = " ".join(str(patient.get("notes") or "").split())[:100]
     parts = []
     if syms:

@@ -47,8 +47,8 @@ def test_double_read_confirmation_is_server_enforced():
 
 
 def test_root_microphone_regression_test_uses_current_flat_layout():
-    assert "path.join(__dirname, 'views/chat_view.py')" in MIC
-    assert "path.join(__dirname, '../views/chat_view.py')" not in MIC
+    assert "path.join(__dirname, 'static/js/chat/assistant.js')" in MIC
+    assert "path.join(__dirname, '../static/js/chat/assistant.js')" not in MIC
 
 
 def test_release_metadata_and_pwa_cache_are_current():
