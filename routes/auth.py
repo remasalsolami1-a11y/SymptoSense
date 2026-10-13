@@ -15,6 +15,7 @@ import admin_2fa
 import admin_security
 import best_effort
 import db
+import input_utils
 import logging
 import platform_v2
 
@@ -440,9 +441,9 @@ def api_register():
     if not _request_allowed("api_register", 5, 900):
         return _rate_limited_response()
     try:
-        data=request.get_json(force=True)
-        name=(data.get("name") or "").strip(); email=(data.get("email") or "").strip().lower()
-        password=data.get("password") or ""; confirm=data.get("confirm",password) or ""
+        data=input_utils.as_dict(request.get_json(force=True, silent=True))
+        name=input_utils.as_text(data.get("name")).strip(); email=input_utils.as_text(data.get("email")).strip().lower()
+        password=input_utils.as_text(data.get("password")); confirm=input_utils.as_text(data.get("confirm",password))
         if password!=confirm: return jsonify({"ok":False,"error":"password_mismatch"}),400
         if len(password)<8: return jsonify({"ok":False,"error":"password_too_short"}),400
         if data.get("accept_terms") is not True: return jsonify({"ok":False,"error":"terms_required"}),400
@@ -466,7 +467,7 @@ def api_register():
 def api_login():
     db.init_db()
     try:
-        data=request.get_json(force=True); email=(data.get("email") or "").strip().lower(); password=data.get("password") or ""
+        data=input_utils.as_dict(request.get_json(force=True, silent=True)); email=input_utils.as_text(data.get("email")).strip().lower(); password=input_utils.as_text(data.get("password"))
         network_origin=_client_ip()
         if (not _login_pair_allowed(email, network_origin, "api_login")
                 or not _request_allowed(

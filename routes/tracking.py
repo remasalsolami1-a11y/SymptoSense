@@ -95,8 +95,8 @@ def api_update_health_field():
     if not _service_consent_ok():
         return _consent_required_json("/manage")
     uid = _ss_user_id()
-    data = request.get_json(force=True)
-    field = data.get("field", "")
+    data = input_utils.as_dict(request.get_json(force=True, silent=True))
+    field = input_utils.as_text(data.get("field"))
     value = data.get("value", "")
     allowed = {"display_name", "dob", "gender", "height", "weight", "activity_level", "medications", "allergies", "health_conditions", "extra_info", "lang"}
     if field not in allowed:
@@ -117,8 +117,8 @@ def api_update_health_field():
 def api_delete_health_field():
     db.init_db()
     uid = _ss_user_id()
-    data = request.get_json(force=True)
-    field = data.get("field", "")
+    data = input_utils.as_dict(request.get_json(force=True, silent=True))
+    field = input_utils.as_text(data.get("field"))
     allowed = {"display_name", "dob", "gender", "height", "weight", "activity_level", "medications", "allergies", "health_conditions", "extra_info"}
     if field not in allowed:
         return jsonify({"ok": False, "error": "Invalid field"})
@@ -203,9 +203,8 @@ def api_smart_followup():
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"ok": False, "error": "invalid_json_object"}), 400
-    try:
-        record_id = int(data.get("record_id") or 0)
-    except (TypeError, ValueError):
+    record_id = input_utils.parse_int(data.get("record_id") or 0, 0, 2**31 - 1)
+    if record_id is None:
         return jsonify({"ok": False, "error": "invalid_record_id"}), 400
     try:
         outcome, new_sign = db.normalize_followup(data.get("outcome"), data.get("new_sign"))
@@ -272,11 +271,11 @@ def api_family_one(mid):
 def api_timeline():
     try:
         db.init_db()
-        member_id = int(request.args.get("member") or 0)
-        days = max(1, min(365, int(request.args.get("days") or 30)))
-        if member_id < 0:
-            raise ValueError("invalid_member")
-        events = db.member_timeline(_data_user_id(), member_id, days)
+        member_id = input_utils.parse_int(request.args.get("member") or 0, 0, 2**31 - 1)
+        days = input_utils.parse_int(request.args.get("days") or 30, 1, 10**9)
+        if member_id is None or days is None:
+            raise ValueError("invalid_query")
+        events = db.member_timeline(_data_user_id(), member_id, min(days, 365))
         return jsonify({"ok": True, "events": events})
     except (TypeError, ValueError):
         return jsonify({"ok": False, "error": "invalid_query"}), 400
@@ -297,8 +296,8 @@ def api_handoff_candidates():
 @route("/api/handoff/create", methods=["POST"])
 def api_handoff_create():
     try:
-        data=request.get_json(silent=True) or {}
-        result=privacy_features.create_handoff(_data_user_id(),int(data.get("record_id") or 0),data.get("selected") or {},data.get("previous_ids") or [],int(data.get("expires_minutes") or 60))
+        data=input_utils.as_dict(request.get_json(silent=True))
+        result=privacy_features.create_handoff(_data_user_id(),input_utils.parse_int(data.get("record_id") or 0, 0, 2**31 - 1) or 0,data.get("selected") or {},data.get("previous_ids") or [],input_utils.parse_int(data.get("expires_minutes") or 60, 1, 10080) or 60)
         payload_lang = "en" if (result.get("payload") or {}).get("lang") == "en" else "ar"
         # Build the QR from the dedicated PUBLIC HTML route only.  Using the
         # canonical public host avoids reverse-proxy/API-path leakage on Railway,

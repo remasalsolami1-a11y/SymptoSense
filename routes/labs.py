@@ -17,6 +17,7 @@ import best_effort
 import blood_test
 import clinical_text
 import db
+import input_utils
 import hashlib
 import hmac
 import json
@@ -55,11 +56,8 @@ def api_blood_history():
     try:
         db.init_db()
         member_id = request.args.get("member")
-        try:
-            member_filter = int(member_id) if member_id not in (None, "") else None
-        except (TypeError, ValueError):
-            return jsonify({"ok": False, "error": "invalid_member"}), 400
-        if member_filter is not None and member_filter < 0:
+        member_filter = input_utils.parse_int(member_id, 0, 2**31 - 1) if member_id not in (None, "") else None
+        if member_filter is None and member_id not in (None, ""):
             return jsonify({"ok": False, "error": "invalid_member"}), 400
         tests = db.get_blood_tests(_data_user_id(), limit=8, member_id=member_filter)
         out = []

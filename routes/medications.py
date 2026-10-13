@@ -10,6 +10,7 @@ from flask import make_response
 from flask import redirect
 from flask import request
 from services.medication_service import MEDS_API_REVISION, MedicationError, MedicationService
+import input_utils
 import medication_email
 
 DEPS = ("_consent_required_json", "_kick_medication_delivery_now", "_localized_url", "_medication_user_id", "_medication_worker_snapshot", "_mk_error", "_service_consent_ok", "_start_medication_reminder_worker_once", "_t", "api_login_required", "meds_page", )
@@ -227,9 +228,9 @@ def api_meds_delivery_status():
 
 @route("/api/meds", methods=["POST"])
 def api_meds():
-    data = request.get_json(force=True)
+    data = input_utils.as_dict(request.get_json(force=True, silent=True))
     try:
-        return jsonify(service.check_interactions_text(data.get("text", "")))
+        return jsonify(service.check_interactions_text(input_utils.as_text(data.get("text"))))
     except Exception as e:
         return _mk_error(e, 500)
 

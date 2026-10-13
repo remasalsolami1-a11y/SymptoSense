@@ -9,6 +9,7 @@ import re
 from flask import Blueprint, jsonify, request
 
 import db
+import input_utils
 
 _ALLOWED_RELIEF_FACTORS = {"rest", "fluids", "food", "position", "sleep", "medication", "other"}
 
@@ -40,9 +41,8 @@ def register(app, current_user_id, data_user_id_getter, consent_ok, consent_requ
         db.init_db()
         user_key = data_user_id_getter()
         if request.method == "GET":
-            try:
-                record_id = int(request.args.get("record_id") or 0)
-            except (TypeError, ValueError):
+            record_id = input_utils.parse_int(request.args.get("record_id") or 0, 0, 2**31 - 1)
+            if record_id is None:
                 return jsonify({"ok": False, "error": "invalid_record_id"}), 400
             if record_id <= 0:
                 return jsonify({"ok": True, "logged_in": True, "stored": False, "summary": []})
@@ -55,9 +55,8 @@ def register(app, current_user_id, data_user_id_getter, consent_ok, consent_requ
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
             return jsonify({"ok": False, "error": "invalid_json_object"}), 400
-        try:
-            record_id = int(data.get("record_id") or 0)
-        except (TypeError, ValueError):
+        record_id = input_utils.parse_int(data.get("record_id") or 0, 0, 2**31 - 1)
+        if record_id is None:
             return jsonify({"ok": False, "error": "invalid_record_id"}), 400
         factor = str(data.get("factor") or "").strip().lower()
         if factor not in _ALLOWED_RELIEF_FACTORS:

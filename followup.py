@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import db
+import input_utils
 
 # Follow-up window by the urgency of the analysis being followed up: (hours before asking, days it stays open).
 # A product decision, pending clinical review (see MEDICAL_REVIEW_NEEDED.md).
@@ -86,9 +87,8 @@ def register(app, api_login_required, data_user_id, lang_fn, mk_error):
         if not isinstance(data, dict):
             return jsonify({"ok": False, "error": "invalid_json_object"}), 400
         outcome = str(data.get("outcome") or "")
-        try:
-            record_id = int(data.get("record_id"))
-        except (TypeError, ValueError):
+        record_id = input_utils.parse_int(data.get("record_id"), 1, 2**31 - 1)
+        if record_id is None:
             return jsonify({"ok": False, "error": "invalid_record_id"}), 400
         try:
             outcome, new_sign = db.normalize_followup(outcome, data.get("new_sign"))

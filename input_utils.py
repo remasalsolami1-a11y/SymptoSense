@@ -27,3 +27,13 @@ def parse_int(value, low, high):
 
 def parse_rating(value, low=1, high=5):
     return parse_int(value, low, high)
+
+
+def as_dict(value):
+    """A JSON body that is not an object (list, string, number, null) is treated as empty."""
+    return value if isinstance(value, dict) else {}
+
+
+def as_text(value):
+    """Only real strings count as text; lists, dicts, numbers and None become ''."""
+    return value if isinstance(value, str) else ""

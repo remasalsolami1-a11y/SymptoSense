@@ -176,13 +176,18 @@ def register(app, consent_ok, consent_required, mk_error):
         try:
             if not consent_ok():
                 return consent_required("/chat")
-            data = request.get_json(silent=True) or {}
+            data = request.get_json(silent=True)
+            data = data if isinstance(data, dict) else {}
             lang = "en" if data.get("lang") == "en" else "ar"
             symptoms = data.get("symptoms") or []
             if isinstance(symptoms, str):
                 symptoms = [symptoms]
-            asked = [str(x)[:40] for x in (data.get("asked") or [])][:20]
-            nxt = next_screen([str(x)[:120] for x in symptoms][:30], asked, data.get("age"), lang)
+            symptoms = symptoms if isinstance(symptoms, list) else []
+            asked = data.get("asked")
+            asked = [str(x)[:40] for x in (asked if isinstance(asked, list) else [])][:20]
+            age = data.get("age")
+            age = age if isinstance(age, (int, float, str)) and not isinstance(age, bool) else None
+            nxt = next_screen([str(x)[:120] for x in symptoms][:30], asked, age, lang)
             return jsonify({"ok": True, "done": nxt is None, "screen": nxt})
         except Exception as exc:
             return mk_error(exc, 500)

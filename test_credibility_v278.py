@@ -153,9 +153,9 @@ def _admin_rows():
     return db.admin_symptom_trial_rows()
 
 
-def test_guest_analyses_reach_the_admin_export_only_with_analytics_consent():
+def test_guest_analyses_reach_the_admin_export_once_the_service_consent_is_accepted():
     import webapp
-    # 1) guest WITH analytics consent: normal + emergency analyses are saved anonymously
+    # 1) guest WITH analytics consent: normal + emergency analyses are saved anonymously (as before)
     c = webapp.app.test_client()
     assert c.post("/api/consent/preferences", json={"service_usage": True, "analytics_research": True}).status_code == 200
     before = len(_admin_rows())
@@ -170,15 +170,20 @@ def test_guest_analyses_reach_the_admin_export_only_with_analytics_consent():
     joined = " ".join(str(v) for row in rows[:2] for v in row.values())
     assert "0501234567" not in joined and "ملاحظة" not in joined
     assert any("صداع" in str(row.get("symptoms")) for row in rows[:2])
-    # 2) guest WITHOUT analytics consent: nothing is stored
+    # 2) guest with the service consent only (owner decision V68.5): also saved, still anonymous and without the free-text note
     c2 = webapp.app.test_client()
     assert c2.post("/api/consent/preferences", json={"service_usage": True, "analytics_research": False}).status_code == 200
     n0 = len(_admin_rows())
     r = c2.post("/api/analyze", json={"age": 40, "gender": "male", "symptoms": ["كحة"], "duration": "اليوم",
-                                      "severity": 2, "notes": "", "lang": "ar"},
+                                      "severity": 2, "notes": "سري 0507654321", "lang": "ar"},
                 environ_overrides={"REMOTE_ADDR": "198.18.20.9"}).get_json()
     assert r.get("ok")
-    assert len(_admin_rows()) == n0
+    rows2 = _admin_rows()
+    assert len(rows2) == n0 + 1 and "0507654321" not in repr(rows2[0]) and "سري" not in repr(rows2[0])
+    # 3) no service consent at all: the analysis is refused and nothing is stored
+    n1 = len(_admin_rows())
+    assert webapp.app.test_client().post("/api/analyze", json={"age": 40, "gender": "male", "symptoms": ["كحة"], "duration": "اليوم", "lang": "ar"}).status_code == 403
+    assert len(_admin_rows()) == n1
 
 
 def test_feedback_moderation_unpublishes_without_deleting():

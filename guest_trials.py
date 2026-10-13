@@ -2,8 +2,9 @@
 
 Until V279 only signed-in users' analyses were saved, so the admin Excel
 ("Symptom Trials") silently missed everyone who used the site as a guest.
-A guest analysis is now saved as a minimal, anonymous trial row, but ONLY when
-the visitor gave analytics consent. What is stored: age, gender, symptoms,
+A guest analysis is saved as a minimal, anonymous trial row once the visitor has
+accepted the service-usage consent (V68.5: the consent text now says so; before
+that it also needed the optional analytics box). What is stored: age, gender, symptoms,
 duration, severity and urgency. NOT stored: free-text notes, conditions,
 medications, allergies, name, e-mail, IP address or the browser session id
 itself (only a one-way hash of the random guest key, as for accounts).
@@ -17,9 +18,10 @@ _SAVE_ERRORS = db.DB_ERRORS + (RuntimeError, OSError, ValueError, TypeError, Key
 
 
 def save(owner_key, lang, patient, result, demo_mode, analytics_ok, research_ok):
+    # analytics_ok / research_ok only decide the record's analytics/research eligibility flags, never whether it is saved.
     """Return the new record id, or None when nothing was saved (never raises)."""
     try:
-        if demo_mode or not analytics_ok or not owner_key:
+        if demo_mode or not owner_key:
             return None
         if patient.get("user_id") or result.get("record_id"):
             return None  # signed-in users are saved by the normal path
@@ -36,7 +38,7 @@ def save(owner_key, lang, patient, result, demo_mode, analytics_ok, research_ok)
             patient.get("duration"), patient.get("severity"), urgency, data)
         try:
             import privacy_features
-            privacy_features.set_record_consent_eligibility(int(rec), True, bool(research_ok))
+            privacy_features.set_record_consent_eligibility(int(rec), bool(analytics_ok), bool(research_ok))
         except _SAVE_ERRORS:
             _log.debug("guest trial consent flags skipped", exc_info=True)
         return rec

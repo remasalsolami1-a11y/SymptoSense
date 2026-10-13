@@ -22,7 +22,7 @@ import db
 import research_study
 
 PH = db.PH
-CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.1")
+CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.2")
 PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2.1")
 try:
     PRIVACY_THRESHOLD = max(3, min(20, int(os.environ.get("ANALYTICS_PRIVACY_THRESHOLD", "5") or 5)))
