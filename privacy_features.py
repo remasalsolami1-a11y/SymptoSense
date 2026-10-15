@@ -22,8 +22,8 @@ import db
 import research_study
 
 PH = db.PH
-CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.2")
-PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2.1")
+CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.5")
+PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2.2")
 try:
     PRIVACY_THRESHOLD = max(3, min(20, int(os.environ.get("ANALYTICS_PRIVACY_THRESHOLD", "5") or 5)))
 except (TypeError, ValueError):
@@ -241,6 +241,19 @@ def log_privacy_event(subject_key: str, action: str, metadata=None):
         conn.close()
 
 
+def _unflag_owner_records(c, subject_key, analytics=False, research=False):
+    """Drop analytics/research eligibility from every record this subject owns (account/web rows and the guest-trial rows)."""
+    n = 0
+    for owner in (subject_key, "guest-" + str(subject_key)):
+        uh = db._hash_user(owner)
+        if analytics:
+            c.execute("UPDATE records SET analytics_eligible=0 WHERE user_hash=%s" % PH, (uh,))
+        if research:
+            c.execute("UPDATE records SET research_eligible=0 WHERE user_hash=%s AND COALESCE(research_eligible,0)=1" % PH, (uh,))
+            n += max(0, int(c.rowcount or 0))
+    return n
+
+
 def save_consent(subject_key: str, user_id, service_usage: bool, analytics_research: bool, research_participation=None) -> dict:
     """Persist service, analytics, and scientific-research consent atomically.
 
@@ -288,6 +301,8 @@ def save_consent(subject_key: str, user_id, service_usage: bool, analytics_resea
                 vals,
             )
 
+        if not analytics or (research_participation is not None and not research):
+            _unflag_owner_records(c, subject_key, analytics=not analytics, research=research_participation is not None and not research)
         _log_consent(c, sh, uid, "service_usage", "granted" if service else ("withdrawn" if previous_service else "declined"))
         _log_consent(c, sh, uid, "analytics_research", "granted" if analytics else ("withdrawn" if previous_analytics else "declined"))
         if research_participation is not None:
@@ -331,32 +346,19 @@ def save_consent(subject_key: str, user_id, service_usage: bool, analytics_resea
 
 def withdraw_analytics(subject_key: str, user_id=None) -> dict:
     cur = get_consent(subject_key, user_id)
-    updated = save_consent(subject_key, user_id, cur.get("service_usage", False), False, None)
-    uh = db._hash_user(subject_key)
-    conn = db._conn(); c = conn.cursor()
-    try:
-        c.execute("UPDATE records SET analytics_eligible=0 WHERE user_hash=%s" % PH, (uh,))
-        conn.commit()
-    finally:
-        conn.close()
-    return updated
+    return save_consent(subject_key, user_id, cur.get("service_usage", False), False, None)  # also unflags the records
 
 
 def withdraw_research(subject_key: str, user_id=None) -> dict:
     """Withdraw future scientific-research use and remove retained records from future research exports."""
     cur = get_consent(subject_key, user_id)
-    updated = save_consent(
-        subject_key, user_id, cur.get("service_usage", False),
-        cur.get("analytics_research", False), False,
-    )
-    uh = db._hash_user(subject_key)
-    conn = db._conn(); c = conn.cursor(); excluded = 0
+    conn = db._conn(); c = conn.cursor()
     try:
-        c.execute("UPDATE records SET research_eligible=0 WHERE user_hash=%s AND COALESCE(research_eligible,0)=1" % PH, (uh,))
-        excluded = max(0, int(c.rowcount or 0))
-        conn.commit()
+        c.execute("SELECT COUNT(*) FROM records WHERE user_hash IN (%s,%s) AND COALESCE(research_eligible,0)=1" % (PH, PH), (db._hash_user(subject_key), db._hash_user("guest-" + str(subject_key))))
+        excluded = int(c.fetchone()[0] or 0)
     finally:
         conn.close()
+    updated = save_consent(subject_key, user_id, cur.get("service_usage", False), cur.get("analytics_research", False), False)  # unflags the records
     log_privacy_event(subject_key, "research_records_excluded", {"status":"completed", "count":excluded})
     updated["excluded_research_records"] = excluded
     return updated
@@ -511,6 +513,7 @@ def delete_health_data(account_user_id: int, data_owner_key: str) -> dict:
 
         # General account-owned health tables use the stable account-* owner key.
         for table, col in [
+            ("family_member_archive","user_hash"),("symptom_relief_logs","user_hash"),
             ("results","user_hash"),("records","user_hash"),("profiles","user_hash"),
             ("blood_tests","user_hash"),("daily_checkins","user_hash"),("ss_daily_checkins","user_hash"),
             ("feedback","user_hash"),("followups","user_hash"),("visits","user_hash"),
@@ -521,6 +524,14 @@ def delete_health_data(account_user_id: int, data_owner_key: str) -> dict:
         ]:
             if table in existing and col in _cols_for_table(c, table):
                 c.execute(f"DELETE FROM {table} WHERE {col}={PH}", (uh,)); deleted += max(0,int(c.rowcount or 0))
+
+        # Website daily tracking is stored in user_data, separate from the
+        # historical check-in tables. Use the legacy-compatible storage key.
+        if "user_data" in existing:
+            layout = db._user_data_layout(c)
+            key = db._user_data_key(db._web_checkin_storage_id(uid), layout)
+            c.execute(f"DELETE FROM user_data WHERE user_id={PH}", (key,))
+            deleted += max(0, int(c.rowcount or 0))
 
         # Medication hash tables may contain either numeric-account hashes
         # (current) or account-* hashes (legacy). Remove both.
@@ -578,53 +589,106 @@ def purge_consent_identity(subject_key: str, user_id=None) -> dict:
 
 
 def _safe_user_export(account_user_id: int, data_owner_key: str) -> dict:
-    """Return only data belonging to the requester. Never include password hashes/tokens/secrets."""
+    """Complete owner-only export; fail the request rather than silently omit data.
+
+    Every SQL column is explicitly allowed. No authentication, delivery or public
+    sharing tokens are selected. Queries have no silent history-size cutoff.
+    """
     init_schema(); uid = int(account_user_id)
+    if str(data_owner_key) != "account-%s" % uid:
+        raise ValueError("export_owner_mismatch")
+    import medication_email
+    medication_email.init_schema()
     user = db.get_ss_user(uid) or {}
+    owner = db._hash_user(data_owner_key)
     out = {
-        "generated_at": _now(),
-        "account": {k:user.get(k) for k in ("id","email","name","role","status","created_at","last_login")},
+        "export_version": 2, "complete": True, "generated_at": _now(),
+        "account": {k: user.get(k) for k in ("id", "email", "name", "role", "status", "created_at", "last_login")},
         "health_profile": db.load_health_profile(uid) or {},
         "privacy_settings": db.load_privacy_settings(uid) or {},
         "consent": get_consent(data_owner_key, uid),
-        "consent_history": consent_history(data_owner_key),
         "analysis_history": [],
-        "assistant_history": db.get_chat_history(uid, limit=500),
-        "medication_reminders": [],
-        "medication_history": [],
     }
-    try:
-        records = db.get_records(data_owner_key, limit=1000)
-        for r in records:
-            item = dict(r); result = db.load_result(data_owner_key, r.get("id")) or {}
-            item["result"] = result
-            out["analysis_history"].append(item)
-    except Exception:
-        logging.getLogger(__name__).debug("Handled exception in _safe_user_export; fallback applied (handler 508)")
-        pass
-    # Ensure modern medication columns/tables exist before building a portable
-    # user export. This is a local import to avoid adding a module-level cycle.
-    try:
-        import medication_email
-        medication_email.init_schema()
-    except Exception:
-        logging.getLogger(__name__).warning("Medication schema was unavailable during user export", exc_info=True)
     conn = db._conn(); c = conn.cursor()
     try:
-        try:
-            med_hashes = _medication_owner_hashes(uid, data_owner_key)
-            marks = ','.join([PH] * len(med_hashes))
-            c.execute(f"SELECT id,member_id,med_name,dose,times,frequency,start_date,end_date,days_of_week,timezone,notes,active,created FROM med_plans WHERE user_hash IN ({marks}) ORDER BY id", med_hashes)
-            out["medication_reminders"] = _rows(c)
-            if "med_logs" in _existing_tables(c):
-                c.execute(f"SELECT plan_id,member_id,log_date,log_time,status,created FROM med_logs WHERE user_hash IN ({marks}) ORDER BY id", med_hashes)
-                out["medication_history"] = _rows(c)
-        except Exception:
-            logging.getLogger(__name__).debug("Handled exception in _safe_user_export; fallback applied (handler 515)")
-            pass
+        existing = _existing_tables(c)
+
+        def select_owned(table, fields, column="user_hash", values=(owner,)):
+            if table not in existing:
+                return []
+            available = _cols_for_table(c, table)
+            selected = [name for name in fields.split(",") if name in available]
+            if not selected or column not in available:
+                raise RuntimeError("export_schema_incompatible:" + table)
+            marks = ",".join([PH] * len(values))
+            c.execute(f"SELECT {','.join(selected)} FROM {table} WHERE {column} IN ({marks})", values)
+            rows = []
+            while True:
+                batch = c.fetchmany(500)
+                if not batch:
+                    break
+                rows.extend(dict(zip(selected, row)) for row in batch)
+            return rows
+
+        records = select_owned("records", "id,timestamp,lang,age,gender,symptoms,duration,severity,urgency,conditions,medications,member_id")
+        saved = select_owned("results", "record_id,data")
+        result_by_id = {r["record_id"]: _export_json(r["data"]) for r in saved}
+        for record in sorted(records, key=lambda row: row["id"], reverse=True):
+            record["symptoms"] = [s for s in str(record.get("symptoms") or "").split(",") if s]
+            record["result"] = result_by_id.get(record["id"], {})
+            out["analysis_history"].append(record)
+        sections = {
+            "blood_tests": ("blood_tests", "id,timestamp,data,member_id"),
+            "vitals": ("vitals", "id,member_id,kind,v1,v2,context,measured_at,created"),
+            "family_members": ("family_members", "id,relation,name,age,gender,conditions,medications,allergies,notes,created"),
+            "archived_family_members": ("family_member_archive", "member_id,relation,name,age,gender,conditions,medications,allergies,notes,created,archived_at"),
+            "daily_checkins": ("daily_checkins", "id,timestamp,severity,checkin_date"),
+            "legacy_daily_checkins": ("ss_daily_checkins", "checkin_date,severity,updated_at"),
+            "symptom_followups": ("symptom_followups", "id,record_id,outcome,new_sign,timestamp"),
+            "symptom_relief_logs": ("symptom_relief_logs", "id,record_id,symptom_key,factor,timestamp"),
+            "feedback": ("feedback", "id,record_id,rating,comment,timestamp,public_comment,reason_code,context"),
+            "assistant_feedback": ("assistant_feedback", "id,message,rating,reason,timestamp"),
+            "saved_profile": ("profiles", "lang,age,gender,conditions,medications,allergies,updated_at"),
+        }
+        for section, (table, fields) in sections.items():
+            out[section] = select_owned(table, fields)
+        for row in out["blood_tests"]:
+            row["data"] = _export_json(row["data"])
+        out["assistant_history"] = select_owned("ss_chat_history", "id,role,content,timestamp", "user_id", (uid,))
+        out["assistant_history"].sort(key=lambda row: row["id"])
+        out["consent_history"] = select_owned("ss_consent_log", "consent_type,consent_status,consent_version,privacy_policy_version,timestamp", "subject_hash", (_subject_hash(data_owner_key),))
+        med_hashes = _medication_owner_hashes(uid, data_owner_key)
+        out["medication_reminders"] = select_owned("med_plans", "id,member_id,med_name,dose,times,frequency,start_date,end_date,days_of_week,timezone,notes,active,created", values=med_hashes)
+        out["medication_history"] = select_owned("med_logs", "id,plan_id,member_id,log_date,log_time,status,created", values=med_hashes)
+        out["medication_snoozes"] = select_owned("med_snoozes", "id,plan_id,member_id,log_date,log_time,due_at_utc,minutes,status,created_at", values=med_hashes)
+        out["safeid_cards"] = select_owned("ss_safeid_cards", "subject_type,subject_id,enabled,config_json,created_at,updated_at", "owner_hash", (_subject_hash(data_owner_key),))
+        for row in out["safeid_cards"]:
+            row["config_json"] = _export_json(row["config_json"])
+        out["shared_summaries"] = select_owned("ss_handoff_links", "payload_json,created_at,expires_at,revoked_at", "owner_hash", (owner,))
+        for row in out["shared_summaries"]:
+            row["payload_json"] = _export_json(row["payload_json"])
+        out["web_daily_checkins"] = []
+        if "user_data" in existing:
+            layout = db._user_data_layout(c)
+            key = db._user_data_key(db._web_checkin_storage_id(uid), layout)
+            c.execute(f"SELECT data FROM user_data WHERE user_id={PH}", (key,))
+            row = c.fetchone()
+            payload = db._decode_user_data_blob(row[0]) if row else {}
+            checkins = db._clean_web_checkin_map(payload.get("checkins"))
+            out["web_daily_checkins"] = [{"date": day, "value": checkins[day]} for day in sorted(checkins)]
     finally:
         conn.close()
     return out
+
+
+def _export_json(value):
+    """Keep legacy malformed owner content visible instead of silently dropping it."""
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value) if value else {}
+    except (TypeError, ValueError):
+        return {"unparsed_stored_content": str(value or "")}
 
 
 def user_export_bytes(account_user_id: int, data_owner_key: str) -> io.BytesIO:

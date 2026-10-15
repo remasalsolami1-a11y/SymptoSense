@@ -39,7 +39,7 @@ jobs:
       - name: Unit / regression tests (isolated per file; prints passed / failed / skipped, fails on unexplained skips)
         env:
           SKIP_BUDGET: "1"   # the one documented skip: conftest.SKIP_REASONS (iPhone install card removed from /meds)
-        run: tools/ci_run_tests.sh 4
+        run: bash tools/ci_run_tests.sh 4
 
   browser:
     runs-on: ubuntu-latest

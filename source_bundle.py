@@ -8,6 +8,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
+def _read_source(path):
+    """Preserve source newlines on the supported Python 3.12 runtime."""
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
 def _legacy_view_of_routes_module(text):
     """Render routes/<group>.py the way the code used to read inside webapp.py: ``@app.route`` plus the original
     protection decorators (login_required, admin_api_required(...)) directly above the ``def`` line."""
@@ -40,7 +46,7 @@ def webapp_text(root=None):
         if d.is_dir():
             for p in sorted(d.glob(pattern)):
                 if p.is_file():
-                    t = p.read_text(encoding="utf-8", newline="")
+                    t = _read_source(p)
                     parts.append(_legacy_view_of_routes_module(t) if folder in ("routes", "pagelib", "services") and p.name != "__init__.py" else t)
     return "\n".join(parts)
 
@@ -61,7 +67,7 @@ def segment(marker, root=None):
     base = Path(root) if root else ROOT
     files = [base / "webapp.py"] + [q for f in ("routes", "pagelib", "services") if (base / f).is_dir() for q in sorted((base / f).glob("*.py"))] + sorted((base / "inline_assets").glob("*"))
     for p in files:
-        text = p.read_text(encoding="utf-8", newline="")
+        text = _read_source(p)
         i = text.find(marker)
         if i >= 0:
             return text[i:]

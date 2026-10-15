@@ -52,8 +52,8 @@ def test_search_gap_retention_and_launch_reset_are_covered():
 
 
 def test_privacy_versions_and_copy_updated_for_new_analytics_signal():
-    assert 'CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.2")' in PRIV
-    assert 'PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2.1")' in PRIV
+    assert 'CONSENT_VERSION = os.environ.get("CONSENT_VERSION", "2.5")' in PRIV
+    assert 'PRIVACY_POLICY_VERSION = os.environ.get("PRIVACY_POLICY_VERSION", "2.2")' in PRIV
     assert "بدون ربطها بحساب أو جلسة" in WEB
 
 

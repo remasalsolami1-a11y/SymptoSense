@@ -1,13 +1,12 @@
 """Keep anonymous (no-account) symptom analyses in the admin trial export.
 
-Until V279 only signed-in users' analyses were saved, so the admin Excel
-("Symptom Trials") silently missed everyone who used the site as a guest.
-A guest analysis is saved as a minimal, anonymous trial row once the visitor has
-accepted the service-usage consent (V68.5: the consent text now says so; before
-that it also needed the optional analytics box). What is stored: age, gender, symptoms,
-duration, severity and urgency. NOT stored: free-text notes, conditions,
-medications, allergies, name, e-mail, IP address or the browser session id
-itself (only a one-way hash of the random guest key, as for accounts).
+A guest analysis is saved as a minimal, anonymous trial row ONLY when the visitor
+has accepted optional usage analytics or scientific-research participation (the
+service consent alone covers running the analysis, not keeping a copy). What is
+stored: age, gender, symptoms, duration, severity and urgency. NOT stored:
+free-text notes, conditions, medications, allergies, name, e-mail, IP address or
+the browser session id itself (only a one-way hash of the random guest key).
+Each purpose is flagged and withdrawn independently (privacy_features).
 """
 import logging
 
@@ -18,11 +17,10 @@ _SAVE_ERRORS = db.DB_ERRORS + (RuntimeError, OSError, ValueError, TypeError, Key
 
 
 def save(owner_key, lang, patient, result, demo_mode, analytics_ok, research_ok):
-    # analytics_ok / research_ok only decide the record's analytics/research eligibility flags, never whether it is saved.
     """Return the new record id, or None when nothing was saved (never raises)."""
     try:
-        if demo_mode or not owner_key:
-            return None
+        if demo_mode or not owner_key or not (analytics_ok or research_ok):
+            return None  # product-improvement use: needs at least one independently chosen optional purpose
         if patient.get("user_id") or result.get("record_id"):
             return None  # signed-in users are saved by the normal path
         symptoms = [str(s).strip() for s in (patient.get("symptoms") or []) if str(s).strip()][:20]

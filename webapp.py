@@ -147,7 +147,7 @@ def _configure_error_monitoring():
         return False
 _sentry_enabled = _configure_error_monitoring()
 app = Flask(__name__)
-STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-193"
+STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-194"
 app.wsgi_app = railway_runtime.RailwayHealthcheckMiddleware(app.wsgi_app)
 if os.environ.get("SENTRY_DSN", "").strip() and not _sentry_enabled:
     app.logger.warning("Sentry was requested but could not be initialized")
@@ -2064,7 +2064,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v279")
+    response.set_etag("symptosense-app-shell-v112-v281")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):

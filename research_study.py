@@ -31,7 +31,15 @@ CORE_FILES = (
     "medical_knowledge.py",
     "ml_diagnosis.py",
     "medication_warnings.py",
+    "clinical_text.py", "safety_engine.py", "emergency_lexicon.py",
+    "redflag_screen.py", "clinical_reasoning.py",
+    "symptom_engine_v2.py", "symptom_context.py", "symptom_combo_intelligence.py",
+    "context_triage.py", "decision_log.py", "decision_card.py", "risk_explain.py",
+    "medical_knowledge_extra.py", "medication_context.py", "input_utils.py",
+    "ml_model.json", "research_projection.py",
 )
+# Include the refactored request/service layer and newly added modules as well.
+CORE_FOLDERS = ("routes", "services")
 _SCHEMA_READY = None
 
 
@@ -63,9 +71,15 @@ def init_schema():
 
 def algorithm_signature() -> dict:
     digest = hashlib.sha256(); included = []
-    for rel in CORE_FILES:
+    files = set(CORE_FILES)
+    files.update(path.name for path in BASE_DIR.glob("medical_knowledge_expansion*.py"))
+    for folder in CORE_FOLDERS:
+        files.update(path.relative_to(BASE_DIR).as_posix() for path in (BASE_DIR / folder).rglob("*.py"))
+    for rel in sorted(files):
         path = BASE_DIR / rel
         if not path.exists():
+            digest.update(rel.encode("utf-8") + b"\0MISSING\0")
+            included.append({"file": rel, "missing": True})
             continue
         raw = path.read_bytes()
         digest.update(rel.encode("utf-8") + b"\0" + raw + b"\0")

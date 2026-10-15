@@ -1,7 +1,7 @@
 {
-  "delivery_revision": "V279",
-  "test_files": 247,
+  "delivery_revision": "V281",
+  "test_files": 249,
   "safety_regression_cases": 11,
-  "note": "V228 rebuilds the interactive body map with a clearer clinical illustration, labeled connected regions, compact mobile method tabs, and iPhone Safari dvh/safe-area handling while preserving symptom-analysis logic.",
+  "note": "V281: structured private trial exports, explicit Excel text cells, short analytics consent text with full details, consent version 2.5, updated safety documentation and regression coverage. Clinical sign-off remains pending.",
   "deployment_fix": "Arabic medication pages no longer dump long English label text; source-grounded summaries are cached, with an Arabic-only safe fallback if translation is unavailable."
 }

@@ -17,7 +17,7 @@ import input_utils
 import logging
 import privacy_features
 
-DEPS = ("_checkin_api_payload", "_consent_required_json", "_data_user_id", "_family_member_payload", "_followup_local_answer", "_groq_chat_completion_with_retry", "_lang", "_mk_error", "_service_consent_ok", "_site_url", "_ss_user_id", "api_login_required", "login_required", )
+DEPS = ("_analytics_consent_ok", "_checkin_api_payload", "_consent_required_json", "_data_user_id", "_family_member_payload", "_followup_local_answer", "_groq_chat_completion_with_retry", "_lang", "_mk_error", "_service_consent_ok", "_site_url", "_ss_user_id", "api_login_required", "login_required", )
 
 _SPECS = {}
 _WRAPPERS = {
@@ -440,7 +440,7 @@ def api_checkin():
 
 @route("/api/feedback", methods=["POST"])
 def api_feedback():
-    # Feedback is an explicit user submission, separate from optional analytics consent.
+    # Ratings/comments are product-improvement data: stored only with the optional analytics consent.
     try:
         data = request.get_json(force=True, silent=True)
         data = data if isinstance(data, dict) else {}
@@ -470,9 +470,10 @@ def api_feedback():
                 if not db.get_record_owned(_data_user_id(), candidate_id):
                     return jsonify({"ok": False, "error": "record_not_found"}), 404
                 record_id = candidate_id
+        if not _analytics_consent_ok(): return jsonify({"ok": True, "recorded": False, "reason": "analytics_consent_disabled"})
         db.init_db()
         db.save_feedback(_data_user_id(), record_id, "star:%d" % rating, comment or None, public_comment=public_comment, reason_code=reason_code, context=context)
-        return jsonify({"ok": True, "public_comment": public_comment, "reason_code": reason_code})
+        return jsonify({"ok": True, "recorded": True, "public_comment": public_comment, "reason_code": reason_code})
     except Exception as e:
         return _mk_error(e, 500)
 

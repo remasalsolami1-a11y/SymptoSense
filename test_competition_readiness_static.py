@@ -66,7 +66,7 @@ class CompetitionReadinessStaticTests(unittest.TestCase):
     def test_privacy_has_provider_and_retention_disclosures(self):
         self.assertIn("مزودو الخدمة ومكان المعالجة", WEBAPP)
         self.assertIn("الاحتفاظ والحذف", WEBAPP)
-        self.assertIn("إصدار سياسة الخصوصية 2.0", WEBAPP)
+        self.assertIn("إصدار سياسة الخصوصية 2.2", WEBAPP)
 
     def test_report_blob_url_is_not_revoked_immediately(self):
         self.assertIn("SymptoSense_Report_", WEBAPP)

@@ -9,6 +9,7 @@ set -u
 cd "$(dirname "$0")/.."
 JOBS="${1:-4}"
 OUT="$(mktemp -d)"
+export PYTHONPATH="$PWD/tools/offline_tests${PYTHONPATH:+:$PYTHONPATH}"
 export WEB_SECRET="ci-secret-that-is-longer-than-thirty-two-characters"
 export SESSION_COOKIE_SECURE=0 SYMPTOSENSE_DISABLE_BACKUP_SCHEDULER=1
 run_one() {

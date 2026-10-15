@@ -31,7 +31,7 @@ def test_required_browser_assets_exist_at_served_paths():
     for rel in paths: assert (ROOT/rel).is_file(), rel
 
 def test_asset_cache_revision_is_bumped():
-    assert 'STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-193"' in WEB
+    assert 'STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-194"' in WEB
     assert '/static/js/manage-profile.js?v=263' in WEB
     assert '/static/css/v83_user_tools.css?v=193' in CHAT
     assert versioning.SW_CACHE in SW

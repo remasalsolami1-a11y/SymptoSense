@@ -24,9 +24,9 @@ def test_feedback_is_five_star_and_has_comment():
     assert 'star:%d' in WEB
     assert 'feedback_comment' in WEB
 
-def test_feedback_is_explicit_not_blocked_by_analytics_consent():
-    block = source_bundle.between('def api_feedback():', '@app.route("/api/search")')
-    assert '_analytics_consent_ok()' not in block
+def test_feedback_is_stored_only_with_the_analytics_consent():
+    block = source_bundle.between('def api_feedback():', 'def register_routes')
+    assert '_analytics_consent_ok()' in block   # V68.6: ratings are listed under the optional analytics consent
 
 def test_home_has_how_it_works_without_duplicate_community_dashboard():
     block = source_bundle.function_source("home_page")

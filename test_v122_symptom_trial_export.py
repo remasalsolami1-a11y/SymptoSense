@@ -54,6 +54,14 @@ def test_clear_symptom_trials_preserves_accounts_and_blood_tests():
     assert "DELETE FROM ss_users" not in block
 
 
+def _analytics_consent_all(db):
+    """These tests seed records directly; the admin trials export lists only analytics-consented records (V68.6)."""
+    import privacy_features
+    privacy_features.init_schema()
+    conn = db._conn(); conn.cursor().execute("UPDATE records SET analytics_eligible=1"); conn.commit(); conn.close()
+
+
+
 def test_runtime_rows_are_retrieved_from_saved_symptom_analyses_only(monkeypatch):
     import db
     tmp=tempfile.NamedTemporaryFile(suffix='.db',delete=False)
@@ -68,6 +76,7 @@ def test_runtime_rows_are_retrieved_from_saved_symptom_analyses_only(monkeypatch
         'account-1','ar',23,'f',['صداع','غثيان'],'يومين',2,'low',
         {'ok':True},member_id=0,
     )
+    _analytics_consent_all(db)
     # CBC data must NOT leak into the symptom-trial export.
     db.save_blood_test('account-1',{'age':99,'gender':'m','summary':'cbc-only'},0)
     rows=db.admin_symptom_trial_rows()
@@ -76,7 +85,7 @@ def test_runtime_rows_are_retrieved_from_saved_symptom_analyses_only(monkeypatch
         'age':23,
         'gender':'Female | أنثى',
         'symptoms':'صداع • غثيان',
-        'duration':'يومين',
+        'duration':'Days',
     }
     summary=db.admin_symptom_trial_summary()
     assert summary['saved_analyses']==1
@@ -93,7 +102,7 @@ def test_runtime_clear_removes_analysis_rows_but_keeps_cbc(monkeypatch):
     monkeypatch.setattr(db,'DB_PATH',tmp.name)
     monkeypatch.setattr(db,'_DB_READY_KEY',None)
     db.init_db()
-    db.save_analysis_record_with_result('account-2','en',30,'m',['headache'],'3 days',2,'low',{'ok':True})
+    db.save_analysis_record_with_result('account-2','en',30,'m',['headache'],'3 days',2,'low',{'ok':True}); _analytics_consent_all(db)
     db.save_blood_test('account-2',{'age':30,'gender':'m','summary':'cbc'},0)
     result=db.admin_clear_symptom_trials()
     assert result['deleted_analyses']==1

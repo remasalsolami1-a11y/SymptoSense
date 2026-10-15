@@ -70,6 +70,14 @@ def test_analysis_api_rows_include_editable_context():
         assert key in CORE
 
 
+def _analytics_consent_all(db):
+    """These tests seed records directly; the admin trials export lists only analytics-consented records (V68.6)."""
+    import privacy_features
+    privacy_features.init_schema()
+    conn = db._conn(); conn.cursor().execute("UPDATE records SET analytics_eligible=1"); conn.commit(); conn.close()
+
+
+
 def test_admin_preview_matches_excel_source():
     import db
     from openpyxl import load_workbook
@@ -82,13 +90,15 @@ def test_admin_preview_matches_excel_source():
             'account-v213','ar',31,'f',['غثيان','ألم بطن'],'1-3 أيام',2,'low',
             {'ok':True,'input_snapshot':{'symptoms':['غثيان','ألم بطن']},'symptoms':['غثيان','ألم بطن']}
         )
+        _analytics_consent_all(db)
         rows=db.admin_symptom_trial_rows()
-        assert rows and 'غثيان' in rows[0]['symptoms'] and 'ألم بطن' in rows[0]['symptoms']
+        assert rows and 'غثيان' in rows[0]['symptoms'] and 'نص حر محجوب' in rows[0]['symptoms']
         wb=load_workbook(db.admin_export_symptom_trials_xlsx(),data_only=True)
         ws=wb['Symptom Trials']
         assert ws['C4'].value=='Symptoms | الأعراض'
         exported='\n'.join(str(ws.cell(r,3).value or '') for r in range(5,ws.max_row+1))
-        assert 'غثيان' in exported and 'ألم بطن' in exported
+        assert exported == rows[0]['symptoms']
+        assert 'نص حر محجوب' in exported
         assert 'معاينة بيانات تحليل الأعراض' in WEB
         assert '__SYMPTOM_PREVIEW__' in WEB
     finally:

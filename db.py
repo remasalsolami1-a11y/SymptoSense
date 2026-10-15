@@ -3307,13 +3307,15 @@ def admin_symptom_trial_rows():
     from the export just because one historical column was incomplete.
     """
     init_db()
+    __import__('privacy_features').init_schema()  # adds records.analytics_eligible
     conn = _conn()
     try:
         c = conn.cursor()
         c.execute(
-            "SELECT r.age, r.gender, r.symptoms, r.duration, res.data "
+            "SELECT r.age, r.gender, r.symptoms, r.duration, res.data, r.lang "
             "FROM records r "
             "LEFT JOIN results res ON res.record_id=r.id AND res.user_hash=r.user_hash "
+            "WHERE COALESCE(r.analytics_eligible,0)=1 "
             "ORDER BY r.timestamp DESC, r.id DESC"
         )
         raw_rows = c.fetchall()
@@ -3326,7 +3328,7 @@ def admin_symptom_trial_rows():
             return 'Female | أنثى'
         if raw in {'m', 'male', 'ذكر'}:
             return 'Male | ذكر'
-        return str(value or '').strip()
+        return 'Unknown | غير محدد'
 
     def _coerce_symptom_list(value):
         if isinstance(value, (list, tuple)):
@@ -3366,6 +3368,9 @@ def admin_symptom_trial_rows():
                 recovered.append(value)
         return recovered
 
+    from research_projection import ResearchProjection
+    from clinical_text import parse_age_years
+    projection = ResearchProjection()
     rows = []
     for row in raw_rows:
         symptoms = _coerce_symptom_list(row[2])
@@ -3377,10 +3382,10 @@ def admin_symptom_trial_rows():
             # dropped when the legacy records column alone is blank.
             continue
         rows.append({
-            'age': row[0] if row[0] is not None else '',
+            'age': parse_age_years(row[0]) if parse_age_years(row[0]) is not None else '',
             'gender': _gender(row[1]),
-            'symptoms': ' • '.join(symptoms),
-            'duration': str(row[3] or '').strip(),
+            'symptoms': ' • '.join(projection.terms(symptoms, projection.symptoms, 'ar' if row[5] == 'ar' else 'en')),
+            'duration': projection.duration(row[3]),
         })
     return rows
 
@@ -3395,7 +3400,7 @@ def admin_symptom_trial_summary():
     conn = _conn()
     try:
         c = conn.cursor()
-        c.execute("SELECT COUNT(DISTINCT user_hash) FROM records")
+        c.execute("SELECT COUNT(DISTINCT user_hash) FROM records WHERE COALESCE(analytics_eligible,0)=1")
         row = c.fetchone() or (0,)
         testers = max(0, int(row[0] or 0))
     finally:
@@ -3454,6 +3459,9 @@ def admin_export_symptom_trials_xlsx():
             values=[item['age'],item['gender'],item['symptoms'],item['duration']]
             for c_idx,value in enumerate(values,start=1):
                 cell=ws.cell(r_idx,c_idx,value)
+                # User-derived strings must remain text, never spreadsheet formulas.
+                if isinstance(value, str):
+                    cell.data_type = 's'
                 cell.font=Font(name='Calibri',size=10,color=text)
                 cell.alignment=Alignment(
                     horizontal='center' if c_idx in (1,2,4) else 'left',
@@ -4788,7 +4796,8 @@ def delete_ss_user(user_id):
             c.execute(f"PRAGMA table_info({table})")
             return {str(r[1]) for r in c.fetchall()}
 
-        by_hash = ("family_members","results","blood_tests","profiles",
+        by_hash = ("family_member_archive","symptom_relief_logs","blood_collection_consents",
+                   "family_members","results","blood_tests","profiles",
                    "daily_checkins","assistant_feedback","feedback","followups","records",
                    "visits","push_subscriptions","symptom_followups","vitals")
         for table in by_hash:

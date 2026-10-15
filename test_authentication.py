@@ -447,7 +447,9 @@ class AuthenticationIntegrationTest(unittest.TestCase):
 
         failed=mock.MagicMock(); failed.__enter__.return_value=failed
         failed.login.side_effect=webapp.smtplib.SMTPAuthenticationError(535,b"rejected")
-        with mock.patch.dict(os.environ,smtp_env,clear=False), mock.patch.object(webapp.smtplib,"SMTP",return_value=failed):
+        with mock.patch.dict(os.environ,smtp_env,clear=False), mock.patch.object(webapp.smtplib,"SMTP",return_value=failed), \
+                mock.patch.object(webapp, "_send_auth_email_resend", return_value=(False, "email_provider_unavailable")), \
+                mock.patch.object(webapp, "_send_auth_email_brevo", return_value=(False, "email_provider_unavailable")):
             ok,reason=self.original_sender("recipient@example.test","Subject","<b>Hello</b>","password_reset")
         self.assertFalse(ok); self.assertEqual(reason,"email_smtp_auth_failed")
 

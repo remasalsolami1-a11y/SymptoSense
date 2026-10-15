@@ -58,6 +58,14 @@ def test_admin_export_can_recover_legacy_symptoms_from_result_json():
     assert "norm.get('unmatched')" in block
 
 
+def _analytics_consent_all(db):
+    """These tests seed records directly; the admin trials export lists only analytics-consented records (V68.6)."""
+    import privacy_features
+    privacy_features.init_schema()
+    conn = db._conn(); conn.cursor().execute("UPDATE records SET analytics_eligible=1"); conn.commit(); conn.close()
+
+
+
 def test_runtime_excel_contains_symptoms_and_legacy_recovery(monkeypatch):
     import db
     from openpyxl import load_workbook
@@ -82,15 +90,15 @@ def test_runtime_excel_contains_symptoms_and_legacy_recovery(monkeypatch):
         rid=c.lastrowid
         payload={'symptom_normalization':{'canonical':[{'original':'ألم بطن'}],'unmatched':['دوخة']}}
         c.execute("INSERT INTO results (user_hash,record_id,data) VALUES (?,?,?)",(db._hash_user('account-old'),rid,json.dumps(payload,ensure_ascii=False)))
-        conn.commit(); conn.close()
+        conn.commit(); conn.close(); _analytics_consent_all(db)
         rows=db.admin_symptom_trial_rows()
         assert any('صداع' in x['symptoms'] and 'غثيان' in x['symptoms'] for x in rows)
-        assert any('ألم بطن' in x['symptoms'] and 'دوخة' in x['symptoms'] for x in rows)
+        assert any('نص حر محجوب' in x['symptoms'] and 'دوخة' in x['symptoms'] for x in rows)
         wb=load_workbook(db.admin_export_symptom_trials_xlsx(), data_only=True)
         ws=wb['Symptom Trials']
         exported=[ws.cell(r,3).value or '' for r in range(5,ws.max_row+1)]
         assert any('صداع' in x and 'غثيان' in x for x in exported)
-        assert any('ألم بطن' in x and 'دوخة' in x for x in exported)
+        assert any('نص حر محجوب' in x and 'دوخة' in x for x in exported)
     finally:
         try: os.unlink(tmp.name)
         except OSError: pass

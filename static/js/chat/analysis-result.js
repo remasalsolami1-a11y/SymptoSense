@@ -302,13 +302,13 @@
         h += '</section>';
       }
 
-      // 0b) Connected clinical picture (reasoning). All text is escaped.
+      // 0b) Comprehensive health picture (reasoning). All text is escaped.
       const rs = d.reasoning;
       if (rs) {
         const L = function(a, e){ return LANG==='ar' ? a : e; };
         const ul = function(arr){ return '<ul>'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; };
         h += '<section class="ss-report-card ss-reasoning">';
-        h += '<div class="ss-report-heading"><h2>🧠 '+esc(L('الصورة السريرية المترابطة','Connected clinical picture'))+'</h2></div>';
+        h += '<div class="ss-report-heading"><h2>🧠 '+esc(L('الصورة الصحية الشاملة','Comprehensive health picture'))+'</h2></div>';
         const ch = rs.what_changed || {};
         if (ch.items && ch.items.length) h += '<div class="ss-rs-block"><b>'+esc(L('ما الذي تغيّر منذ المرة السابقة؟','What changed since last time?'))+'</b>'+ul(ch.items)+'</div>';
         if (rs.contributors && rs.contributors.length) h += '<div class="ss-rs-block"><b>'+esc(L('عوامل مرتبطة ببياناتك','Factors linked to your data'))+'</b>'+ul(rs.contributors.map(function(c){return c.text;}))+'</div>';

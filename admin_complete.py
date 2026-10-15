@@ -512,9 +512,12 @@ def admin_analysis_results(query: str = "", risk: str = "", lang: str = "", page
     finally:
         conn.close()
 
+    from research_projection import ResearchProjection
+    projection = ResearchProjection()
     records=[]
     risk_counts=Counter(); lang_counts=Counter(); with_output=0
     for row in raw_rows:
+        row = projection.row(row)
         rid,user_hash,timestamp,row_lang,age,gender,symptoms_raw,conditions_raw,medications_raw,duration,severity,urgency,study_version,app_version,result_raw=row
         result=parse_result(result_raw)
         h=str(user_hash); risk_label=_risk(urgency)
@@ -720,6 +723,9 @@ def export_admin_workbook(dataset_scope: str = "official") -> io.BytesIO:
     finally:
         conn.close()
 
+    from research_projection import ResearchProjection
+    projection = ResearchProjection()
+    eligible_rows = [projection.row(row) for row in eligible_rows]
     allowed_hashes = {str(row[1]) for row in eligible_rows}
 
     # One compact row per participant. No account type, registration date,
@@ -889,6 +895,7 @@ def export_admin_workbook(dataset_scope: str = "official") -> io.BytesIO:
 
     research_summary = [
         ["Generated at", generated_at],
+        ["Research privacy policy", "Structured catalog terms only; raw and generated free text excluded. Personal records are unchanged."],
         ["Dataset scope", "Official frozen-study dataset" if dataset_scope == "official" else "Pilot / non-frozen dataset"],
         ["Freeze integrity valid", freeze_integrity_ok],
         ["Frozen study version", frozen_study],
