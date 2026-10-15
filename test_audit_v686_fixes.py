@@ -197,3 +197,16 @@ def test_trial_workbook_keeps_untrusted_strings_as_text(monkeypatch, payload):
     for col in ('B', 'C', 'D'):
         assert ws[f'{col}5'].data_type == 's'
         assert ws[f'{col}5'].value == payload
+
+
+def test_welcome_description_paragraphs_are_centered_on_phones_v6812():
+    """The two 'smart health assistant' paragraphs used to keep a narrow max-width without auto side margins,
+    so on phones the Arabic block sat off-centre and the English one could run past the edge."""
+    import welcome_phone
+    css = welcome_phone.CSS
+    rule = [r for r in css.split("}") if ".first-lang-desc-ar" in r and ".first-lang-desc-en" in r and "font-size:13px" in r]
+    assert rule, "phone rule for the description paragraphs exists"
+    r = rule[0]
+    for needed in ("margin:0 auto 3px!important", "width:100%!important", "max-width:100%!important",
+                   "text-align:center!important", "overflow-wrap:anywhere!important"):
+        assert needed in r
