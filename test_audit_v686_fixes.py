@@ -199,14 +199,18 @@ def test_trial_workbook_keeps_untrusted_strings_as_text(monkeypatch, payload):
         assert ws[f'{col}5'].value == payload
 
 
-def test_welcome_description_paragraphs_are_centered_on_phones_v6812():
-    """The two 'smart health assistant' paragraphs used to keep a narrow max-width without auto side margins,
-    so on phones the Arabic block sat off-centre and the English one could run past the edge."""
+def test_welcome_phone_drops_description_and_keeps_search_visible_v6814():
+    """Phones: the long bilingual description is hidden so the language buttons sit above the fold, and the language
+    card starts below the preview search bar instead of covering it. Desktop keeps both paragraphs."""
     import welcome_phone
     css = welcome_phone.CSS
-    rule = [r for r in css.split("}") if ".first-lang-desc-ar" in r and ".first-lang-desc-en" in r and "font-size:13px" in r]
-    assert rule, "phone rule for the description paragraphs exists"
-    r = rule[0]
-    for needed in ("margin:0 auto 3px!important", "width:100%!important", "max-width:100%!important",
-                   "text-align:center!important", "overflow-wrap:anywhere!important"):
-        assert needed in r
+    assert "first-lang-copy{display:none!important}" in css
+    assert "first-lang-panel{margin-top:clamp(86px,10svh,104px)!important}" in css
+    # short phones: the preview keeps 52px, the card is pushed lower than the preview search bar
+    assert "first-lang-card>.fl-preview{margin-top:52px!important}" in css
+    assert "first-lang-panel{margin-top:77px!important}" in css
+    # the phone rule lives inside the <=600px media query only
+    assert css.index("first-lang-copy{display:none!important}") < css.index("@media (max-width:600px) and (max-height:700px)")
+    import webapp
+    page = webapp.app.test_client().get("/").get_data(as_text=True)
+    assert "first-lang-desc-ar" in page and "first-lang-desc-en" in page, "paragraphs stay in the page (desktop)"
