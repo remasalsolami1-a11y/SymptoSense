@@ -27,6 +27,8 @@ from email.message import EmailMessage
 from email.utils import parseaddr
 from urllib.parse import urlsplit, quote, urlencode
 CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
+# V68.15: optional reviewer/supervisor/contact details live in trust_pages (shown only when set).
+_accountability_html = lambda ar: __import__("trust_pages").accountability_html(ar)
 from functools import lru_cache, wraps
 from flask import Flask, request, jsonify, render_template_string, session, send_file, send_from_directory, Response, redirect, url_for, g, abort, has_request_context, make_response
 import db
@@ -1704,6 +1706,7 @@ _PUBLIC_CANONICAL_MAP = {
     "/health-file": "/health-file",
     "/vitals": "/vitals",
     "/terms": "/terms",
+    "/changelog": "/changelog",
     "/profile": "/profile",
     "/family": "/family",
     "/checkin": "/checkin",
@@ -1982,8 +1985,10 @@ def _footer():
         '<a href="/privacy">%s</a>'
         '<a href="/terms">%s</a>'
         '<a href="/sources">%s</a>'
+        '<a href="/changelog">%s</a>'
         '%s'
         '</div>'
+        '%s'
         '<hr class="f-sep" aria-hidden="true"><p class="f-love"><span>%s</span> <b>%s</b></p>'
         '<p class="f-copy">%s</p>'
         '</div></div>'
@@ -1993,7 +1998,9 @@ def _footer():
          _t("footer_contact_t"), tg, _t("footer_wa_btn"),
          _t("footer_privacy"), _t("footer_terms"),
          ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
+         ("سجل التحديثات" if _lang() == "ar" else "Changelog"),
          ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
+         _accountability_html(_lang() == "ar"),
          _t("footer_love"), _t("footer_love_name"),
          _t("footer_copy_full"))
 
@@ -2113,6 +2120,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
             ),
         },
         "/privacy": {"ar": ("سياسة الخصوصية | SymptoSense", "تعرّف على كيفية جمع SymptoSense للبيانات واستخدامها وحمايتها وحقوقك المتعلقة بالخصوصية."), "en": ("Privacy Policy | SymptoSense", "Learn how SymptoSense collects, uses, protects, and manages your data and privacy choices.")},
+        "/changelog": {"ar": ("سجل التحديثات | SymptoSense", "سجل مختصر بتحديثات محتوى SymptoSense وقاعدة المعرفة عبر الإصدارات."), "en": ("Changelog | SymptoSense", "A short log of SymptoSense content and knowledge-base updates across releases.")},
         "/terms": {"ar": ("شروط الاستخدام | SymptoSense", "اطّلع على شروط استخدام SymptoSense وحدود الخدمة والمسؤوليات المرتبطة باستخدام الموقع."), "en": ("Terms of Use | SymptoSense", "Review the terms for using SymptoSense, service limitations, and responsibilities related to the platform.")},
         "/meds": {"ar": ("الأدوية والتذكيرات | SymptoSense", "معلومات توعوية عن الأدوية والتنبيهات والتداخلات، مع أدوات تذكير تساعدك على تنظيم أدويتك بأمان."), "en": ("Medications & Reminders | SymptoSense", "Educational medication information, warnings and interactions, plus reminder tools to help organize medicines safely.")},
         "/firstaid": {"ar": ("الإسعافات الأولية | SymptoSense", "إرشادات إسعاف أولي مبسطة للحالات الشائعة، مع توضيح متى تحتاج للاتصال بالطوارئ فورًا."), "en": ("First Aid | SymptoSense", "Simple first-aid guidance for common situations, including when emergency help is needed immediately.")},
@@ -2435,6 +2443,11 @@ def _refresh_home_knowledge_snapshot_background():
     try:
         stats = medical_knowledge.statistics()
         snap = _merge_home_knowledge_stats(stats, fallback)
+        _kb = __import__("kb_stats").get_kb_stats()
+        if _kb.get("origin") == "database" and snap.get("_origin") == "live":
+            snap.update({"verified_sources": _kb["sources"], "conditions": _kb["conditions"],
+                         "symptoms": _kb["symptoms"], "red_flags": _kb["red_flags"],
+                         "searchable_symptoms": _kb["symptoms"]})
         with _HOME_KNOWLEDGE_LOCK:
             _HOME_KNOWLEDGE_CACHE["data"] = snap
             _HOME_KNOWLEDGE_CACHE["at"] = time.time()
@@ -2587,6 +2600,9 @@ def terms_page():
     for key, value in values.items():
         body = body.replace(key, value)
     return _page(title, __import__("legal_terms").extend_terms(body, ar))
+
+def changelog_page():
+    return __import__("trust_pages").changelog_page()
 
 def contact_page():
     ar = _lang() == "ar"
@@ -3166,6 +3182,13 @@ def _public_trust_snapshot():
 
     knowledge = v51_innovation._knowledge_metrics()
     coverage = v51_innovation._coverage_matrix()
+    # V68.15: one canonical set of counts shared by every public page.
+    _kb = __import__("kb_stats").get_kb_stats()
+    if _kb.get("origin") == "database":
+        knowledge.update({"symptoms": _kb["symptoms"], "diseases": _kb["conditions"], "sources": _kb["sources"],
+                          "red_rules": _kb["red_flags"], "links": _kb["links"]})
+        coverage.update({"symptoms_total": _kb["symptoms"], "symptoms_linked": _kb["symptoms_linked"],
+                         "diseases_total": _kb["conditions"], "red_flags_total": _kb["red_flags"]})
     tests = _count_automated_checks()
     features = feature_flags.public_state()
     knowledge_total = int(knowledge.get('symptoms', 0)) + int(knowledge.get('diseases', 0)) + int(knowledge.get('links', 0)) + int(knowledge.get('red_rules', 0)) + int(knowledge.get('sources', 0)) + int(knowledge.get('combos', 0)) + int(knowledge.get('aliases_ar', 0)) + int(knowledge.get('aliases_en', 0))
@@ -3355,6 +3378,10 @@ def privacy_center():
 @app.route("/terms")
 def terms():
     return terms_page()
+
+@app.route("/changelog")
+def changelog():
+    return changelog_page()
 
 @app.route("/contact")
 def contact():
@@ -3772,7 +3799,7 @@ def localized_page_dispatch(lang_code, subpath):
         "search": "search", "calculators": "calculators", "meds": "meds",
         "emergency": "emergency", "firstaid": "firstaid", "tips": "tips", "relax": "relax",
         "health-library": "health_library_index", "health-trends": "health_trends",
-        "community-dashboard": "community_dashboard", "terms": "terms", "contact": "contact",
+        "community-dashboard": "community_dashboard", "terms": "terms", "changelog": "changelog", "contact": "contact",
         "profile": "profile", "family": "family", "checkin": "checkin", "safeid": "safeid",
         "settings": "settings", "manage": "manage_page", "memory": "memory_page",
         "login": "login", "register": "register", "verify-email": "verify_email_pending",

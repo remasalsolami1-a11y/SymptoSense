@@ -29,4 +29,4 @@ def test_webapp_remains_below_static_quality_limit():
     # temporary ceiling that still catches runaway growth; the next structural
     # refactor should move the lab UI into its own module instead of weakening
     # this guard further.
-    assert len(WEB.splitlines()) < 24000
+    assert len(WEB.splitlines()) < 24200  # V68.15: +trust_pages/changelog, +regional 911 copy

@@ -1015,8 +1015,8 @@ function asstMhOfflineReply(text) {
   var passiveEn = ["wish i wouldn't wake up",'wish i would not wake up','wish i could disappear','better off without me',"can't go on",'cannot go on','tired of life'];
   if ((lang === 'ar' ? passiveAr : passiveEn).some(function(p){ return low.indexOf(p) !== -1; })) {
     return lang === 'ar'
-      ? 'هذا الكلام يدل أن الحمل عليك ثقيل جدًا، وأحتاج أتأكد من سلامتك: هل تفكر الآن في إيذاء نفسك أو إنهاء حياتك؟ إذا نعم، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك واتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن، وللاستشارة الصحية تواصل مع وزارة الصحة 937.'
-      : "That sounds painfully heavy, and I want to check your safety: are you thinking about hurting yourself or ending your life right now? If yes, or if you're not sure you can stay safe, don't stay alone—call 997 or the unified emergency number 911 now; the Ministry of Health is available on 937 for health support.";
+      ? 'هذا الكلام يدل أن الحمل عليك ثقيل جدًا، وأحتاج أتأكد من سلامتك: هل تفكر الآن في إيذاء نفسك أو إنهاء حياتك؟ إذا نعم، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك واتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية، وللاستشارة الصحية تواصل مع وزارة الصحة 937.'
+      : "That sounds painfully heavy, and I want to check your safety: are you thinking about hurting yourself or ending your life right now? If yes, or if you're not sure you can stay safe, don't stay alone—call 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province; the Ministry of Health is available on 937 for health support.";
   }
   if (lang === 'ar') {
     if (low.includes('ألم صدر شديد') || low.includes('الم صدر شديد') || low.includes('ضيق تنفس شديد') || low.includes('إغماء') || low.includes('اغماء')) return 'لا نفترض أن هذا قلق فقط. إذا كان عندك ألم صدر شديد، صعوبة شديدة في التنفس، إغماء أو عرض جسدي جديد وقوي، اتصل بالإسعاف 997 الآن.';
@@ -1123,12 +1123,12 @@ function asstRenderMentalCrisisCard(kind) {
   var harmMsg;
   if (kind === 'other') {
     harmMsg = lang === 'ar'
-      ? '🚨 إذا تحس أنك ممكن تؤذي شخصًا الآن، ابتعد عنه فورًا وابتعد عن أي سلاح أو وسيلة أذى. اتصل بالطوارئ الموحدة 911 الآن، وإذا كان أحد يحتاج إسعافًا عاجلًا فاتصل بـ997. خلك مع شخص تثق به يساعد يحافظ على سلامة الجميع.'
-      : '🚨 If you think you may hurt someone now, move away from that person and from any weapon or means of harm. Call the unified emergency number 911 now; call 997 too if anyone needs urgent medical help. Stay with someone you trust who can help keep everyone safe.';
+      ? '🚨 إذا تحس أنك ممكن تؤذي شخصًا الآن، ابتعد عنه فورًا وابتعد عن أي سلاح أو وسيلة أذى. اتصل بالطوارئ الموحدة 911 الآن إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية، أو بالشرطة 999 في بقية المناطق، وإذا كان أحد يحتاج إسعافًا عاجلًا فاتصل بـ997. خلك مع شخص تثق به يساعد يحافظ على سلامة الجميع.'
+      : '🚨 If you think you may hurt someone now, move away from that person and from any weapon or means of harm. Call the unified emergency number 911 now if you are in Riyadh, Makkah, Madinah or the Eastern Province, or the police on 999 elsewhere; call 997 too if anyone needs urgent medical help. Stay with someone you trust who can help keep everyone safe.';
   } else {
     harmMsg = lang === 'ar'
-      ? '🚨 سلامتك أهم شيء الآن. إذا كنت تفكر في إيذاء نفسك أو إنهاء حياتك، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك. ابتعد عن أي وسيلة أذى وخلك مع شخص تثق به. اتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن، وللاستشارة الصحية على مدار الساعة تواصل مع وزارة الصحة على 937.'
-      : '🚨 Your safety comes first. If you are thinking about hurting yourself or ending your life, or you are not sure you can stay safe, do not stay alone. Move away from means of harm and stay with someone you trust. Call ambulance services on 997 or the unified emergency number 911 now; the Ministry of Health is available on 937 for 24/7 health support.';
+      ? '🚨 سلامتك أهم شيء الآن. إذا كنت تفكر في إيذاء نفسك أو إنهاء حياتك، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك. ابتعد عن أي وسيلة أذى وخلك مع شخص تثق به. اتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية، وللاستشارة الصحية على مدار الساعة تواصل مع وزارة الصحة على 937.'
+      : '🚨 Your safety comes first. If you are thinking about hurting yourself or ending your life, or you are not sure you can stay safe, do not stay alone. Move away from means of harm and stay with someone you trust. Call ambulance services on 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province; the Ministry of Health is available on 937 for 24/7 health support.';
   }
   var harmBtns = '<div class="mh-call-row">' +
     '<a href="tel:997">🚑 ' + (lang === 'ar' ? 'الإسعاف 997' : 'Ambulance 997') + '</a>' +

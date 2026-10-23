@@ -36,4 +36,6 @@ def test_questionnaire_is_capped_and_old_input_is_hidden():
 def test_emergency_copy_does_not_overclaim_911_coverage():
     assert "Unified emergency number across all regions" not in WEB
     assert "الرقم الموحد للطوارئ في جميع المناطق" not in WEB
-    assert '"em_unified_desc": "Unified Emergency Number"' in WEB
+    # V68.15: the unified-number copy names the regions where 911 works and sends everyone else to 997.
+    assert "Riyadh, Makkah, Madinah and the Eastern Province" in WEB
+    assert "في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية" in WEB

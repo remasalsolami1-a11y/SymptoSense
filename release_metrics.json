@@ -1,6 +1,6 @@
 {
   "delivery_revision": "V281",
-  "test_files": 249,
+  "test_files": 250,
   "safety_regression_cases": 11,
   "note": "V281: structured private trial exports, explicit Excel text cells, short analytics consent text with full details, consent version 2.5, updated safety documentation and regression coverage. Clinical sign-off remains pending.",
   "deployment_fix": "Arabic medication pages no longer dump long English label text; source-grounded summaries are cached, with an Arabic-only safe fallback if translation is unavailable."

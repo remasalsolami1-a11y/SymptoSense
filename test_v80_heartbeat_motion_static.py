@@ -30,4 +30,4 @@ def test_reduced_motion_supported():
 def test_webapp_quality_size_guard_kept():
     # V106: production hardening and mobile/iOS fixes increased guarded runtime
     # code. Keep a tight ceiling without flagging the current audited release.
-    assert len(WEB.splitlines()) < 24000
+    assert len(WEB.splitlines()) < 24200  # V68.15: +trust_pages/changelog, +regional 911 copy

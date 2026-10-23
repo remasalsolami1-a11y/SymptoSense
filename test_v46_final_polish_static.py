@@ -79,7 +79,7 @@ def test_large_chat_view_was_extracted_from_monolith():
     assert "def render_chat_page" in CHAT
     # V111 adds guarded response compression and a small async analytics queue
     # while keeping the large chat view extracted. Retain a tight ceiling.
-    assert len(WEB.splitlines()) < 24000
+    assert len(WEB.splitlines()) < 24200  # V68.15: +trust_pages/changelog, +regional 911 copy
     assert len(CHAT.splitlines()) > 2000
 
 

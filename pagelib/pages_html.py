@@ -906,19 +906,7 @@ def sources_page():
     body = '<main class="v2-info-page" style="max-width:1040px"><section><h1>📚 %s</h1><p>%s</p></section>%s<section><h2>%s</h2><p>%s</p></section><div class="v2-source-grid">%s</div></main>' % (
         title,
         ("نعرض المصادر الطبية الموثقة المستخدمة في قاعدة المعرفة، مع مراجع مباشرة مرتبطة بالتفسيرات عندما تكون متاحة." if ar else "We show verified medical sources used by the knowledge base, with direct references linked to interpretations when available."),
-        summary + ('' and (
-            '<section><h2>%s</h2><div class="card"><strong>%s</strong><p class="muted" style="margin-top:8px">%s</p></div></section>' % (
-                ("ما الذي أُضيف في V75؟" if ar else "What was added in V75?"),
-                (("+%s أعراض جديدة في V75 · البحث الصحي يطابق مكتبة الأعراض النشطة ويجمع عدة أعراض في بحث واحد" % release_symptoms_added) if ar else ("+%s new symptom concepts in V75 · Health Search matches the active symptom library and combines multiple symptoms in one query" % release_symptoms_added)),
-                ("تم ربط البحث الصحي بمكتبة الأعراض النشطة كاملة، وإضافة مفاهيم شائعة ومرادفات عامية جديدة، مع إبقاء كل نتيجة مرتبطة بمصدرها بدل إنشاء علاقة تشخيصية بين الأعراض." if ar else "Health Search is now connected to the full active symptom library, with additional common concepts and colloquial aliases while keeping each result attached to its own source rather than implying a diagnosis between symptoms."),
-            )
-            + '<section><h2>%s</h2><div class="card"><strong>%s</strong><p class="muted" style="margin-top:8px">%s</p><p class="muted" style="margin-top:8px">%s</p></div></section>' % (
-                ("مراجعة V76 الشاملة وجودة البيانات" if ar else "V76 full-site and data-quality audit"),
-                (("من 247 إلى %s عرضًا نشطًا وفريدًا: +%s صافيًا منذ V74" % (int(stats.get("active_symptoms") or 0), symptom_growth)) if ar else ("From 247 to %s active unique symptoms: +%s net since V74" % (int(stats.get("active_symptoms") or 0), symptom_growth))),
-                (("روابط الحالة–العرض: 715 → %s (+%s) · أسماء ومرادفات البحث: 1,876 → %s (+%s)" % (int(stats.get("total_relationships") or 0), relationship_growth, search_term_entries, search_term_growth)) if ar else ("Condition–symptom links: 715 → %s (+%s) · searchable name/alias entries: 1,876 → %s (+%s)" % (int(stats.get("total_relationships") or 0), relationship_growth, search_term_entries, search_term_growth))),
-                (("أضيف في V76 مفهوم شائع مستقل (%s)، ودُمج مفهوم مكرر واحد، وحُلّت %s تعارضات تطابق حرفي في المرادفات. بقيت الحالات والمصادر والمواضيع التفصيلية عند %s حالة، %s مصدرًا، و%s موضوعًا لأن التحديث ركّز على جودة مكتبة الأعراض لا تضخيم الأرقام." % (v76_symptoms_added, int(stats.get("v76_alias_collisions_resolved") or 0), int(stats.get("active_diseases") or 0), len(sources), search_topics)) if ar else ("V76 added %s distinct common symptom concept, merged one duplicate concept, and resolved %s exact alias collisions. Conditions, sources, and detailed topics remain at %s, %s, and %s because this audit focused on library quality rather than inflating counts." % (v76_symptoms_added, int(stats.get("v76_alias_collisions_resolved") or 0), int(stats.get("active_diseases") or 0), len(sources), search_topics))),
-            )
-        )),
+        summary,
         "الجهات والمراجع" if ar else "Organizations and references",
         "تتضمن القائمة مصادر حكومية ودولية وإرشادية وتخصصية، مرتبة حسب أولوية المصدر." if ar else "The list includes governmental, international, guideline, and specialty sources, ordered by source priority.",
         cards,
@@ -3068,6 +3056,7 @@ def emergency_page():
     .em-mental-crisis h3{margin:0 0 8px;color:#8B1E2D;font-size:18px}
     .em-mental-crisis p{margin:0;color:#40566F;line-height:1.85}
     .em-mental-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+    .em-mental-crisis .em-911-note{margin-top:11px;font-size:14px;color:#5B6F86}
     .em-mental-actions .em-call{flex:1 1 150px;text-align:center}
     .em-mental-actions .em-call.health{background:#1F6FAE}
     @media(max-width:560px){.em-mental-actions{display:grid;grid-template-columns:1fr}.em-mental-actions .em-call{width:100%}}
@@ -3107,10 +3096,11 @@ def emergency_page():
           <a class="em-call" href="tel:911">🚨 __EMMH911__</a>
           <a class="em-call health" href="tel:937">🩺 __EMMH937__</a>
         </div>
+        <p class="em-911-note">__EM911NOTE__</p>
       </div>
       <div class="em-mini">
-        <div class="em-mini-card">🚓 <b>__EMPOL__</b><span class="em-mini-num">999</span><p class="muted" style="flex-basis:100%;">__EMPOLD__</p></div>
-        <div class="em-mini-card">🚒 <b>__EMCIV__</b><span class="em-mini-num">998</span><p class="muted" style="flex-basis:100%;">__EMCIVD__</p></div>
+        <div class="em-mini-card">🚓 <b>__EMPOL__</b><span class="em-mini-num">999</span><p class="muted" style="flex-basis:100%;">__EMPOLD__</p><a class="em-call" href="tel:999" style="flex:1 1 100%;text-align:center" aria-label="__EMPOLCALL__">📞 __EMPOLCALL__</a></div>
+        <div class="em-mini-card">🚒 <b>__EMCIV__</b><span class="em-mini-num">998</span><p class="muted" style="flex-basis:100%;">__EMCIVD__</p><a class="em-call" href="tel:998" style="flex:1 1 100%;text-align:center" aria-label="__EMCIVCALL__">📞 __EMCIVCALL__</a></div>
       </div>
     </div>
     <div class="card em-danger">
@@ -3193,6 +3183,7 @@ def emergency_page():
         ("__EMCALL__", t["em_call"]),
         ("__EMPOL__", t["em_police"]), ("__EMCIV__", t["em_civil"]),
         ("__EMPOLD__", t["em_police_desc"]), ("__EMCIVD__", t["em_civil_desc"]),
+        ("__EM911NOTE__", t["em_911_note"]), ("__EMPOLCALL__", t["em_police_call"]), ("__EMCIVCALL__", t["em_civil_call"]),
         ("__EMSIGNH__", t["em_signs_h"]),
         ("__EMS1__", t["em_s1"]), ("__EMS2__", t["em_s2"]), ("__EMS3__", t["em_s3"]),
         ("__EMS4__", t["em_s4"]), ("__EMS5__", t["em_s5"]), ("__EMS6__", t["em_s6"]),

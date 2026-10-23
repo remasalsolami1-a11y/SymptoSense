@@ -10,7 +10,7 @@ import db
 
 _DISEASE = re.compile(r"^/health-library/disease/[a-z0-9][a-z0-9-]*$")
 _PAGES = ["/", "/search", "/calculators", "/meds", "/emergency", "/firstaid", "/tips", "/relax", "/about",
-          "/how-we-work", "/health-trends", "/health-library", "/privacy", "/terms"]
+          "/how-we-work", "/health-trends", "/health-library", "/privacy", "/terms", "/changelog"]
 _PRIORITY = {"/": 1.0, "/how-we-work": 0.8, "/about": 0.8, "/health-library": 0.8}
 
 

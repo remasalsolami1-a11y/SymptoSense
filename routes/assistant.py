@@ -762,7 +762,7 @@ def api_assistant():
                     "If low mood, anxiety, sleep difficulty, or distress is persistent or clearly impairing daily life, gently suggest professional support. "
                     "If the user expresses passive death wishes or says people would be better without them, ask directly whether they are thinking about harming themselves or ending their life now. "
                     "If they express self-harm/suicide intent, a plan, or inability to stay safe, stop ordinary coaching: tell them not to stay alone, move away from means of harm, stay with a trusted person, "
-                    "and call Saudi ambulance 997 or the unified emergency number 911 now; Ministry of Health 937 is available 24/7 for health consultation. "
+                    "and call Saudi ambulance 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province; Ministry of Health 937 is available 24/7 for health consultation. "
                     "If panic-like distress includes severe chest pain, severe breathing difficulty, fainting, sudden weakness, or another strong new physical symptom, do not assume it is anxiety; advise emergency evaluation."
                 )
             else:
@@ -776,7 +776,7 @@ def api_assistant():
                     "إذا كان الحزن أو القلق أو الأرق أو الضيق مستمرًا أو يؤثر بوضوح على الحياة اليومية، اقترح مراجعة مختص بلطف. "
                     "إذا قال المستخدم إنه يتمنى ألا يصحو أو أن الآخرين أفضل بدونه، اسأله مباشرة هل يفكر الآن في إيذاء نفسه أو إنهاء حياته. "
                     "إذا عبّر عن نية إيذاء النفس أو الانتحار أو خطة أو عدم القدرة على البقاء آمنًا، أوقف الإرشاد العادي وركز على السلامة: لا يبقى وحده، يبتعد عن وسائل الأذى، يبقى مع شخص يثق به، "
-                    "ويتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن؛ ووزارة الصحة 937 متاحة على مدار الساعة للاستشارة الصحية. "
+                    "ويتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية؛ ووزارة الصحة 937 متاحة على مدار الساعة للاستشارة الصحية. "
                     "إذا وُصفت أعراض تشبه الهلع لكن معها ألم صدر شديد أو صعوبة شديدة في التنفس أو إغماء أو ضعف مفاجئ أو عرض جسدي جديد وقوي، لا تفترض أنها قلق ووجّه للطوارئ."
                 )
         elif lang == "en":

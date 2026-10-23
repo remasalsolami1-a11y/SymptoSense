@@ -208,11 +208,11 @@ def crisis_message(lang: str = "ar") -> str:
         return (
             "I'm concerned about your safety, and what you said matters. If you might hurt yourself or you are in immediate danger, "
             "please do not stay alone: move away from anything you could use to hurt yourself, stay with someone you trust, and call "
-            "Saudi ambulance services on 997 or the unified emergency number 911 now. You can also call the Ministry of Health on 937 for 24/7 health support."
+            "Saudi ambulance services on 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province. You can also call the Ministry of Health on 937 for 24/7 health support."
         )
     return (
         "أنا قلق على سلامتك الآن، وكلامك مهم. إذا كنت قد تؤذي نفسك أو كنت في خطر مباشر، لا تبق وحدك: "
-        "ابتعد عن أي شيء قد تستخدمه لإيذاء نفسك، وابقَ مع شخص تثق به، واتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن. "
+        "ابتعد عن أي شيء قد تستخدمه لإيذاء نفسك، وابقَ مع شخص تثق به، واتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية. "
         "وتقدر أيضًا تتواصل مع وزارة الصحة على 937 للدعم والاستشارة الصحية على مدار الساعة."
     )
 
@@ -221,11 +221,11 @@ def passive_risk_message(lang: str = "ar") -> str:
     if lang == "en":
         return (
             "That sounds painfully heavy, and I want to check your safety directly. Are you thinking about hurting yourself or ending your life right now? "
-            "If yes, or if you are not sure you can stay safe, do not stay alone—call 997 or the unified emergency number 911 now. You can also contact the Ministry of Health on 937."
+            "If yes, or if you are not sure you can stay safe, do not stay alone—call 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province. You can also contact the Ministry of Health on 937."
         )
     return (
         "هذا الكلام يدل أن الحمل عليك ثقيل جدًا، وأحتاج أتأكد من سلامتك بشكل مباشر: هل تفكر الآن في إيذاء نفسك أو إنهاء حياتك؟ "
-        "إذا نعم، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك واتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن. وتقدر أيضًا تتواصل مع وزارة الصحة على 937."
+        "إذا نعم، أو مو متأكد أنك تقدر تبقى آمن، لا تبق وحدك واتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية. وتقدر أيضًا تتواصل مع وزارة الصحة على 937."
     )
 
 
@@ -233,11 +233,11 @@ def other_harm_message(lang: str = "ar") -> str:
     if lang == "en":
         return (
             "I hear how intense this is. Put some distance between you and the person right now, and move away from any weapon or object you could use to hurt them. "
-            "If you think you may act on it, move away from weapons or other means of harm and call the unified emergency number 911 now; call 997 as well if anyone needs urgent medical help. Stay with a trusted person who can help keep everyone safe."
+            "If you think you may act on it, move away from weapons or other means of harm and call the unified emergency number 911 now if you are in Riyadh, Makkah, Madinah or the Eastern Province, or the police on 999 elsewhere; call 997 as well if anyone needs urgent medical help. Stay with a trusted person who can help keep everyone safe."
         )
     return (
         "أسمع قد إيش الغضب عالي الآن. أبعد نفسك عن الشخص للحظة، وابتعد عن أي سلاح أو شيء ممكن تستخدمه لإيذائه. "
-        "إذا تحس إنك ممكن تتصرف فعلًا، ابتعد عن أي سلاح أو وسيلة أذى واتصل بالطوارئ الموحدة 911 الآن؛ وإذا احتاج أحد إسعافًا عاجلًا فاتصل بـ997 أيضًا. خلك مع شخص تثق به يساعد يحافظ على سلامتك وسلامة غيرك."
+        "إذا تحس إنك ممكن تتصرف فعلًا، ابتعد عن أي سلاح أو وسيلة أذى واتصل بالطوارئ الموحدة 911 الآن إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية، أو بالشرطة 999 في بقية المناطق؛ وإذا احتاج أحد إسعافًا عاجلًا فاتصل بـ997 أيضًا. خلك مع شخص تثق به يساعد يحافظ على سلامتك وسلامة غيرك."
     )
 
 
@@ -284,11 +284,11 @@ def urgent_support(lang: str = "ar") -> str:
     if lang == "en":
         return (
             "🚨 If you feel you may not be safe with yourself, do not stay alone. Stay with someone you trust, move away from anything you could use to hurt yourself, "
-            "and call 997 or the unified emergency number 911 now. For 24/7 health consultation in Saudi Arabia, you can also call the Ministry of Health on 937."
+            "and call 997 now (available in all regions), or the unified emergency number 911 if you are in Riyadh, Makkah, Madinah or the Eastern Province. For 24/7 health consultation in Saudi Arabia, you can also call the Ministry of Health on 937."
         )
     return (
         "🚨 إذا كنت تشعر أنك قد لا تكون آمنًا على نفسك، لا تبق وحدك. خلك مع شخص تثق به، وابتعد عن أي شيء قد تستخدمه لإيذاء نفسك، "
-        "واتصل بالإسعاف 997 أو بالطوارئ الموحدة 911 الآن. وللاستشارة الصحية على مدار الساعة داخل السعودية يمكنك الاتصال بوزارة الصحة على 937."
+        "واتصل بالإسعاف 997 الآن (يعمل في كل مناطق المملكة)، أو بالطوارئ الموحدة 911 إن كنت في الرياض ومكة المكرمة والمدينة المنورة والمنطقة الشرقية. وللاستشارة الصحية على مدار الساعة داخل السعودية يمكنك الاتصال بوزارة الصحة على 937."
     )
 
 

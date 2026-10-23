@@ -111,4 +111,4 @@ def test_restart_resets_v83_transient_state():
 def test_webapp_line_guard_remains_under_limit():
     # V106: production hardening and mobile/iOS fixes increased guarded runtime
     # code. Keep a tight ceiling without flagging the current audited release.
-    assert len(WEB.splitlines()) < 24000
+    assert len(WEB.splitlines()) < 24200  # V68.15: +trust_pages/changelog, +regional 911 copy

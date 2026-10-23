@@ -48,6 +48,8 @@ def webapp_text(root=None):
                 if p.is_file():
                     t = _read_source(p)
                     parts.append(_legacy_view_of_routes_module(t) if folder in ("routes", "pagelib", "services") and p.name != "__init__.py" else t)
+    if (base / "trust_pages.py").is_file():
+        parts.append(_read_source(base / "trust_pages.py"))
     return "\n".join(parts)
 
 
@@ -59,6 +61,8 @@ def python_text(root=None):
         d = base / folder
         if d.is_dir():
             parts += [_legacy_view_of_routes_module(p.read_text(encoding="utf-8")) for p in sorted(d.glob("*.py")) if p.name != "__init__.py"]
+    if (base / "trust_pages.py").is_file():
+        parts.append((base / "trust_pages.py").read_text(encoding="utf-8"))
     return "\n".join(parts)
 
 
