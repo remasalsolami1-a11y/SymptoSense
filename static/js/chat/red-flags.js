@@ -93,10 +93,24 @@
       const cat = emCategory(d);
       const list = (d.emergency_flags || []).map(function(f){ return '<span class="em-chip">🚨 ' + esc(f) + '</span>'; }).join('');
       // Why this alert appeared: matched red flag + what the person entered (server: emergency_explain.py).
-      var whyItems = [];
-      (Array.isArray(d.risk_reasons) ? d.risk_reasons : []).forEach(function(r){ var m = r && (r.message || r.why || r.reason); if (m && whyItems.indexOf(m) < 0) whyItems.push(String(m)); });
-      if (!whyItems.length && d.why_result) whyItems.push(String(d.why_result));
-      const whyHtml = whyItems.length ? '<div class="em-why" data-em-why><div class="em-why-t">' + esc(TT('em_why_t')) + '</div>' + whyItems.map(function(m){ return '<p>' + esc(m) + '</p>'; }).join('') + '</div>' : '';
+      // Each reason quotes the exact words that triggered the rule (r.evidence), so the person can
+      // see the decision path: their words -> concept -> safety rule.
+      var whyItems = [], seenMsg = [], anyEvidence = false;
+      (Array.isArray(d.risk_reasons) ? d.risk_reasons : []).forEach(function(r){
+        var m = r && (r.message || r.why || r.reason);
+        if (!m || seenMsg.indexOf(m) >= 0) return;
+        seenMsg.push(m);
+        var ev = (r && Array.isArray(r.evidence)) ? r.evidence : [];
+        var chips = '', emArrow = (document.documentElement.getAttribute('dir') === 'rtl') ? ' ← ' : ' → ';
+        ev.forEach(function(e){ (Array.isArray(e.quotes) ? e.quotes : []).forEach(function(q){
+          chips += '<li class="em-ev"><mark>' + esc(q) + '</mark><span aria-hidden="true">' + emArrow + '</span><span>' + esc(e.label || '') + '</span></li>';
+        }); });
+        if (chips) anyEvidence = true;
+        whyItems.push('<p>' + esc(m) + '</p>' + (chips ? '<div class="em-ev-t">' + esc(TT('em_ev_t')) + '</div><ul class="em-evs" data-em-evidence>' + chips + '</ul>' : ''));
+      });
+      if (!whyItems.length && d.why_result) whyItems.push('<p>' + esc(String(d.why_result)) + '</p>');
+      const whyHtml = whyItems.length ? '<div class="em-why" data-em-why><div class="em-why-t">' + esc(TT('em_why_t')) + '</div>' + whyItems.join('')
+        + (anyEvidence ? '<p class="em-src">' + esc(TT('em_src')) + '</p>' : '') + '</div>' : '';
       var steps = [];
       if (cat === 'selfharm') {
         steps = ['em_sh1','em_sh2','em_sh3'];

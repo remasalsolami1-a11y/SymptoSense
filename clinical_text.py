@@ -98,8 +98,11 @@ def _phrase_pattern(phrase: str) -> re.Pattern:
 _NEGATION_SUFFIXES = (
     # Arabic — all strings are normalized by normalize_clinical_text first.
     r"(?:لا\s+يوجد(?:\s+لدي)?|لا\s+يوجد\s+عندي|لا\s+اتناول|لا\s+اخذ|لا\s+استخدم|ما\s+اتناول|ما\s+اخذ|ما\s+استخدم|لا\s+اعاني\s+من|لا\s+اشعر\s+ب|لا\s+احس\s+ب|لا\s+لدي|لا\s+عندي|ما\s+عندي|ما\s+لدي|ما\s+في|مافي|ليس\s+لدي|ليست\s+لدي|بدون|دون|انفي\s+وجود|ينفي\s+وجود|ما\s+(?:عنده|عندها|عندهم|لديه|لديها|فيه|فيها|يعاني\s+من|تعاني\s+من|يشتكي\s+من|تشتكي\s+من|يحس\s+ب|تحس\s+ب)|مافيه|مافيها|ليس\s+(?:لديه|لديها|عنده|عندها)|لا\s+(?:يعاني\s+من|تعاني\s+من|يشتكي\s+من|تشتكي\s+من)|لا\s+يوجد\s+(?:عنده|عندها|لديه|لديها))\s*(?:اي\s*)?$",
-    # A direct Arabic لا before the symptom: "لا ألم في الصدر".
-    r"(?:^|\s)(?:لا|ولا)\s*$",
+    # A direct Arabic negator immediately before the symptom: "لا ألم في الصدر",
+    # verbal "ما اغمي علي" / "لم يغم عليه" (Gulf/MSA), dialect "مو/مب". Only the
+    # single word right before the phrase counts, so "ما اقدر اتنفس" (a phrase that
+    # itself starts with ما) and questions like "ما سبب ..." are unaffected.
+    r"(?:^|\s)(?:لا|ولا|ما|وما|لم|ولم|مو|مب)\s*$",
     # English.
     r"(?:no|without|deny|denies|denied|do\s+not\s+take|don't\s+take|does\s+not\s+take|doesn't\s+take|did\s+not\s+take|didn't\s+take|not\s+taking|not\s+on|do\s+not|don't|does\s+not|doesn't|did\s+not|didn't|do\s+not\s+have|don't\s+have|does\s+not\s+have|doesn't\s+have|did\s+not\s+have|didn't\s+have|not\s+experiencing|not\s+feeling|am\s+not|i'm\s+not|im\s+not|is\s+not|isn't|are\s+not|aren't|was\s+not|wasn't|were\s+not|weren't|no\s+longer|not)\s*(?:any\s*)?$",
 )
@@ -128,7 +131,7 @@ def occurrence_is_negated(normalized_text: str, start: int) -> bool:
         return False
     # Keep only a compact suffix so an earlier negation about a different symptom
     # cannot leak across several words into the current phrase.
-    prefix = re.sub(r"\b(?:(?:any|severe|mild|moderate|new|sudden|significant)\s*)+$", "", prefix).strip()
+    prefix = re.sub(r"\b(?:(?:any|severe|mild|moderate|new|sudden|significant|immediate|current|active|acute)\s*)+$", "", prefix).strip()
     suffix = " ".join(prefix.split()[-8:])
     if any(rx.search(suffix) for rx in _NEGATION_SUFFIX_RE):
         return True

@@ -39,7 +39,7 @@ def _web_text() -> str:
 
 def _runtime_source_bundle() -> str:
     """Return source text across the refactored web runtime modules."""
-    paths = _web_modules() + [ROOT / "views" / "chat_view.py", ROOT / "web_security.py"] + sorted((ROOT / "static" / "js" / "chat").glob("*.js"))
+    paths = _web_modules() + [ROOT / "chat_view.py", ROOT / "web_security.py"] + sorted((ROOT / "static" / "js" / "chat").glob("*.js"))
     return "\n".join(path.read_text(encoding="utf-8") for path in paths if path.exists())
 
 
@@ -97,8 +97,8 @@ def check_json_files() -> None:
 
 
 def count_test_files() -> int:
-    """Number of test_*.py files in the source tree. They live in the project root (a tests/ folder, if one is ever
-    added, is counted too); a tree without any (e.g. the Docker image) returns 0, which skips the metrics comparison."""
+    """Number of test_*.py files in the source tree. They live in tests/ since V283 (older releases kept them in the
+    root; both places are counted). A tree without any (e.g. the Docker image) returns 0, which skips the comparison."""
     names = {p.name for p in ROOT.glob("test_*.py")}
     if (ROOT / "tests").is_dir():
         names |= {p.name for p in (ROOT / "tests").glob("test_*.py")}
@@ -256,7 +256,7 @@ def check_javascript_syntax() -> None:
         for match in re.finditer(r"<script(?:\s[^>]*)?>(.*?)</script>", html_asset.read_text(encoding="utf-8"), flags=re.I | re.S):
             scripts.append((html_asset.name, 0, match.group(1)))
     for source_path in _web_modules() + [
-        ROOT / "views" / "chat_view.py",
+        ROOT / "chat_view.py",
         ROOT / "dashboard.py",
         ROOT / "v47_routes.py",
     ]:
@@ -342,7 +342,7 @@ def check_interaction_bridge_contract() -> None:
         re.I | re.S,
     )
     for source_path in _web_modules() + sorted((ROOT / "inline_assets").glob("*.html")) + sorted((ROOT / "static" / "js" / "chat").glob("*.js")) + [
-        ROOT / "views" / "chat_view.py",
+        ROOT / "chat_view.py",
         ROOT / "dashboard.py",
         ROOT / "v47_routes.py",
     ]:

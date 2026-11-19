@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import db
 
 _DISEASE = re.compile(r"^/health-library/disease/[a-z0-9][a-z0-9-]*$")
+_GUIDE = re.compile(r"^/health-library/guide/[a-z0-9][a-z0-9-]*$")
 _PAGES = ["/", "/search", "/calculators", "/meds", "/emergency", "/firstaid", "/tips", "/relax", "/about",
           "/how-we-work", "/health-trends", "/health-library", "/privacy", "/terms", "/changelog"]
 _PRIORITY = {"/": 1.0, "/how-we-work": 0.8, "/about": 0.8, "/health-library": 0.8}
@@ -17,7 +18,11 @@ _PRIORITY = {"/": 1.0, "/how-we-work": 0.8, "/about": 0.8, "/health-library": 0.
 def indexable(logical_path):
     """Condition pages are the richest library pages and are indexable; thin
     symptom pages stay noindex until they have enough content."""
-    return bool(_DISEASE.match(str(logical_path or "").rstrip("/")))
+    path = str(logical_path or "").rstrip("/")
+    if _GUIDE.match(path):
+        import health_guides
+        return path.rsplit("/", 1)[1] in health_guides.GUIDES
+    return bool(_DISEASE.match(path))
 
 
 def _site_date():
@@ -61,6 +66,9 @@ def sitemap_xml(base):
 
     for s in _PAGES:
         add(s, site_date, _PRIORITY.get(s, 0.7), root=(s == "/"))
+    import health_guides
+    for slug in health_guides.slugs():
+        add("/health-library/guide/" + slug, health_guides.LAST_VERIFIED, 0.7)
     try:
         for slug, lm in _disease_rows():
             add("/health-library/disease/" + slug, lm if re.match(r"^\d{4}-\d{2}-\d{2}$", lm) else site_date, 0.6)
@@ -71,15 +79,37 @@ def sitemap_xml(base):
             + "\n".join(rows) + "\n</urlset>\n")
 
 
-def condition_jsonld(item, name, description, url, ar, sources):
+def _absolute(url):
+    """schema.org urls must be absolute; resolve root-relative paths against the
+    canonical site URL (same base as <link rel=canonical>). Outside a request the
+    path is returned unchanged."""
+    url = str(url or "")
+    if not url.startswith("/"):
+        return url
+    import sys
+    from flask import has_request_context
+    web = sys.modules.get("webapp")
+    if web is None or not has_request_context():
+        return url
+    try:
+        return web._site_url().rstrip("/") + url
+    except (RuntimeError, ValueError, AttributeError):
+        return url
+
+
+def condition_jsonld(item, name, description, url, ar, sources, review=None):
+    """``review`` is health_library.review_dates(): lastReviewed is emitted only for an
+    independent clinical approval; otherwise the content date is dateModified."""
+    review = review or {"reviewed": None, "modified": str(item.get("last_updated") or "")[:10] or None}
     data = {
         "@context": "https://schema.org",
         "@type": "MedicalWebPage",
         "name": name,
         "description": description,
-        "url": url,
+        "url": _absolute(url),
         "inLanguage": "ar" if ar else "en",
-        "lastReviewed": str(item.get("last_updated") or "")[:10] or None,
+        "lastReviewed": review.get("reviewed"),
+        "dateModified": review.get("modified"),
         "about": {"@type": "MedicalCondition", "name": name,
                   "signOrSymptom": [{"@type": "MedicalSymptom", "name": s.get("name_ar" if ar else "name_en")}
                                     for s in (item.get("symptoms") or []) if s.get("name_ar" if ar else "name_en")][:12]},

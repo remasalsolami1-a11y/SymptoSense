@@ -109,12 +109,12 @@ def evaluate(patient, text=None):
         out["today"].append((rid, ar, en))
 
     # 1. Fever in a baby younger than 3 months.
-    if _live(_FEVER, t) and _infant_under_3m(patient, text):
-        try:
-            import analysis_core
-            temp = analysis_core._extract_temperature_c(text)
-        except Exception:
-            temp = None
+    try:
+        import analysis_core
+        temp = analysis_core._extract_temperature_c(text)
+    except Exception:
+        temp = None
+    if (_live(_FEVER, t) or (temp is not None and temp >= 38.0)) and _infant_under_3m(patient, text):
         if temp is None or temp >= 38.0:
             emerg("infant_fever_under_3m", "حرارة عند رضيع عمره أقل من 3 أشهر", "Fever in an infant younger than 3 months")
 

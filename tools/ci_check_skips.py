@@ -36,7 +36,9 @@ def main(argv=None):
     for xml in collect(a.paths):
         for case in ET.parse(xml).getroot().iter("testcase"):
             name = "%s::%s" % ((case.get("file") or case.get("classname", "").replace(".", "/") + ".py"), case.get("name"))
-            module = (case.get("classname") or "").split(".")[0] + ".py"
+            # classname is "test_x[.Class]" or, since tests/ (V283), "tests.test_x[.Class]": take the test module
+            parts = (case.get("classname") or "").split(".")
+            module = next((x for x in parts if x.startswith("test_")), parts[0]) + ".py"
             sk = case.find("skipped")
             if case.find("failure") is not None or case.find("error") is not None:
                 failed += 1; bad.append(name)

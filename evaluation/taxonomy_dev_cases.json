@@ -1,0 +1,399 @@
+{
+ "about": "V287 error-taxonomy development cases. After V286 the misses of en_test were inspected and grouped into error TYPES (not copied). For each type these new cases were written in different words, Arabic and English, together with mild look-alikes that must NOT become emergencies. The new concept rules were built on these cases only. Author-written, development set; starter labels, not clinician-verified.",
+ "version": 1,
+ "cases": [
+  {
+   "category": "respiratory_distress",
+   "id": "TX01",
+   "label": "high",
+   "lang": "ar",
+   "text": "أختي نفسها ضايق مرة وشفايفها صارت زرقا"
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TX02",
+   "label": "high",
+   "lang": "ar",
+   "text": "ما يقدر يكمل جملة من ضيق النفس ويلهث"
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TX03",
+   "label": "high",
+   "lang": "en",
+   "text": "His lips look bluish and he is struggling for breath"
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TX04",
+   "label": "high",
+   "lang": "en",
+   "text": "Too breathless to speak more than a few words"
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TX05",
+   "label": "high",
+   "lang": "en",
+   "text": "Throat swelling, drooling and noisy difficult breathing"
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TN01",
+   "label": "low",
+   "lang": "ar",
+   "text": "شفايفي ناشفة ومتشققة من البرد وأتنفس عادي",
+   "note": "Replaced during development: the first version ('blue lips from the cold after swimming') is clinically ambiguous, because blue lips can be cyanosis, so it was not a fair 'low' case."
+  },
+  {
+   "category": "respiratory_distress",
+   "id": "TN02",
+   "label": "low",
+   "lang": "en",
+   "text": "A little short of breath after climbing three flights of stairs, fine after resting"
+  },
+  {
+   "category": "reduced_consciousness",
+   "id": "TX06",
+   "label": "high",
+   "lang": "ar",
+   "text": "جدي ما يرد علينا زين وصاير صعب نصحيه"
+  },
+  {
+   "category": "reduced_consciousness",
+   "id": "TX07",
+   "label": "high",
+   "lang": "en",
+   "text": "My father is barely responsive and keeps drifting off"
+  },
+  {
+   "category": "reduced_consciousness",
+   "id": "TX08",
+   "label": "high",
+   "lang": "en",
+   "text": "She responds only to pain and is not making sense"
+  },
+  {
+   "category": "reduced_consciousness",
+   "id": "TN03",
+   "label": "low",
+   "lang": "en",
+   "text": "I feel sleepy in the afternoon after lunch"
+  },
+  {
+   "category": "sepsis",
+   "id": "TX09",
+   "label": "high",
+   "lang": "ar",
+   "text": "أمي الكبيرة عندها حرارة وصارت متلخبطة وما تعرفنا"
+  },
+  {
+   "category": "sepsis",
+   "id": "TX10",
+   "label": "high",
+   "lang": "ar",
+   "text": "حرارة عالية وطلعت بقع بنفسجية في جسمه ما تختفي لما أضغط عليها"
+  },
+  {
+   "category": "sepsis",
+   "id": "TX11",
+   "label": "high",
+   "lang": "en",
+   "text": "High temperature and now confused and breathing very fast"
+  },
+  {
+   "category": "sepsis",
+   "id": "TX12",
+   "label": "high",
+   "lang": "en",
+   "text": "Fever with a purple spotty rash that does not fade when pressed"
+  },
+  {
+   "category": "sepsis",
+   "id": "TN04",
+   "label": "low",
+   "lang": "ar",
+   "text": "حرارة خفيفة وزكام وأنا صاحي ونشيط"
+  },
+  {
+   "category": "sepsis",
+   "id": "TN05",
+   "label": "low",
+   "lang": "en",
+   "text": "Mild fever and a sore throat, alert and eating normally"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TX13",
+   "label": "high",
+   "lang": "ar",
+   "text": "طحت مغمى علي وأنا ألعب كورة وكان صدري يعورني"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TX14",
+   "label": "high",
+   "lang": "ar",
+   "text": "يغمى علي أكثر من مرة وقلبي يدق بشكل غير منتظم"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TX15",
+   "label": "high",
+   "lang": "en",
+   "text": "Passed out while running and had chest pain just before"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TX16",
+   "label": "high",
+   "lang": "en",
+   "text": "Fainted twice today and my heartbeat feels irregular"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TN06",
+   "label": "low",
+   "lang": "ar",
+   "text": "دخت شوي لما قمت بسرعة من السرير وراحت"
+  },
+  {
+   "category": "cardiac_syncope",
+   "id": "TN07",
+   "label": "low",
+   "lang": "en",
+   "text": "Felt woozy for a second when standing up quickly, no fainting"
+  },
+  {
+   "category": "bleeding",
+   "id": "TX17",
+   "label": "high",
+   "lang": "ar",
+   "text": "ينزل دم كثير من الدبر وأحس إني بطيح"
+  },
+  {
+   "category": "bleeding",
+   "id": "TX18",
+   "label": "high",
+   "lang": "en",
+   "text": "Lots of blood from the back passage and I feel lightheaded and weak"
+  },
+  {
+   "category": "bleeding",
+   "id": "TX19",
+   "label": "high",
+   "lang": "en",
+   "text": "Bleeding heavily from a cut that won't stop and I feel dizzy"
+  },
+  {
+   "category": "bleeding",
+   "id": "TN08",
+   "label": "low",
+   "lang": "ar",
+   "text": "شوية دم على المناديل بعد الإمساك وما فيني شي ثاني"
+  },
+  {
+   "category": "bleeding",
+   "id": "TN09",
+   "label": "low",
+   "lang": "en",
+   "text": "A small nosebleed that stopped after ten minutes of pressure"
+  },
+  {
+   "category": "dehydration",
+   "id": "TX20",
+   "label": "high",
+   "lang": "ar",
+   "text": "ما يوقف استفراغ من أمس وما يتبول تقريبا وصاير نعسان"
+  },
+  {
+   "category": "dehydration",
+   "id": "TX21",
+   "label": "high",
+   "lang": "en",
+   "text": "Can't keep any fluids down, hardly peeing and getting drowsy"
+  },
+  {
+   "category": "dehydration",
+   "id": "TX22",
+   "label": "high",
+   "lang": "en",
+   "text": "Vomiting all day, no urine since morning and now confused"
+  },
+  {
+   "category": "dehydration",
+   "id": "TN10",
+   "label": "low",
+   "lang": "ar",
+   "text": "استفرغت مرة وحدة بعد الأكل وبعدها صرت زين وأشرب عادي"
+  },
+  {
+   "category": "dehydration",
+   "id": "TN11",
+   "label": "low",
+   "lang": "en",
+   "text": "Vomited once, drinking fluids and passing urine normally"
+  },
+  {
+   "category": "anaphylaxis_trigger",
+   "id": "TX23",
+   "label": "high",
+   "lang": "ar",
+   "text": "قرصتني نحلة وصار وجهي منتفخ ونفسي ضيق"
+  },
+  {
+   "category": "anaphylaxis_trigger",
+   "id": "TX24",
+   "label": "high",
+   "lang": "en",
+   "text": "Stung by a wasp and now wheezing with a swollen face"
+  },
+  {
+   "category": "anaphylaxis_trigger",
+   "id": "TN12",
+   "label": "low",
+   "lang": "en",
+   "text": "Bee sting on my hand, small red bump, breathing fine"
+  },
+  {
+   "category": "glaucoma",
+   "id": "TX25",
+   "label": "high",
+   "lang": "ar",
+   "text": "ألم شديد مفاجئ في عيني مع استفراغ ونظري صار ضبابي"
+  },
+  {
+   "category": "glaucoma",
+   "id": "TX26",
+   "label": "high",
+   "lang": "en",
+   "text": "Sudden severe pain in one eye, blurred vision and vomiting"
+  },
+  {
+   "category": "glaucoma",
+   "id": "TN13",
+   "label": "low",
+   "lang": "en",
+   "text": "Tired eyes after screen time with mild ache, vision fine"
+  },
+  {
+   "category": "cauda_equina",
+   "id": "TX27",
+   "label": "high",
+   "lang": "ar",
+   "text": "ألم ظهر قوي وما أقدر أتحكم في البول ورجلي ضعيفة"
+  },
+  {
+   "category": "cauda_equina",
+   "id": "TX28",
+   "label": "high",
+   "lang": "en",
+   "text": "Back pain with numbness around the groin and I can't control my bladder"
+  },
+  {
+   "category": "cauda_equina",
+   "id": "TN14",
+   "label": "low",
+   "lang": "en",
+   "text": "Lower back ache after lifting boxes, legs and bladder normal"
+  },
+  {
+   "category": "limb_ischemia",
+   "id": "TX29",
+   "label": "high",
+   "lang": "ar",
+   "text": "رجلي صارت باردة وشاحبة فجأة وتوجعني وما أحس فيها"
+  },
+  {
+   "category": "limb_ischemia",
+   "id": "TX30",
+   "label": "high",
+   "lang": "en",
+   "text": "My leg suddenly went cold, white and numb and it hurts badly"
+  },
+  {
+   "category": "limb_ischemia",
+   "id": "TN15",
+   "label": "low",
+   "lang": "en",
+   "text": "Cold feet in the winter, warm up with socks"
+  },
+  {
+   "category": "hypoglycemia",
+   "id": "TX31",
+   "label": "high",
+   "lang": "ar",
+   "text": "عندي سكر وأحس برجفة وعرق ومتلخبط"
+  },
+  {
+   "category": "hypoglycemia",
+   "id": "TX32",
+   "label": "high",
+   "lang": "en",
+   "text": "Type 1 diabetic, shaky, sweaty and drowsy, hard to rouse"
+  },
+  {
+   "category": "hypoglycemia",
+   "id": "TN16",
+   "label": "low",
+   "lang": "en",
+   "text": "Diabetic, slightly hungry before lunch, feel fine"
+  },
+  {
+   "category": "stroke_wording",
+   "id": "TX33",
+   "label": "high",
+   "lang": "ar",
+   "text": "ميلان في الوجه فجأة وضعف في اليد اليسار"
+  },
+  {
+   "category": "stroke_wording",
+   "id": "TX34",
+   "label": "high",
+   "lang": "ar",
+   "text": "فجأة كلامه صار ثقيل ويده اليمين ضعيفة"
+  },
+  {
+   "category": "stroke_wording",
+   "id": "TN17",
+   "label": "low",
+   "lang": "ar",
+   "text": "يدي تعبانة شوي بعد ما شلت أغراض ثقيلة"
+  },
+  {
+   "category": "thunderclap",
+   "id": "TX35",
+   "label": "high",
+   "lang": "ar",
+   "text": "فجأة جاني صداع قوي ما صار لي مثله أبد"
+  },
+  {
+   "category": "thunderclap",
+   "id": "TX36",
+   "label": "high",
+   "lang": "en",
+   "text": "Sudden explosive headache, the worst I have ever had"
+  },
+  {
+   "category": "thunderclap",
+   "id": "TN18",
+   "label": "low",
+   "lang": "ar",
+   "text": "صداع خفيف يجي ويروح بعد الدوام"
+  },
+  {
+   "category": "asthma_wording",
+   "id": "TX37",
+   "label": "high",
+   "lang": "ar",
+   "text": "نوبة الربو ما تتحسن مع البخاخ وأتنفس بصعوبة"
+  },
+  {
+   "category": "asthma_wording",
+   "id": "TN19",
+   "label": "low",
+   "lang": "ar",
+   "text": "عندي ربو وأخذت البخاخ وتحسنت بسرعة"
+  }
+ ]
+}

@@ -115,11 +115,11 @@ body.ss-chat-page .step-answer-summary summary{cursor:pointer;padding:9px 12px;f
 body.ss-chat-page .step-answer-summary summary::-webkit-details-marker{display:none}
 body.ss-chat-page .step-answer-summary-list{padding:0 12px 9px;display:grid;gap:7px}
 body.ss-chat-page .step-answer-summary-row{display:grid;gap:2px;padding-top:7px;border-top:1px solid #EDF3F7;font-size:11.5px;line-height:1.5}
-body.ss-chat-page .step-answer-summary-row b{color:#123B70}.step-answer-summary-row span{color:#60788B}
+body.ss-chat-page .step-answer-summary-row b{color:#123B70}.step-answer-summary-row span{color:#566a7d}
 /* V212: real editable answer form after a completed assessment. */
 body.ss-chat-page .answer-edit-panel{max-width:860px;margin:10px auto;padding:18px;border:1px solid #D7E6EF;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(27,73,108,.08);direction:inherit}
 body.ss-chat-page .answer-edit-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
-body.ss-chat-page .answer-edit-head h3{margin:0;color:#123B70;font-size:18px}.answer-edit-head p{margin:5px 0 0;color:#60788B;font-size:12.5px;line-height:1.7}
+body.ss-chat-page .answer-edit-head h3{margin:0;color:#123B70;font-size:18px}.answer-edit-head p{margin:5px 0 0;color:#566a7d;font-size:12.5px;line-height:1.7}
 body.ss-chat-page .answer-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.answer-edit-field{display:grid;gap:6px}.answer-edit-field.wide{grid-column:1/-1}
 body.ss-chat-page .answer-edit-field label{font-size:12px;font-weight:900;color:#274D69}.answer-edit-field input,.answer-edit-field select,.answer-edit-field textarea{width:100%;box-sizing:border-box;border:1px solid #CFE0EA;border-radius:12px;background:#FBFDFF;color:#123B70;padding:11px 12px;font:inherit;min-height:44px}.answer-edit-field textarea{min-height:86px;resize:vertical;line-height:1.7}.answer-edit-field input:focus,.answer-edit-field select:focus,.answer-edit-field textarea:focus{outline:2px solid #8CC7E9;outline-offset:1px;border-color:#65AED8;background:#fff}
 body.ss-chat-page .answer-edit-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.answer-edit-actions .ss-btn-primary,.answer-edit-actions .opt{min-height:44px}.answer-edit-error{min-height:20px;margin-top:8px;color:#A13D3D;font-size:12px;font-weight:800}

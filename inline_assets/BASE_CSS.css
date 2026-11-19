@@ -693,7 +693,7 @@ html[dir="rtl"] .how-tl-item { flex-direction: row-reverse; text-align: right; }
 [dir="rtl"] .auth-card .auth-consent { direction:rtl; text-align:right; }
 [dir="ltr"] .auth-card .auth-consent { direction:ltr; text-align:left; }
 .auth-card .auth-consent input[type="checkbox"] {
-  width:17px; height:17px; margin:3px 0 0; flex:0 0 17px;
+  width:24px; height:24px; margin:0; flex:0 0 24px;  /* WCAG 2.2 target size (2.5.8) */
   accent-color:var(--primary); cursor:pointer;
 }
 .auth-card .auth-consent-text { display:block; flex:1 1 auto; min-width:0; }

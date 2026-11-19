@@ -22,7 +22,7 @@ body.ss-chat-page .ss-quality-score,body.ss-chat-page a.ss-step-source{color:#1F
 .em-card .em-icon{margin-inline:auto}
 .em-card .em-flags,.em-card .em-btns{justify-content:center}
 .em-card .em-why{margin:0 0 16px;padding:12px 14px;border-radius:14px;background:#FFF7F7;border:1px solid #FECACA;text-align:start;color:#7F1D1D}.ss-risk-why{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#FFFBEB;border:1px solid #FDE68A;color:#4B3A06;text-align:start}.ss-risk-why b{display:block;font-size:13.5px;margin-bottom:4px}.ss-risk-why p{margin:3px 0 0;font-size:13.5px;line-height:1.7}
-.em-card .em-why-t{font-weight:800;font-size:14px;margin-bottom:6px;color:#991B1B}.em-card .em-why p{margin:4px 0 0;font-size:13.5px;line-height:1.7;color:#4B1D1D}
+.em-card .em-why-t{font-weight:800;font-size:14px;margin-bottom:6px;color:#991B1B}.em-card .em-ev-t{font-weight:700;font-size:12.5px;margin:8px 0 4px;color:#991B1B}.em-card .em-evs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}.em-card .em-ev{font-size:13px;line-height:1.5;background:#fff;border:1px solid #FECACA;border-radius:10px;padding:3px 8px;color:#4B1D1D}.em-card .em-ev mark{background:#FEE2E2;color:#7F1D1D;font-weight:800;padding:0 3px;border-radius:4px}.em-card .em-src{font-size:12px!important;color:#7F1D1D!important;opacity:.85;margin-top:8px!important}.em-card .em-why p{margin:4px 0 0;font-size:13.5px;line-height:1.7;color:#4B1D1D}
 .em-call-main{font-size:18px!important;min-height:54px;display:inline-flex;align-items:center;padding:0 26px!important;animation:emPulse 1.6s ease-in-out infinite}
 .em-call-alt{background:#7F1D1D!important}
 .em-back{background:#B91C1C!important}
@@ -48,6 +48,9 @@ body.ss-chat-page #headP{font-size:12px!important;color:#fff!important}
 body .ss-flow-copy span,body.ss-chat-page .ss-flow-copy span{font-size:12px!important}
 body #ssBnav a span,body .ss-bnav a span{font-size:12px!important;font-weight:700;line-height:1.2}
 body.ss-chat-page .chat-access>summary{min-height:44px;display:inline-flex;align-items:center}
+/* V285 measured accessibility fixes (tools/accessibility_audit.py) */
+body.ss-chat-page .chat-access>summary{background:#123B70!important;border-color:rgba(255,255,255,.55)!important;color:#fff!important}
+.privacy-links a{min-height:44px;display:inline-flex;align-items:center}
 .lang-sw a{min-height:40px;display:inline-flex;align-items:center}
 body .account-label,body .account-menu-head small{font-size:12px!important}
 body .ss-trust-item,body .ss-trust-ic,body .ss-trust-safety-link span,body .ss-hero-kicker b,body .ss-tech-card b,body .ss-v132-privacy b,body .ss-tools-all,body .ss-tool small,body .ss-how-step small,body .ss-source-more,body .ss-source-badge,body .ss-strength-stat span,body .ss-strength-note,body .ss-strength-note a,body .eyebrow{font-size:12px!important}

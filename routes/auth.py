@@ -127,13 +127,13 @@ def login():
       <div class="auth-error __ERR_CLASS__">__ERR__</div>__CREATE_ACTION__
       <form method="POST" action="/login?next=__NEXT__">
         <input type="hidden" name="csrf_token" value="__CSRF__">
-        <div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"></div>
-        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required maxlength="256" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="auth-field"><label for="auth-email">__EMAIL__</label><input id="auth-email" type="email" name="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"></div>
+        <div class="auth-field"><label for="auth-password">__PASS__</label><input id="auth-password" type="password" name="password" required maxlength="256" placeholder="••••••••" autocomplete="current-password"></div>
         <button type="submit" class="auth-btn">__BTN__</button>
       </form>
       <p class="auth-link" style="margin-top:12px"><a href="/forgot-password">__FORGOT__</a></p>
       <p class="auth-link">__NOACCT__ <a href="/register?next=__NEXT__">__REG__</a></p>
-      <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#94A3B8"><span style="height:1px;background:#DCE8F0;flex:1"></span><span>__OR__</span><span style="height:1px;background:#DCE8F0;flex:1"></span></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#64748B"><span style="height:1px;background:#DCE8F0;flex:1"></span><span>__OR__</span><span style="height:1px;background:#DCE8F0;flex:1"></span></div>
       <a class="btn auth-guest-btn" href="/home">__GUEST__</a>
     </div></div>
     """
@@ -176,10 +176,10 @@ def register():
       <h1>__H__</h1><p class="auth-sub">__SUB__</p><div class="auth-error __ERR_CLASS__">__ERR__</div>
       <form method="POST" action="/register?next=__NEXT__">
         <input type="hidden" name="csrf_token" value="__CSRF__">
-        <div class="auth-field"><label>__NAME__</label><input type="text" name="name" required minlength="2" maxlength="100" autocomplete="name"></div>
-        <div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"></div>
-        <div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" maxlength="256" autocomplete="new-password"></div>
-        <div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" maxlength="256" autocomplete="new-password"></div>
+        <div class="auth-field"><label for="auth-name">__NAME__</label><input id="auth-name" type="text" name="name" required minlength="2" maxlength="100" autocomplete="name"></div>
+        <div class="auth-field"><label for="auth-email">__EMAIL__</label><input id="auth-email" type="email" name="email" required maxlength="254" placeholder="name@example.com" autocomplete="email"></div>
+        <div class="auth-field"><label for="auth-password">__PASS__</label><input id="auth-password" type="password" name="password" required minlength="8" maxlength="256" autocomplete="new-password"></div>
+        <div class="auth-field"><label for="auth-confirm">__CONFIRM__</label><input id="auth-confirm" type="password" name="confirm" required minlength="8" maxlength="256" autocomplete="new-password"></div>
         <label class="auth-consent"><input type="checkbox" name="accept_terms" required><span class="auth-consent-text">__ACCEPT__</span></label>
         <button type="submit" class="auth-btn">__BTN__</button>
       </form><p class="auth-link">__HASACCT__ <a href="/login?next=__NEXT__">__LOGIN__</a></p>
@@ -312,9 +312,9 @@ def verify_email_pending():
     body="""
     <div class="auth-wrap"><div class="auth-card"><div class="auth-icon">📧</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p><p class="muted" style="direction:ltr">__MASKED__</p>
       __NOTICE____ERROR__
-      <form method="post" style="margin-bottom:12px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="verify_code"><div class="auth-field"><label>__CODELABEL__</label><input type="text" name="verification_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" style="direction:ltr;text-align:center;font-size:25px;letter-spacing:7px" placeholder="000000"></div><button class="auth-btn" type="submit">__VERIFYBTN__</button></form>
+      <form method="post" style="margin-bottom:12px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="verify_code"><div class="auth-field"><label for="auth-verification_code">__CODELABEL__</label><input id="auth-verification_code" type="text" name="verification_code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" style="direction:ltr;text-align:center;font-size:25px;letter-spacing:7px" placeholder="000000"></div><button class="auth-btn" type="submit">__VERIFYBTN__</button></form>
       <form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="resend"><button class="auth-btn" type="submit">__RESEND__</button></form>
-      <details style="margin-top:14px;text-align:start"><summary style="cursor:pointer;font-weight:700">__CHANGE__</summary><form method="post" style="margin-top:10px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="change_email"><div class="auth-field"><label>__NEWEMAIL__</label><input type="email" name="new_email" required autocomplete="email"></div><div class="auth-field"><label>__PASSWORD__</label><input type="password" name="current_password" required autocomplete="current-password"></div><button class="btn ghost" type="submit">__SAVEEMAIL__</button></form></details>
+      <details style="margin-top:14px;text-align:start"><summary style="cursor:pointer;font-weight:700">__CHANGE__</summary><form method="post" style="margin-top:10px"><input type="hidden" name="csrf_token" value="__CSRF__"><input type="hidden" name="action" value="change_email"><div class="auth-field"><label for="auth-new_email">__NEWEMAIL__</label><input id="auth-new_email" type="email" name="new_email" required autocomplete="email"></div><div class="auth-field"><label for="auth-current_password">__PASSWORD__</label><input id="auth-current_password" type="password" name="current_password" required autocomplete="current-password"></div><button class="btn ghost" type="submit">__SAVEEMAIL__</button></form></details>
       <p class="auth-link"><a href="/login">__BACK__</a></p>
     </div></div>
     """
@@ -378,7 +378,7 @@ def forgot_password():
     # Keep the public response identical whether the account exists, the
     # request was throttled, or the provider had a transient failure. Details
     # remain in server logs/configuration diagnostics only.
-    body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔑</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>__NOTICE____ERROR__<form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><div class="auth-field"><label>__EMAIL__</label><input type="email" name="email" required autocomplete="email" placeholder="name@example.com"></div><button class="auth-btn" type="submit">__BTN__</button></form><p class="auth-link"><a href="/login">__BACK__</a></p></div></div>"""
+    body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔑</div><h1>__TITLE__</h1><p class="auth-sub">__SUB__</p>__NOTICE____ERROR__<form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><div class="auth-field"><label for="auth-email">__EMAIL__</label><input id="auth-email" type="email" name="email" required autocomplete="email" placeholder="name@example.com"></div><button class="auth-btn" type="submit">__BTN__</button></form><p class="auth-link"><a href="/login">__BACK__</a></p></div></div>"""
     notice=('<div class="ss-msg success" style="display:block">%s</div>' % generic) if sent else ""
     error_html=('<div class="auth-error show">%s</div>' % form_error) if form_error else ""
     vals={"__TITLE__":"نسيت كلمة المرور؟" if ar else "Forgot Password?","__SUB__":"أدخل بريدك لإرسال رابط إعادة تعيين مؤقت." if ar else "Enter your email to receive a temporary reset link.","__EMAIL__":"البريد الإلكتروني" if ar else "Email","__BTN__":"إرسال رابط الاستعادة" if ar else "Send Reset Link","__BACK__":"العودة إلى تسجيل الدخول" if ar else "Back to Login","__NOTICE__":notice,"__ERROR__":error_html,"__CSRF__":_auth_csrf_token()}
@@ -420,7 +420,7 @@ def reset_password(token):
         session.clear()
         body='<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">✅</div><h1>%s</h1><p class="auth-sub">%s</p><a class="auth-btn" href="/login">%s</a></div></div>' % (("تمت إعادة تعيين كلمة المرور بنجاح" if ar else "Password reset successfully"),("يمكنك تسجيل الدخول بكلمة المرور الجديدة." if ar else "You can now sign in with your new password."),("العودة إلى تسجيل الدخول" if ar else "Back to Login"))
     else:
-        body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔐</div><h1>__TITLE__</h1><div class="auth-error __ERR_CLASS__">__ERROR__</div><form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><div class="auth-field"><label>__PASS__</label><input type="password" name="password" required minlength="8" maxlength="256" autocomplete="new-password"></div><div class="auth-field"><label>__CONFIRM__</label><input type="password" name="confirm" required minlength="8" maxlength="256" autocomplete="new-password"></div><button class="auth-btn" type="submit">__BTN__</button></form></div></div>"""
+        body="""<div class="auth-wrap"><div class="auth-card"><div class="auth-icon">🔐</div><h1>__TITLE__</h1><div class="auth-error __ERR_CLASS__">__ERROR__</div><form method="post"><input type="hidden" name="csrf_token" value="__CSRF__"><div class="auth-field"><label for="auth-password">__PASS__</label><input id="auth-password" type="password" name="password" required minlength="8" maxlength="256" autocomplete="new-password"></div><div class="auth-field"><label for="auth-confirm">__CONFIRM__</label><input id="auth-confirm" type="password" name="confirm" required minlength="8" maxlength="256" autocomplete="new-password"></div><button class="auth-btn" type="submit">__BTN__</button></form></div></div>"""
         vals={"__TITLE__":"إعادة تعيين كلمة المرور" if ar else "Reset Password","__PASS__":"كلمة المرور الجديدة" if ar else "New Password","__CONFIRM__":"تأكيد كلمة المرور الجديدة" if ar else "Confirm New Password","__BTN__":"إعادة تعيين كلمة المرور" if ar else "Reset Password","__CSRF__":_auth_csrf_token(),"__ERR_CLASS__":"show" if error else "","__ERROR__":error}
         for k,v in vals.items(): body=body.replace(k,v)
     return _page("استعادة كلمة المرور" if ar else "Reset Password",body)

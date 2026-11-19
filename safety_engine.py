@@ -10,8 +10,10 @@ import re
 import clinical_text
 import context_triage
 import emergency_lexicon
+import red_flag_concepts
+import temporal_context
 
-ENGINE_VERSION = "deterministic-red-flag-v4-precision"
+ENGINE_VERSION = "deterministic-red-flag-v8-review-fixes"
 
 # --- V197: Gulf-dialect / colloquial coverage -------------------------------
 # All phrases are matched through clinical_text, which normalises hamza, taa
@@ -251,6 +253,9 @@ def evaluate(patient, lang="ar"):
     disease; it only decides whether the normal symptom-matching flow should stop
     in favor of urgent-care guidance.
     """
+    # V290: clauses that clearly describe a finished past event ("as a child", «قبل سنتين»)
+    # are not current symptoms. Conservative; see temporal_context.py.
+    patient = temporal_context.current_patient(patient)
     symptoms = [str(x) for x in (patient.get("symptoms") or [])]
     notes = str(patient.get("notes") or "")
     text = " ; ".join(symptoms + [notes])
@@ -260,6 +265,7 @@ def evaluate(patient, lang="ar"):
 
     flags = []
     rule_ids = []
+    rule_labels = {}
 
     def add(rule_id, ar, en):
         label = en if lang == "en" else ar
@@ -267,6 +273,7 @@ def evaluate(patient, lang="ar"):
             flags.append(label)
         if rule_id not in rule_ids:
             rule_ids.append(rule_id)
+            rule_labels[rule_id] = label
 
     if anyp(
         "ألم شديد في الصدر", "الم شديد في الصدر", "ألم صدر شديد", "ألم شديد بالصدر", "الم شديد بالصدر",
@@ -446,6 +453,13 @@ def evaluate(patient, lang="ar"):
     for _rid, _ar, _en in context_triage.evaluate(patient, text)["emergency"]:
         add(_rid, _ar, _en)
 
+    # V284: compositional concept rules (any word order, dialect forms, one-letter
+    # typos). Additive only; measured on a held-out set by tools/evaluate_engine.py.
+    evidence = {}
+    for _item in red_flag_concepts.explain(text, skip_neuro=bool(chronic_neuro or mechanical_limb)):
+        add(_item["rule_id"], _item["label_ar"], _item["label_en"])
+        evidence[_item["rule_id"]] = _item["evidence"]
+
     # Fever in a baby is important, but temperature alone should not produce an
     # ambulance instruction here.  The clinical triage layer handles age and
     # temperature thresholds and asks for further context.
@@ -454,6 +468,11 @@ def evaluate(patient, lang="ar"):
         "emergency": bool(flags),
         "flags": flags,
         "rule_ids": rule_ids,
+        # flags are de-duplicated by label, so rule_ids[i] need not pair with flags[i]
+        "rule_labels": rule_labels,
+        # rule_id -> [{concept, label_ar, label_en, quotes:[{start, end, text}]}]; quotes are
+        # slices of what the user typed (concept rules only; phrase rules have no entry).
+        "evidence": evidence,
         "engine": ENGINE_VERSION,
     }
 

@@ -196,7 +196,7 @@ def main(argv):
         remaining_src = remaining_src.replace("".join(lines[(n.decorator_list[0].lineno if n.decorator_list else n.lineno) - 1:n.end_lineno]), "")
     rem_tree = ast.parse(remaining_src)
     used_rem = {x.id for x in ast.walk(rem_tree) if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Load)}
-    test_text = "\n".join(p.read_text(encoding="utf-8") for p in ROOT.glob("test_*.py"))
+    test_text = "\n".join(p.read_text(encoding="utf-8") for p in (ROOT / "tests").glob("test_*.py"))
     other_deps = set()
     for pkg in ("routes", "pagelib", "services"):
         for mp in (ROOT / pkg).glob("*.py") if (ROOT / pkg).is_dir() else []:

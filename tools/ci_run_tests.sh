@@ -18,7 +18,7 @@ run_one() {
   echo $? > "$OUT/$b.rc"
 }
 export -f run_one; export OUT
-ls test_*.py | grep -v -E '^test_e2e_|_browser\.py$|^test_postgres_|^test_interaction_bridge_data_actions' | xargs -P "$JOBS" -I{} bash -c 'run_one {}'
+(cd tests && ls test_*.py) | grep -v -E '^test_e2e_|_browser\.py$|^test_postgres_|^test_interaction_bridge_data_actions' | sed 's|^|tests/|' | xargs -P "$JOBS" -I{} bash -c 'run_one {}'
 fail=0
 for rc in "$OUT"/*.rc; do
   b="$(basename "$rc" .rc)"

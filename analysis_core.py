@@ -455,7 +455,8 @@ def _extract_age_months(value, text=""):
         mr = _AGE_UNIT_RE.search(clinical_text.normalize_clinical_text(raw.translate(trans)))
         if mr and mr.group("n"):
             return float(mr.group("n")) * _UNIT_MONTHS[mr.group("u")]
-    t = clinical_text.normalize_clinical_text(str(text or "").translate(trans))
+    # "6-week-old" -> "6 week old"
+    t = clinical_text.normalize_clinical_text(str(text or "").translate(trans)).replace("-", " ")
     for m in _AGE_UNIT_RE.finditer(t):
         unit, num = m.group("u"), m.group("n")
         if num is None and unit not in _COUNTLESS and unit not in ("شهر", "اسبوع", "يوم", "month", "week", "day"):
@@ -478,7 +479,7 @@ def _extract_temperature_c(text):
         "٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789"
     ))
     patterns = (
-        r"(?:حراره|حرارة|حرارته|حرارتها|temperature|temp)\s*(?:هي|=|:)?\s*(3[5-9](?:[.,]\d)?|4[0-2](?:[.,]\d)?)",
+        r"(?:حراره|حرارة|حرارته|حرارتها|حرارتي|temperature|temp)\s*(?:هي|=|:|of|is|was|at|around|about)?\s*(3[5-9](?:[.,]\d)?|4[0-2](?:[.,]\d)?)",
         r"(3[5-9](?:[.,]\d)?|4[0-2](?:[.,]\d)?)\s*(?:°\s*c|c\b|درجه|درجة)",
     )
     for pattern in patterns:
@@ -549,6 +550,8 @@ def _triage(d, lang):
     infant_mentioned = clinical_text.contains_unnegated_any(text, ("رضيع", "مولود", "حديث الولادة", "newborn", "neonate", "infant"))
     age_months = _extract_age_months(d.get("age"), text)
     temp_c = _extract_temperature_c(text)
+    if temp_c is not None and temp_c >= 38.0:
+        has_fever = True  # "a temperature of 38.2" without the word fever
 
     red = detect_red_flags(syms, d.get("notes") or "", lang, age=d.get("age"), severity=d.get("severity"), duration=d.get("duration"), redflag_yes=d.get("redflag_yes"))
 
@@ -576,6 +579,13 @@ def _triage(d, lang):
         # alone is not enough to declare an ambulance emergency. Immediate
         # emergency guidance is reserved for deterministic red-flag patterns.
         add("today", "شدة الأعراض عالية جدًا (5/5) وتحتاج تقييمًا طبيًا اليوم" if lang == "ar" else "Very high symptom severity (5/5) needs medical evaluation today")
+
+    try:
+        import text_context
+        _text_signal = text_context.triage_signal(text, lang)
+    except Exception:
+        logging.getLogger(__name__).error("text_context failed", exc_info=True)
+        _text_signal = None
 
     if level == "monitor":
         try:
@@ -616,6 +626,10 @@ def _triage(d, lang):
             add("today", "شدة الأعراض عالية (4/5)" if lang == "ar" else "High symptom severity (4/5)")
         elif age and age >= 60 and (has_chest or has_breath or has_dizzy):
             add("today", "العمر فوق 60 عاماً مع أعراض تستدعي الحذر" if lang == "ar" else "Age over 60 with symptoms that require caution")
+        elif _text_signal:
+            # V286: duration / severity / worsening / impact read from the user's own words.
+            # Raise-only and capped at "today" (text_context.py); quotes the words used.
+            add(_text_signal[0], _text_signal[1])
         elif sev == 3:
             add("soon", "شدة الأعراض متوسطة (3/5)" if lang == "ar" else "Moderate symptom severity (3/5)")
         elif long_ago:
@@ -1536,10 +1550,14 @@ def run_analysis(patient, lang="ar"):
 
     # The structured knowledge and rule-based safety layers always run before AI.
     # They are the authority for possible conditions, sources, and risk level.
+    # V290: decisions read the text without clauses that describe a finished past event
+    # ("I had a seizure as a child, now …"). The user's own words are still stored and shown.
+    import temporal_context
+    dd = temporal_context.current_patient(d)
     try:
         bundle = medical_knowledge.knowledge_bundle(
-            d.get("symptoms", []), d.get("severity", 1), d.get("age"),
-            d.get("notes", ""), lang,
+            dd.get("symptoms", []), d.get("severity", 1), d.get("age"),
+            dd.get("notes", ""), lang,
             negatives=d.get("negative_symptoms") or d.get("negatives") or [],
             analytics_consent=bool(d.get("analytics_consent")),
             gender=d.get("gender"),
@@ -1558,7 +1576,7 @@ def run_analysis(patient, lang="ar"):
     # overrides the action advice, but grounded knowledge-base matches are kept
     # visible as non-diagnostic possibilities so the user still understands what
     # may fit the reported symptoms. They must never delay urgent care.
-    pre_triage = _triage(d, lang)
+    pre_triage = _triage(dd, lang)
     if pre_triage.get("level") == "emergency" and bundle.get("risk", {}).get("level") != "urgent":
         safety_reason = pre_triage.get("reason") or (
             "بعض الأعراض المذكورة قد تستدعي رعاية طبية عاجلة."
@@ -1799,7 +1817,7 @@ def run_analysis(patient, lang="ar"):
     predicted = []
     ml_explanation = {"available": False, "used_for_display": False}
     try:
-        normalized_for_ml = _normalize_symptoms(d.get("symptoms", []))
+        normalized_for_ml = _normalize_symptoms(dd.get("symptoms", []))
         predicted = ml_diagnosis.predict_conditions(normalized_for_ml) or []
         ml_explanation = ml_diagnosis.explain_prediction(normalized_for_ml)
     except Exception:

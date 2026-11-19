@@ -34,6 +34,9 @@ from flask import Flask, request, jsonify, render_template_string, session, send
 import db
 import best_effort
 import inline_assets
+import ui_icons
+_ICON_GLOBE = ui_icons.svg("globe", 18)
+_ICON_USER = ui_icons.svg("user", 18)
 from services.medication_service import MEDS_API_REVISION  # noqa: F401 - re-exported; the revision lives with the service
 from pagelib.pages_html import blood_page, meds_page, safeid_page
 from services.search_answers import _health_search_question_answer, _health_search_relation_result, _pdf_report, _search_contextual_structured_result
@@ -1706,6 +1709,7 @@ _PUBLIC_CANONICAL_MAP = {
     "/health-file": "/health-file",
     "/vitals": "/vitals",
     "/terms": "/terms",
+    "/contact": "/contact",
     "/changelog": "/changelog",
     "/profile": "/profile",
     "/family": "/family",
@@ -1890,7 +1894,7 @@ def _nav():
     for href, label in links:
         cls = ' class="on"' if (path == href or (href == "/home" and path == "/")) else ""
         html += '<a href="%s"%s>%s</a>' % (href, cls, label)
-    html += '<a href="/home?assistant=general" class="v2-nav-cta" data-ss-click="openAsstGeneral" data-ss-prevent>🤖 %s</a>' % ("المساعد الذكي" if ar else "AI assistant")
+    html += '<a href="/home?assistant=general" class="v2-nav-cta" data-ss-click="openAsstGeneral" data-ss-prevent>%s %s</a>' % (ui_icons.svg("message-circle", 16), "المساعد الذكي" if ar else "AI assistant")
     html += ('<div class="dd"><button type="button" class="dd-btn v2-services-btn" aria-haspopup="menu" aria-expanded="false" data-dd-toggle="1" data-ss-click="toggleDD" data-ss-args="[&quot;$event&quot;]">%s <span aria-hidden="true">⌄</span></button>'
              '<div class="dd-menu v2-services-menu" role="menu">'
              '<a href="/blood">🧪 %s</a><a href="/meds">💊 %s</a><a href="/calculators">🧮 %s</a>'
@@ -1939,10 +1943,10 @@ def _nav():
             admin_menu_link, _t("nav_logout"),
         )
     else:
-        html += '<a href="/profile" class="dd-btn" style="text-decoration:none;">👤 %s</a>' % ("ملفي" if ar else "My profile")
+        html += '<a href="/profile" class="dd-btn" style="text-decoration:none;">%s %s</a>' % (_ICON_USER, "ملفي" if ar else "My profile")
     lang_picker_href = "/?choose=1&amp;next=" + escape(path)
-    desktop_lang_label = "🌐 اختيار اللغة" if lang == "ar" else "🌐 Choose language"
-    html += '<div class="lang-sw"><a href="%s" class="on">%s</a></div>' % (lang_picker_href, desktop_lang_label)
+    desktop_lang_label = ("اختيار اللغة" if lang == "ar" else "Choose language")
+    html += '<div class="lang-sw"><a href="%s" class="on">%s %s</a></div>' % (lang_picker_href, _ICON_GLOBE, desktop_lang_label)
     html += '</div></nav>'
     if user:
         short_name = (user.get("name") or ("ملفي" if lang == "ar" else "Profile")).strip().split()[0]
@@ -1961,9 +1965,9 @@ def _nav():
         '<a href="/home" class="ss-mobile-logo" dir="ltr" aria-label="SymptoSense home">'
         '<img class="ss-nav-logo-mark" src="/brand-icon.svg" width="24" height="24" alt="" aria-hidden="true"><b class="ss-brand-gradient">SymptoSense</b></a>'
         '<div class="ss-mobile-actions">'
-        '<a class="ss-mobile-lang" href="%s" aria-label="%s"><span aria-hidden="true">🌐</span><span>%s</span></a>'
+        '<a class="ss-mobile-lang" href="%s" aria-label="%s"><span aria-hidden="true">' + _ICON_GLOBE + '</span><span>%s</span></a>'
         '%s'
-        '<a class="ss-mobile-account" href="%s" aria-label="%s"><span aria-hidden="true">👤</span><span>%s</span></a>'
+        '<a class="ss-mobile-account" href="%s" aria-label="%s"><span aria-hidden="true">' + _ICON_USER + '</span><span>%s</span></a>'
         '</div></header>'
     ) % (lang_picker_href, lang_aria, lang_label, mobile_admin, mobile_account_href, mobile_account_aria, mobile_account_label)
     return html
@@ -1978,7 +1982,7 @@ def _footer():
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
         '<div class="f-sec"><h4>%s</h4><a href="/about" class="f-owner">%s<br>%s</a></div>'
         '<div class="f-sec"><h4>%s</h4>'
-        '<a class="f-tg" href="%s" target="_blank" rel="noopener">%s</a>'
+        '<a class="f-tg" href="%s" target="_blank" rel="noopener">' + ui_icons.svg("message-circle", 18) + ' %s</a>'
         '</div>'
         '</div>'
         '<div class="f-links">'
@@ -2059,6 +2063,7 @@ PREMIUM_POLISH_CSS += inline_assets.text("PREMIUM_POLISH_CSS_17.css")
 
 import polish_css_v249
 PREMIUM_POLISH_CSS += polish_css_v249.CSS
+PREMIUM_POLISH_CSS += inline_assets.text("V291_SHARED_CSS.css")  # V291 icons and readable text
 
 @app.route("/assets/app-shell-v112.css")
 def app_shell_v112_css():
@@ -2071,7 +2076,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v281")
+    response.set_etag("symptosense-app-shell-v112-v291")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2331,7 +2336,7 @@ WELCOME_CSS = inline_assets.text("WELCOME_CSS.css")
 
 LANG_PICKER_CSS = inline_assets.text("LANG_PICKER_CSS.css")
 
-HOME_CSS = inline_assets.text("HOME_CSS.css")
+HOME_CSS = inline_assets.text("HOME_CSS.css") + inline_assets.text("V291_HOME_CSS.css")
 _HOME_KNOWLEDGE_CACHE = {"at": 0.0, "data": None, "refreshing": False}
 _HOME_KNOWLEDGE_LOCK = threading.Lock()
 
@@ -3650,7 +3655,7 @@ def how_we_work_page():
     source_fragment = _extract_main_as_div(source_html)
     extra_css = _extract_styles(trust_html, (".trust-page", ".trust-hero")) + "\n" + _extract_styles(method_html, (".method-page", ".method-hero"))
     shell_css = r"""
-    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#123B70;font-size:clamp(28px,4vw,42px)}.ia-hub-head p{margin:8px 0 0;color:#60788b;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
+    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#123B70;font-size:clamp(28px,4vw,42px)}.ia-hub-head p{margin:8px 0 0;color:#566a7d;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
     """
     body = '''<div class="ia-hub">
       <section class="ia-hub-head"><h1>%s</h1><p>%s</p></section>
@@ -3804,7 +3809,7 @@ def localized_page_dispatch(lang_code, subpath):
         "settings": "settings", "manage": "manage_page", "memory": "memory_page",
         "login": "login", "register": "register", "verify-email": "verify_email_pending",
         "forgot-password": "forgot_password", "health-command-center": "health_command_center",
-        "privacy-center": "privacy_center", "consent": "consent", "health-file": "health_file_page", "vitals": "vitals_page",
+        "privacy-center": "privacy_center", "consent": "consent", "health-file": "health_file_page", "vitals": "vitals_page", "live-demo": "live_demo_page",
     }
     endpoint = endpoint_map.get(subpath)
     if not endpoint:
@@ -5437,6 +5442,7 @@ def _extract_blood_from_image(client, image_bytes, audit_pass=False):
                 "THEN extract EVERY laboratory test row visible, not only common CBC tests. For each test return: TEST | NAME | VALUE | UNIT | REF_LOW | REF_HIGH | STATUS | BBOX. "
                 "BBOX is the approximate row rectangle as x1,y1,x2,y2 normalized from 0 to 1000; leave it blank if uncertain. Example: TEST | HGB | 130 | g/L | 130 | 170 | Normal | 115,220,900,270. "
                 "Preserve the printed test name, numeric value, unit, reference limits, and the laboratory's own Normal/Low/High label when shown. For unfamiliar tests, KEEP the printed name instead of omitting it. "
+                "For a one-sided limit write only the number in the matching column: '<5' or 'up to 5' -> REF_LOW blank and REF_HIGH 5; '>60' -> REF_LOW 60 and REF_HIGH blank. "
                 "If a unit, reference limit, status, metadata field, or BBOX is not printed/readable, leave only that field blank. Skip only test rows whose numeric result itself is unreadable. "
                 "Return plain text only with no prose before or after these lines.") )},
             {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
@@ -5781,6 +5787,9 @@ routes_pages.register_routes(app, globals())
 pagelib_pages_html.bind(globals())
 
 services_search_answers.bind(globals())
+
+import live_demo  # public 3-minute demo on the real engine (V285)
+live_demo.register_routes(app, page=_page, lang_getter=_lang, request_allowed=_request_allowed)
 
 if __name__ == "__main__":
     run_webapp()

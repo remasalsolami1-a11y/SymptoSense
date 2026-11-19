@@ -131,7 +131,7 @@ def _seed_fingerprint():
     import hashlib
     global _FP_CACHE
     if _FP_CACHE:
-        return _FP_CACHE  # _seed() appends to SOURCES, so compute once, before the first seed
+        return _FP_CACHE  # seed tables are final after import; cache the hash per process
     h = hashlib.sha256()
     for name in sorted(globals()):
         if name.isupper() and isinstance(globals()[name], (list, tuple, dict)):
@@ -967,6 +967,34 @@ _SUPPLEMENTARY_URLS = frozenset(_r[3] for _rows in _tsw.disease_source_rows().va
 for _slug, _rows in _tsw.disease_source_rows().items():
     EXISTING_DISEASE_SOURCE_ENRICHMENT.setdefault(_slug, []).extend(_rows)
 
+# V282: verified condition-specific Saudi MOH pages (see saudi_sources.py).
+# Registered as supplementary like the V251 pass, so the originally curated source
+# stays the primary explanation source and analysis output is unchanged.
+import saudi_sources as _saudi
+for _slug, _rows in _saudi.disease_source_rows().items():
+    EXISTING_DISEASE_SOURCE_ENRICHMENT.setdefault(_slug, []).extend(_rows)
+_SUPPLEMENTARY_URLS = _SUPPLEMENTARY_URLS | frozenset(_r[3] for _rows in _saudi.disease_source_rows().values() for _r in _rows)
+
+# V177: every public health page carries a Saudi-local care-navigation
+# reference in addition to its condition-specific global source. This
+# does NOT claim MOH 937 is condition-specific evidence; it documents
+# the local consultation/escalation pathway used by the UI.
+# Registered here (import time), not inside _seed(): when it was appended
+# lazily during seeding, a fresh worker computed bundled home statistics
+# before seeding and showed one source fewer (29) than the database (30).
+SAUDI_MOH_937_SOURCE = (
+    "saudi-moh-937",
+    "وزارة الصحة السعودية — 937",
+    "Saudi Ministry of Health",
+    "https://www.moh.gov.sa/937/pages/default.aspx",
+    "government",
+    9,
+    "مرجع محلي رسمي للاستشارة الصحية وتوجيه المستخدم إلى مسار الرعاية المناسب عبر خدمات 937.",
+    "Official Saudi local reference for health consultation and care navigation through MOH 937 services.",
+)
+if not any(row[0] == SAUDI_MOH_937_SOURCE[0] for row in SOURCES):
+    SOURCES.append(SAUDI_MOH_937_SOURCE)
+
 # Enrich existing conditions without duplicating a disease row.  The stronger
 # weight wins for a repeated symptom and source tuples are de-duplicated by
 # (source slug, reference URL).
@@ -1181,22 +1209,8 @@ def _remove_retired_aliases(values, slug, language):
 def _seed(c):
 
     now = _now()
-    # V177: every public health page carries a Saudi-local care-navigation
-    # reference in addition to its condition-specific global source. This
-    # does NOT claim MOH 937 is condition-specific evidence; it documents
-    # the local consultation/escalation pathway used by the UI.
-    _moh937 = (
-        "saudi-moh-937",
-        "وزارة الصحة السعودية — 937",
-        "Saudi Ministry of Health",
-        "https://www.moh.gov.sa/937/pages/default.aspx",
-        "government",
-        9,
-        "مرجع محلي رسمي للاستشارة الصحية وتوجيه المستخدم إلى مسار الرعاية المناسب عبر خدمات 937.",
-        "Official Saudi local reference for health consultation and care navigation through MOH 937 services.",
-    )
-    if not any(row[0] == _moh937[0] for row in SOURCES):
-        SOURCES.append(_moh937)
+    # The MOH 937 source row is registered at import time (see SAUDI_MOH_937_SOURCE)
+    # so bundled statistics and the database always count the same sources.
     for slug, ar, en in CATEGORIES:
         c.execute(f"INSERT INTO mk_categories (slug,name_ar,name_en,status,created_at,updated_at) VALUES ({db.PH},{db.PH},{db.PH},'active',{db.PH},{db.PH}) ON CONFLICT(slug) DO NOTHING", (slug, ar, en, now, now))
     for slug, name, org, url, typ, priority, description_ar, description_en in SOURCES:

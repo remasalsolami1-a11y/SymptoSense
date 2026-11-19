@@ -860,6 +860,10 @@ def api_assistant():
                           if lang == "ar" else
                           (_assistant_general_local_fallback(last_text, lang) or "The full assistant is temporarily unavailable. Add more detail to your health question."))
         answer = _assistant_compact_response(answer, lang, mode)
+        if mode != "mh":
+            # V289: the model's wording may never contradict the deterministic triage.
+            import answer_guard
+            answer, _guarded = answer_guard.guard(answer, last_text, lang)
         return jsonify({"ok": True, "answer": answer, "emergency_flags": [], "services": services,
                         "medical_sources": assistant_sources})
     except Exception as e:

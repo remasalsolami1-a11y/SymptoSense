@@ -1,0 +1,74 @@
+{
+ "meta": {
+  "generated_at": "2026-11-16T10:05:31+00:00",
+  "route": "POST /api/analyze",
+  "controlled": {
+   "severity": 2,
+   "duration": "",
+   "ai_provider": "disabled"
+  }
+ },
+ "api_engine_agreement": {
+  "k": 525,
+  "n": 525
+ },
+ "by_condition": {
+  "en_dev": {
+   "n": 60,
+   "agree": 60
+  },
+  "en_test": {
+   "n": 120,
+   "agree": 120
+  },
+  "ar_msa": {
+   "n": 40,
+   "agree": 40
+  },
+  "ar_dialect": {
+   "n": 40,
+   "agree": 40
+  },
+  "ar_dialect_typos": {
+   "n": 40,
+   "agree": 40
+  },
+  "negation": {
+   "n": 10,
+   "agree": 10
+  },
+  "ar_code_switch": {
+   "n": 24,
+   "agree": 24
+  },
+  "ar_arabizi": {
+   "n": 8,
+   "agree": 8
+  },
+  "taxonomy_dev": {
+   "n": 56,
+   "agree": 56
+  },
+  "medium_combo": {
+   "n": 26,
+   "agree": 26
+  },
+  "v290_dev": {
+   "n": 71,
+   "agree": 71
+  },
+  "pediatric": {
+   "n": 30,
+   "agree": 30
+  }
+ },
+ "differences": [],
+ "latency_ms": {
+  "median": 64.2,
+  "p95": 298.0
+ },
+ "ai_guard": {
+  "k": 780,
+  "n": 780
+ }
+}

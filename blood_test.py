@@ -80,6 +80,9 @@ EXTENDED_REFS = {
     "folate": ("الفولات", "Folate", "ng/mL", (None, None, None, None)),
     "anc": ("العدد المطلق للعدلات (ANC)", "Absolute neutrophil count (ANC)", "10^9/L", (None, None, None, None)),
     "troponin": ("التروبونين القلبي", "Cardiac troponin", "ng/L", (None, None, None, None)),
+    # V290: before V290 these rows were dropped silently ("INR 4.8" gave a "normal" report)
+    "inr": ("سيولة الدم INR", "INR (clotting time ratio)", "", (None, None, None, None)),
+    "lactate": ("اللاكتات (حمض اللبنيك)", "Lactate", "mmol/L", (None, None, None, None)),
 }
 REFS.update(EXTENDED_REFS)
 
@@ -125,7 +128,13 @@ SYNONYMS.update({
     "folate": ["folate", "folic acid", "serum folate", "فولات", "حمض الفوليك"],
     "anc": ["absolute neutrophil count", "anc", "neutrophils absolute", "absolute neutrophils", "العدد المطلق للعدلات"],
     "troponin": ["troponin", "troponin i", "troponin t", "high sensitivity troponin", "hs troponin", "hs-troponin", "تروبونين"],
+    "inr": ["international normalized ratio", "international normalised ratio", "pt/inr", "pt-inr", "inr", "النسبة المعيارية الدولية",
+            "سيولة الدم"],
+    "lactate": ["lactic acid", "serum lactate", "blood lactate", "plasma lactate", "lactate", "حمض اللاكتيك", "حمض اللبنيك", "اللاكتات", "لاكتات"],
 })
+# V290: vitamin D written with its chemical name ("25(OH)D", "25-hydroxyvitamin D")
+SYNONYMS["vitd"] = SYNONYMS["vitd"] + ["25(oh)d", "25 (oh) d", "25(oh) d", "25-oh-d", "25-oh d", "25ohd", "25 oh d",
+                                       "25-hydroxyvitamin d", "25 hydroxyvitamin d", "25-hydroxy vitamin d", "فيتامين د 25"]
 
 TEST_GROUPS = {
     "red_cells": {"hgb","rbc","hct","mcv","mch","mchc","rdw"},
@@ -141,6 +150,8 @@ TEST_GROUPS = {
     "inflammation": {"crp","esr"},
     "pancreas": {"lipase"},
     "cardiac": {"troponin"},
+    "clotting": {"inr"},
+    "metabolic": {"lactate"},
 }
 GROUP_LABELS = {
     "red_cells": ("كريات الدم الحمراء", "Red-cell indices"),
@@ -156,6 +167,8 @@ GROUP_LABELS = {
     "inflammation": ("مؤشرات الالتهاب", "Inflammation markers"),
     "pancreas": ("البنكرياس", "Pancreas"),
     "cardiac": ("مؤشرات قلبية", "Cardiac markers"),
+    "clotting": ("تخثر الدم", "Clotting"),
+    "metabolic": ("مؤشرات الأكسجة والاستقلاب", "Oxygen delivery & metabolism"),
 }
 
 def test_group(key):
@@ -167,7 +180,8 @@ def test_group(key):
 # Production helper; the name is retained for compatibility with existing callers.
 test_group.__test__ = False
 
-_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+# V288: also the Arabic decimal separator (٫) and Persian digits: "٦٫٩" is 6.9, not 6
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹٫", "01234567890123456789.")
 
 # Emergency thresholds: (level, when value crosses).
 DANGER_RULES = {
@@ -322,6 +336,8 @@ def possible_factors_note(lang="ar"):
 def attention_level_for_result(result):
     """Return a display triage level without inventing test-specific cutoffs."""
     r = result or {}
+    if r.get("critical_level") in {"urgent", "emergency"}:
+        return r["critical_level"]  # V288: a critical value is never hidden behind "needs confirmation"
     if r.get("verification_level") == "needs_review" or r.get("status") == "unclassified":
         return "needs_confirmation"
     if r.get("reported_critical"):
@@ -624,6 +640,40 @@ def _parse_native_lab_table(raw_text):
             rows.append(seen[key][1])
     return rows
 
+# V288: one-sided laboratory limits ("<5", ">60", "≤ 130", "up to 14", "أقل من 5") are common for
+# CRP, LDL, eGFR, troponin and HbA1c. Before V288 they were ignored, so the value stayed unclassified.
+_ONE_SIDED_RE = re.compile(
+    r"(?P<op><=|>=|≤|≥|<|>|less\s+than|up\s+to|upto|below|under|greater\s+than|more\s+than|above|over|"
+    r"اقل\s+من|أقل\s+من|اكثر\s+من|أكثر\s+من|حتى)\s*(?P<num>\d+(?:[.,]\d+)?)", re.I)
+_UPPER_OPS = {"<", "<=", "≤", "less than", "up to", "upto", "below", "under", "اقل من", "أقل من", "حتى"}
+
+
+def _one_sided_range(text):
+    """(low, high) with exactly one bound, or (None, None)."""
+    m = _ONE_SIDED_RE.search(str(text or ""))
+    if not m:
+        return None, None
+    try:
+        num = float(m.group("num").replace(",", "."))
+    except (TypeError, ValueError):
+        return None, None
+    op = re.sub(r"\s+", " ", m.group("op").strip().lower())
+    return (None, num) if op in _UPPER_OPS else (num, None)
+
+
+# V290: numbers that belong to the test NAME, not the result: "Vitamin D (25-OH) 18", "فيتامين د ٢٥ هيدروكسي 18",
+# "Vitamin D 25(OH) 18". A leading bracket with letters, or a number glued to OH / hydroxy, is skipped.
+_NAME_QUALIFIER_RE = re.compile(
+    r"^\s*(?:[\(\[][^\)\]]*[a-z\u0600-\u06ff][^\)\]]*[\)\]]\s*[:=\-]?\s*"
+    r"|\d+\s*[-\s]?\s*\(?\s*(?:oh|hydroxy|هيدروكسي|هيدروكسى|هيدروكسيل)\s*\)?\s*(?:vitamin\s*d|d|فيتامين\s*د)?\s*[:=\-]?\s*"
+    r"|(?:total|serum|plasma|blood|venous|arterial|fasting|random|الكلي|الصائم|العشوائي)\s+)+", re.I)
+
+
+def _strip_name_qualifiers(after):
+    """Drop name qualifiers before the result number (see _NAME_QUALIFIER_RE)."""
+    return _NAME_QUALIFIER_RE.sub("", str(after or ""), count=1).lstrip(" :|=-")
+
+
 def _parse_blood_text_v142(text):
     """Extract CBC value + unit + laboratory reference range when available.
 
@@ -667,7 +717,7 @@ def _parse_blood_text_v142(text):
                         except (TypeError, ValueError): hi = None
                         best = {"key": key, "value": value, "unit": unit, "reference_low": lo, "reference_high": hi}
                         break
-                after = line[idx + len(_norm(syn)):].strip(" :|=-")
+                after = _strip_name_qualifiers(line[idx + len(_norm(syn)):].strip(" :|=-"))
                 nums = re.findall(r"[-+]?\d+(?:[.,]\d+)?", after)
                 if not nums:
                     continue
@@ -675,6 +725,9 @@ def _parse_blood_text_v142(text):
                 # Avoid false positives from test-name text such as
                 # "lymphocytes/100 leukocytes" or "Vitamin B12".
                 if key in {"neut", "lymph", "mono", "eos", "baso"} and value == 100 and "%" not in after:
+                    continue
+                # V288: "Absolute Neutrophil Count 0.3 10^9/L" is the ANC row, not the neutrophil percentage
+                if key in {"neut", "lymph", "mono", "eos", "baso"} and re.search(r"\babsolute\b|العدد المطلق", line):
                     continue
                 if key == "b12" and value == 12 and not re.search(r"\b(?:pmol|pg|ng|ug|µg|μg)\b", after, re.I):
                     continue
@@ -689,6 +742,8 @@ def _parse_blood_text_v142(text):
                 lo = hi = None
                 if range_match:
                     lo = float(range_match.group(1).replace(",", ".")); hi = float(range_match.group(2).replace(",", "."))
+                else:
+                    lo, hi = _one_sided_range(after[len(nums[0]):])
                 best = {"key": key, "value": value, "unit": unit, "reference_low": lo, "reference_high": hi}
                 break
             if best:
@@ -1231,6 +1286,8 @@ DIRECT_SOURCES = {
     "ggt": {"name":"MedlinePlus — GGT Test","url":"https://medlineplus.gov/lab-tests/gamma-glutamyl-transferase-ggt-test/","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع مباشر لـ GGT كمؤشر يُقرأ مع بقية اختبارات الكبد ولا يحدد السبب بمفرده.","use_en":"Direct reference for GGT, interpreted with other liver tests and not diagnostic by itself."},
     "lipase": {"name":"MedlinePlus — Lipase Tests","url":"https://www.medlineplus.gov/lab-tests/lipase-tests/","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع مباشر لفحص الليباز واستخدامه ضمن تقييم البنكرياس والسياق السريري.","use_en":"Direct reference for lipase testing in pancreatic assessment and clinical context."},
     "folate": {"name":"MedlinePlus — Folic Acid Test","url":"https://www.medlineplus.gov/ency/article/003686.htm","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع مباشر لفحص الفولات (فيتامين B9) في الدم وعلاقته بتكوين خلايا الدم، ويُفسر مع B12 والتغذية والسياق السريري.","use_en":"Direct reference for blood folate (vitamin B9) testing and its role in blood-cell formation, interpreted with B12, nutrition, and clinical context."},
+    "inr": {"name":"MedlinePlus — Prothrombin Time Test and INR (PT/INR)","url":"https://medlineplus.gov/lab-tests/prothrombin-time-test-and-inr-ptinr/","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع حكومي مباشر لفحص INR واستخدامه في متابعة مميّعات الدم.","use_en":"Direct government reference for the INR test and its use in monitoring blood thinners."},
+    "lactate": {"name":"MedlinePlus — Lactic Acid Test","url":"https://medlineplus.gov/ency/article/003507.htm","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع حكومي مباشر لفحص اللاكتات وأسباب ارتفاعه.","use_en":"Direct government reference for the lactate (lactic acid) test and why it rises."},
     "anc": {"name":"NCI — Absolute Neutrophil Count (ANC)","url":"https://www.cancer.gov/publications/dictionaries/cancer-terms/def/absolute-neutrophil-count","organization":"U.S. National Cancer Institute","authority":"government","use_ar":"مرجع حكومي مباشر لتعريف العدد المطلق للعدلات (ANC) ودوره في تقدير عدد العدلات ومخاطر العدوى عند الانخفاض الشديد.","use_en":"Direct government reference defining absolute neutrophil count (ANC) and its role in assessing neutrophil quantity and infection risk when markedly low."},
     "troponin": {"name":"MedlinePlus — Troponin Test","url":"https://www.medlineplus.gov/lab-tests/troponin-test/","organization":"NIH / U.S. National Library of Medicine","authority":"government","use_ar":"مرجع مباشر للتروبونين القلبي؛ نوع الفحص والحدود المرجعية والتوقيت والسياق السريري أساسية للتفسير.","use_en":"Direct reference for cardiac troponin; assay, reference limit, timing, and clinical context are essential to interpretation."},
 }
@@ -1273,6 +1330,8 @@ EXTENDED_INFO = {
     "folate": ("يقيس الفولات المرتبط بتكوين الخلايا والدم؛ يجب تفسيره مع التغذية وB12 والسياق.", "Measures folate, which is involved in cell and blood formation; interpret with nutrition, B12, and context."),
     "anc": ("يمثل العدد المطلق للعدلات، وهو أدق من النسبة وحدها عند تقييم عدد العدلات.", "The absolute neutrophil count; more informative than percentage alone when assessing neutrophil quantity."),
     "troponin": ("بروتين قلبي يُستخدم عند الاشتباه بأذية عضلة القلب. لا تُفسر قيمة واحدة دون نوع الفحص وحد المختبر وتوقيت السحب والأعراض وتخطيط القلب.", "A cardiac protein used when heart-muscle injury is suspected. A single value should not be interpreted without the assay, lab limit, timing, symptoms, and ECG context."),
+    "inr": ("يقيس سرعة تجلط الدم مقارنةً بالمعدل الطبيعي، ويُستخدم خصوصًا لمتابعة مميّعات الدم مثل الوارفارين. الهدف يختلف حسب سبب العلاج، ويحدده الطبيب.", "Measures how quickly blood clots compared with normal, mainly to monitor blood thinners such as warfarin. The target depends on why the medicine is taken and is set by the clinician."),
+    "lactate": ("ناتج عن استهلاك الطاقة دون أكسجين كافٍ؛ ارتفاعه في المستشفى قد يدل على نقص تروية أو عدوى شديدة، وقد يرتفع مؤقتًا بعد مجهود شديد.", "Produced when tissues use energy without enough oxygen; a high value in hospital can point to poor blood flow or a severe infection, and it can rise briefly after hard exercise."),
 }
 for _k, (_ar_desc, _en_desc) in EXTENDED_INFO.items():
     INDICATOR_INFO.setdefault(_k, {
@@ -1295,6 +1354,12 @@ INDICATOR_INFO.setdefault("troponin", {}).update({
 # These sources provide context and guideline-level interpretation. They NEVER
 # replace the patient's own laboratory reference interval for high/low/normal.
 SPECIALIST_SOURCES = {
+    "inr": [
+        {"name":"NHS — Warfarin","url":"https://www.nhs.uk/medicines/warfarin/","organization":"NHS (UK)","authority":"government","use_ar":"مرجع حكومي لمتابعة INR أثناء العلاج بالوارفارين ومتى تُطلب المساعدة.","use_en":"Government reference for INR monitoring on warfarin and when to get help."},
+    ],
+    "lactate": [
+        {"name":"SCCM — Surviving Sepsis Campaign Guidelines 2021","url":"https://sccm.org/sepsisguidelines","organization":"Society of Critical Care Medicine","authority":"specialty_guideline","use_ar":"إرشاد تخصصي يعتبر اللاكتات المرتفع (4 mmol/L فأكثر) علامة تستدعي إنعاشًا عاجلًا في العدوى الشديدة.","use_en":"Specialty guideline that treats a high lactate (4 mmol/L or more) as a sign that needs urgent resuscitation in severe infection."},
+    ],
     "glucose": [
         {"name":"ADA — Standards of Care in Diabetes 2026: Diagnosis & Classification","url":"https://diabetesjournals.org/care/article/49/Supplement_1/S27/163926/2-Diagnosis-and-Classification-of-Diabetes","organization":"American Diabetes Association","authority":"specialty_guideline","use_ar":"مرجع تخصصي حديث لمعايير تشخيص اضطرابات سكر الدم وحدود استخدام الجلوكوز وHbA1c.","use_en":"Current specialty guideline for diagnostic use and limitations of glucose and HbA1c."},
     ],
@@ -1673,7 +1738,7 @@ def _describe_results_v142_base(results, lang="ar"):
             "group": test_group(key),
             "group_label": GROUP_LABELS.get(test_group(key), ("أخرى", "Other"))[0 if ar else 1],
             "reference_source": r.get("reference_source") or "unclassified",
-            "reference_source_label": (("نطاق المختبر من التقرير" if r.get("reference_source")=="lab_reference" else "نطاق تطبيقي احتياطي للبالغين" if r.get("reference_source")=="app_adult_reference" else "النطاق غير واضح") if ar else ("Laboratory range from report" if r.get("reference_source")=="lab_reference" else "Adult app fallback range" if r.get("reference_source")=="app_adult_reference" else "Reference range unclear")),
+            "reference_source_label": (("نطاق المختبر من التقرير" if r.get("reference_source")=="lab_reference" else "حد المختبر من التقرير (حد واحد)" if r.get("reference_source")=="lab_reference_one_sided" else "نطاق تطبيقي احتياطي للبالغين" if r.get("reference_source")=="app_adult_reference" else "النطاق غير واضح") if ar else ("Laboratory range from report" if r.get("reference_source")=="lab_reference" else "Laboratory limit from report (one-sided)" if r.get("reference_source")=="lab_reference_one_sided" else "Adult app fallback range" if r.get("reference_source")=="app_adult_reference" else "Reference range unclear")),
         })
     return out
 
@@ -1833,6 +1898,13 @@ def _v143_pipe_rows(raw_text):
             try: return float(parts[i].replace(",", "."))
             except (TypeError, ValueError): return None
         lo, hi = num(3), num(4)
+        if lo is None and hi is None:
+            # V288/V289: OCR rows often carry a one-sided limit in either column ("<5", ">60")
+            for cell in parts[3:5]:
+                one_lo, one_hi = _one_sided_range(cell)
+                if one_lo is not None or one_hi is not None:
+                    lo, hi = one_lo, one_hi
+                    break
         if lo is not None and hi is not None and lo > hi:
             lo, hi = hi, lo
         reported = _v143_status(parts[5] if len(parts) > 5 else "")
@@ -1898,10 +1970,67 @@ def _v143_native_rows(raw_text):
     return rows
 
 
+# V290: a plain line "Procalcitonin 2.1 ng/mL 0-0.5" whose name is not a built-in marker used to be
+# dropped without a word, so a report could look "normal" while hiding an abnormal test. Such lines are
+# kept as report-defined rows (judged only against their own printed range) and listed to the user.
+_PLAIN_ROW_RE = re.compile(
+    r"^\s*(?P<name>[A-Za-z\u0600-\u06ff][A-Za-z\u0600-\u06ff0-9 ()\[\]/.,'+\-]{1,60}?)\s*[:=]?\s*"
+    r"(?P<value>[-+]?\d+(?:[.,]\d+)?)\s*(?P<flag>\b[HLhl]\b)?\s*(?P<rest>.*)$")
+_NOT_A_TEST = re.compile(
+    r"^(?:age|date|dob|page|id|mrn|file|patient|name|phone|tel|mobile|version|printed|collected|received|reported|report|sample|"
+    r"specimen|order|request|visit|room|bed|ref|lab|doctor|dr|time|year|years|month|weight|height|bmi|pulse|bp|fasting|fast|"
+    r"hours|temperature|temp|"
+    r"العمر|عمر|تاريخ|رقم|الاسم|اسم|هاتف|جوال|الصفحه|صفحه|الطبيب|الوزن|الطول|النبض|الضغط|السنه|صيام|الصيام|ساعات|الحراره)\b", re.I)
+
+
+def _v290_plain_rows(raw_text, known_lines):
+    rows = []
+    for line in re.split(r"[\r\n]+", str(raw_text or "").translate(_AR_DIGITS)):
+        if "|" in line or not line.strip() or _norm(line) in known_lines:
+            continue
+        m = _PLAIN_ROW_RE.match(line)
+        if not m:
+            continue
+        name = _v143_safe_name(m.group("name").strip(" :=-"))
+        if len(re.sub(r"[^A-Za-z\u0600-\u06ff]", "", name)) < 2 or _NOT_A_TEST.match(_norm(name)):
+            continue
+        rest = m.group("rest")
+        rng = re.search(r"([-+]?\d+(?:[.,]\d+)?)\s*(?:-|–|—|to)\s*([-+]?\d+(?:[.,]\d+)?)", rest)
+        lo = hi = None
+        if rng:
+            lo, hi = float(rng.group(1).replace(",", ".")), float(rng.group(2).replace(",", "."))
+        else:
+            lo, hi = _one_sided_range(rest)
+        unit_m = re.match(r"\s*([A-Za-zµμ%][A-Za-z0-9µμ%/^.*]{0,15})", rest)
+        if lo is None and hi is None and not unit_m:
+            continue  # a bare "word number" is too ambiguous to call a lab result
+        flag = (m.group("flag") or "").upper()
+        rows.append({
+            "key": _v143_generic_key(name), "name": name, "value": float(m.group("value").replace(",", ".")),
+            "unit": _v143_safe_unit(unit_m.group(1)) if unit_m else "",
+            "reference_low": lo, "reference_high": hi,
+            "reported_status": {"H": "high", "L": "low"}.get(flag, ""), "reported_critical": False,
+            "unrecognized": True,
+        })
+    return rows
+
+
+def _known_lines(text):
+    """Normalised lines that mention a built-in marker name."""
+    out = set()
+    for line in re.split(r"[\r\n]+", str(text or "").translate(_AR_DIGITS)):
+        n = _norm(line)
+        if n and any(_find_synonym(n, syn) >= 0 for syns in SYNONYMS.values() for syn in syns):
+            out.add(n)
+    return out
+
+
 def parse_blood_text(text):
     """V143: retain all readable test rows, not only the built-in marker list."""
     base, age = _parse_blood_text_v142(text)
     extras = _v143_native_rows(text) + _v143_pipe_rows(text)
+    if not extras:
+        extras = _v290_plain_rows(text, _known_lines(text))
     merged = []
     index = {}
     for row in list(base) + extras:
@@ -1987,28 +2116,28 @@ def _analyze_blood_v143_base(entries, gender="", age=None):
 
 
 _V143_FOCUS_LOW_AR = {
-    "hgb": "ركّزي على معرفة سبب الانخفاض أولًا وربطه بالفيريتين والحديد وB12 والفولات عند الحاجة. الغذاء الغني بالحديد والبروتين قد يساعد إذا كان النقص غذائيًا، لكن لا تبدئي مكمل الحديد قبل تأكيد السبب.",
+    "hgb": "الأهم معرفة سبب الانخفاض أولًا وربطه بالفيريتين والحديد وB12 والفولات عند الحاجة. الغذاء الغني بالحديد والبروتين قد يساعد إذا كان النقص غذائيًا، لكن لا يُبدأ مكمل الحديد قبل تأكيد السبب.",
     "rbc": "يُربط عادةً بالهيموغلوبين وMCV والحديد/B12 والفولات. التركيز يكون على السبب وليس رفع العدد مباشرة.",
-    "hct": "يُفسَّر مع الهيموغلوبين وكريات الدم الحمراء. إذا كان منخفضًا، راجعي أسباب فقر الدم أو فقدان الدم مع مختص بدل محاولة رفعه وحده.",
-    "mcv": "إذا كان منخفضًا فركّزي على تقييم الحديد والفيريتين؛ وإذا كان مرتفعًا فغالبًا يحتاج ربطه بـB12 والفولات وأسباب أخرى. لا يعتمد على الغذاء وحده.",
+    "hct": "يُفسَّر مع الهيموغلوبين وكريات الدم الحمراء. إذا كان منخفضًا، تُراجَع أسباب فقر الدم أو فقدان الدم مع مختص بدل محاولة رفعه وحده.",
+    "mcv": "إذا كان منخفضًا فالأهم تقييم الحديد والفيريتين؛ وإذا كان مرتفعًا فغالبًا يحتاج ربطه بـB12 والفولات وأسباب أخرى. لا يعتمد على الغذاء وحده.",
     "mch": "يُقرأ مع MCV وMCHC والهيموغلوبين. انخفاضه يستحق تقييم الحديد/الفيريتين قبل أي مكمل.",
-    "mchc": "انخفاضه قد يتماشى مع نقص صبغة الهيموغلوبين داخل الكريات؛ ركّزي على تقييم الحديد والفيريتين وربطه ببقية CBC بدل محاولة رفع الرقم مباشرة.",
-    "ferritin": "ركّزي على مصادر الحديد الغذائية مثل اللحوم والبقول والخضار الورقية مع فيتامين C، وعلى البحث عن سبب نقص المخزون. مكمل الحديد يفضّل بعد تأكيد السبب والجرعة مع مختص.",
-    "iron": "ركّزي على الغذاء الغني بالحديد وربط النتيجة بالفيريتين وCBC. قراءة الحديد تتغير خلال اليوم، لذلك لا يُعالج الرقم منفردًا.",
-    "b12": "ركّزي على مصادر B12 مثل اللحوم والبيض ومنتجات الألبان أو الأغذية المدعمة، مع تقييم الامتصاص أو النظام الغذائي إذا كان الانخفاض واضحًا. جرعة المكمل تُحدد حسب السبب.",
-    "vitd": "ركّزي على المصادر الغذائية المدعمة والتعرض الآمن للشمس بما يناسبك؛ جرعة مكمل فيتامين D تعتمد على مستوى النقص والحالة الصحية ويحددها مختص.",
-    "albumin": "ركّزي على كفاية البروتين والطاقة في الغذاء، لكن الانخفاض قد يرتبط أيضًا بالكبد أو الكلى أو الالتهاب؛ لذلك يحتاج تفسير السبب.",
-    "total_protein": "راجعي كفاية البروتين الغذائي مع الطبيب، لأن انخفاض البروتين الكلي قد يكون له أسباب غير غذائية أيضًا.",
+    "mchc": "انخفاضه قد يتماشى مع نقص صبغة الهيموغلوبين داخل الكريات؛ الأهم تقييم الحديد والفيريتين وربطه ببقية CBC بدل محاولة رفع الرقم مباشرة.",
+    "ferritin": "الأهم مصادر الحديد الغذائية مثل اللحوم والبقول والخضار الورقية مع فيتامين C، والبحث عن سبب نقص المخزون. مكمل الحديد يفضّل بعد تأكيد السبب والجرعة مع مختص.",
+    "iron": "الأهم الغذاء الغني بالحديد وربط النتيجة بالفيريتين وCBC. قراءة الحديد تتغير خلال اليوم، لذلك لا يُعالج الرقم منفردًا.",
+    "b12": "الأهم مصادر B12 مثل اللحوم والبيض ومنتجات الألبان أو الأغذية المدعمة، مع تقييم الامتصاص أو النظام الغذائي إذا كان الانخفاض واضحًا. جرعة المكمل تُحدد حسب السبب.",
+    "vitd": "الأهم المصادر الغذائية المدعمة والتعرض الآمن للشمس بما يناسبك؛ جرعة مكمل فيتامين D تعتمد على مستوى النقص والحالة الصحية ويحددها مختص.",
+    "albumin": "الأهم كفاية البروتين والطاقة في الغذاء، لكن الانخفاض قد يرتبط أيضًا بالكبد أو الكلى أو الالتهاب؛ لذلك يحتاج تفسير السبب.",
+    "total_protein": "تُراجَع كفاية البروتين الغذائي مع الطبيب، لأن انخفاض البروتين الكلي قد يكون له أسباب غير غذائية أيضًا.",
     "hdl": "النشاط البدني المنتظم، الدهون غير المشبعة، وتجنب التدخين إن وجد عوامل تساعد عادةً على تحسين HDL ضمن خطة صحة القلب.",
 }
 _V143_FOCUS_HIGH_AR = {
-    "glucose": "ركّزي على نمط الوجبات، تقليل السكريات المضافة والكربوهيدرات المكررة، الحركة المنتظمة، ومتابعة القياس حسب توجيه الطبيب.",
-    "hba1c": "ركّزي على نمط الأكل، النشاط، الوزن الصحي إن كان مناسبًا، ومراجعة الطبيب لوضع هدف فردي للسكر؛ لا يعتمد القرار على قراءة واحدة فقط.",
-    "ldl": "ركّزي على تقليل الدهون المشبعة والمتحولة، زيادة الألياف والنشاط البدني، وتقييم عوامل خطورة القلب مع الطبيب.",
+    "glucose": "الأهم نمط الوجبات، تقليل السكريات المضافة والكربوهيدرات المكررة، الحركة المنتظمة، ومتابعة القياس حسب توجيه الطبيب.",
+    "hba1c": "الأهم نمط الأكل، النشاط، الوزن الصحي إن كان مناسبًا، ومراجعة الطبيب لوضع هدف فردي للسكر؛ لا يعتمد القرار على قراءة واحدة فقط.",
+    "ldl": "الأهم تقليل الدهون المشبعة والمتحولة، زيادة الألياف والنشاط البدني، وتقييم عوامل خطورة القلب مع الطبيب.",
     "chol_total": "يُفهم مع LDL وHDL والدهون الثلاثية. التركيز يكون على نمط غذائي صحي للقلب والنشاط ومراجعة عوامل الخطورة.",
-    "triglycerides": "ركّزي على تقليل السكريات المضافة والكحول إن وُجد، تحسين النشاط والوزن إن كان مناسبًا، والتأكد من شروط الصيام إذا طلبها المختبر.",
-    "ferritin": "لا تتناولي مكملات الحديد بهدف تعديل الرقم قبل معرفة السبب؛ ارتفاع الفيريتين قد يتأثر بالالتهاب وعوامل أخرى ويحتاج تفسيرًا.",
-    "iron": "تجنبي إضافة مكمل الحديد دون تقييم السبب، واربطِي النتيجة بالفيريتين وCBC وبقية فحوص الحديد.",
+    "triglycerides": "الأهم تقليل السكريات المضافة والكحول إن وُجد، تحسين النشاط والوزن إن كان مناسبًا، والتأكد من شروط الصيام إذا طلبها المختبر.",
+    "ferritin": "لا تُؤخذ مكملات الحديد بهدف تعديل الرقم قبل معرفة السبب؛ ارتفاع الفيريتين قد يتأثر بالالتهاب وعوامل أخرى ويحتاج تفسيرًا.",
+    "iron": "يُفضّل تجنب إضافة مكمل الحديد دون تقييم السبب، وربط النتيجة بالفيريتين وCBC وبقية فحوص الحديد.",
     "mpv": "لا توجد طريقة غذائية موثوقة لخفض MPV مباشرة؛ الأهم ربطه بعدد الصفائح وبقية CBC والسياق السريري.",
 }
 
@@ -2017,26 +2146,26 @@ def focus_guidance(key, status, lang="ar"):
     ar = lang == "ar"
     key = str(key or "")
     if status == "normal":
-        return ("لا يحتاج هذا المؤشر إلى رفعه أو خفضه بناءً على التقرير وحده؛ حافظي على نمط صحي واتبعي خطة طبيبك إن وجدت." if ar else
+        return ("لا يحتاج هذا المؤشر إلى رفعه أو خفضه بناءً على التقرير وحده؛ المهم الحفاظ على نمط صحي واتباع خطة الطبيب إن وجدت." if ar else
                 "This marker does not need to be raised or lowered based on the report alone; maintain healthy habits and follow your clinician's plan if applicable.")
     if status == "low":
         if key in _V143_FOCUS_LOW_AR:
             return _V143_FOCUS_LOW_AR[key] if ar else "Focus on confirming the cause of the low value with related tests and your clinician before starting supplements or trying to raise the number directly."
         if key in {"sodium", "potassium", "calcium", "co2", "chloride"}:
-            return ("لا تحاولي رفع الأملاح أو المعادن ذاتيًا بمكملات أو كميات كبيرة؛ بعض الانخفاضات تحتاج تقييمًا سريعًا حسب الدرجة والأعراض." if ar else
+            return ("لا يُنصح بمحاولة رفع الأملاح أو المعادن ذاتيًا بمكملات أو كميات كبيرة؛ بعض الانخفاضات تحتاج تقييمًا سريعًا حسب الدرجة والأعراض." if ar else
                     "Do not try to raise electrolytes on your own with supplements or large amounts; some low results need prompt assessment depending on severity and symptoms.")
         if key in {"wbc", "neut", "lymph", "mono", "eos", "baso", "plt"}:
             return ("هذا النوع من القيم لا يُرفع بالغذاء بشكل مباشر عادةً؛ التركيز يكون على معرفة السبب ومراجعة الأدوية/العدوى/السياق مع الطبيب." if ar else
                     "These counts are not usually corrected directly with food; focus on finding the cause and reviewing medications, infections, and context with a clinician.")
-        return ("لا توجد طريقة آمنة لرفع هذه القيمة تلقائيًا دون معرفة السبب. ركّزي على تأكيد النتيجة والنطاق المرجعي ومناقشة السبب مع الطبيب." if ar else
+        return ("لا توجد طريقة آمنة لرفع هذه القيمة تلقائيًا دون معرفة السبب. الأهم تأكيد النتيجة والنطاق المرجعي ومناقشة السبب مع الطبيب." if ar else
                 "There is no safe universal way to raise this value without knowing the cause. Confirm the result/reference range and discuss the cause with a clinician.")
     if status == "high":
         if key in _V143_FOCUS_HIGH_AR:
             return _V143_FOCUS_HIGH_AR[key] if ar else "Focus on the underlying cause and the related markers rather than trying to lower the number directly; discuss persistent elevation with a clinician."
         if key in {"sodium", "potassium", "calcium", "co2", "chloride"}:
-            return ("لا تحاولي خفض الإلكتروليت ذاتيًا؛ الارتفاع قد يحتاج تقييمًا طبيًا بحسب الدرجة والأعراض والأدوية." if ar else
+            return ("لا يُنصح بمحاولة خفض الإلكتروليت ذاتيًا؛ الارتفاع قد يحتاج تقييمًا طبيًا بحسب الدرجة والأعراض والأدوية." if ar else
                     "Do not try to lower an electrolyte on your own; elevation may need medical assessment depending on severity, symptoms, and medications.")
-        return ("الهدف ليس خفض الرقم عشوائيًا؛ ركّزي على معرفة السبب وربطه بالفحوص الأخرى وإعادة القياس أو المتابعة حسب توجيه الطبيب." if ar else
+        return ("الهدف ليس خفض الرقم عشوائيًا؛ الأهم معرفة السبب وربطه بالفحوص الأخرى وإعادة القياس أو المتابعة حسب توجيه الطبيب." if ar else
                 "The goal is not to lower the number blindly; focus on the cause, related tests, and repeat testing/follow-up as advised by a clinician.")
     return ("يلزم أولًا تأكيد الوحدة أو النطاق المرجعي قبل إعطاء توجيه لرفع أو خفض هذه القيمة." if ar else
             "Confirm the unit or reference range before giving advice to raise or lower this value.")
@@ -2106,6 +2235,16 @@ def _v145_verification_meta(result, source_entry):
             "conflict": False,
         }
 
+    if ref_source == "lab_reference_one_sided":
+        if reported and computed != reported:
+            return {"level": "needs_review", "score": 0, "label_ar": "يحتاج مراجعة قبل الاعتماد", "label_en": "Needs review before relying on it",
+                    "issue_ar": "يوجد تعارض بين القيمة وحد المختبر المطبوع وتصنيف المختبر. لم نعتمد تصنيفًا تلقائيًا.",
+                    "issue_en": "The value, the printed laboratory limit and the laboratory status disagree. No automatic classification was accepted.",
+                    "conflict": True}
+        return {"level": "double_verified" if reported else "lab_range_verified", "score": 4 if reported else 3,
+                "label_ar": "متحقق من حد المختبر المطبوع (حد واحد)", "label_en": "Verified against the laboratory's printed limit (one-sided)",
+                "issue_ar": "", "issue_en": "", "conflict": False}
+
     if ref_source == "lab_reported_status":
         return {
             "level": "lab_status_only",
@@ -2149,6 +2288,25 @@ def analyze_blood(entries, gender="", age=None):
         if key:
             source_by_key[key] = e
 
+    # V288: classify against a single printed laboratory limit.
+    for r in results:
+        if r.get("status") != "unclassified" or r.get("reference_source") == "verification_conflict":
+            continue
+        src = source_by_key.get(str(r.get("key") or "").strip().lower(), {})
+        lo, hi = src.get("reference_low"), src.get("reference_high")
+        try:
+            lo = float(lo) if lo not in (None, "") else None
+            hi = float(hi) if hi not in (None, "") else None
+            value = float(r.get("raw_value", r.get("value")))
+        except (TypeError, ValueError):
+            continue
+        if (lo is None) == (hi is None):
+            continue
+        r["value"], r["unit"] = value, (src.get("unit") or r.get("raw_unit") or r.get("unit") or "")
+        r["low"], r["high"] = lo, hi
+        r["status"] = ("high" if value > hi else "normal") if hi is not None else ("low" if value < lo else "normal")
+        r["reference_source"] = "lab_reference_one_sided"
+
     conflict_keys = set()
     for r in results:
         key = str(r.get("key") or "").strip().lower()
@@ -2166,10 +2324,42 @@ def analyze_blood(entries, gender="", age=None):
 
     # If an extraction/status conflict exists, do not keep causal/pattern notes
     # that may have been generated from the disputed classification.
+    # V288: only a REAL disagreement with the report (value vs printed range/status)
+    # removes danger alerts. A missing laboratory range is not a conflict: a
+    # haemoglobin of 4.5 g/dL is critical whatever range the lab prints.
     if conflict_keys:
         notes = []
-        if conflict_keys.intersection(DANGER_RULES):
+        report_conflicts = {k for k in conflict_keys
+                            if any(str(r.get("key") or "").lower() == k and r.get("verification_level") == "needs_review"
+                                   and str(source_by_key.get(k, {}).get("reported_status") or "").strip() for r in results)}
+        if report_conflicts.intersection(DANGER_RULES):
             dangers = []
+
+    # V288: critical ("panic") values for chemistry and troponin (blood_critical.py).
+    import blood_critical
+    try:
+        _age = float(age) if age not in (None, "") else None
+    except (TypeError, ValueError):
+        _age = None
+    # adult limits apply unless the person is known to be a child (unknown age -> applied, the safer side)
+    adult = _gender_key(gender) != "child" and not (_age is not None and _age < 18)
+    for r in results:
+        key = str(r.get("key") or "").strip().lower()
+        try:
+            cv = float(r.get("canonical_value")) if r.get("canonical_value") is not None else None
+        except (TypeError, ValueError):
+            cv = None
+        for lvl, threshold, op in DANGER_RULES.get(key, []):
+            if cv is not None and (cv < threshold if op == "lt" else cv > threshold):
+                r["critical_level"] = lvl
+                break
+    for r in results:
+        key = str(r.get("key") or "").strip().lower()
+        hit = blood_critical.check(r, source_by_key.get(key, {}), adult=adult)
+        if hit:
+            r["critical_level"] = hit[0]
+            if not any(d[1] == hit[1] for d in dangers):
+                dangers.append(hit)
 
     # A laboratory-printed Critical flag is treated as an urgent clinician
     # signal, not as a universal numeric emergency threshold. If extraction

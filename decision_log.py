@@ -13,20 +13,22 @@ from datetime import datetime, timezone
 import db
 
 _LOG = logging.getLogger("SymptoSense")
-_READY = False
+_READY_KEY = None  # identity of the database whose table was created (not a bare flag:
+                  # a switched database must get its table too)
 LEVELS = ("emergency", "high", "medium", "low")
 
 
 def _ensure(conn):
-    global _READY
-    if _READY:
+    global _READY_KEY
+    key = db._database_identity()
+    if _READY_KEY == key:
         return
     conn.cursor().execute(
         "CREATE TABLE IF NOT EXISTS ss_safety_decisions ("
         "ts TEXT NOT NULL, level TEXT NOT NULL, rule_ids TEXT NOT NULL, lang TEXT, source TEXT)"
     )
     conn.commit()
-    _READY = True
+    _READY_KEY = key
 
 
 def _clean_rules(rule_ids):

@@ -161,6 +161,42 @@ def decide(review_id: int, approve: bool, reviewer: dict, note: str = "") -> dic
         conn.close()
 
 
+def last_independent_approval(kind: str, entity_id) -> str | None:
+    """Date (YYYY-MM-DD) of the latest approved review of this entity by someone
+    other than its author, or None.
+
+    Public pages may say "last reviewed" only when this returns a date; a seed or
+    import timestamp is a content update, not a review. Self-reviews (allowed for
+    single-admin deployments and tagged "[self-review]") do not count. Never raises.
+    """
+    if kind not in KINDS:
+        return None
+    try:
+        eid = int(entity_id)
+    except (TypeError, ValueError):
+        return None
+    errors = (OSError, RuntimeError, ValueError, TypeError) + tuple(db.DB_ERRORS)
+    try:
+        conn = db._conn()
+    except errors:
+        return None
+    try:
+        _ensure(conn)
+        c = conn.cursor()
+        c.execute(
+            f"SELECT reviewed_at, note FROM mk_clinical_reviews WHERE status='approved' AND entity_type={db.PH} "
+            f"AND (result_entity_id={db.PH} OR entity_id={db.PH}) ORDER BY reviewed_at DESC",
+            (kind, eid, eid))
+        for reviewed_at, note in c.fetchall():
+            if reviewed_at and "[self-review]" not in str(note or ""):
+                return str(reviewed_at)[:10]
+        return None
+    except errors:
+        return None
+    finally:
+        conn.close()
+
+
 def counts() -> dict:
     conn = db._conn()
     try:

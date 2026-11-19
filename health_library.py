@@ -223,9 +223,9 @@ def index(lang: str) -> str:
 <section class="ss-card hl-head"><span class="ss-badge">📚 {"مكتبة" if ar else "Library"}</span><h1>{esc(title)}</h1><p class="ss-muted">{esc(subtitle)}</p>
 <div class="hl-search"><span>🔎</span><input id="hlSearch" type="search" placeholder="{esc('ابحث عن عرض أو حالة طبية…' if ar else 'Search symptoms or conditions…')}" autocomplete="off"></div>
 <div class="hl-key"><span>📋 {"حالة طبية" if ar else "Condition"}</span><span><i class="hl-sym-dot"></i> {"عرض" if ar else "Symptom"}</span></div></section>
-<div class="hl-layout"><aside class="hl-sidebar"><b>{esc('الأقسام' if ar else 'Sections')}</b>{''.join(nav)}</aside><div class="hl-content">{''.join(sections)}<div id="hlEmpty" class="ss-card hl-empty" hidden>{esc(no_results)}</div></div></div>
+<div class="hl-layout"><aside class="hl-sidebar"><b>{esc('الأقسام' if ar else 'Sections')}</b>{''.join(nav)}</aside><div class="hl-content">{__import__("health_guides").index_section(ar, prefix)}{''.join(sections)}<div id="hlEmpty" class="ss-card hl-empty" hidden>{esc(no_results)}</div></div></div>
 <style>
-.hl-shell{{max-width:1120px;padding-top:24px;padding-bottom:60px}}.hl-head{{text-align:center;margin-bottom:14px}}.hl-head h1{{margin:8px 0 4px}}.hl-search{{max-width:680px;margin:18px auto 6px;display:flex;align-items:center;gap:9px;border:1px solid #cfe0ea;border-radius:15px;padding:4px 13px;background:#fff}}.hl-search input{{width:100%;border:0;outline:0;padding:11px 2px;font:inherit;background:transparent}}.hl-key{{display:flex;justify-content:center;gap:18px;font-size:12px;color:#657c8b;margin-top:10px}}.hl-layout{{display:grid;grid-template-columns:210px minmax(0,1fr);gap:14px;align-items:start}}.hl-sidebar{{position:sticky;top:86px;background:#fff;border:1px solid var(--v2-line,#dceafa);border-radius:18px;padding:14px;max-height:calc(100vh - 110px);overflow:auto}}.hl-sidebar b{{display:block;color:#174e73;margin-bottom:8px}}.hl-sidebar a{{display:flex;justify-content:space-between;gap:8px;padding:8px 6px;text-decoration:none;color:#496477;border-radius:9px;font-size:12px}}.hl-sidebar a:hover{{background:#f2f8fc}}.hl-content{{min-width:0}}.hl-section{{scroll-margin-top:90px;margin-bottom:13px}}.hl-section h2{{margin-top:0}}.hl-section h2 .ss-muted{{font-size:13px;font-weight:600}}.hl-chip-row{{display:flex;flex-wrap:wrap;gap:8px}}.hl-chip{{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;font-size:13px;font-weight:750;text-decoration:none;border:1px solid var(--border-card,#DCEBFA);transition:.16s}}.hl-chip-disease{{background:#f5f9ff;color:#123B70;border-color:#cfe0f1}}.hl-chip-symptom{{background:#F4FBF6;color:#1B6B3A;border-color:#D6EEDD;align-items:flex-start;width:calc(50% - 4px);min-width:260px;padding:11px 12px}}.hl-chip-main{{display:grid;gap:3px;min-width:0;text-align:start}}.hl-chip-main b{{font-size:13.5px;color:#185f35;line-height:1.45}}.hl-chip-main small{{font-size:11.5px;font-weight:500;color:#5e7467;line-height:1.6}}.hl-chip:hover{{transform:translateY(-1px);filter:brightness(.98)}}.hl-kind-icon{{display:inline-flex;align-items:center}}.hl-sym-dot{{display:inline-block;width:8px;height:8px;border-radius:50%;background:#38a169;vertical-align:middle}}.hl-hot{{margin:0 0 14px;padding:11px;border-radius:14px;background:#fff9ec;border:1px solid #f0dfad}}.hl-hot>b{{display:block;font-size:12px;color:#74591d;margin-bottom:8px}}.hl-chip.hl-pop{{background:#fff;border-color:#e7c769}}.hl-subgroup{{margin:15px 0}}.hl-subgroup h3{{font-size:14px;color:#47687c;margin:0 0 8px}}.hl-empty{{text-align:center;color:#667c8b}}@media(max-width:900px){{.hl-layout{{grid-template-columns:1fr}}.hl-sidebar{{display:none}}}}@media(max-width:520px){{.hl-chip{{font-size:12px;padding:7px 10px}}.hl-chip-symptom{{width:100%;min-width:0;padding:10px}}.hl-chip-main b{{font-size:13px}}.hl-chip-main small{{font-size:11px}}.hl-shell{{padding-inline:10px}}}}
+.hl-shell{{max-width:1120px;padding-top:24px;padding-bottom:60px}}.hl-head{{text-align:center;margin-bottom:14px}}.hl-head h1{{margin:8px 0 4px}}.hl-search{{max-width:680px;margin:18px auto 6px;display:flex;align-items:center;gap:9px;border:1px solid #cfe0ea;border-radius:15px;padding:4px 13px;background:#fff}}.hl-search input{{width:100%;border:0;outline:0;padding:11px 2px;font:inherit;background:transparent}}.hl-key{{display:flex;justify-content:center;gap:18px;font-size:12px;color:#566a7d;margin-top:10px}}.hl-layout{{display:grid;grid-template-columns:210px minmax(0,1fr);gap:14px;align-items:start}}.hl-sidebar{{position:sticky;top:86px;background:#fff;border:1px solid var(--v2-line,#dceafa);border-radius:18px;padding:14px;max-height:calc(100vh - 110px);overflow:auto}}.hl-sidebar b{{display:block;color:#174e73;margin-bottom:8px}}.hl-sidebar a{{display:flex;justify-content:space-between;gap:8px;padding:8px 6px;text-decoration:none;color:#496477;border-radius:9px;font-size:12px}}.hl-sidebar a:hover{{background:#f2f8fc}}.hl-content{{min-width:0}}.hl-section{{scroll-margin-top:90px;margin-bottom:13px}}.hl-section h2{{margin-top:0}}.hl-section h2 .ss-muted{{font-size:13px;font-weight:600}}.hl-chip-row{{display:flex;flex-wrap:wrap;gap:8px}}.hl-chip{{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;font-size:13px;font-weight:750;text-decoration:none;border:1px solid var(--border-card,#DCEBFA);transition:.16s}}.hl-chip-disease{{background:#f5f9ff;color:#123B70;border-color:#cfe0f1}}.hl-chip-symptom{{background:#F4FBF6;color:#1B6B3A;border-color:#D6EEDD;align-items:flex-start;width:calc(50% - 4px);min-width:260px;padding:11px 12px}}.hl-chip-main{{display:grid;gap:3px;min-width:0;text-align:start}}.hl-chip-main b{{font-size:13.5px;color:#185f35;line-height:1.45}}.hl-chip-main small{{font-size:11.5px;font-weight:500;color:#5e7467;line-height:1.6}}.hl-chip:hover{{transform:translateY(-1px);filter:brightness(.98)}}.hl-kind-icon{{display:inline-flex;align-items:center}}.hl-sym-dot{{display:inline-block;width:8px;height:8px;border-radius:50%;background:#38a169;vertical-align:middle}}.hl-hot{{margin:0 0 14px;padding:11px;border-radius:14px;background:#fff9ec;border:1px solid #f0dfad}}.hl-hot>b{{display:block;font-size:12px;color:#74591d;margin-bottom:8px}}.hl-chip.hl-pop{{background:#fff;border-color:#e7c769}}.hl-subgroup{{margin:15px 0}}.hl-subgroup h3{{font-size:14px;color:#47687c;margin:0 0 8px}}.hl-empty{{text-align:center;color:#667c8b}}@media(max-width:900px){{.hl-layout{{grid-template-columns:1fr}}.hl-sidebar{{display:none}}}}@media(max-width:520px){{.hl-chip{{font-size:12px;padding:7px 10px}}.hl-chip-symptom{{width:100%;min-width:0;padding:10px}}.hl-chip-main b{{font-size:13px}}.hl-chip-main small{{font-size:11px}}.hl-shell{{padding-inline:10px}}}}
 </style>
 <script>
 (function(){{
@@ -238,6 +238,50 @@ def index(lang: str) -> str:
 </script></main>'''
 
 
+SAUDI_CARE_SOURCE_SLUG = "saudi-moh-937"
+
+
+def _seo_title(kind: str, name: str, ar: bool) -> str:
+    """Search-result title: the condition name plus what the page answers, then the brand."""
+    if kind == "disease":
+        tail = "الأعراض والأسباب ومتى تراجع الطبيب" if ar else "symptoms, causes and when to see a doctor"
+    else:
+        tail = "الأسباب المحتملة ومتى تطلب الرعاية" if ar else "possible causes and when to seek care"
+    return f"{name}: {tail} | SymptoSense"
+
+
+def review_dates(kind: str, item: dict, sources) -> dict:
+    """{'reviewed': date of an independent clinical approval or None, 'modified': content date}.
+
+    ``last_updated`` is written when content is seeded/imported or saved; it is a
+    modification date. Only an approved, non-self review in the clinical review
+    queue may be presented as "last reviewed" (to users and in schema.org).
+    """
+    modified = str(item.get("last_updated") or item.get("updated_at")
+                   or next((x.get("last_verified") for x in (sources or []) if x.get("last_verified")), None) or "")[:10]
+    reviewed = None
+    if item.get("id") is not None:
+        import clinical_review
+        reviewed = clinical_review.last_independent_approval(kind, item.get("id"))
+    return {"reviewed": reviewed, "modified": modified or None}
+
+
+def _source_note(sources, ar: bool) -> str:
+    """Describe the linked sources accurately: the MOH 937 link is a local care-navigation
+    reference, not evidence for the medical description (see medical_knowledge V177 note)."""
+    sources = sources or []
+    has_local = any(s.get("slug") == SAUDI_CARE_SOURCE_SLUG for s in sources)
+    has_content = any(s.get("slug") != SAUDI_CARE_SOURCE_SLUG for s in sources)
+    if has_content and has_local:
+        text = ("المحتوى مبني على مصادر صحية موثقة، مع مرجع سعودي رسمي (937) للاستشارة ومسار الرعاية." if ar else
+                "Content is based on verified health sources, with an official Saudi reference (MOH 937) for consultation and care navigation.")
+    elif has_content:
+        text = "المحتوى مبني على مصادر صحية موثقة." if ar else "Content is based on verified health sources."
+    else:
+        return ""
+    return '<p class="hl-source-ok">✓ ' + html_lib.escape(text) + '</p>'
+
+
 def detail(kind: str, slug: str, lang: str):
     item = _entity_by_slug(kind, slug)
     if not item: return None
@@ -246,7 +290,7 @@ def detail(kind: str, slug: str, lang: str):
     if kind != "disease":
         import symptom_page_safety as _sps
         description = _sps.description(description, name, ar)
-    page_title = name; meta_desc = description[:155] if description else name
+    page_title = _seo_title(kind, name, ar); meta_desc = description[:155] if description else name
     def block(la,le,value):
         if not value: return ""
         text = value if isinstance(value,str) else " • ".join(str(v) for v in value)
@@ -283,14 +327,19 @@ def detail(kind: str, slug: str, lang: str):
     for src in sources:
         url=src.get("reference_url") or src.get("official_url") or "#"; title=src.get("reference_title_ar" if ar else "reference_title_en") or src.get("source_name") or src.get("organization")
         source_cards.append(f'<a class="hl-source" href="{esc(url)}" target="_blank" rel="noopener noreferrer"><b>{esc(__import__("source_names").display(src, ar))}</b><span>{esc(title)}</span></a>')
-    reviewed = item.get("last_updated") or item.get("updated_at") or next((x.get("last_verified") for x in sources if x.get("last_verified")), None) or "—"
-    source_note = '<p class="hl-source-ok">✓ '+esc("تتضمن الصفحة مصادر سعودية وعالمية داعمة للمحتوى." if ar else "At least one verified Saudi source and one independent global source are linked.")+'</p>'
-    body_parts.append(f'<section class="ss-card"><div class="hl-review"><h2>{esc("المصادر والمراجعة" if ar else "Sources & review")}</h2><span>{esc("آخر مراجعة: " if ar else "Last reviewed: ")}{esc(str(reviewed)[:10])}</span></div><div class="hl-sources">{"".join(source_cards)}</div>{source_note}</section>')
+    review = review_dates(kind, item, sources)
+    if review["reviewed"]:
+        date_label, date_value = ("آخر مراجعة: " if ar else "Last reviewed: "), review["reviewed"]
+    else:
+        date_label, date_value = ("آخر تحديث للمحتوى: " if ar else "Content last updated: "), (review["modified"] or "—")
+    source_note = _source_note(sources, ar)
+    # <bdi dir="ltr"> keeps ISO dates in order inside Arabic text (otherwise shown as 12-11-2026).
+    body_parts.append(f'<section class="ss-card"><div class="hl-review"><h2>{esc("المصادر والمراجعة" if ar else "Sources & review")}</h2><span>{esc(date_label)}<bdi dir="ltr">{esc(date_value)}</bdi></span></div><div class="hl-sources">{"".join(source_cards)}</div>{source_note}</section>')
     disclaimer=("هذه الصفحة توعوية عامة ولا تُغني عن استشارة طبية. إذا كانت أعراضك شديدة أو مقلقة، تواصل مع مختص صحي." if ar else "This page is general educational information, not a medical consultation. If symptoms are severe or worrying, contact a healthcare professional.")
     body_parts.append(f'<section class="ss-card" style="text-align:center"><a class="ss-btn ss-btn-primary" href="{prefix}/chat">{esc("افحص أعراضك الآن ←" if ar else "Check your symptoms now →")}</a><p class="ss-muted" style="font-size:12px;margin-top:10px">{esc(disclaimer)}</p></section>')
     body=f'''<main class="container" style="max-width:780px;padding-top:24px;padding-bottom:60px"><div class="ss-stack">{"".join(body_parts)}<p style="text-align:center"><a href="{prefix}/health-library">{esc("← رجوع للمكتبة" if ar else "← Back to the library")}</a></p></div><style>.hl-review{{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}}.hl-review h2{{margin:0}}.hl-review span{{font-size:12px;color:#6b7e8d}}.hl-sources{{display:grid;gap:8px;margin-top:12px}}.hl-source{{display:grid;gap:2px;text-decoration:none;border:1px solid #d9e8f1;border-radius:12px;padding:10px 12px;background:#f8fbfd;color:#36586d}}.hl-source b{{color:#176f9e}}.hl-source span{{font-size:12px}}.hl-source-gap{{margin-top:10px;padding:10px;border-radius:11px;background:#fff9ec;color:#755a18;font-size:12px;line-height:1.7}}.hl-source-ok{{margin-top:10px;padding:10px;border-radius:11px;background:#eef9f3;color:#246746;font-size:12px;line-height:1.7}}.hl-q{{line-height:1.9;padding-inline-start:22px}}.hl-tax small{{color:#6b7e8d}}</style></main>'''
     if kind=="disease":
-        body += __import__("seo_extras").condition_jsonld(item, name, meta_desc, f"{prefix}/health-library/disease/{slug}", ar, sources)
+        body += __import__("seo_extras").condition_jsonld(item, name, meta_desc, f"{prefix}/health-library/disease/{slug}", ar, sources, review)
     return page_title, meta_desc, body
 
 

@@ -675,6 +675,12 @@ def api_blood():
                 app.logger.debug("Blood medication-context lookup skipped", exc_info=True)
         trend = blood_test.compare_with_history(indicators, previous_tests, lang, current_report_meta=report_meta)
         health_context_links = lab_intake.build_health_context_links(indicators, latest_symptom_record, context_medications, lang)
+        # V290: "how can I improve this?" cards — pattern-aware, no doses, none for critical values (blood_advice.py)
+        try:
+            import blood_advice
+            blood_advice.attach(indicators, results, age=age, context=clinical_context, medications=context_medications, lang=lang)
+        except Exception:
+            app.logger.warning("Blood advice cards skipped", exc_info=True)
 
         chart_b64 = None
         try:

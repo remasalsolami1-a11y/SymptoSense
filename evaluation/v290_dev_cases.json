@@ -1,0 +1,505 @@
+{
+ "about": "V290 development cases. The fresh probe set (fresh_probe_sealed.json) was sealed first; its errors were grouped into error TYPES and, for each type, these new cases were written in different words, Arabic and English, together with mild look-alikes that must NOT be raised. V290 rules were built on these cases. Author-written, development set; starter labels, not clinician-verified.",
+ "version": 1,
+ "cases": [
+  {
+   "category": "choking",
+   "id": "VD01",
+   "label": "high",
+   "lang": "ar",
+   "text": "بنتي غصّت بقطعة لحم ووجهها احمر وما تقدر تتنفس"
+  },
+  {
+   "category": "choking",
+   "id": "VD02",
+   "label": "high",
+   "lang": "ar",
+   "text": "ابوي شرق بالأكل وما يقدر يتكلم ولا يكح"
+  },
+  {
+   "category": "choking",
+   "id": "VD03",
+   "label": "high",
+   "lang": "en",
+   "text": "He has a grape stuck in his throat and cannot breathe"
+  },
+  {
+   "category": "choking",
+   "id": "VD04",
+   "label": "high",
+   "lang": "en",
+   "text": "Choked on a sweet, making no sound and turning blue"
+  },
+  {
+   "category": "choking",
+   "id": "VD05",
+   "label": "low",
+   "lang": "ar",
+   "text": "شرقت بالموية شوي وكحيت وراحت"
+  },
+  {
+   "category": "choking",
+   "id": "VD06",
+   "label": "low",
+   "lang": "en",
+   "text": "I coughed after a crumb went down the wrong way, fine now"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD07",
+   "label": "high",
+   "lang": "ar",
+   "text": "ولدي بلع مغناطيس صغير من اللعبة"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD08",
+   "label": "high",
+   "lang": "ar",
+   "text": "طفلي شرب من علبة المبيض"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD09",
+   "label": "high",
+   "lang": "en",
+   "text": "My son swallowed two magnets from a toy"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD10",
+   "label": "high",
+   "lang": "en",
+   "text": "My daughter drank some drain cleaner"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD11",
+   "label": "high",
+   "lang": "en",
+   "text": "My child swallowed a coin battery from the remote"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD12",
+   "label": "low",
+   "lang": "ar",
+   "text": "بلعت علكة بالغلط"
+  },
+  {
+   "category": "ingestion",
+   "id": "VD13",
+   "label": "low",
+   "lang": "en",
+   "text": "I swallowed a cherry stone by mistake, feel fine"
+  },
+  {
+   "category": "overdose",
+   "id": "VD14",
+   "label": "high",
+   "lang": "ar",
+   "text": "أمي أخذت علبة بنادول كاملة"
+  },
+  {
+   "category": "overdose",
+   "id": "VD15",
+   "label": "high",
+   "lang": "ar",
+   "text": "شربت شريط حبوب كامل"
+  },
+  {
+   "category": "overdose",
+   "id": "VD16",
+   "label": "high",
+   "lang": "en",
+   "text": "She swallowed a handful of sleeping tablets"
+  },
+  {
+   "category": "overdose",
+   "id": "VD17",
+   "label": "high",
+   "lang": "en",
+   "text": "Took too many paracetamol tablets this morning"
+  },
+  {
+   "category": "overdose",
+   "id": "VD18",
+   "label": "low",
+   "lang": "ar",
+   "text": "عندي حبوب كثير في وجهي"
+  },
+  {
+   "category": "overdose",
+   "id": "VD19",
+   "label": "low",
+   "lang": "en",
+   "text": "I took two paracetamol tablets for a headache"
+  },
+  {
+   "category": "burn",
+   "id": "VD20",
+   "label": "high",
+   "lang": "ar",
+   "text": "انكب علي ماي حار وصدري كله فيه فقاعات"
+  },
+  {
+   "category": "burn",
+   "id": "VD21",
+   "label": "high",
+   "lang": "ar",
+   "text": "ولدي مسك سلك كهرباء وانحرقت يده"
+  },
+  {
+   "category": "burn",
+   "id": "VD22",
+   "label": "high",
+   "lang": "en",
+   "text": "Large burn on my leg from boiling water, bigger than my hand, with blisters"
+  },
+  {
+   "category": "burn",
+   "id": "VD23",
+   "label": "high",
+   "lang": "en",
+   "text": "Chemical burn on my face from oven cleaner"
+  },
+  {
+   "category": "burn",
+   "id": "VD24",
+   "label": "high",
+   "lang": "en",
+   "text": "Burn on my hand, skin looks white and leathery"
+  },
+  {
+   "category": "burn",
+   "id": "VD25",
+   "label": "low",
+   "lang": "ar",
+   "text": "حرق صغير في إصبعي من الفرن بدون فقاعات"
+  },
+  {
+   "category": "burn",
+   "id": "VD26",
+   "label": "low",
+   "lang": "en",
+   "text": "Small burn on my finger from the pan, red and sore"
+  },
+  {
+   "category": "fracture",
+   "id": "VD27",
+   "label": "high",
+   "lang": "ar",
+   "text": "ابني طاح من الدرج ويده معوجة بشكل غريب"
+  },
+  {
+   "category": "fracture",
+   "id": "VD28",
+   "label": "high",
+   "lang": "ar",
+   "text": "انكسرت رجله والعظم طالع من الجلد"
+  },
+  {
+   "category": "fracture",
+   "id": "VD29",
+   "label": "high",
+   "lang": "en",
+   "text": "After the fall her wrist is bent at an odd angle"
+  },
+  {
+   "category": "fracture",
+   "id": "VD30",
+   "label": "high",
+   "lang": "en",
+   "text": "My grandfather fell and cannot get up, his leg looks shorter and turned out"
+  },
+  {
+   "category": "fracture",
+   "id": "VD31",
+   "label": "low",
+   "lang": "ar",
+   "text": "التوت رجلي شوي وأقدر أمشي عليها"
+  },
+  {
+   "category": "fracture",
+   "id": "VD32",
+   "label": "low",
+   "lang": "en",
+   "text": "Twisted my ankle a little, can walk fine"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD33",
+   "label": "high",
+   "lang": "ar",
+   "text": "صدري كأن عليه حجر ثقيل وأعرق"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD34",
+   "label": "high",
+   "lang": "ar",
+   "text": "أحس شي يعصر صدري"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD35",
+   "label": "high",
+   "lang": "en",
+   "text": "Feels like a heavy weight crushing my chest"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD36",
+   "label": "high",
+   "lang": "en",
+   "text": "A tight band squeezing my chest and I feel sick"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD37",
+   "label": "low",
+   "lang": "ar",
+   "text": "وجع خفيف في صدري لما أضغط على العضلة بعد النادي"
+  },
+  {
+   "category": "chest_pressure",
+   "id": "VD38",
+   "label": "low",
+   "lang": "en",
+   "text": "Mild chest soreness when I press on the muscle after the gym"
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD39",
+   "label": "high",
+   "lang": "ar",
+   "text": "أمي فجأة تخربط بالكلام وما تقدر تمسك الملعقة"
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD40",
+   "label": "high",
+   "lang": "ar",
+   "text": "خالي فجأة صار كلامه غير مفهوم"
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD41",
+   "label": "high",
+   "lang": "en",
+   "text": "Grandma suddenly can't get her words out and drops things from her right hand"
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD42",
+   "label": "high",
+   "lang": "en",
+   "text": "His words suddenly came out jumbled"
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD43",
+   "label": "medium",
+   "lang": "en",
+   "text": "My hands are stiff in the morning for years, words fine",
+   "note": "Look-alike for sudden speech/grip loss: must not be an emergency. Symptoms lasting months or years get a routine doctor's review (V286 rule), so the label is medium, not low."
+  },
+  {
+   "category": "speech_grip",
+   "id": "VD44",
+   "label": "medium",
+   "lang": "ar",
+   "text": "يدي تتعب لما أكتب كثير من شهور",
+   "note": "Look-alike for sudden speech/grip loss: must not be an emergency. Symptoms lasting months or years get a routine doctor's review (V286 rule), so the label is medium, not low."
+  },
+  {
+   "category": "meningitis",
+   "id": "VD45",
+   "label": "high",
+   "lang": "ar",
+   "text": "حرارته 39.5 وما يقدر يحني راسه وعنده صداع قوي"
+  },
+  {
+   "category": "meningitis",
+   "id": "VD46",
+   "label": "high",
+   "lang": "en",
+   "text": "Temperature of 39 with a terrible headache and I can't bend my neck forward"
+  },
+  {
+   "category": "meningitis",
+   "id": "VD47",
+   "label": "high",
+   "lang": "en",
+   "text": "Fever, awful headache and neck too stiff to touch chin to chest"
+  },
+  {
+   "category": "meningitis",
+   "id": "VD48",
+   "label": "low",
+   "lang": "en",
+   "text": "Stiff neck from sleeping badly, no fever"
+  },
+  {
+   "category": "meningitis",
+   "id": "VD49",
+   "label": "low",
+   "lang": "ar",
+   "text": "رقبتي متشنجة من النومة الغلط وما عندي حرارة"
+  },
+  {
+   "category": "past_history",
+   "id": "VD50",
+   "label": "low",
+   "lang": "ar",
+   "text": "وانا صغيرة جاتني تشنجات، الحين بس عندي زكام"
+  },
+  {
+   "category": "past_history",
+   "id": "VD51",
+   "label": "low",
+   "lang": "ar",
+   "text": "قبل سنتين سويت عملية في القلب وكانت ناجحة، اليوم عندي كحة خفيفة"
+  },
+  {
+   "category": "past_history",
+   "id": "VD52",
+   "label": "low",
+   "lang": "en",
+   "text": "Years ago I had a stroke and recovered fully; today I have a sore throat"
+  },
+  {
+   "category": "past_history",
+   "id": "VD53",
+   "label": "low",
+   "lang": "en",
+   "text": "I fainted once as a teenager. Now I have a runny nose"
+  },
+  {
+   "category": "past_history",
+   "id": "VD54",
+   "label": "high",
+   "lang": "en",
+   "text": "I had a seizure as a child and today he had a seizure that lasted ten minutes"
+  },
+  {
+   "category": "past_history",
+   "id": "VD55",
+   "label": "high",
+   "lang": "ar",
+   "text": "كان عندي جلطة قبل سنة، والحين ألم شديد في صدري ينتشر لذراعي"
+  },
+  {
+   "category": "past_history",
+   "id": "VD56",
+   "label": "high",
+   "lang": "en",
+   "text": "History of heart disease and crushing chest pain right now"
+  },
+  {
+   "category": "abscess",
+   "id": "VD57",
+   "label": "medium",
+   "lang": "ar",
+   "text": "دمل في فخذي منتفخ وفيه قيح"
+  },
+  {
+   "category": "abscess",
+   "id": "VD58",
+   "label": "medium",
+   "lang": "en",
+   "text": "A painful lump on my back that is leaking pus"
+  },
+  {
+   "category": "abscess",
+   "id": "VD59",
+   "label": "low",
+   "lang": "en",
+   "text": "Small pimple on my chin"
+  },
+  {
+   "category": "dental",
+   "id": "VD60",
+   "label": "medium",
+   "lang": "ar",
+   "text": "ضرسي يعورني وفكي منتفخ من يومين"
+  },
+  {
+   "category": "dental",
+   "id": "VD61",
+   "label": "medium",
+   "lang": "en",
+   "text": "Toothache for three days and my gum is swollen"
+  },
+  {
+   "category": "dental",
+   "id": "VD62",
+   "label": "low",
+   "lang": "ar",
+   "text": "سني حساس للبارد شوي"
+  },
+  {
+   "category": "diarrhoea",
+   "id": "VD63",
+   "label": "medium",
+   "lang": "ar",
+   "text": "إسهال صار له أربع أيام وما وقف"
+  },
+  {
+   "category": "diarrhoea",
+   "id": "VD64",
+   "label": "medium",
+   "lang": "en",
+   "text": "Loose stools for four days now"
+  },
+  {
+   "category": "diarrhoea",
+   "id": "VD65",
+   "label": "low",
+   "lang": "en",
+   "text": "Diarrhoea once this morning after spicy food"
+  },
+  {
+   "category": "urinary",
+   "id": "VD66",
+   "label": "medium",
+   "lang": "en",
+   "text": "It stings when I urinate since this morning"
+  },
+  {
+   "category": "urinary",
+   "id": "VD67",
+   "label": "medium",
+   "lang": "ar",
+   "text": "حرقان مع التبول من أمس"
+  },
+  {
+   "category": "urinary",
+   "id": "VD68",
+   "label": "low",
+   "lang": "en",
+   "text": "I pee more often since I started drinking more water"
+  },
+  {
+   "category": "sprain",
+   "id": "VD69",
+   "label": "medium",
+   "lang": "en",
+   "text": "Knee hurts and I am limping since the fall three days ago"
+  },
+  {
+   "category": "sprain",
+   "id": "VD70",
+   "label": "medium",
+   "lang": "ar",
+   "text": "كاحلي متورم وأعرج من ثلاث أيام بعد ما التوى"
+  },
+  {
+   "category": "sprain",
+   "id": "VD71",
+   "label": "low",
+   "lang": "en",
+   "text": "Ankle a bit sore after a twist this morning, walking normally"
+  }
+ ]
+}

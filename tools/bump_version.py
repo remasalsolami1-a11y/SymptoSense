@@ -31,7 +31,7 @@ def main(new):
             text = text.replace(a, b)
         p.write_text(text, encoding="utf-8")
     # tests that pin the stylesheet URL version follow the bump (otherwise every bump breaks them by hand)
-    for tp in sorted(ROOT.glob("test_*.py")):
+    for tp in sorted((ROOT / "tests").glob("test_*.py")):
         t = tp.read_text(encoding="utf-8")
         t2 = t.replace("app-shell-v112.css?v=" + old_major, "app-shell-v112.css?v=" + major).replace("symptosense-app-shell-v112-v" + old_major, "symptosense-app-shell-v112-v" + major)
         if t2 != t:

@@ -1,0 +1,533 @@
+{
+ "about": "Fresh-wording probe set written for the V289 code review (2026-11-16), before any V290 change. It is an INSPECTED probe set, not a blind held-out set: its errors were seen when it was first run. V290 fixes were written against separate development cases per error type (evaluation/v290_dev_cases.json) and general vocabulary; this file is sealed (sha256 in HELDOUT_LOG.md) and its labels are never edited after the fact. Where a label is clinically debatable it is reported as a disagreement, not changed.",
+ "sealed_at": "2026-11-16",
+ "engine_at_seal": "deterministic-red-flag-v7-combos (V289, 9f8d960)",
+ "symptoms": [
+  {
+   "id": "FS01",
+   "expected": "high",
+   "lang": "ar",
+   "text": "زوجي يتكلم كلام مو مفهوم فجأة وما يقدر يمسك الكوب بيده"
+  },
+  {
+   "id": "FS02",
+   "expected": "high",
+   "lang": "ar",
+   "text": "أحس بضغط على صدري كأن أحد قاعد عليه وأنفاسي قصيرة"
+  },
+  {
+   "id": "FS03",
+   "expected": "high",
+   "lang": "ar",
+   "text": "بنتي بلعت بطارية صغيرة قبل ساعة"
+  },
+  {
+   "id": "FS04",
+   "expected": "high",
+   "lang": "ar",
+   "text": "شربت كلوركس بالغلط"
+  },
+  {
+   "id": "FS05",
+   "expected": "high",
+   "lang": "ar",
+   "text": "أخذت حبوب كثير عشان أنهي حياتي"
+  },
+  {
+   "id": "FS06",
+   "expected": "high",
+   "lang": "ar",
+   "text": "ولدي يكح وما يقدر يتنفس بعد ما بلع حبة فول"
+  },
+  {
+   "id": "FS07",
+   "expected": "high",
+   "lang": "ar",
+   "text": "حامل في الشهر الثامن ونزل علي دم كثير مع ألم"
+  },
+  {
+   "id": "FS08",
+   "expected": "high",
+   "lang": "ar",
+   "text": "صداع فظيع مع ترجيع ورقبتي ما أقدر أحركها وحرارتي 39"
+  },
+  {
+   "id": "FS09",
+   "expected": "high",
+   "lang": "ar",
+   "text": "جدتي طاحت وما تقدر تقوم ورجلها ملتوية لبرا"
+  },
+  {
+   "id": "FS10",
+   "expected": "high",
+   "lang": "ar",
+   "text": "احترقت يدي كلها بالزيت وطلعت فقاعات كبيرة"
+  },
+  {
+   "id": "FS11",
+   "expected": "high",
+   "lang": "en",
+   "text": "My dad's speech is suddenly garbled and he can't hold a cup"
+  },
+  {
+   "id": "FS12",
+   "expected": "high",
+   "lang": "en",
+   "text": "It feels like an elephant is sitting on my chest"
+  },
+  {
+   "id": "FS13",
+   "expected": "high",
+   "lang": "en",
+   "text": "My toddler swallowed a button battery"
+  },
+  {
+   "id": "FS14",
+   "expected": "high",
+   "lang": "en",
+   "text": "I took a whole bottle of pills"
+  },
+  {
+   "id": "FS15",
+   "expected": "high",
+   "lang": "en",
+   "text": "Pregnant 34 weeks, heavy bleeding and belly pain"
+  },
+  {
+   "id": "FS16",
+   "expected": "high",
+   "lang": "en",
+   "text": "Choking on food and can't cough or speak"
+  },
+  {
+   "id": "FS17",
+   "expected": "high",
+   "lang": "en",
+   "text": "Seizure lasting more than five minutes"
+  },
+  {
+   "id": "FS18",
+   "expected": "high",
+   "lang": "en",
+   "text": "Sudden severe tearing pain from chest to back"
+  },
+  {
+   "id": "FS19",
+   "expected": "medium",
+   "lang": "ar",
+   "text": "عندي ألم في الركبة من أسبوعين ويزيد مع المشي"
+  },
+  {
+   "id": "FS20",
+   "expected": "medium",
+   "lang": "ar",
+   "text": "طلعت لي حبة في الإبط حمرا وفيها صديد وتوجعني"
+  },
+  {
+   "id": "FS21",
+   "expected": "medium",
+   "lang": "ar",
+   "text": "أسناني توجعني من أربعة أيام وخدي منتفخ شوي"
+  },
+  {
+   "id": "FS22",
+   "expected": "medium",
+   "lang": "ar",
+   "text": "عندي إسهال من خمس أيام"
+  },
+  {
+   "id": "FS23",
+   "expected": "medium",
+   "lang": "en",
+   "text": "Earache with fever for two days"
+  },
+  {
+   "id": "FS24",
+   "expected": "medium",
+   "lang": "en",
+   "text": "Burning when I pee since yesterday"
+  },
+  {
+   "id": "FS25",
+   "expected": "medium",
+   "lang": "en",
+   "text": "Ankle swollen and painful after a twist, can walk but limping for three days"
+  },
+  {
+   "id": "FS26",
+   "expected": "low",
+   "lang": "ar",
+   "text": "ما عندي حرارة ولا ضيق تنفس، بس زكام خفيف"
+  },
+  {
+   "id": "FS27",
+   "expected": "low",
+   "lang": "ar",
+   "text": "صداع بسيط من قلة القهوة"
+  },
+  {
+   "id": "FS28",
+   "expected": "low",
+   "lang": "ar",
+   "text": "انجرحت جرح صغير في إصبعي ووقف الدم"
+  },
+  {
+   "id": "FS29",
+   "expected": "low",
+   "lang": "ar",
+   "text": "ما فيني شي بس أبي أعرف عن فيتامين د"
+  },
+  {
+   "id": "FS30",
+   "expected": "low",
+   "lang": "ar",
+   "text": "ألم عضلات بعد التمرين أمس"
+  },
+  {
+   "id": "FS31",
+   "expected": "low",
+   "lang": "en",
+   "text": "Not short of breath, no chest pain, just a stuffy nose"
+  },
+  {
+   "id": "FS32",
+   "expected": "low",
+   "lang": "en",
+   "text": "Mild heartburn after a big dinner"
+  },
+  {
+   "id": "FS33",
+   "expected": "low",
+   "lang": "en",
+   "text": "Small bruise on my arm, no pain"
+  },
+  {
+   "id": "FS34",
+   "expected": "low",
+   "lang": "en",
+   "text": "My chest pain from last year was checked and was fine, today I only have a cold"
+  },
+  {
+   "id": "FS35",
+   "expected": "low",
+   "lang": "en",
+   "text": "I had a seizure as a child, now I just have a headache from screens"
+  }
+ ],
+ "blood": [
+  {
+   "id": "FB01",
+   "text": "Hemoglobin 11,2 g/dL 12,0 - 15,5",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "hgb": {
+     "value": 11.2,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB02",
+   "text": "HGB 10.5 L g/dL (12.0-15.5)",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "hgb": {
+     "value": 10.5,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB03",
+   "text": "Hb: 13.1 g/dL [13.5 – 17.5]",
+   "gender": "m",
+   "age": 30,
+   "expected": {
+    "hgb": {
+     "value": 13.1,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB04",
+   "text": "WBC 5.6 x10^3/µL 4.0-11.0",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "wbc": {
+     "value": 5.6,
+     "status": "normal"
+    }
+   },
+   "expected_level": "normal"
+  },
+  {
+   "id": "FB05",
+   "text": "PLT 412 H x10^9/L 150-400",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "plt": {
+     "value": 412,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB06",
+   "text": "Creatinine 140 µmol/L 45-90",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "creatinine": {
+     "value": 140,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB07",
+   "text": "Creatinine 140 umol/L",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "creatinine": {
+     "value": 140,
+     "status": "unclassified"
+    }
+   },
+   "expected_level": "unclassified"
+  },
+  {
+   "id": "FB08",
+   "text": "Glucose (fasting) 6.4 mmol/L 3.9 - 5.5",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "glucose": {
+     "value": 6.4,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB09",
+   "text": "Vitamin B12 150 pg/mL 200-900",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "b12": {
+     "value": 150,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB10",
+   "text": "Ferritin 8 ng/mL 13-150",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "ferritin": {
+     "value": 8,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB11",
+   "text": "TSH 6.8 µIU/mL 0.27-4.2",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "tsh": {
+     "value": 6.8,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB12",
+   "text": "Total Cholesterol 245 mg/dL < 200",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "chol_total": {
+     "value": 245,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB13",
+   "text": "HDL 35 mg/dL > 40",
+   "gender": "m",
+   "age": 30,
+   "expected": {
+    "hdl": {
+     "value": 35,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB14",
+   "text": "Sodium 158 mmol/L 136-145",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "sodium": {
+     "value": 158,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB15",
+   "text": "Potassium 6.4 mEq/L 3.5-5.1",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "potassium": {
+     "value": 6.4,
+     "status": "high"
+    }
+   },
+   "expected_level": "urgent"
+  },
+  {
+   "id": "FB16",
+   "text": "Glucose 3.0 mmol/L 3.9-5.5",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "glucose": {
+     "value": 3.0,
+     "status": "low"
+    }
+   },
+   "expected_level": "urgent"
+  },
+  {
+   "id": "FB17",
+   "text": "الهيموجلوبين: ١١٫٢ (١٢-١٦) غم/دل",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "hgb": {
+     "value": 11.2,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB18",
+   "text": "فيتامين د ٢٥ هيدروكسي 18 نانوغرام/مل 30-100",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "vitd": {
+     "value": 18,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB19",
+   "text": "كريات الدم البيضاء 2.1 10^9/L 4-11",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "wbc": {
+     "value": 2.1,
+     "status": "low"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB20",
+   "text": "ALT 300 U/L 0-33\nAST 250 U/L 0-32",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "alt": {
+     "value": 300,
+     "status": "high"
+    },
+    "ast": {
+     "value": 250,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB21",
+   "text": "Hemoglobin 13.0 g/dL 12.0-15.5\nHemoglobin A1c 6.1 % 4.0-5.6",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "hgb": {
+     "value": 13.0,
+     "status": "normal"
+    },
+    "hba1c": {
+     "value": 6.1,
+     "status": "high"
+    }
+   },
+   "expected_level": "see_doctor"
+  },
+  {
+   "id": "FB22",
+   "text": "INR 4.8 0.8-1.2",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "inr": {
+     "value": 4.8,
+     "status": "high"
+    }
+   },
+   "expected_level": "urgent"
+  },
+  {
+   "id": "FB23",
+   "text": "Lactate 4.5 mmol/L 0.5-2.2",
+   "gender": "f",
+   "age": 30,
+   "expected": {
+    "lactate": {
+     "value": 4.5,
+     "status": "high"
+    }
+   },
+   "expected_level": "urgent"
+  }
+ ],
+ "baseline_v289": {
+  "symptoms_wrong": 16,
+  "symptoms_n": 35,
+  "blood_wrong": 4,
+  "blood_n": 23,
+  "note": "Blood baseline counts 4 real misses; the probe script originally used the key 'chol' for total cholesterol (a script typo, fixed here as 'chol_total' — the engine was right)."
+ }
+}

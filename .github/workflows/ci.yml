@@ -67,7 +67,7 @@ jobs:
           DB_PATH: ${{ runner.temp }}/e2e.db
         run: |
           python -m pytest -q -p no:cacheprovider -rs --junitxml="${{ runner.temp }}/browser.xml" \
-            test_interaction_bridge_data_actions.py test_e2e_emergency_stop_browser.py test_e2e_full_flow_browser.py test_family_ops_browser.py test_home_hero_mobile_browser.py
+            tests/test_interaction_bridge_data_actions.py tests/test_e2e_emergency_stop_browser.py tests/test_e2e_full_flow_browser.py tests/test_family_ops_browser.py tests/test_home_hero_mobile_browser.py
       - name: Browser tests must run, not skip (counts of passed / failed / skipped)
         if: always()
         run: python tools/ci_check_skips.py "${{ runner.temp }}/browser.xml" --budget 0 --min-tests 21 --critical 'test_*.py'
@@ -126,7 +126,7 @@ jobs:
           WEB_SECRET: ci-secret-that-is-longer-than-thirty-two-characters
           SESSION_COOKIE_SECURE: "0"
           SYMPTOSENSE_DISABLE_BACKUP_SCHEDULER: "1"
-        run: python -m pytest -q -p no:cacheprovider -rs --junitxml="${{ runner.temp }}/pg.xml" test_postgres_family_delete.py test_dose_race.py test_postgres_backup.py
+        run: python -m pytest -q -p no:cacheprovider -rs --junitxml="${{ runner.temp }}/pg.xml" tests/test_postgres_family_delete.py tests/test_dose_race.py tests/test_postgres_backup.py
       - name: PostgreSQL tests must run, not skip (counts of passed / failed / skipped)
         if: always()
         run: python tools/ci_check_skips.py "${{ runner.temp }}/pg.xml" --budget 0 --min-tests 25 --critical 'test_*.py'

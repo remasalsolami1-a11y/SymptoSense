@@ -1,0 +1,43 @@
+{
+ "meta": {
+  "generated_at": "2026-11-16T21:33:43+00:00",
+  "sealed_sha256_ok": true,
+  "status": "inspected probe set (errors seen once at V289); not a blind held-out estimate"
+ },
+ "baseline_v289": {
+  "symptoms_wrong": 16,
+  "symptoms_n": 35,
+  "blood_wrong": 4,
+  "blood_n": 23,
+  "note": "Blood baseline counts 4 real misses; the probe script originally used the key 'chol' for total cholesterol (a script typo, fixed here as 'chol_total' — the engine was right)."
+ },
+ "symptoms": {
+  "correct": 35,
+  "n": 35,
+  "wrong": []
+ },
+ "blood": {
+  "correct": 22,
+  "n": 23,
+  "wrong": [
+   {
+    "id": "FB16",
+    "text": "Glucose 3.0 mmol/L 3.9-5.5",
+    "expected": {
+     "glucose": {
+      "value": 3.0,
+      "status": "low"
+     }
+    },
+    "expected_level": "urgent",
+    "got": {
+     "glucose": [
+      3.0,
+      "low"
+     ]
+    },
+    "got_level": "see_doctor"
+   }
+  ]
+ }
+}

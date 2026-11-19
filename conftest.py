@@ -9,8 +9,19 @@
 * Tests that pin the markup of UI that was replaced in V245-V247 (the old SVG
   body map and old landing/typography details) are skipped until rewritten.
 """
-import pytest
-from flask.testing import FlaskClient
+import os
+import tempfile
+
+# V289 — test isolation: with pytest-xdist every worker used to share ./symptosense.db, so one
+# worker could reseed the knowledge base while another counted its rows (rare, scheduling-
+# dependent failures). Each xdist worker now gets its own SQLite file. This runs before any
+# test module imports db; a DB_PATH set by the caller is respected; sequential runs unchanged.
+_xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
+if _xdist_worker and not os.environ.get("DB_PATH"):
+    os.environ["DB_PATH"] = os.path.join(tempfile.mkdtemp(prefix=f"ss_test_{_xdist_worker}_"), "symptosense.db")
+
+import pytest  # noqa: E402
+from flask.testing import FlaskClient  # noqa: E402
 
 _orig_open = FlaskClient.open
 
@@ -37,12 +48,12 @@ def _open(self, *args, **kwargs):
 FlaskClient.open = _open
 
 _OBSOLETE_IDS = {
-    "test_stabilization.py::StabilizationTest::test_medications_has_iphone_home_screen_install_guidance",
+    "tests/test_stabilization.py::StabilizationTest::test_medications_has_iphone_home_screen_install_guidance",
 }
 
 # Every skipped test carries its own reason (why it is skipped and what replaces it).
 SKIP_REASONS = {
-    "test_stabilization.py::StabilizationTest::test_medications_has_iphone_home_screen_install_guidance":
+    "tests/test_stabilization.py::StabilizationTest::test_medications_has_iphone_home_screen_install_guidance":
         "feature removed: the iPhone 'add to home screen' card (#iosInstallCard) no longer exists on /meds; only the SafeID page keeps an install button",
 }
 OBSOLETE_UI_TESTS = {i: SKIP_REASONS.get(i, "obsolete: UI markup replaced in V245-V247; rewrite against current UI") for i in _OBSOLETE_IDS}

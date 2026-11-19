@@ -32,7 +32,6 @@ tools/
 release_check.py
 
 # Runtime view builders are intentionally flattened into root modules in V95.
-views/
 
 # Flat release QA/source artifacts (kept in the ZIP, excluded from production image)
 test_*.py
