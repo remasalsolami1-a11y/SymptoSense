@@ -1,7 +1,0 @@
-{
-  "except_exception_max": 466,
-  "innerhtml_python_max": 240,
-  "innerhtml_static_js_max": 0,
-  "note": "Ratchet: these ceilings may only go DOWN. Lower them when you remove occurrences.",
-  "duplicate_defs_allowed": []
-}
