@@ -1,0 +1,188 @@
+"""V292.1: honest wording for question reasons and graph links, full sign-off states, one doctor-summary system."""
+import json
+from datetime import date, timedelta
+from pathlib import Path
+
+import pytest
+
+import clinical_signoff as cs
+import doctor_summary
+import health_file
+import knowledge_graph as kg
+import medical_knowledge as mk
+import signoff_cli
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+# 1 ------------------------------------------------------------- why we ask
+def _d(name, weight):
+    return {"name_ar": name, "name_en": name, "symptoms": ({"x": weight} if weight is not None else {})}
+
+
+def test_link_bands_follow_the_knowledge_base_weights():
+    assert mk.symptom_link_band(0.9)[0] == "very_common"
+    assert mk.symptom_link_band(0.6)[0] == "common"
+    assert mk.symptom_link_band(0.4)[0] == "sometimes"
+    assert mk.symptom_link_band(0.1)[0] == "weak"
+    assert mk.symptom_link_band(0)[0] == mk.symptom_link_band(None)[0] == "absent"
+
+
+def test_weak_link_is_not_called_common():
+    r = mk._question_reason("س", "x", [_d("أ", 0.15), _d("ب", 0.8)], "ar")
+    assert "ضعيف الارتباط بـ«أ»" in r and "شائع في «ب»" in r
+    assert "شائع في «أ»" not in r
+
+
+def test_missing_link_is_not_called_uncommon():
+    r = mk._question_reason("س", "x", [_d("أ", 0.7), _d("ج", None)], "ar")
+    assert "غير مدرج ضمن الروابط الحالية في قاعدة المعرفة لـ«ج»" in r
+    assert "غير شائع" not in r
+    en = mk._question_reason("S", "x", [_d("A", 0.7), _d("C", None)], "en")
+    assert "not among the current links in the knowledge base for C" in en and "not in" not in en.replace("not among", "")
+
+
+def test_no_links_at_all_falls_back_to_the_neutral_sentence():
+    assert mk._question_reason("س", "x", [_d("أ", None)], "ar").startswith("يساعد هذا السؤال")
+
+
+def test_live_question_reason_never_uses_the_old_wording():
+    for syms in (["صداع", "غثيان"], ["حمى", "سعال"], ["دوخة"]):
+        r = mk.differential_question(syms, lang="ar")
+        if not r.get("done"):
+            assert "غير شائع" not in r["question_reason"] and "دون تشخيص" in r["question_reason"]
+
+
+# 2 ------------------------------------------------------------- knowledge graph
+def test_graph_has_no_duplicate_links_and_every_link_has_a_kind():
+    g = kg.graph()
+    keys = [(e["a"], e["b"], e["kind"]) for e in g["edges"]]
+    assert len(keys) == len(set(keys))
+    assert all(e["kind"] in kg.KINDS for e in g["edges"])
+
+
+def test_condition_source_is_labelled_as_the_condition_source_not_link_evidence():
+    d = kg.neighborhood("symptom:dizziness", "ar")
+    cond = [l for l in d["links"] if l["kind"] == "typical_symptom"]
+    assert cond and all(l.get("strength") for l in cond)
+    with_src = [l for l in cond if l["evidence_url"]]
+    assert with_src and all(l["evidence_label"] == "مصدر الحالة" for l in with_src)
+    assert all("وليس هذا الرابط وحده" in l["limit"] for l in cond)
+
+
+def test_medicine_group_links_say_group_level_and_not_causation():
+    d = kg.neighborhood("medicine:gi", "en")
+    assert d["links"]
+    for l in d["links"]:
+        assert l["kind"] == "medicine_group" and l["evidence_url"] is None
+        assert "not to every medicine" in l["limit"] and "caused" in l["limit"]
+        assert "leaflet" not in l["relation"]
+
+
+def test_lab_links_merge_low_and_high_and_say_they_are_not_proof():
+    d = kg.neighborhood("lab:hgb", "ar")
+    labs = [l for l in d["links"] if l["kind"] == "lab_symptom"]
+    assert labs and all(l["weight"] is None and "strength" not in l for l in labs)
+    assert all("ليس دليلًا على السبب" in l["limit"] and l["evidence_label"] == "مرجع المؤشر" for l in labs)
+
+
+def test_explorer_shows_source_scope_and_limits_without_innerhtml():
+    js = (ROOT / "static" / "js" / "knowledge-graph.js").read_text(encoding="utf-8")
+    assert "l.evidence_label" in js and "kg-limit" in js and "innerHTML" not in js
+
+
+# 3 ------------------------------------------------------------- clinical sign-off states
+def _area(**kw):
+    a = {"title_ar": "a", "title_en": "a", "status": "pending", "reviewer": None, "credentials": None, "date": None,
+         "review_every_days": 365, "history": []}
+    a.update(kw)
+    return a
+
+
+def test_all_five_states():
+    today = date.today()
+    assert cs.state(_area()) == "pending"
+    assert cs.state(_area(status="in_review", reviewer="R")) == "in_review"
+    assert cs.state(_area(status="rejected", reviewer="R", credentials="MD", date=today.isoformat())) == "rejected"
+    assert cs.state(_area(status="approved", reviewer="R", credentials="MD", date=today.isoformat())) == "approved"
+    old = (today - timedelta(days=400)).isoformat()
+    assert cs.state(_area(status="approved", reviewer="R", credentials="MD", date=old)) == "expired"
+    assert set(cs.STATE_LABELS) == {"pending", "in_review", "approved", "rejected", "expired"}
+
+
+def test_future_dates_are_rejected_and_never_count_as_approved():
+    future = (date.today() + timedelta(days=5)).isoformat()
+    a = _area(status="approved", reviewer="R", credentials="MD", date=future)
+    assert not cs.is_reviewed(a) and cs.state(a) == "pending"
+    assert any("in the future" in p for p in cs.validate({"areas": {"x": a}}))
+    h = _area(history=[{"action": "approve", "date": future}])
+    assert any("history[0]" in p for p in cs.validate({"areas": {"x": h}}))
+
+
+def test_status_labels_for_in_review_and_rejected_do_not_claim_review(monkeypatch):
+    for st in ({"status": "in_review", "reviewer": "R"}, {"status": "rejected", "reviewer": "R", "credentials": "MD", "date": date.today().isoformat()}):
+        monkeypatch.setattr(cs, "load", lambda path=None, st=st: {"areas": {"search_base": _area(**st)}})
+        s = cs.status_for("search", "headache", "ar")
+        assert s["reviewed"] is False and s["state"] == st["status"] and "راجعه" not in s["label"]
+
+
+def test_cli_records_organization_scope_and_refuses_future_dates(tmp_path, monkeypatch):
+    data = json.loads(cs.PATH.read_text(encoding="utf-8"))
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(cs, "PATH", p)
+    future = (date.today() + timedelta(days=1)).isoformat()
+    assert signoff_cli.main(["approve", "lab_cards", "--reviewer", "R", "--credentials", "MD", "--date", future]) == 2
+    assert signoff_cli.main(["start-review", "lab_cards", "--reviewer", "R", "--organization", "Clinic", "--scope", "CBC cards"]) == 0
+    assert cs.state(json.loads(p.read_text(encoding="utf-8"))["areas"]["lab_cards"]) == "in_review"
+    today = date.today().isoformat()
+    assert signoff_cli.main(["reject", "lab_cards", "--reviewer", "R", "--credentials", "MD", "--date", today, "--organization", "Clinic"]) == 0
+    a = json.loads(p.read_text(encoding="utf-8"))["areas"]["lab_cards"]
+    assert cs.state(a) == "rejected" and a["organization"] == "Clinic"
+    assert [h["action"] for h in a["history"]] == ["start-review", "reject"] and a["history"][0]["scope"] == "CBC cards"
+
+
+def test_registry_ships_without_any_sign_off_and_states_the_licence_limit():
+    data = cs.load(cs.PATH)
+    assert cs.validate(data) == []
+    assert all(cs.state(a) == "pending" for a in data["areas"].values())  # no invented reviewers or dates
+    assert "does not verify licences" in data["policy"]
+    s = cs.summary()
+    assert s["by_state"]["pending"] == s["total"] and "لا يتحقق" in s["credentials_note_ar"]
+
+
+# 4 ------------------------------------------------------------- one doctor summary
+def test_doctor_summary_module_delegates_to_health_file():
+    assert doctor_summary.build is health_file.visit_summary
+    src = (ROOT / "doctor_summary.py").read_text(encoding="utf-8")
+    assert "_DURATIONS" not in src and "_URGENCY" not in src and "def _symptom_names" not in src
+
+
+def test_health_file_uses_the_shared_bilingual_labels():
+    d = {"days": 365, "member_id": 0, "counts": {"analyses": 1, "lab_reports": 0, "medicines": 0, "high_urgency": 0},
+         "last_detail": {"date": "2026-11-01", "symptoms": ["صداع", "شي غريب"], "duration": "1-3 أيام", "severity": "2", "urgency": "medium"},
+         "recurring": [], "symptoms": [{"symptom": "صداع", "count": 1, "recurring": False}], "high_urgency_dates": [],
+         "attention_labs": [], "labs": [], "medicines": [], "vitals": [], "vitals_rows": [], "followup_outcomes": []}
+    en = health_file.summary_text(d, "en")
+    assert "Headache" in en and "شي غريب (patient's words)" in en and "1-3 days" in en and "Needs an appointment soon" in en
+    page_en = health_file.render_doctor(d, "en")
+    assert 'dir="ltr"' in page_en and "Headache" in page_en and "doc_lang=ar" in page_en
+    page_ar = health_file.render_doctor(d, "ar")
+    assert "صداع" in page_ar and "doc_lang=en" in page_ar
+
+
+def test_health_file_page_offers_the_doctor_page_in_english(monkeypatch):
+    import webapp
+    c = webapp.app.test_client()
+    with c.session_transaction() as s:
+        s["ss_user_id"] = 987654
+    r = c.get("/health-file?view=doctor&doc_lang=en")
+    assert r.status_code in (200, 302)
+    if r.status_code == 200:
+        html = r.get_data(as_text=True)
+        assert "One-page summary for your clinician" in html and "doc_lang=ar" in html
+
+
+def test_chat_card_links_to_the_full_page_only_for_the_health_file_url():
+    js = (ROOT / "static" / "js" / "chat" / "doctor-summary.js").read_text(encoding="utf-8")
+    assert "j.full_page" in js and "health-file\\?view=doctor" in js

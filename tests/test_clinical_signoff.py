@@ -61,7 +61,7 @@ def test_search_results_carry_a_review_status_and_endpoint_lists_areas():
     lab = c.get("/api/search", query_string={"q": "AST", "lang": "en"}).get_json()["result"]
     assert lab["review"]["area"] == "lab_cards"
     s = c.get("/api/clinical-signoff").get_json()
-    assert s["ok"] and s["total"] == 9 and s["reviewed"] == 0
+    assert s["ok"] and s["total"] == 10 and s["reviewed"] == 0
 
 
 def test_badge_can_be_hidden_by_operator(monkeypatch):

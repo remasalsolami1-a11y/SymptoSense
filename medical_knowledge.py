@@ -1710,7 +1710,7 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
             sources=_source_rows_for_disease(c,did)
             if not sources:
                 continue
-            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":sorted(negative_slugs),"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
+            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":sorted(negative_slugs),"negative_evidence_names":[_symptom_display_name(x,lang) for x in sorted(negative_slugs)],"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
         out.sort(key=lambda x:(x["_score"],len(x["matched_symptoms"])),reverse=True)
         for item in out:
             item.pop("_score",None)
@@ -1916,12 +1916,64 @@ def differential_question(raw_symptoms, asked=None, negatives=None, gender="", l
         "candidates": public_candidates,
         "question_number": min(len(asked) + 1, max_questions),
         "max_questions": max_questions,
-        "question_reason": (
-            "يساعد هذا السؤال على التفريق بين الاحتمالات الأقرب بناءً على إجاباتك، دون تشخيص."
-            if lang == "ar" else
-            "This question helps distinguish the closest possibilities from your answers without making a diagnosis."
-        ),
+        "question_reason": _question_reason(name, slug, candidate_defs[:3], lang),
     }
+
+
+# V292.1: one wording for how typical a symptom is in a condition, shared by the follow-up
+# question reason and the knowledge graph. The weight is the knowledge base's curated estimate,
+# not a measured percentage; a missing link means "not listed yet", never "rare" or "absent".
+SYMPTOM_LINK_BANDS = (
+    (0.85, "very_common", "شائع جدًا", "very common"),
+    (0.6, "common", "شائع", "common"),
+    (0.35, "sometimes", "يظهر أحيانًا", "sometimes seen"),
+    (0.0, "weak", "ضعيف الارتباط", "weakly linked"),
+)
+SYMPTOM_LINK_ABSENT = ("absent", "غير مدرج ضمن الروابط الحالية في قاعدة المعرفة", "not among the current links in the knowledge base")
+
+
+def symptom_link_band(weight):
+    """(key, ar, en) for a knowledge-base symptom weight; weight <= 0 or missing -> SYMPTOM_LINK_ABSENT."""
+    try:
+        w = float(weight or 0.0)
+    except (TypeError, ValueError):
+        w = 0.0
+    if w <= 0:
+        return SYMPTOM_LINK_ABSENT
+    for floor, key, ar, en in SYMPTOM_LINK_BANDS:
+        if w >= floor:
+            return key, ar, en
+    return SYMPTOM_LINK_BANDS[-1][1:]
+
+
+def _question_reason(name, slug, candidate_defs, lang="ar"):
+    """V292.1: say which possibilities this question separates, with the knowledge base's own strength wording."""
+    ar = lang != "en"
+    order = [b[1] for b in SYMPTOM_LINK_BANDS] + [SYMPTOM_LINK_ABSENT[0]]
+    groups, labels = {}, {}
+    for d in candidate_defs:
+        key, b_ar, b_en = symptom_link_band((d.get("symptoms") or {}).get(slug))
+        groups.setdefault(key, []).append("«%s»" % d["name_ar"] if ar else d["name_en"])
+        labels[key] = b_ar if ar else b_en
+    if not groups or set(groups) == {"absent"}:
+        return ("يساعد هذا السؤال على التفريق بين الاحتمالات الأقرب بناءً على إجاباتك، دون تشخيص."
+                if ar else "This question helps distinguish the closest possibilities from your answers without making a diagnosis.")
+    join = (lambda xs: " و".join(xs)) if ar else (lambda xs: " and ".join(xs))
+    parts = []
+    for key in order:
+        if key not in groups:
+            continue
+        if ar:
+            prep = "لـ" if key == "absent" else ("بـ" if key == "weak" else "في ")
+            parts.append(f"{labels[key]} {prep}{join(groups[key])}")
+        else:
+            prep = "for" if key == "absent" else ("with" if key == "weak" else "in")
+            parts.append(f"{labels[key]} {prep} {join(groups[key])}")
+    tail_ar = "إجابتك تساعد على التفريق بينها" if len(groups) > 1 else "إجابتك تساعد على ترتيب الأقرب منها"
+    tail_en = "your answer helps tell them apart" if len(groups) > 1 else "your answer helps re-order them"
+    if ar:
+        return f"نسأل عن «{name}» لأنه {'، و'.join(parts)} — {tail_ar}، دون تشخيص."
+    return f"We ask about “{name}” because it is {'; '.join(parts)} — {tail_en}, without a diagnosis."
 
 
 # Only these knowledge-base rules are ambulance/emergency bypasses by themselves.
@@ -2652,10 +2704,18 @@ def periodic_review_status(max_age_days: int = 365, red_flag_max_age_days: int =
     """Return a review queue for medical content without changing any records.
 
     Active diseases/symptoms should have at least one active verified source.
-    Sources and clinical content are flagged when their recorded review date is
-    missing or older than the configured age. Red-flag rules use a shorter
-    default review interval because they drive urgent triage.
+    V292: clinical content (conditions, symptoms, red flags) is "reviewed" only by a
+    named clinician's sign-off in clinical_signoff.json (areas knowledge_base and
+    redflag_screens). Editing a record changes ``last_edited`` but never counts as a
+    clinical review. Sources keep their own link-verification date. Red-flag rules use
+    a shorter default interval because they drive urgent triage.
     """
+    import clinical_signoff
+    signoff = {aid: clinical_signoff.area(aid) for aid in ("knowledge_base", "redflag_screens")}
+
+    def clinical_date(area_id):
+        a = signoff.get(area_id) or {}
+        return a.get("date") if clinical_signoff.is_reviewed(a) else None
     init_schema()
     from datetime import datetime, timezone
     today = datetime.now(timezone.utc).date()
@@ -2689,34 +2749,37 @@ def periodic_review_status(max_age_days: int = 365, red_flag_max_age_days: int =
         conn.close()
 
     items=[]
-    def add(kind,entity_id,name_ar,name_en,status,last_date,source_count=None,max_days=max_age_days,source_missing=False,reason=None):
+    def add(kind,entity_id,name_ar,name_en,status,last_date,source_count=None,max_days=max_age_days,source_missing=False,reason=None,last_edited=None,clinical=False):
         age=age_days(last_date)
         if status not in {'active','verified'}:
             review='needs_review'; why=reason or 'inactive_or_draft'
         elif source_missing:
             review='source_missing'; why='no_active_verified_source'
         elif age is None:
-            review='needs_review'; why='missing_review_date'
+            review='needs_review'; why='no_clinical_review' if clinical else 'missing_review_date'
         elif age>max_days:
             review='outdated'; why='review_date_expired'
         else:
             review='verified'; why='current'
-        items.append({'entity_type':kind,'entity_id':entity_id,'name_ar':name_ar or '', 'name_en':name_en or '', 'review_status':review,'reason':why,'last_reviewed':last_date,'age_days':age,'source_count':source_count})
+        items.append({'entity_type':kind,'entity_id':entity_id,'name_ar':name_ar or '', 'name_en':name_en or '', 'review_status':review,'reason':why,'last_reviewed':last_date,'age_days':age,'source_count':source_count,
+                      'last_edited':last_edited,'review_basis':'clinician_signoff' if clinical else 'source_verification'})
 
+    kb_date=clinical_date("knowledge_base"); rf_date=clinical_date("redflag_screens")
     for r in diseases:
-        did=int(r[0]); add('disease',did,r[1],r[2],r[4],r[3],disease_sources.get(did,0),source_missing=(r[4]=='active' and disease_sources.get(did,0)==0))
+        did=int(r[0]); add('disease',did,r[1],r[2],r[4],kb_date,disease_sources.get(did,0),source_missing=(r[4]=='active' and disease_sources.get(did,0)==0),last_edited=r[3],clinical=True)
     for r in symptoms:
-        sid=int(r[0]); add('symptom',sid,r[1],r[2],r[4],r[3],symptom_sources.get(sid,0),source_missing=(r[4]=='active' and symptom_sources.get(sid,0)==0))
+        sid=int(r[0]); add('symptom',sid,r[1],r[2],r[4],kb_date,symptom_sources.get(sid,0),source_missing=(r[4]=='active' and symptom_sources.get(sid,0)==0),last_edited=r[3],clinical=True)
     for r in sources:
         sid=int(r[0]); status='verified' if r[4]=='verified' and r[5]=='active' else 'needs_review'; add('source',sid,r[1],r[2],status,r[3],None,reason='source_verification_needed' if status!='verified' else None)
     for r in red_flags:
-        rid=int(r[0]); source_ok=bool(r[5] or str(r[6] or '').strip()); add('red_flag',rid,r[1],r[2],r[4],r[3],1 if source_ok else 0,max_days=red_flag_max_age_days,source_missing=(r[4]=='active' and not source_ok))
+        rid=int(r[0]); source_ok=bool(r[5] or str(r[6] or '').strip()); add('red_flag',rid,r[1],r[2],r[4],rf_date,1 if source_ok else 0,max_days=red_flag_max_age_days,source_missing=(r[4]=='active' and not source_ok),last_edited=r[3],clinical=True)
 
     counts={k:0 for k in ('verified','needs_review','source_missing','outdated')}
     for x in items: counts[x['review_status']]=counts.get(x['review_status'],0)+1
     queue=[x for x in items if x['review_status']!='verified']
     queue.sort(key=lambda x: ({'source_missing':0,'outdated':1,'needs_review':2}.get(x['review_status'],3), -(x['age_days'] or 0), x['entity_type'], x['entity_id']))
-    return {'counts':counts,'total':len(items),'queue':queue,'all':items,'max_age_days':int(max_age_days),'red_flag_max_age_days':int(red_flag_max_age_days),'generated_at':_now()}
+    return {'counts':counts,'total':len(items),'queue':queue,'all':items,'max_age_days':int(max_age_days),'red_flag_max_age_days':int(red_flag_max_age_days),'generated_at':_now(),
+            'clinical_signoff':{aid:{'reviewed':clinical_signoff.is_reviewed(a),'date':a.get('date'),'reviewer':a.get('reviewer') if clinical_signoff.is_reviewed(a) else None} for aid,a in signoff.items()}}
 
 
 def statistics():
@@ -2934,3 +2997,17 @@ def versioning_summary() -> dict:
         c.execute("SELECT COUNT(*) FROM mk_audit_log"); total_audits=int(c.fetchone()[0] or 0)
         return {"entities":out,"version_snapshots":total_versions,"audit_events":total_audits,"review":periodic_review_status()}
     finally: conn.close()
+
+
+_SYMPTOM_NAMES = None
+
+
+def _symptom_display_name(slug, lang="ar"):
+    """The name a visitor reads for a symptom slug (``stiff-neck`` -> «تيبس شديد في الرقبة»)."""
+    global _SYMPTOM_NAMES
+    if _SYMPTOM_NAMES is None:
+        _SYMPTOM_NAMES = {row[0]: (row[1], row[2]) for row in SYMPTOMS}
+    pair = _SYMPTOM_NAMES.get(str(slug))
+    if pair:
+        return pair[1 if lang == "en" else 0]
+    return str(slug).replace("-", " ").replace("_", " ")

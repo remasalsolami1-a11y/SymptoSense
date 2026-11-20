@@ -15,7 +15,7 @@ def _footer():
 
 def test_single_footer_component_with_required_order():
     f = _footer()
-    order = ['class="f-inner"', 'class="f-brand"', 'class="f-tag"', 'class="f-grid"', 'class="f-links"', 'class="f-sep"', 'class="f-love"', 'class="f-copy"']
+    order = ['class="f-inner"', 'class="f-brand"', 'class="f-tag"', 'class="f-grid"', 'class="f-links"', 'class="f-sep"', 'class="f-copy"']
     pos = [f.index(t) for t in order]
     assert pos == sorted(pos), pos
     assert f.count('class="f-sec"') == 3
@@ -38,5 +38,7 @@ def test_layout_css_three_columns_central_container_and_stacked_mobile():
     assert 'display:none' not in mobile.split('\n')[0]
 
 
-def test_credit_text_is_unchanged():
-    assert 'footer_love' in _footer() and 'footer_copy_full' in _footer()
+def test_credit_is_stated_once():
+    # V291.1: the owner's name appears once (the "designed and built by" column), not again in a credit line
+    f = _footer()
+    assert 'footer_owner_name' in f and 'footer_copy_full' in f and 'footer_love' not in f and 'class="f-love"' not in f

@@ -91,9 +91,8 @@
         differentialAsked.push(d.symptom_slug);
         const qNo = Number(d.question_number || differentialCount);
         const qMax = Number(d.max_questions || SMART_FOLLOWUP_MAX);
-        addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'ساعدنا نفهم أكثر · سؤال ':'Help us understand better · Question ')+qNo+(LANG==='ar'?' من ':' of ')+qMax)+'</div>','bot');
-        if (d.question_reason) addHtml('<div class="muted" style="font-size:11.5px;line-height:1.65;margin-top:-4px">'+esc(d.question_reason)+'</div>','bot');
         focusStepQuestion('🩺 ' + d.question);
+        stepNote((LANG==='ar'?'ساعدنا نفهم أكثر · سؤال ':'Help us understand better · Question ')+qNo+(LANG==='ar'?' من ':' of ')+qMax, d.question_reason || '');
         const answerOpts=[
           {label:TT('clar_yes'), fn:function(){
             add(TT('clar_yes'),'user');

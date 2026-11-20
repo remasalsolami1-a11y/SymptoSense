@@ -6,6 +6,7 @@ outside the laboratory's own range); nothing here diagnoses or ranks conditions.
 """
 from __future__ import annotations
 
+import functools
 import html as _html
 from collections import Counter, OrderedDict
 from datetime import datetime, timedelta, timezone
@@ -106,6 +107,142 @@ def symptom_patterns(records):
     return rows
 
 
+# ----------------------------------------------------------------------------- doctor summary
+# V292.1: the one place that turns assessment data into doctor-facing text, in Arabic or English.
+# Used by the saved health file (summary_text / render_doctor) and by the chat's doctor card
+# (visit_summary, served through doctor_summary.py). Symptom and condition names come from the
+# knowledge base in both languages; the patient's own free text is kept as written and marked.
+_URGENCY = {
+    "high": ("عاجل — يحتاج تقييمًا طبيًا فوريًا", "Urgent — needs immediate medical assessment"),
+    "emergency": ("طوارئ", "Emergency"),
+    "today": ("يحتاج تقييمًا طبيًا اليوم", "Needs medical assessment today"),
+    "medium": ("يحتاج موعدًا قريبًا", "Needs an appointment soon"),
+    "soon": ("يحتاج موعدًا قريبًا", "Needs an appointment soon"),
+    "low": ("يمكن المتابعة والمراقبة", "Can be monitored at home"),
+    "urgent": ("عاجل — يحتاج تقييمًا طبيًا فوريًا", "Urgent — needs immediate medical assessment"),
+    "monitor": ("يمكن المتابعة والمراقبة", "Can be monitored at home"),
+}
+_GENDER = {"m": ("ذكر", "Male"), "male": ("ذكر", "Male"), "ذكر": ("ذكر", "Male"),
+           "f": ("أنثى", "Female"), "female": ("أنثى", "Female"), "أنثى": ("أنثى", "Female")}
+
+
+_DURATIONS = (  # the chat's fixed duration buttons and the common ways people write it
+    ("أقل من 24 ساعة", "Less than 24 hours"), ("1-3 أيام", "1-3 days"), ("4-7 أيام", "4-7 days"),
+    ("1-2 أسبوع", "1-2 weeks"), ("أكثر من أسبوعين", "More than two weeks"), ("أكثر من شهر", "More than a month"),
+    ("أكثر من أسبوع", "More than a week"), ("يومين", "Two days"), ("أسبوعين", "Two weeks"), ("شهرين", "Two months"),
+    ("ساعات", "Hours"), ("اليوم", "Today"), ("أمس", "Since yesterday"), ("يوم", "One day"), ("أسبوع", "One week"), ("شهر", "One month"),
+)
+
+
+def _duration_en(text):
+    t = text.strip(" 📅⏰🗓️📆")
+    t = (t[3:] if t.startswith("من ") else t).strip()
+    for ar, en in _DURATIONS:
+        if t == ar:
+            return en
+    return "%s (patient's words)" % text if text else ""
+
+
+def _clean(value, limit=200):
+    return " ".join(str(value or "").split())[:limit]
+
+
+def _symptom_names(raw):
+    import medical_knowledge
+    info = medical_knowledge.normalize_symptoms([_clean(x, 80) for x in (raw or []) if _clean(x)][:20], "ar")
+    ar, en = [], []
+    for c in info.get("canonical") or []:
+        if c.get("name_ar") not in ar:
+            ar.append(c.get("name_ar")); en.append(c.get("name_en"))
+    for u in info.get("unmatched") or []:
+        text = _clean(u.get("original") if isinstance(u, dict) else u, 80)
+        if text:
+            ar.append(text); en.append("%s (patient's words)" % text)
+    return ar, en
+
+
+def _slug_names(slugs):
+    import medical_knowledge
+    meta = {row[0]: (row[1], row[2]) for row in medical_knowledge.SYMPTOMS}
+    out = [meta[s] for s in (str(x) for x in (slugs or [])[:10]) if s in meta]
+    return [a for a, _ in out], [e for _, e in out]
+
+
+def _condition_names(slugs):
+    import medical_knowledge
+    by = {d["slug"]: (d["name_ar"], d["name_en"]) for d in medical_knowledge.DISEASES}
+    out = [by[s] for s in (str(x) for x in (slugs or [])[:3]) if s in by]
+    return [a for a, _ in out], [e for _, e in out]
+
+
+def visit_summary(data: dict) -> dict:
+    """{"ar": text, "en": text} for one assessment that may not be saved yet (the chat's doctor card)."""
+    d = data if isinstance(data, dict) else {}
+    sym_ar, sym_en = _symptom_names(d.get("symptoms"))
+    yes_ar, yes_en = _slug_names(d.get("yes"))
+    no_ar, no_en = _slug_names(d.get("no"))
+    cond_ar, cond_en = _condition_names(d.get("matches"))
+    urg = _URGENCY.get(_clean(d.get("urgency"), 20).lower())
+    gender = _GENDER.get(_clean(d.get("gender"), 10).lower())
+    ar, en = ["ملخص SymptoSense لزيارة الطبيب", ""], ["SymptoSense doctor-visit summary", ""]
+
+    def line(label_ar, label_en, value_ar, value_en):
+        if value_ar:
+            ar.append(f"{label_ar}: {value_ar}")
+            en.append(f"{label_en}: {value_en}")
+
+    try:
+        age = int(d.get("age"))
+        line("العمر", "Age", f"{age} سنة", f"{age} years") if 0 < age < 125 else None
+    except (TypeError, ValueError):
+        pass
+    if gender:
+        line("الجنس", "Sex", gender[0], gender[1])
+    line("الأعراض", "Symptoms", "، ".join(sym_ar), ", ".join(sym_en))
+    dur = _clean(d.get("duration"), 60)
+    line("المدة", "Duration", dur, _duration_en(dur))
+    try:
+        sev = int(d.get("severity"))
+        line("الشدة", "Severity", f"{sev}/5", f"{sev}/5") if 1 <= sev <= 5 else None
+    except (TypeError, ValueError):
+        pass
+    line("أعراض أكّدها في أسئلة المتابعة", "Confirmed on follow-up", "، ".join(yes_ar), ", ".join(yes_en))
+    line("أعراض نفاها في أسئلة المتابعة", "Denied on follow-up", "، ".join(no_ar), ", ".join(no_en))
+    if urg:
+        line("مستوى الاستعجال في التقييم", "Assessment urgency", urg[0], urg[1])
+    line("احتمالات غير تشخيصية ظهرت", "Non-diagnostic possibilities shown", "، ".join(cond_ar), ", ".join(cond_en))
+    meds = _clean(d.get("medications"), 160)
+    line("أدوية ذكرها", "Medicines mentioned", meds, f"{meds} (patient's words)")
+    ar += ["", "ملخص توعوي من SymptoSense وليس تشخيصًا طبيًا. ما كتبه المريض بنفسه منقول كما هو."]
+    en += ["", "Educational SymptoSense summary, not a medical diagnosis. Free text written by the patient is kept as written, not translated."]
+    return {"ar": "\n".join(ar), "en": "\n".join(en)}
+
+
+def symptom_label(text, lang="ar"):
+    """One saved symptom string in the page language: knowledge-base name, else the patient's words (marked in English)."""
+    return _symptom_label(_clean(text, 80), "en" if lang == "en" else "ar")
+
+
+@functools.lru_cache(maxsize=1024)
+def _symptom_label(text, lang):
+    if not text:
+        return ""
+    ar_names, en_names = _symptom_names([text])
+    if not ar_names:
+        return _clean(text, 80)
+    return "، ".join(ar_names) if lang != "en" else ", ".join(en_names)
+
+
+def duration_label(text, lang="ar"):
+    t = _clean(text, 60)
+    return t if lang != "en" else _duration_en(t)
+
+
+def urgency_label(level, lang="ar"):
+    u = _URGENCY.get(_clean(level, 20).lower())
+    return (u[1] if lang == "en" else u[0]) if u else (_clean(level, 20) or "-")
+
+
 _FU_WORDS = {"ar": {"better": "تحسنت", "same": "نفس الحال", "worse": "ساءت"}, "en": {"better": "better", "same": "same", "worse": "worse"}}
 
 
@@ -177,13 +314,13 @@ def summary_text(d, lang="ar"):
     if ld and ld["symptoms"]:
         L.append(("آخر تحليل (%s): %s — المدة: %s، الشدة: %s، مستوى الاستعجال: %s" if ar else
                   "Latest analysis (%s): %s — duration: %s, severity: %s, urgency: %s")
-                 % (_ltr(ld["date"], ar), ("، " if ar else ", ").join(ld["symptoms"]), ld["duration"] or "-", ld["severity"] or "-", _URG["ar" if ar else "en"].get(str(ld["urgency"]).lower(), ld["urgency"] or "-")))
+                 % (_ltr(ld["date"], ar), ("، " if ar else ", ").join(symptom_label(x, lang) for x in ld["symptoms"]), duration_label(ld["duration"], lang) or "-", ld["severity"] or "-", urgency_label(ld["urgency"], lang)))
     if d["recurring"]:
         L.append("أعراض متكررة:" if ar else "Recurring symptoms:")
-        L += ["- %s (%d %s)" % (s["symptom"], s["count"], "مرات" if ar else "times") for s in d["recurring"][:6]]
+        L += ["- %s (%d %s)" % (symptom_label(s["symptom"], lang), s["count"], "مرات" if ar else "times") for s in d["recurring"][:6]]
     elif d["symptoms"]:
-        L.append("الأعراض المسجلة: " + "، ".join(s["symptom"] for s in d["symptoms"][:6]) if ar else
-                 "Recorded symptoms: " + ", ".join(s["symptom"] for s in d["symptoms"][:6]))
+        L.append("الأعراض المسجلة: " + "، ".join(symptom_label(s["symptom"], lang) for s in d["symptoms"][:6]) if ar else
+                 "Recorded symptoms: " + ", ".join(symptom_label(s["symptom"], lang) for s in d["symptoms"][:6]))
     if d["high_urgency_dates"]:
         L.append(("تنبيهات عالية الأولوية بتاريخ: " if ar else "High-priority alerts on: ") + ", ".join(_ltr(x, ar) for x in d["high_urgency_dates"]))
     if d["attention_labs"]:
@@ -205,9 +342,6 @@ def summary_text(d, lang="ar"):
     return "\n".join(L)
 
 
-_URG = {"ar": {"high": "مرتفع", "medium": "متوسط", "low": "منخفض"}, "en": {"high": "high", "medium": "medium", "low": "low"}}
-
-
 def render_doctor(d, lang="ar"):
     """One printable page for the clinician: symptoms, duration, medicines, labs, red flags, current decision."""
     ar = lang != "en"
@@ -218,13 +352,13 @@ def render_doctor(d, lang="ar"):
     sep = "، " if ar else ", "
     rows = []
     rows.append(row("الأعراض والمدة والشدة" if ar else "Symptoms, duration, severity",
-                    e(sep.join(ld.get("symptoms") or []) or "-") + "<br>" + e("المدة: " if ar else "Duration: ") + iso(ld.get("duration") or "-") + e(" · الشدة: " if ar else " · Severity: ") + iso("%s/5" % (ld.get("severity") or "-"))))
-    urg = _URG["ar" if ar else "en"].get(str(ld.get("urgency") or "").lower(), "-")
+                    e(sep.join(symptom_label(x, lang) for x in (ld.get("symptoms") or [])) or "-") + "<br>" + e("المدة: " if ar else "Duration: ") + iso(duration_label(ld.get("duration"), lang) or "-") + e(" · الشدة: " if ar else " · Severity: ") + iso("%s/5" % (ld.get("severity") or "-"))))
+    urg = urgency_label(ld.get("urgency"), lang) if ld.get("urgency") else "-"
     flags = ", ".join(d.get("high_urgency_dates") or []) or ("لا يوجد" if ar else "none recorded")
     rows.append(row("القرار/الاستعجال المسجّل" if ar else "Recorded urgency / decision", e(urg) + " — " + e("تنبيهات عالية بتاريخ: " if ar else "High alerts on: ") + iso(flags)))
     rec = [s for s in d.get("recurring") or []]
     if rec:
-        rows.append(row("أعراض متكررة" if ar else "Recurring symptoms", e(sep.join("%s ×%d" % (s["symptom"], s["count"]) for s in rec[:5]))))
+        rows.append(row("أعراض متكررة" if ar else "Recurring symptoms", e(sep.join("%s ×%d" % (symptom_label(s["symptom"], lang), s["count"]) for s in rec[:5]))))
     meds = d.get("medicines") or []
     rows.append(row("الأدوية الحالية" if ar else "Current medicines", e(sep.join(("%s %s" % (m["name"], m["dose"] or "")).strip() for m in meds) or "-")))
     names = _DIR_VERDICT["ar" if ar else "en"]
@@ -240,8 +374,15 @@ def render_doctor(d, lang="ar"):
     fu = d.get("followup_outcomes") or []
     if fu:
         rows.append(row("متابعة الأعراض" if ar else "Symptom follow-up", e(sep.join(fu[:3]))))
-    note = ("مبني على ما سجّله المستخدم في التطبيق وليس تشخيصًا." if ar else "Based on what the user recorded in the app; not a diagnosis.")
-    return ('<main class="container" style="max-width:760px;padding:16px 16px 40px"><section class="ss-card">'
+    note = ("مبني على ما سجّله المستخدم في التطبيق وليس تشخيصًا. ما كتبه بنفسه منقول كما هو." if ar else
+            "Based on what the user recorded in the app; not a diagnosis. Free text written by the patient is kept as written, not translated.")
+    # V292.1: the same page in Arabic or English for the clinician, whatever the site language.
+    member = int(d.get("member_id") or 0)
+    tab = lambda code, label: ('<a href="?view=doctor&amp;doc_lang=%s%s" lang="%s" aria-current="%s" style="padding:6px 12px;border-radius:999px;border:1px solid #1565c0;text-decoration:none;font-weight:700;%s">%s</a>'
+                               % (code, ("&amp;member=%d" % member) if member else "", code, "true" if (code == "en") != ar else "false",
+                                  "background:#1565c0;color:#fff" if (code == "en") != ar else "background:#fff;color:#1565c0", label))
+    tabs = '<p class="no-print" style="display:flex;gap:8px;margin:0 0 10px">%s%s</p>' % (tab("ar", "العربية"), tab("en", "English"))
+    return ('<main class="container" style="max-width:760px;padding:16px 16px 40px"><section class="ss-card"%s>' % ('' if ar else ' dir="ltr" lang="en"') + tabs +
             '<h1 style="margin:0 0 8px;font-size:22px">%s</h1><table style="width:100%%;border-collapse:collapse">%s</table>'
             '<p class="ss-muted" style="font-size:12px">%s</p>'
             '<p class="no-print"><a class="btn" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;margin:4px 0;border-radius:12px;border:1px solid #1565c0;background:#fff;color:#1565c0;font-weight:700;text-decoration:none;cursor:pointer" href="%s">%s</a> <button class="btn" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;margin:4px 0;border-radius:12px;border:1px solid #1565c0;background:#fff;color:#1565c0;font-weight:700;text-decoration:none;cursor:pointer" type="button" data-ss-click="ssPrint">%s</button></p>'
@@ -295,7 +436,7 @@ def render(d, lang="ar"):
                 "ظهرت علامة جديدة مقلقة" if ar else "A new worrying sign appeared",
                 "تحسنت" if ar else "Better", "نفس الحال" if ar else "The same", "ساءت" if ar else "Worse"))
     if d["recurring"] or d["symptoms"]:
-        rows = "".join('<li>%s <span class="ss-muted">× %d</span>%s</li>' % (e(s["symptom"]), s["count"], (" 🔁" if s["recurring"] else "")) for s in d["symptoms"])
+        rows = "".join('<li>%s <span class="ss-muted">× %d</span>%s</li>' % (e(symptom_label(s["symptom"], lang)), s["count"], (" 🔁" if s["recurring"] else "")) for s in d["symptoms"])
         parts.append('<section class="ss-card"><h2 style="margin-top:0">%s</h2><ul>%s</ul><p class="ss-muted" style="font-size:12px">%s</p></section>' % (
             "الأعراض المسجلة" if ar else "Recorded symptoms", rows,
             "🔁 = تكرر %d مرات أو أكثر" % RECURRING_MIN if ar else "🔁 = recorded %d or more times" % RECURRING_MIN))
@@ -351,7 +492,9 @@ def register(app, login_required, api_login_required, data_user_id, page, lang_f
         db.init_db()
         member, days = _args()
         lang = lang_fn()
-        data = build(data_user_id(), member or 0, days or 365, lang)
         if request.args.get("view") == "doctor":
-            return page("ملخص للطبيب" if lang != "en" else "Clinician summary", render_doctor(data, lang))
+            doc_lang = request.args.get("doc_lang") if request.args.get("doc_lang") in ("ar", "en") else lang
+            data = build(data_user_id(), member or 0, days or 365, doc_lang)
+            return page("ملخص للطبيب" if lang != "en" else "Clinician summary", render_doctor(data, doc_lang))
+        data = build(data_user_id(), member or 0, days or 365, lang)
         return page("ملفك الصحي" if lang != "en" else "Your health file", render(data, lang))

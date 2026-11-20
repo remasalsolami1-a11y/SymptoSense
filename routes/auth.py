@@ -15,6 +15,7 @@ import admin_2fa
 import admin_security
 import best_effort
 import db
+import privacy_features
 import input_utils
 import logging
 import platform_v2
@@ -101,7 +102,7 @@ def login():
                 _admin_auth_debug("login_password_success_2fa_pending",login_user,granted=False,redirect_target=redirect_target)
                 return redirect(redirect_target)
             elif user_id:
-                session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
+                guest_consent=session.get("_guest_consent_state"); session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True; best_effort.call(privacy_features.adopt_guest_consent, int(user_id), guest_consent)
                 session["login_toast"]="admin" if is_admin else "user"
                 if is_admin:
                     session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())
@@ -504,7 +505,7 @@ def api_login():
                 redirect_target=url_for("admin_2fa_verify") if st.get("enabled") else url_for("admin_2fa_setup")
                 best_effort.call(platform_v2.audit, int(user_id), 'login_password_verified', 'admin_session', 'self', None, {'status': '2fa_pending', 'setup_required': not bool(st.get('enabled'))})
                 return jsonify({"ok":True,"redirect_url":redirect_target,"role":"admin","is_admin":True,"two_factor_required":True,"two_factor_setup_required":not bool(st.get("enabled"))})
-            session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True
+            guest_consent=session.get("_guest_consent_state"); session.clear(); session["ss_user_id"]=int(user_id); session.permanent=True; best_effort.call(privacy_features.adopt_guest_consent, int(user_id), guest_consent)
             session["login_toast"]="admin" if is_admin else "user"
             if is_admin:
                 session["admin_last_seen"]=int(datetime.now(timezone.utc).timestamp())

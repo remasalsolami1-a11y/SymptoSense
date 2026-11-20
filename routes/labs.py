@@ -123,12 +123,9 @@ def api_blood():
             session.get("blood_collection_consent_v1")
             and (session.get("blood_collection_consent_version") in {None, BLOOD_COLLECTION_CONSENT_VERSION})
         )
-    if not collection_consent_ok:
-        return jsonify({
-            "ok": False,
-            "error": "blood_collection_consent_required",
-            "message": ("يلزم الموافقة على استخدام بيانات تحليل الدم بصورة مجهولة قبل المتابعة." if lang == "ar" else "Consent to anonymized use of blood-test analysis data is required before continuing."),
-        }), 403
+    if str(request.form.get("blood_collection_consent") or "").strip() == "0":  # V291.1: research use is optional; unticked = analysed, kept out of research, box no longer pre-ticked
+        collection_consent_ok = False; session.pop("blood_collection_consent_v1", None); session.pop("blood_collection_consent_version", None)
+        if _ss_user_id(): best_effort.call(db.withdraw_blood_collection_consent, _data_user_id())
     mode = str(request.form.get("mode") or "full").strip().lower()
     app.logger.info("BLOOD_API request mode=%s user_signed_in=%s", mode, bool(_ss_user_id()))
     if mode not in {"full", "extract", "analyze_confirmed"}:
@@ -722,9 +719,9 @@ def api_blood():
             "child_note": child_note_text,
             "chart": chart_b64,
             "member_name": member.get("name") if member else None,
-            "blood_collection_consent": True,
-            "blood_collection_consent_version": BLOOD_COLLECTION_CONSENT_VERSION,
-            "blood_collection_consent_at": datetime.now(timezone.utc).isoformat(),
+            "blood_collection_consent": bool(collection_consent_ok),
+            "blood_collection_consent_version": BLOOD_COLLECTION_CONSENT_VERSION if collection_consent_ok else None,
+            "blood_collection_consent_at": datetime.now(timezone.utc).isoformat() if collection_consent_ok else None,
             "source_file_stored": False,
             "source_file_sha256": source_file_hash or None,
             "extraction_meta": dict(extraction_meta, extracted_count=len(entries)),

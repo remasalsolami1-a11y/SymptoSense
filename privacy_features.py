@@ -1282,3 +1282,23 @@ def anonymous_health_analytics() -> dict:
         "consent_metrics":metrics,
         "consent_subjects":total_consents,
     }
+
+
+def adopt_guest_consent(user_id, guest_mirror) -> bool:
+    """V291.1: a visitor who agreed on the consent page and then signs in in the same browser
+    should not be asked again. Copy that same choice to the account, but only when it is for
+    the current consent and privacy-policy versions, includes the required service consent,
+    and the account has no current choice of its own (an account's own choice always wins)."""
+    if not user_id or not isinstance(guest_mirror, dict) or not guest_mirror.get("service_usage"):
+        return False
+    if (guest_mirror.get("consent_version") != CONSENT_VERSION
+            or guest_mirror.get("privacy_policy_version") != PRIVACY_POLICY_VERSION):
+        return False
+    key = "account-%s" % int(user_id)
+    current = get_consent(key, int(user_id))
+    if current.get("service_usage") and not current.get("needs_review"):
+        return False
+    save_consent(key, int(user_id), True, bool(guest_mirror.get("analytics_research")),
+                 bool(guest_mirror.get("research_participation")))
+    return True
+

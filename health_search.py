@@ -1338,6 +1338,40 @@ def explain_term(term, lang="ar"):
     return None
 
 
+def explain_from_card(term, card, lang="ar"):
+    """V291.2: three reading levels built from the library card the visitor is already reading,
+    for topics the short glossary does not cover (dizziness, fever, diabetes...). Uses only the
+    card's own reviewed text, so nothing new is claimed. Returns None when the card has no text."""
+    if not isinstance(card, dict):
+        return None
+    # Only a real library topic, never the neutral shell built for a free-text question.
+    if not card.get("key") or card.get("key") == "free_health_query" or card.get("category") == "question":
+        return None
+    ar = lang != "en"
+    what = str(card.get("direct_answer") or card.get("what") or "").strip()
+    if not what:
+        return None
+    first = re.split(r"(?<=[.!؟?])\s+", what, maxsplit=1)[0].strip() or what
+    causes = [str(c).strip() for c in (card.get("causes") or []) if str(c).strip()]
+    sep = "، " if ar else ", "
+    basic = what
+    if causes:
+        basic += ("\n\nمن الأسباب الشائعة: " if ar else "\n\nCommon causes: ") + sep.join(causes[:4]) + "."
+    advanced = basic
+    doctor = str(card.get("doctor") or "").strip()
+    worry = str(card.get("worry") or "").strip()
+    if doctor:
+        advanced += ("\n\nمتى تراجع الطبيب؟ " if ar else "\n\nWhen to see a doctor: ") + doctor
+    if worry:
+        advanced += ("\n\nمتى تستدعي الانتباه؟ " if ar else "\n\nWhen it is urgent: ") + worry
+    return {
+        "term": term,
+        "title": str(card.get("title") or term),
+        "levels": {"very_simple": first, "basic": basic, "advanced": advanced},
+        "source": "library_card",
+    }
+
+
 def suggestion_terms(lang="ar"):
     """Popular search suggestions shown when focusing the search box."""
     if lang == "ar":

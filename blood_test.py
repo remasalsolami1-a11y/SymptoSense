@@ -1976,6 +1976,10 @@ def _v143_native_rows(raw_text):
 _PLAIN_ROW_RE = re.compile(
     r"^\s*(?P<name>[A-Za-z\u0600-\u06ff][A-Za-z\u0600-\u06ff0-9 ()\[\]/.,'+\-]{1,60}?)\s*[:=]?\s*"
     r"(?P<value>[-+]?\d+(?:[.,]\d+)?)\s*(?P<flag>\b[HLhl]\b)?\s*(?P<rest>.*)$")
+_HEADER_WORDS = re.compile(
+    r"\b(?:date|laborator(?:y|ies)|hospital|clinic|patient|sample|specimen|report|collected|received|printed|"
+    r"physician|doctor|referr\w*|mrn|account)\b|تاريخ|مختبر|المختبر|مستشفى|المستشفى|المريض|العينه|التقرير|الطبيب", re.I)
+_DATE_TAIL = re.compile(r"^\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,4}\b")
 _NOT_A_TEST = re.compile(
     r"^(?:age|date|dob|page|id|mrn|file|patient|name|phone|tel|mobile|version|printed|collected|received|reported|report|sample|"
     r"specimen|order|request|visit|room|bed|ref|lab|doctor|dr|time|year|years|month|weight|height|bmi|pulse|bp|fasting|fast|"
@@ -1995,6 +1999,8 @@ def _v290_plain_rows(raw_text, known_lines):
         if len(re.sub(r"[^A-Za-z\u0600-\u06ff]", "", name)) < 2 or _NOT_A_TEST.match(_norm(name)):
             continue
         rest = m.group("rest")
+        if _HEADER_WORDS.search(name) or _DATE_TAIL.match(rest):
+            continue  # V291.1: report header ("Lab ... Sample date: 2026-11-18"), not a test row
         rng = re.search(r"([-+]?\d+(?:[.,]\d+)?)\s*(?:-|–|—|to)\s*([-+]?\d+(?:[.,]\d+)?)", rest)
         lo = hi = None
         if rng:

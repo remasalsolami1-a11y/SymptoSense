@@ -63,7 +63,7 @@ __HREFLANG__
 <meta name="twitter:description" content="__DESC__">
 <meta name="twitter:image" content="__OG_IMAGE__">
 <meta name="theme-color" content="#1565c0">
-<link rel="stylesheet" href="/assets/app-shell-v112.css?v=291">
+<link rel="stylesheet" href="/assets/app-shell-v112.css?v=292">
 <style>__EXTRA_CSS__</style>
 <style>
 .asst-fab { position: fixed; bottom: 22px; left: 22px; z-index: 999; display: flex; align-items: center; gap: 9px; background: linear-gradient(135deg, #1565c0, var(--primary-dark)); color: #FFF; font-family: inherit; font-size: 16.5px; font-weight: 800; padding: 15px 26px; border-radius: 999px; cursor: pointer; border: 2px solid rgba(255,255,255,.35); box-shadow: 0 12px 30px rgba(25,118,210,.35); }
@@ -249,17 +249,18 @@ document.addEventListener('keydown', function(ev) {
   document.querySelectorAll('.dd-menu.open').forEach(function(menu) { menu.classList.remove('open'); });
   document.querySelectorAll('button[aria-haspopup="menu"]').forEach(function(button) { button.setAttribute('aria-expanded', 'false'); });
 });
-(function(){
-  var p = location.pathname;
-  var bnav = document.getElementById('ssBnav');
-  if (!bnav) return;
-  var links = bnav.querySelectorAll('a');
-  links.forEach(function(a){
-    var h = a.getAttribute('href');
-    if (h && p.indexOf(h) === 0 && h !== '#') a.classList.add('on');
-    else if (h === '/home' && p === '/') a.classList.add('on');
+function ssMarkBnav(){ // V291.2: highlight the tab for the current page (/ar|/en prefix ignored)
+  var bnav = document.getElementById('ssBnav'); if (!bnav) return;
+  var p = location.pathname.replace(/^\/(ar|en)(?=\/|$)/, '') || '/';
+  var key = /[?&]assistant=mh\b/.test(location.search) ? 'bn-psych' : (p === '/' || p === '/home') ? 'bn-home' : /^\/chat\b/.test(p) ? 'bn-chat'
+    : /^\/(profile|account|settings|health-file|my-results|family|login|register)\b/.test(p) ? 'bn-profile' : '';
+  bnav.querySelectorAll('a').forEach(function(a){
+    var on = key && a.classList.contains(key);
+    a.classList.toggle('on', !!on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
-});
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ssMarkBnav); else ssMarkBnav();
 </script>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
@@ -283,7 +284,7 @@ __FOOTER__
   <a href="/home?assistant=mh" class="bn-psych" data-assistant-mode="mh" aria-label="__BNAV_PSYCH__"><span class="bn-icon" aria-hidden="true"><svg class="ss-ic" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M15.8 9.2a2.5 2.5 0 0 0-3.5 0l-.3.4-.35-.3a2.42 2.42 0 1 0-3.2 3.6l3.6 3.5 3.6-3.5c1.2-1.2 1.1-2.7.2-3.7"/></svg></span><span>__BNAV_PSYCH__</span></a>
   <a href="/profile" class="bn-profile" aria-label="__BNAV_PROFILE__"><span class="bn-icon" aria-hidden="true"><svg class="ss-ic" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>__BNAV_PROFILE__</span></a>
 </nav>
-<script>/* V291: no floating assistant button where it covered key content */(function(){if(/(^|\/)(emergency|live-demo|login|register|consent|chat)(\/|$)/.test(location.pathname))document.documentElement.classList.add('ss-no-fab');})();</script>
+<script>/* V291: no floating assistant button where it covered key content */(function(){if(/(^|\/)(emergency|live-demo|login|register|consent|chat|knowledge-graph)(\/|$)/.test(location.pathname))document.documentElement.classList.add('ss-no-fab');})();</script>
 <button type="button" class="asst-fab" id="asstFab" title="__AST_TITLE__" aria-label="__AST_TITLE__" aria-expanded="false" aria-controls="asstPanel"><span class="asst-fab-ic" aria-hidden="true"><svg class="ss-ic ic-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><svg class="ss-ic ic-close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span><span class="asst-fab-lb">__AST_TITLE__</span></button>
 <div class="asst-panel" id="asstPanel" role="dialog" aria-modal="true" aria-labelledby="asstHeadT">
   <div class="asst-head">

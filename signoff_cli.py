@@ -18,21 +18,26 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
     st = sub.add_parser("check"); st.add_argument("--strict", action="store_true", help="fail while any area is still pending")
-    for name in ("approve", "revoke"):
+    # V292.1: start-review -> in_review, approve -> approved, reject -> rejected, revoke -> pending.
+    for name in ("start-review", "approve", "reject", "revoke"):
         p = sub.add_parser(name); p.add_argument("area")
-        if name == "approve":
-            p.add_argument("--reviewer", required=True); p.add_argument("--credentials", required=True)
-            p.add_argument("--date", required=True); p.add_argument("--notes", default="")
+        if name != "revoke":
+            p.add_argument("--reviewer", required=True)
+            p.add_argument("--credentials", required=(name != "start-review"), default="")
+            p.add_argument("--date", required=(name != "start-review"), default=None)
+            p.add_argument("--organization", default="", help="the reviewer's hospital, clinic or body, as they state it")
+            p.add_argument("--scope", default="", help="what exactly was reviewed, e.g. 'all red-flag questions, Arabic and English'")
+            p.add_argument("--notes", default="")
     a = ap.parse_args(argv)
     data = cs.load(cs.PATH)
     areas = data["areas"]
     if a.cmd == "list":
         for aid, x in areas.items():
-            print(("✔ " if cs.is_reviewed(x) else "… ") + aid + " — " + x["title_en"] + ((" — " + x["reviewer"] + ", " + x["date"]) if cs.is_reviewed(x) else ""))
+            print("[" + cs.state(x) + "] " + aid + " — " + x["title_en"] + ((" — " + x["reviewer"] + ", " + x["date"]) if cs.is_reviewed(x) else ""))
         return 0
     if a.cmd == "check":
         problems = cs.validate(data)
-        pending = [k for k, x in areas.items() if not cs.is_reviewed(x)]
+        pending = [k for k, x in areas.items() if cs.state(x) != "approved"]
         for pr in problems:
             print("ERROR:", pr)
         if pending:
@@ -40,12 +45,30 @@ def main(argv=None) -> int:
         return 1 if problems or (a.strict and pending) else 0
     if a.area not in areas:
         print("unknown area; choose from:", ", ".join(areas)); return 2
-    if a.cmd == "approve":
-        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", a.date):
-            print("--date must be YYYY-MM-DD"); return 2
-        areas[a.area].update(status="reviewed", reviewer=a.reviewer.strip(), credentials=a.credentials.strip(), date=a.date, notes=a.notes)
+    if a.cmd != "revoke":
+        from datetime import date as _date
+        if a.date is not None:
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", a.date):
+                print("--date must be YYYY-MM-DD"); return 2
+            try:
+                when = _date.fromisoformat(a.date)
+            except ValueError:
+                print("--date is not a real date"); return 2
+            if when > _date.today():
+                print("--date cannot be in the future: record a review only after it happened"); return 2
+        status = {"start-review": "in_review", "approve": "approved", "reject": "rejected"}[a.cmd]
+        areas[a.area].update(status=status, reviewer=a.reviewer.strip(), credentials=(a.credentials or "").strip() or None,
+                             date=a.date, organization=(a.organization or "").strip() or None,
+                             scope=(a.scope or "").strip() or None, notes=a.notes)
     else:
-        areas[a.area].update(status="pending", reviewer=None, credentials=None, date=None)
+        areas[a.area].update(status="pending", reviewer=None, credentials=None, date=None, organization=None)
+    # V292: keep who approved or revoked each area and when (the area fields only hold the latest).
+    from datetime import datetime, timezone
+    areas[a.area].setdefault("history", []).append({
+        "action": a.cmd, "reviewer": getattr(a, "reviewer", None), "credentials": getattr(a, "credentials", None) or None,
+        "organization": getattr(a, "organization", None) or None, "scope": getattr(a, "scope", None) or None,
+        "date": getattr(a, "date", None), "notes": getattr(a, "notes", "") or "",
+        "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
     problems = cs.validate(data)
     if problems:
         print("\n".join(problems)); return 1

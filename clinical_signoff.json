@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy": "A content area is shown to users as clinician-reviewed only when status is 'reviewed' and reviewer, credentials and date are filled in. Everything else is shown as not yet clinically reviewed.",
+  "policy": "States: pending, in_review (a named reviewer has started), approved (reviewer, credentials and a real review date recorded), rejected (reviewed and not approved; content is being corrected), and expired (an approval older than review_every_days: 180 for urgent rules, 365 otherwise). Only an approved, unexpired area is shown to users as clinician-reviewed. Review dates can never be in the future. Organization and scope record what the reviewer states they reviewed. Credentials are recorded as the reviewer states them; SymptoSense does not verify licences with any authority. Editing content never counts as a clinical review, and every state change is kept in the area's history.",
   "areas": {
     "emergency_rules": {
       "title_ar": "قواعد الطوارئ وشاشة التوقف",
@@ -9,7 +9,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 180,
+      "history": []
     },
     "redflag_screens": {
       "title_ar": "أسئلة فحص علامات الخطر",
@@ -18,7 +20,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 180,
+      "history": []
     },
     "search_new_v251": {
       "title_ar": "مواضيع البحث الجديدة (الحساسية، عرق النسا، الهلع، انخفاض الضغط، زغللة، اكتئاب)",
@@ -27,7 +31,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "search_base": {
       "title_ar": "مكتبة مواضيع البحث",
@@ -36,7 +42,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "lab_cards": {
       "title_ar": "بطاقات التحاليل",
@@ -45,7 +53,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "library_core": {
       "title_ar": "مكتبة الأعراض والأمراض",
@@ -54,7 +64,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "vitals_thresholds": {
       "title_ar": "حدود تنبيهات القياسات المنزلية (ضغط، سكر، حرارة، نبض، SpO₂)",
@@ -63,7 +75,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "medication_context": {
       "title_ar": "ربط الأدوية بالأعراض والحالات (من نصوص الكتالوج)",
@@ -72,7 +86,9 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     },
     "clinical_reasoning": {
       "title_ar": "منطق الصورة السريرية وقواعد رفع مستوى المتابعة",
@@ -81,7 +97,20 @@
       "reviewer": null,
       "credentials": null,
       "date": null,
-      "notes": ""
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
+    },
+    "knowledge_base": {
+      "title_ar": "قاعدة المعرفة: الحالات الصحية والأعراض وروابطها",
+      "title_en": "Knowledge base: health conditions, symptoms and their links",
+      "status": "pending",
+      "reviewer": null,
+      "credentials": null,
+      "date": null,
+      "notes": "",
+      "review_every_days": 365,
+      "history": []
     }
   }
 }

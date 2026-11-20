@@ -33,7 +33,7 @@ def clinical_gate_state():
     import clinical_signoff
     from pathlib import Path
     areas = clinical_signoff.load(clinical_signoff.PATH)["areas"]
-    pending = sorted(k for k, a in areas.items() if not clinical_signoff.is_reviewed(a))
+    pending = sorted(k for k, a in areas.items() if clinical_signoff.state(a) != "approved")
     marker = Path(__file__).with_name(".clinical_bypass")
     return {"pending": pending, "bypass_active": marker.exists(),
             "banner": "Clinical sign-off bypass is active" if marker.exists() and pending else ""}

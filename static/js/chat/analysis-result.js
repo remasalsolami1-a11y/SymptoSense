@@ -289,11 +289,11 @@
           + '<div class="ss-decision-head"><span aria-hidden="true">'+esc(dec.icon||'')+'</span> <strong>'+esc(dec.headline||'')+'</strong></div>'
           + (dec.action ? '<p class="ss-decision-action">'+esc(dec.action)+'</p>' : '')
           + (dec.window ? '<p class="ss-decision-window"><small>'+esc(dec.window)+'</small></p>' : '');
-        if (dec.why) h += '<p class="ss-decision-why"><small>'+esc(Array.isArray(dec.why)?dec.why.join(' · '):dec.why)+'</small></p>';
+        if (dec.why) h += '<p class="ss-decision-why"><b>'+esc(LANG==='ar'?'ليش هذا المستوى؟ ':'Why this level? ')+'</b>'+esc(Array.isArray(dec.why)?dec.why.join(' · '):dec.why)+'</p>';
         if (Array.isArray(dec.would_change) && dec.would_change.length) h += '<details class="ss-decision-change"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(LANG==='ar'?'ما الذي قد يغيّر هذا القرار؟':'What could change this?')+'</summary><ul>'+dec.would_change.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></details>';
         const unc = dec.uncertainty || {};
         if (unc.confidence || (unc.reasons && unc.reasons.length) || (unc.missing && unc.missing.length)) {
-          h += '<details class="ss-decision-unc"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(LANG==='ar'?'مدى الثقة بهذه النتيجة':'How confident is this result?')+(unc.confidence?' — '+esc(unc.confidence):'')+'</summary>';
+          h += '<details class="ss-decision-unc"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(LANG==='ar'?'مدى الثقة بهذه النتيجة':'How confident is this result?')+(unc.confidence?' — '+esc(({high:LANG==='ar'?'عالية':'high',medium:LANG==='ar'?'متوسطة':'medium',low:LANG==='ar'?'منخفضة':'low'})[String(unc.confidence).toLowerCase()]||unc.confidence):'')+'</summary>';
           if (unc.reasons && unc.reasons.length) h += '<ul>'+unc.reasons.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
           if (unc.missing && unc.missing.length) h += '<p><b>'+esc(LANG==='ar'?'معلومات ناقصة تحسّن الدقة:':'Missing info that would improve accuracy:')+'</b> '+unc.missing.map(esc).join('، ')+'</p>';
           if (unc.tip) h += '<p><small>'+esc(unc.tip)+'</small></p>';
@@ -311,13 +311,15 @@
         h += '<div class="ss-report-heading"><h2>🧠 '+esc(L('الصورة الصحية الشاملة','Comprehensive health picture'))+'</h2></div>';
         const ch = rs.what_changed || {};
         if (ch.items && ch.items.length) h += '<div class="ss-rs-block"><b>'+esc(L('ما الذي تغيّر منذ المرة السابقة؟','What changed since last time?'))+'</b>'+ul(ch.items)+'</div>';
-        if (rs.contributors && rs.contributors.length) h += '<div class="ss-rs-block"><b>'+esc(L('عوامل مرتبطة ببياناتك','Factors linked to your data'))+'</b>'+ul(rs.contributors.map(function(c){return c.text;}))+'</div>';
+        if (rs.contributors && rs.contributors.length) h += '<div class="ss-rs-block"><b>'+esc(L('عوامل مرتبطة ببياناتك','Factors linked to your data'))+'</b> <span class="ss-src-tag">'+esc(L('من ملفك المحفوظ','From your saved file'))+'</span>'+ul(rs.contributors.map(function(c){return c.text;}))+'</div>';
         if (rs.possibilities && rs.possibilities.length) {
           h += '<div class="ss-rs-block"><b>'+esc(L('الاحتمالات: لماذا ظهرت وما الذي يقلل احتمالها','Possibilities: why they appeared and what lowers them'))+'</b>';
           rs.possibilities.forEach(function(p){
-            h += '<details style="margin:6px 0"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(p.name)+'</summary>';
-            if (p.why && p.why.length) h += '<p><small><b>'+esc(L('ظهر بسبب: ','Appeared because of: '))+'</b>'+p.why.map(esc).join(' + ')+'</small></p>';
+            h += '<details class="ss-poss" style="margin:6px 0"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(p.name)+(p.strength?' <span class="ss-ev ss-ev-'+esc(p.match_level||'weak')+'">'+esc(p.strength)+'</span>':'')+'</summary>';
+            if (p.why && p.why.length) h += '<p><small><b>'+esc(L('ظهر بسبب: ','Appeared because of: '))+'</b>'+p.why.map(esc).join(' + ')+(p.why_source?' <span class="ss-src-tag">'+esc(p.why_source)+'</span>':'')+(p.strength_note?' · '+esc(p.strength_note):'')+'</small></p>';
             if (p.against && p.against.length) h += '<p><small><b>'+esc(L('ما يقلل احتماله:','What lowers it:'))+'</b></small></p>'+ul(p.against);
+            if (p.unknown && p.unknown.length) h += '<p><small><b>'+esc(L('يفيد لو تذكره (لم يُسأل عنه، فلا يُحسب ضده):','Would help to know (not asked, so not counted against it):'))+'</b> '+p.unknown.map(esc).join('، ')+'</small></p>';
+            if (p.kind) h += '<p><small class="ss-src-tag ss-src-inferred">'+esc(p.kind)+'</small></p>';
             h += '</details>';
           });
           h += '<p><small>'+esc(L('هذه أنماط متوافقة مع ما أدخلته وليست تشخيصًا.','These are patterns that fit what you entered, not a diagnosis.'))+'</small></p></div>';
@@ -465,7 +467,7 @@
             }
           }
           h += '<article class="ss-condition"><div class="ss-condition-head"><div class="ss-condition-name">'+esc(name)+'</div><span class="ss-match">'+esc(matchLevelLabel(m.match_level))+'</span></div>';
-          if (matched.length) { const neg=(m.negative_evidence||[]).filter(Boolean); h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(LANG==='ar'?'يتوافق مع: ':'Matches: ')+esc(matched.join(LANG==='ar'?'، ':', '))+(neg.length?'<div style="margin-top:6px">'+esc(LANG==='ar'?'والأعراض المنفية خفّضت التوافق عند ارتباطها بهذه الحالة: ':'Denied symptoms reduced the match when relevant: ')+esc(neg.join(LANG==='ar'?'، ':', '))+'</div>':'')+(m.description?'<div style="margin-top:6px">'+esc(m.description)+'</div>':'')+directSource+'</div>'; }
+          if (matched.length) { const neg=(m.negative_evidence_names||m.negative_evidence||[]).filter(Boolean); h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(LANG==='ar'?'يتوافق مع: ':'Matches: ')+esc(matched.join(LANG==='ar'?'، ':', '))+(neg.length?'<div style="margin-top:6px">'+esc(LANG==='ar'?'والأعراض المنفية خفّضت التوافق عند ارتباطها بهذه الحالة: ':'Denied symptoms reduced the match when relevant: ')+esc(neg.join(LANG==='ar'?'، ':', '))+'</div>':'')+(m.description?'<div style="margin-top:6px">'+esc(m.description)+'</div>':'')+directSource+'</div>'; }
           else if (m.description) h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(m.description)+directSource+'</div>';
           else if (directSource) h += '<div class="ss-condition-why">'+directSource+'</div>';
           const simpleId='simpleCondition'+idx;

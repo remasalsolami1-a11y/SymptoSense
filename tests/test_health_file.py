@@ -46,7 +46,8 @@ def test_summary_is_neutral_bilingual_and_has_no_diagnosis_words():
          "medicines": [{"name": "Panadol", "dose": "500mg", "frequency": ""}]}
     for lang in ("ar", "en"):
         text = health_file.summary_text(d, lang)
-        assert "ferritin" in text and "Panadol" in text and "صداع" in text
+        # V292.1: symptom names follow the summary language (knowledge-base names)
+        assert "ferritin" in text and "Panadol" in text and ("صداع" if lang == "ar" else "Headache") in text
         assert "diagnos" in text.lower() or "تشخيص" in text
         for bad in ("you have", "لديك مرض", "مصاب"):
             assert bad not in text
@@ -117,7 +118,7 @@ def test_doctor_page_is_compact_escaped_and_complete():
          "last_detail": {"date": "2026-07-01", "symptoms": ["صداع"], "duration": "3 أيام", "severity": "4", "urgency": "high"},
          "followup_outcomes": ["ساءت (2026-07-02)"], "vitals": []}
     out = health_file.render_doctor(d, "ar")
-    for need in ("صداع", "3 أيام", "4/5", "مرتفع", "يتجه نحو النطاق المرجعي", "Panadol", "ساءت", "2026-07-01"):
+    for need in ("صداع", "3 أيام", "4/5", "عاجل", "يتجه نحو النطاق المرجعي", "Panadol", "ساءت", "2026-07-01"):
         assert need in out
     assert "<b>Panadol" not in out and "&lt;b&gt;" in out
     assert len(out) < 6000

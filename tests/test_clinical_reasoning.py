@@ -52,7 +52,11 @@ def test_possibilities_explain_why_and_what_lowers_them():
     r = analysis_core.run_analysis(_patient(owner), "ar")["reasoning"]
     p = r["possibilities"][0]
     assert p["why"] and p["name"]
-    assert any("لم تذكر" in a or "غياب" in a for pp in r["possibilities"] for a in pp["against"])
+    # V292: a symptom the user did not mention is unknown, not evidence against
+    assert not any("لم تذكر" in a for pp in r["possibilities"] for a in pp["against"])
+    assert all(a.startswith("نفيتَ: ") for pp in r["possibilities"] for a in pp["against"])
+    assert any(pp["unknown"] for pp in r["possibilities"]) or any(pp["against"] for pp in r["possibilities"])
+    assert p["strength"] in ("أدلة قوية", "أدلة متوسطة", "أدلة ضعيفة") and p["why_source"] == "قلتها أنت"
 
 
 def test_what_changed_raises_level_one_step_and_never_lowers():

@@ -21,9 +21,8 @@
       const sc = d.screen;
       redflagAsked.push(sc.id);
       state.step = 'clarification';
-      addHtml('<div class="adaptive-step">'+esc((LANG==='ar'?'فحص علامات الخطر · ':'Warning-sign check · ')+sc.number+(LANG==='ar'?' من ':' of ')+sc.max)+'</div>','bot');
-      addHtml('<div class="muted" style="font-size:11.5px;line-height:1.65;margin-top:-4px">'+esc(sc.reason)+'</div>','bot');
       focusStepQuestion('⚠️ ' + sc.question);
+      stepNote((LANG==='ar'?'فحص علامات الخطر · ':'Warning-sign check · ')+sc.number+(LANG==='ar'?' من ':' of ')+sc.max, sc.reason || '');
       showOpts([
         {label:TT('clar_yes'), fn:function(){
           add(TT('clar_yes'),'user');

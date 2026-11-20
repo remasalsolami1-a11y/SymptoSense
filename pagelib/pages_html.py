@@ -779,6 +779,12 @@ def consent_page():
       const art=this.closest('.consent-option'), e=document.getElementById('consentErr');
       if(this.checked){this.removeAttribute('aria-invalid');if(art)art.classList.remove('consent-invalid');if(e)e.style.display='none';}
     });
+    (function(){
+      // Saved a moment ago but sent back here: the browser did not keep the session cookie.
+      let at=0; try{at=Number(sessionStorage.getItem('ssConsentSavedAt')||0);sessionStorage.removeItem('ssConsentSavedAt');}catch(_){}
+      if(at&&Date.now()-at<60000){const err=document.getElementById('consentErr'),btn=document.getElementById('consentMainSubmit');
+        if(err&&btn){btn.insertAdjacentElement('afterend',err);err.style.display='block';err.setAttribute('role','alert');err.textContent=__COOKIE_ERR__;}}
+    })();
     document.getElementById('consentForm').addEventListener('submit', async function(e){
       e.preventDefault();
       const service=document.getElementById('serviceConsent').checked,
@@ -794,17 +800,33 @@ def consent_page():
         return;}
       if(btn.disabled)return;
       err.style.display='none';
-      const oldText=btn.textContent; btn.disabled=true; btn.setAttribute('aria-busy','true'); btn.textContent=__SAVING__;
+      // V291.1: keep the state visible next to the button the visitor pressed, never leave
+      // the page on "Continuing…" with no way forward, and retry a slow save once.
+      const sticky=document.getElementById('consentStickySubmit'), oldText=btn.textContent;
+      function busy(on,text){[btn,sticky].forEach(function(b){if(!b)return;b.disabled=on;b.toggleAttribute('aria-busy',on);b.textContent=text;});}
+      function showNear(msg,link){
+        btn.insertAdjacentElement('afterend',err);
+        err.style.display='block';err.setAttribute('role','alert');err.textContent=msg;
+        if(link){const a=document.createElement('a');a.href=__NEXT__;a.className='btn pri';a.style.cssText='display:block;margin-top:10px;text-align:center';a.textContent=__OPEN__;err.appendChild(a);}
+        err.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+      async function save(){
+        const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),10000);
+        try{
+          const r=await fetch('/api/consent/preferences',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:service,analytics_research:analytics,research_participation:research}),signal:controller.signal});
+          const d=await r.json();
+          if(!r.ok||!d.ok)throw new Error(d.error||'consent_failed');
+        }finally{clearTimeout(timer);}
+      }
+      busy(true,__SAVING__);
       try{
-        const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),12000);
-        const r=await fetch('/api/consent/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_usage:service,analytics_research:analytics,research_participation:research}),signal:controller.signal});
-        clearTimeout(timer);
-        const d=await r.json();
-        if(!r.ok||!d.ok)throw new Error(d.error||'consent_failed');
-        window.location.replace(__NEXT__);
+        try{await save();}catch(first){await save();}
+        busy(true,__OPENING__);
+        try{sessionStorage.setItem('ssConsentSavedAt',String(Date.now()));}catch(_){}
+        window.location.assign(__NEXT__);
+        setTimeout(function(){busy(false,oldText);showNear(__SLOW__,true);},8000);
       }catch(ex){
-        err.style.display='block';err.textContent=__GEN_ERR__;
-        btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=oldText;
+        busy(false,oldText);showNear(__GEN_ERR__,false);
       }
     });
     </script>
@@ -830,6 +852,10 @@ def consent_page():
         "__SAVING__": _json_for_script("جاري المتابعة…" if ar else "Continuing…"),
         "__DISC__": ('موافقة الخدمة مطلوبة لإجراء التحليل، أما الموافقتان الاختياريتان فلا يؤثر رفضهما على استخدام الموقع. يمكنك تعديلهما أو سحبهما لاحقًا: من «مركز الخصوصية» إن كان لديك حساب، أو بإعادة فتح هذه الصفحة إن كنت زائرًا. يوقف السحب المعالجة المرتبطة بها مستقبلًا، ولا يسترجع ملفات بحثية نُزّلت قبل السحب.' if ar else 'The service consent is required to run the analysis; declining either optional consent does not affect use of the site. You can change or withdraw them later: in the Privacy Center if you have an account, or by reopening this page as a guest. Withdrawal stops the related processing going forward; it cannot recall research files downloaded before withdrawal.'),
         "__SERVICE_ERR__": _json_for_script("يجب الموافقة على معالجة البيانات اللازمة لاستخدام خدمة التحليل." if ar else "Service usage consent is required to use the assessment service."),
+        "__OPENING__": _json_for_script("جاري فتح التحليل…" if ar else "Opening the assessment…"),
+        "__SLOW__": _json_for_script("تم حفظ اختيارك. إذا لم تنتقل الصفحة، اضغط الزر التالي." if ar else "Your choice is saved. If the page has not moved on, use the button below."),
+        "__COOKIE_ERR__": _json_for_script("حُفظ اختيارك لكن المتصفح لم يحتفظ به، فرجعت لهذه الصفحة. غالبًا السبب أن ملفات تعريف الارتباط (Cookies) مقفلة أو أنك في وضع التصفح الخاص داخل تطبيق. فعّلها أو افتح الموقع في Safari أو Chrome ثم حاول مرة أخرى." if ar else "Your choice was saved but the browser did not keep it, so you were sent back here. Cookies are probably blocked, or this is an in-app private browser. Allow cookies or open the site in Safari or Chrome, then try again."),
+        "__OPEN__": _json_for_script("افتح تحليل الأعراض" if ar else "Open the symptom assessment"),
         "__GEN_ERR__": _json_for_script("تعذر حفظ الاختيارات الآن. يرجى المحاولة مرة أخرى." if ar else "Unable to save your choices right now. Please try again."),
         "__NEXT__": _json_for_script(next_url),
         "__SERVICE_CHECKED__": "checked" if saved_valid and current.get("service_usage") else "",
@@ -1156,7 +1182,8 @@ def blood_page():
     const LAB_PDF_MAX_BYTES = 25 * 1024 * 1024;
     let selFiles = [];
     let selFile = null; // Backward-compatible alias used by report/download labels.
-    function bloodConsentAccepted(){ const c=document.getElementById('bloodCollectConsent'); return !!(c && c.checked); }
+    function bloodConsentAccepted(){ return true; } // V291.1: research use is optional
+    function bloodResearchConsent(){ const c=document.getElementById('bloodCollectConsent'); return !!(c && c.checked); }
     function bloodConsentWarn(){
       const box=document.getElementById('bloodRes');
       box.innerHTML='<div class="warn">'+esc(LABX_AR?'لازم توافق على استخدام بيانات التحليل بشكل مجهول قبل رفعه وتحليله.':'You must consent to anonymized use of the lab-analysis data before upload and analysis.')+'</div>';
@@ -1395,7 +1422,7 @@ def blood_page():
       if(status){status.style.display='block';status.textContent=readingText;}
       box.innerHTML='<div class="bubble bot" style="max-width:100%;text-align:center">⏳ '+esc(readingText)+' <span class="spin"></span><div style="font-size:11px;color:#6b8193;margin-top:8px">'+esc(LABX_AR?'قد تستغرق قراءة ملف PDF عدة ثوانٍ.':'PDF reading can take several seconds.')+'</div></div>';
       box.scrollIntoView({behavior:'smooth',block:'center'});
-      const fd=new FormData(); fd.append('mode','extract'); selFiles.forEach(function(x){fd.append('files',x.file,x.file.name||'lab-report.pdf');}); fd.append('gender',document.getElementById('bg').value); fd.append('age',document.getElementById('ba').value); fd.append('blood_collection_consent','1');
+      const fd=new FormData(); fd.append('mode','extract'); selFiles.forEach(function(x){fd.append('files',x.file,x.file.name||'lab-report.pdf');}); fd.append('gender',document.getElementById('bg').value); fd.append('age',document.getElementById('ba').value); fd.append('blood_collection_consent',bloodResearchConsent()?'1':'0');
       let r,d;
       const controller=new AbortController();
       const timer=setTimeout(function(){controller.abort();},150000);
@@ -1530,7 +1557,7 @@ def blood_page():
       const entries=labxGather(); if(!entries.length){alert(LX.need);return;}
       const box=document.getElementById('bloodRes'); box.innerHTML='<div class="bubble bot" style="max-width:100%">'+esc(LX.processing)+' <span class="spin"></span></div>';
       if(!bloodConsentAccepted()){bloodConsentWarn();return;}
-      const fd=new FormData(); fd.append('mode','analyze_confirmed'); fd.append('confirmed_entries',JSON.stringify(entries)); fd.append('confirmed_review_ids',JSON.stringify(Array.from(labxConfirmedReviewIds))); fd.append('report_meta',JSON.stringify(labxReportMeta||{})); fd.append('clinical_context',JSON.stringify(labxContext)); fd.append('extraction_receipt',labxExtractionReceipt||''); fd.append('gender',document.getElementById('bg').value); fd.append('age',document.getElementById('ba').value); fd.append('blood_collection_consent','1');
+      const fd=new FormData(); fd.append('mode','analyze_confirmed'); fd.append('confirmed_entries',JSON.stringify(entries)); fd.append('confirmed_review_ids',JSON.stringify(Array.from(labxConfirmedReviewIds))); fd.append('report_meta',JSON.stringify(labxReportMeta||{})); fd.append('clinical_context',JSON.stringify(labxContext)); fd.append('extraction_receipt',labxExtractionReceipt||''); fd.append('gender',document.getElementById('bg').value); fd.append('age',document.getElementById('ba').value); fd.append('blood_collection_consent',bloodResearchConsent()?'1':'0');
       let r,d; try{r=await fetch('/api/blood',{method:'POST',body:fd});try{d=await r.json();}catch(e){d={ok:false,error:TT('blood_err')}}}catch(e){box.innerHTML='<div class="warn">'+esc(TT('blood_err'))+'</div>';return;}
       if(d.error==='login_required'){location.href=d.login_url||'/login?next=/blood';return;} if(d.consent_required){location.href=d.consent_url||'/consent?next=/blood';return;} if(!r.ok||!d.ok){box.innerHTML='<div class="warn">'+esc(d.error||TT('blood_err'))+'</div>';return;}
       labxRenderResult(d);
@@ -1712,9 +1739,9 @@ def blood_page():
         ("__BH__", t["blood_h"]), ("__BCBC__", t["blood_cbc"]), ("__BSUB__", t["blood_sub"]),
         ("__BGENDER__", t["blood_gender"]), ("__BAGE__", t["blood_age"]),
         ("__BCONSENT_CHECKED__", blood_consent_checked),
-        ("__BCONSENT_TITLE__", "موافقة على الاستفادة من البيانات" if _lang() == "ar" else "Consent to use anonymized data"),
+        ("__BCONSENT_TITLE__", "اختياري: المساهمة في تطوير المشروع" if _lang() == "ar" else "Optional: help improve the project"),
         ("__BCONSENT_TEXT__", "أوافق على استخدام نتائج تحاليل الدم والمعلومات الصحية المرتبطة بها بصورة مجهولة ودون إظهار هويتي، بهدف تطوير SymptoSense وتحسين دقة التحليل، والاستفادة من النتائج المجمعة في تطوير المشروع والمشاركات والمسابقات العلمية." if _lang() == "ar" else "I agree to the use of my blood-test results and related health information in anonymized form, without revealing my identity, to develop SymptoSense, improve analysis accuracy, and use aggregated results in project development and scientific competitions."),
-        ("__BCONSENT_NOTE__", "لن يظهر اسمك أو بريدك ضمن البيانات المستخدمة لهذا الغرض، ولن يُحفظ ملف PDF الأصلي ضمن سجل التحليل. يمكنك حذف بياناتك الصحية لاحقًا من مركز الخصوصية." if _lang() == "ar" else "Your name and email will not be included in data used for this purpose, and the original PDF is not stored in the analysis record. You can delete stored health data later from the Privacy Center."),
+        ("__BCONSENT_NOTE__", "لن يظهر اسمك أو بريدك ضمن البيانات المستخدمة لهذا الغرض، ولن يُحفظ ملف PDF الأصلي ضمن سجل التحليل. يمكنك حذف بياناتك الصحية لاحقًا من مركز الخصوصية. يعمل التحليل سواء وافقت أم لا." if _lang() == "ar" else "Your name and email will not be included in data used for this purpose, and the original PDF is not stored in the analysis record. You can delete stored health data later from the Privacy Center. The analysis works either way."),
         ("__BGENDERPH__", t["blood_gender_ph"]),
         ("__BF__", t["blood_female"]), ("__BM__", t["blood_male"]), ("__BU__", t["blood_unknown"]),
         ("__BAGEPH__", t["blood_age_ph"]), ("__BHINT__", t["blood_hint"]),
@@ -2243,7 +2270,7 @@ def family_page():
         medications: document.getElementById('fMeds').value.trim(),
         allergies: document.getElementById('fAll').value.trim()
       })}).then(r=>r.json()).then(d=>{
-        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; }
+        if (d.error === 'login_required') { location.href = d.login_url || '/login?next=/family'; return; } if (d.consent_required && d.consent_url) { location.href = d.consent_url; return; }
         if (!d.ok) { msg.textContent = TT('fam_err') + (d.error||''); msg.style.color='#B91C1C'; return; }
         msg.textContent = TT('fam_saved'); msg.style.color = '#1F6FAE';
         ['fName','fAge','fCond','fMeds','fAll'].forEach(i=>document.getElementById(i).value='');

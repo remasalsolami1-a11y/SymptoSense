@@ -391,7 +391,7 @@ def check_clinical_signoff_gate() -> None:
     if os.environ.get("RELEASE_TARGET", "").strip().lower() != "production":
         return
     import clinical_signoff
-    pending = [k for k, a in clinical_signoff.load(clinical_signoff.PATH)["areas"].items() if not clinical_signoff.is_reviewed(a)]
+    pending = [k for k, a in clinical_signoff.load(clinical_signoff.PATH)["areas"].items() if clinical_signoff.state(a) != "approved"]
     if not pending:
         return
     if os.environ.get("ALLOW_UNSIGNED_CLINICAL", "") == "1":

@@ -1810,6 +1810,18 @@ def save_blood_collection_consent(user_id, consent_version):
         conn.close()
 
 
+def withdraw_blood_collection_consent(user_id):
+    """V291.1: the owner unticked the optional research box; forget the stored consent so the
+    box stays unticked next time. Reports already saved keep the choice made at that time."""
+    conn = _conn()
+    try:
+        c = conn.cursor()
+        c.execute(f"DELETE FROM blood_collection_consents WHERE user_hash={PH}", (_hash_user(user_id),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def has_blood_collection_consent(user_id, consent_version):
     """Return True only when the stored consent matches the current version."""
     version = str(consent_version or "").strip()[:64]

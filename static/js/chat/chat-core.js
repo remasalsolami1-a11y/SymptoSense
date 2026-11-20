@@ -135,6 +135,22 @@
       if (autoSpeak && msg !== lastSpokenMsg) { lastSpokenMsg = msg; speakText(msg); }
       return d;
     }
+    // V292: notes shown inside the current question card ("question 2 of 5", "why we ask").
+    // focusStepQuestion clears the chat body, so anything added before it was never visible.
+    function stepNote(stepText, whyText) {
+      const card = bodyEl.querySelector('.step-focus-card');
+      const n = document.createElement('div'); n.className = 'step-focus-note';
+      if (stepText) { const st = document.createElement('div'); st.className = 'adaptive-step'; st.textContent = stepText; n.appendChild(st); }
+      if (whyText) {
+        const w = document.createElement('div'); w.className = 'ss-why-q';
+        const b = document.createElement('b'); b.textContent = LANG === 'ar' ? 'ليش نسأل؟' : 'Why we ask';
+        w.appendChild(b); w.appendChild(document.createTextNode(' ' + whyText)); n.appendChild(w);
+      }
+      if (!card) { bodyEl.appendChild(n); return n; }
+      const q = card.querySelector('.step-focus-question');
+      if (q && q.nextSibling) card.insertBefore(n, q.nextSibling); else card.appendChild(n);
+      return n;
+    }
     function focusStepQuestion(msg, answerOverride) {
       if (bodyEl.classList.contains('result-mode')) return addQ(msg);
       // Every new questionnaire step starts with a clean input state.

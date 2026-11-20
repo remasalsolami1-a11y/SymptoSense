@@ -1,8 +1,10 @@
 # حزمة المراجعة السريرية — SymptoSense
 
 > **مولَّدة تلقائيًا من الكود** بـ `python tools/clinical_packet.py` — لا تعدّلها يدويًا. تصف **ما يفعله المنتج الآن** ولا تقترح قيمًا طبية.
-> لا يوجد أي اعتماد حتى الآن. الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه:
-> `python tools/signoff.py approve <area> --reviewer "الاسم" --credentials "الترخيص" --date YYYY-MM-DD --notes "..."`
+> لا يوجد أي اعتماد حتى الآن. الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه وبتاريخ مراجعة حدثت فعلًا (لا يُقبل تاريخ مستقبلي):
+> `python tools/signoff.py start-review <area> --reviewer "الاسم" --organization "الجهة" --scope "ما سيُراجَع"`
+> `python tools/signoff.py approve <area> --reviewer "الاسم" --credentials "الترخيص" --organization "الجهة" --scope "ما رُوجع" --date YYYY-MM-DD --notes "..."`
+> أو `reject` بالبيانات نفسها إذا لم يُعتمد المحتوى. المؤهلات كما ذكرها المراجِع، ولا يتحقق SymptoSense من الترخيص لدى أي جهة.
 > كل ملف CSV في `clinical_review/` فيه عمودان فارغان للقرار والملاحظات.
 
 ## 2) redflag_screens — أسئلة علامات الخطر

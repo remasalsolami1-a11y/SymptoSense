@@ -93,13 +93,16 @@ def test_readability_and_layout_rules_are_loaded(client):
     assert ".ss-hero-actions{grid-row:5!important" in html
 
 
-def test_arabic_footer_has_no_english_line_and_english_footer_keeps_it(client):
+def test_footer_wording_is_short_and_states_each_fact_once(client):
     ar = _get(client, "/ar/")
-    foot = ar[ar.index('<p class="f-love">'):]
-    foot = foot[:foot.index("</p>")]
-    assert "تصميم وتطوير" in foot and "Designed" not in foot
+    foot = ar[ar.index('<div class="footer"'):]
+    foot = foot[:foot.index('<p class="f-copy"') + 200]
+    assert "افهم أعراضك واعرف خطوتك التالية" in foot and "صمّمتها وبنيتها" in foot
+    assert "لا تشخّص ولا تغني عن الطبيب" in foot
+    assert foot.count("ريماس حميد السلمي") == 1 and "صاحبة" not in foot and "منصة صحية ذكية" not in foot
+    assert "Designed" not in foot
     en = _get(client, "/en/")
-    assert "Designed &amp; Developed by" in en or "Designed & Developed by" in en
+    assert "Designed and built by" in en and "does not replace a doctor" in en
 
 
 def test_english_wording_fixes():

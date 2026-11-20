@@ -62,16 +62,27 @@
       const urgent=((lastResult||{}).urgency||'low')==='high';
       const clinic=careCallScriptText();
       const summary=doctorSummaryText();
-      const combined=(LANG==='ar'?'نص التواصل\n':'Contact script\n')+clinic+'\n\n'+(LANG==='ar'?'ملخص للطبيب\n':'Clinician summary\n')+summary;
+      let combined=(LANG==='ar'?'نص التواصل\n':'Contact script\n')+clinic+'\n\n'+(LANG==='ar'?'ملخص للطبيب\n':'Clinician summary\n')+summary;
       const overlay=document.createElement('div'); overlay.className='doctor-card-overlay'; overlay.id='doctorCardOverlay';
       const canShare=!!(lastResult&&lastResult.record_id);
       const title=urgent?(LANG==='ar'?'ملخص للطوارئ والطبيب':'Emergency & clinician summary'):(LANG==='ar'?'ملخص للعيادة والطبيب':'Clinic & clinician summary');
       const clinicTitle=urgent?(LANG==='ar'?'ماذا أقول للطوارئ؟':'What to say to emergency services'):(LANG==='ar'?'ماذا أقول عند التواصل مع العيادة؟':'What to say when contacting the clinic');
       overlay.innerHTML='<div class="doctor-card"><div class="doctor-card-head"><div><h2>🩺 '+esc(title)+'</h2><p>'+esc(LANG==='ar'?'مكان واحد للتواصل مع العيادة وتسليم ملخص منظم للطبيب. راجعه قبل النسخ أو المشاركة.':'One place for the clinic contact script and a structured clinician summary. Review it before copying or sharing.')+'</p></div><button type="button" class="doctor-card-close" data-doctor-close>✕</button></div>'+
         '<div class="doctor-card-section"><b>'+esc(clinicTitle)+'</b><pre class="doctor-card-summary">'+esc(clinic)+'</pre></div>'+
-        '<div class="doctor-card-section"><b>'+esc(LANG==='ar'?'الملخص المنظم للطبيب':'Structured clinician summary')+'</b><pre class="doctor-card-summary" id="doctorCardSummary">'+esc(summary)+'</pre></div>'+
+        '<div class="doctor-card-section"><b>'+esc(LANG==='ar'?'الملخص المنظم للطبيب':'Structured clinician summary')+'</b><div class="ss-lang-tabs" role="group" aria-label="'+esc(LANG==='ar'?'لغة الملخص':'Summary language')+'" hidden><button type="button" data-sum-lang="ar">العربية</button><button type="button" data-sum-lang="en">English</button><button type="button" data-sum-lang="both">'+esc(LANG==='ar'?'الاثنين':'Both')+'</button></div><pre class="doctor-card-summary" id="doctorCardSummary">'+esc(summary)+'</pre></div>'+
         '<div class="doctor-card-actions"><button type="button" class="ss-report-action primary" data-doctor-copy>📋 '+esc(LANG==='ar'?'نسخ الملخص كاملًا':'Copy full summary')+'</button>'+(canShare?'<button type="button" class="ss-report-action" data-doctor-share>🔐 '+esc(LANG==='ar'?'مشاركة آمنة مؤقتة':'Secure temporary share')+'</button>':'')+'</div><div class="doctor-card-status" aria-live="polite"></div></div>';
       document.body.appendChild(overlay);
+      // V292: the same summary in Arabic and English (names from the knowledge base; free text kept as written).
+      let bilingual=null; const sumEl=overlay.querySelector('#doctorCardSummary'), tabs=overlay.querySelector('.ss-lang-tabs');
+      const showLang=function(k){ if(!bilingual)return; sumEl.textContent=k==='both'?bilingual.ar+'\n\n— — —\n\n'+bilingual.en:bilingual[k]; sumEl.setAttribute('dir',k==='en'?'ltr':'rtl'); tabs.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.sumLang===k));}); combined=(LANG==='ar'?'نص التواصل\n':'Contact script\n')+clinic+'\n\n'+sumEl.textContent; };
+      (async function(){ try{ const d=lastResult||{}, inp=lastAnalysisInput||state||{};
+        const r=await fetch('/api/doctor-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({age:inp.age,gender:inp.gender,symptoms:inp.symptoms,duration:inp.duration,severity:inp.severity,medications:inp.medications,
+          yes:(differentialAnswers||[]).filter(function(x){return x.answer==='yes';}).map(function(x){return x.slug;}),no:(differentialAnswers||[]).filter(function(x){return x.answer==='no';}).map(function(x){return x.slug;}),
+          matches:(Array.isArray(d.knowledge_matches)?d.knowledge_matches:[]).map(function(m){return m.slug;}),urgency:(d.decision&&d.decision.level)||d.urgency})});
+        const j=await r.json(); if(j&&j.ok&&j.ar&&j.en){bilingual=j;tabs.hidden=false;tabs.querySelectorAll('[aria-pressed]').length||showLang(LANG==='en'?'en':'ar');}
+        if(j&&j.full_page&&/^\/health-file\?view=doctor$/.test(j.full_page)){const a=document.createElement('a');a.href=j.full_page;a.className='ss-full-doctor-page';a.textContent=LANG==='ar'?'صفحة الطبيب الكاملة من ملفك الصحي (عربي/English)':'Full clinician page from your health file (Arabic/English)';sumEl.parentNode.appendChild(a);}
+      }catch(_){} })();
+      tabs.addEventListener('click',function(e){const b=e.target.closest('[data-sum-lang]');if(b)showLang(b.dataset.sumLang);});
       overlay.addEventListener('click',function(e){
         if(e.target===overlay||e.target.closest('[data-doctor-close]')){overlay.remove();return;}
         if(e.target.closest('[data-doctor-copy]')){

@@ -159,11 +159,33 @@ def _load_full_application() -> None:
         with _STATE_LOCK:
             _STATE["phase"] = "serving"
         _LOG.info("Full SymptoSense application loaded")
+        threading.Thread(target=_warm_heavy_pages, args=(app,), name="symptosense-warmup", daemon=True).start()
     except BaseException as exc:
         with _STATE_LOCK:
             _STATE["phase"] = "failed"
             _STATE["error_type"] = type(exc).__name__
         _LOG.exception("Full application bootstrap failed error_type=%s", type(exc).__name__)
+
+
+# Pages whose first render does real work (the live demo runs the engine on its scenarios;
+# how-we-work assembles three pages). Rendering them once after start means the first real
+# visitor gets the cached copy instead of waiting.
+WARM_PATHS = ("/ar/", "/en/", "/ar/live-demo", "/en/live-demo", "/ar/how-we-work", "/en/how-we-work",
+              "/ar/emergency", "/ar/health-library", "/ar/knowledge-graph", "/en/knowledge-graph")
+
+
+def _warm_heavy_pages(app) -> None:
+    if os.environ.get("SYMPTOSENSE_WARMUP", "1") == "0":
+        return
+    client = app.test_client()
+    for path in WARM_PATHS:
+        started = time.monotonic()
+        try:
+            status = client.get(path, headers={"User-Agent": "SymptoSense-warmup"}).status_code
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError, LookupError) as exc:
+            _LOG.warning("warm-up failed path=%s error_type=%s", path, type(exc).__name__)
+            continue
+        _LOG.info("warm-up path=%s status=%s ms=%d", path, status, int((time.monotonic() - started) * 1000))
 
 
 def main() -> None:

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import html
 import json
+import threading
 import time
 
 import analysis_core
@@ -121,16 +122,24 @@ def run(scenario_id: str, lang: str = "ar") -> dict:
 
 
 _CACHE: dict = {}
-_TTL = 600
+# The scenarios and rules are fixed for a given deploy, so the results only change when the
+# code changes. A long cache plus one lock means a burst of first visitors waits for a single
+# computation instead of each starting its own (V291.1: the cold page hung under load).
+_TTL = 6 * 3600
+_LOCK = threading.Lock()
 
 
 def all_results(lang: str = "ar") -> dict:
     hit = _CACHE.get(lang)
     if hit and time.time() - hit[0] < _TTL:
         return hit[1]
-    data = {s["id"]: run(s["id"], lang) for s in SCENARIOS}
-    _CACHE[lang] = (time.time(), data)
-    return data
+    with _LOCK:
+        hit = _CACHE.get(lang)
+        if hit and time.time() - hit[0] < _TTL:
+            return hit[1]
+        data = {s["id"]: run(s["id"], lang) for s in SCENARIOS}
+        _CACHE[lang] = (time.time(), data)
+        return data
 
 
 # --------------------------------------------------------------------------- page

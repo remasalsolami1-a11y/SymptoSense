@@ -26,7 +26,8 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from email.utils import parseaddr
 from urllib.parse import urlsplit, quote, urlencode
-CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")
+CONTACT_TELEGRAM = os.environ.get("CONTACT_TELEGRAM", "rms_2o")  # medication reminders only
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "symptosense@outlook.com")
 # V68.15: optional reviewer/supervisor/contact details live in trust_pages (shown only when set).
 _accountability_html = lambda ar: __import__("trust_pages").accountability_html(ar)
 from functools import lru_cache, wraps
@@ -1973,7 +1974,7 @@ def _nav():
     return html
 
 def _footer():
-    tg = "https://t.me/" + CONTACT_TELEGRAM if CONTACT_TELEGRAM else "#"
+    tg = "mailto:" + CONTACT_EMAIL
     return (
         '<div class="footer" id="contact"><div class="f-inner">'
         '<a class="f-brand" href="/home" aria-label="SymptoSense"><img class="f-logo" src="/brand-icon.svg" width="40" height="40" alt="" aria-hidden="true" decoding="async" loading="lazy"><span class="ss-brand-gradient">SymptoSense</span></a>'
@@ -1981,8 +1982,8 @@ def _footer():
         '<div class="f-grid">'
         '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
         '<div class="f-sec"><h4>%s</h4><a href="/about" class="f-owner">%s<br>%s</a></div>'
-        '<div class="f-sec"><h4>%s</h4>'
-        '<a class="f-tg" href="%s" target="_blank" rel="noopener">' + ui_icons.svg("message-circle", 18) + ' %s</a>'
+        '<div class="f-sec" data-sec="contact">'
+        '<a class="f-tg" href="%s">' + ui_icons.svg("mail", 18) + ' %s</a>'
         '</div>'
         '</div>'
         '<div class="f-links">'
@@ -1993,19 +1994,18 @@ def _footer():
         '%s'
         '</div>'
         '%s'
-        '<hr class="f-sep" aria-hidden="true"><p class="f-love"><span>%s</span> <b>%s</b></p>'
-        '<p class="f-copy">%s</p>'
+        '<hr class="f-sep" aria-hidden="true">'
+        '<p class="f-copy" dir="ltr">%s</p>'
         '</div></div>'
     ) % (_t("footer_slogan"),
          _t("footer_synopsis_t"), _t("footer_synopsis_d"),
          _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
-         _t("footer_contact_t"), tg, _t("footer_wa_btn"),
+         tg, html_lib.escape(CONTACT_EMAIL),
          _t("footer_privacy"), _t("footer_terms"),
          ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
          ("سجل التحديثات" if _lang() == "ar" else "Changelog"),
          ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
          _accountability_html(_lang() == "ar"),
-         _t("footer_love"), _t("footer_love_name"),
          _t("footer_copy_full"))
 
 
@@ -2076,7 +2076,7 @@ def app_shell_v112_css():
     response = Response(css, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v291")
+    response.set_etag("symptosense-app-shell-v112-v292")
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2612,7 +2612,7 @@ def changelog_page():
 def contact_page():
     ar = _lang() == "ar"
     title = "تواصل معنا" if ar else "Contact us"
-    tg_url = ("https://t.me/" + CONTACT_TELEGRAM) if CONTACT_TELEGRAM else ""
+    mail_url = "mailto:" + CONTACT_EMAIL
     body = """
     <main class="v2-info-page ss-contact-page" aria-labelledby="contactTitle">
       <section>
@@ -2624,10 +2624,11 @@ def contact_page():
     </main>
     <style>
       .ss-contact-page section{max-width:720px;margin-inline:auto;text-align:center}
+      .ss-contact-page .ss-contact-mail{margin:10px 0 0;font-weight:700;user-select:all}
       .ss-contact-page .ss-contact-action{display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:0 20px;border-radius:14px;background:#1F6FAE;color:#fff;font-weight:800;text-decoration:none}
     </style>
     """
-    action = ('<a class="ss-contact-action" href="%s" target="_blank" rel="noopener noreferrer">%s</a>' % (html_lib.escape(tg_url, quote=True), ("فتح Telegram" if ar else "Open Telegram"))) if tg_url else ''
+    action = ('<a class="ss-contact-action" href="%s">%s</a><p class="ss-contact-mail" dir="ltr">%s</p>' % (html_lib.escape(mail_url, quote=True), ("راسلنا بالبريد الإلكتروني" if ar else "Email us"), html_lib.escape(CONTACT_EMAIL)))
     values = {
         "__TITLE__": title,
         "__INTRO__": ("للاستفسارات العامة المتعلقة بالموقع يمكنك استخدام قناة التواصل الرسمية أدناه." if ar else "For general questions about the site, use the official contact channel below."),
@@ -3655,10 +3656,10 @@ def how_we_work_page():
     source_fragment = _extract_main_as_div(source_html)
     extra_css = _extract_styles(trust_html, (".trust-page", ".trust-hero")) + "\n" + _extract_styles(method_html, (".method-page", ".method-hero"))
     shell_css = r"""
-    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#123B70;font-size:clamp(28px,4vw,42px)}.ia-hub-head p{margin:8px 0 0;color:#566a7d;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
+    .ia-hub{width:min(1120px,100%);margin:auto;display:grid;gap:16px}.ia-hub-head{padding:24px;border:1px solid #dce8f0;border-radius:22px;background:linear-gradient(135deg,#f8fcff,#f3f9fd)}.ia-hub-head h1{margin:0;color:#123B70;font-size:clamp(28px,4vw,42px)}.ia-kg-link{display:inline-flex;margin-top:10px;font-weight:800;color:#1F6FAE;text-decoration:none;border:1px solid #CFE0F0;background:#fff;border-radius:12px;padding:9px 14px;line-height:1.6}.ia-hub-head p{margin:8px 0 0;color:#566a7d;line-height:1.8}.ia-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:5;padding:8px;border:1px solid #dce8f0;border-radius:16px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}.ia-tabs a{flex:1;min-width:150px;text-align:center;text-decoration:none;padding:10px 12px;border-radius:11px;color:#456276;font-weight:900}.ia-tabs a.on,.ia-tabs a:hover{background:#eaf5fc;color:#1e6e9f}.ia-panel{display:none}.ia-panel.on{display:block}.ia-panel>div{width:100%!important;max-width:none!important;margin:0!important}.ia-anchor{scroll-margin-top:90px}@media(max-width:620px){.ia-hub-head{padding:19px 16px}.ia-tabs{position:static}.ia-tabs a{min-width:0;font-size:12px}}
     """
     body = '''<div class="ia-hub">
-      <section class="ia-hub-head"><h1>%s</h1><p>%s</p></section>
+      <section class="ia-hub-head"><h1>%s</h1><p>%s</p><a class="ia-kg-link" href="/knowledge-graph">%s</a></section>
       <nav class="ia-tabs" aria-label="%s"><a href="#trust" data-ia-tab="trust">%s</a><a href="#methodology" data-ia-tab="methodology">%s</a><a href="#sources" data-ia-tab="sources">%s</a></nav>
       <section id="trust" class="ia-panel ia-anchor" data-ia-panel="trust">%s</section>
       <section id="methodology" class="ia-panel ia-anchor" data-ia-panel="methodology">%s</section>
@@ -3666,7 +3667,7 @@ def how_we_work_page():
     </div>
     <script>(function(){var tabs=[].slice.call(document.querySelectorAll('[data-ia-tab]'));var panels=[].slice.call(document.querySelectorAll('[data-ia-panel]'));function show(name){if(!name||!document.querySelector('[data-ia-panel="'+name+'"]'))name='trust';tabs.forEach(function(a){a.classList.toggle('on',a.dataset.iaTab===name);});panels.forEach(function(p){p.classList.toggle('on',p.dataset.iaPanel===name);});}tabs.forEach(function(a){a.addEventListener('click',function(){show(this.dataset.iaTab);});});window.addEventListener('hashchange',function(){show(location.hash.slice(1));});show(location.hash.slice(1));})();</script>''' % (
         "كيف يعمل SymptoSense" if ar else "How SymptoSense works",
-        "الثقة والأمان، المنهجية، والمصادر الطبية في مكان واحد." if ar else "Trust and safety, methodology, and medical sources in one place.",
+        "الثقة والأمان، المنهجية، والمصادر الطبية في مكان واحد." if ar else "Trust and safety, methodology, and medical sources in one place.", "استكشف شبكة المعرفة الصحية: كيف ترتبط الأعراض والحالات والتحاليل والمصادر ←" if ar else "Explore the health knowledge graph: how symptoms, conditions, tests and sources link →",
         "أقسام كيف نعمل" if ar else "How we work sections",
         "الثقة والأمان" if ar else "Trust & safety",
         "المنهجية" if ar else "Methodology",
@@ -3809,7 +3810,7 @@ def localized_page_dispatch(lang_code, subpath):
         "settings": "settings", "manage": "manage_page", "memory": "memory_page",
         "login": "login", "register": "register", "verify-email": "verify_email_pending",
         "forgot-password": "forgot_password", "health-command-center": "health_command_center",
-        "privacy-center": "privacy_center", "consent": "consent", "health-file": "health_file_page", "vitals": "vitals_page", "live-demo": "live_demo_page",
+        "privacy-center": "privacy_center", "consent": "consent", "health-file": "health_file_page", "vitals": "vitals_page", "live-demo": "live_demo_page", "knowledge-graph": "knowledge_graph_page",
     }
     endpoint = endpoint_map.get(subpath)
     if not endpoint:
@@ -5103,7 +5104,7 @@ def _assistant_compact_response(answer, lang="ar", mode=""):
     Emergency / crisis instructions are intentionally left untouched so safety
     information and phone numbers are never truncated.
     """
-    text = str(answer or "").strip()
+    text = __import__("assistant_tidy").tidy(answer, lang)
     if not text:
         return text
     low = text.lower()
@@ -5326,12 +5327,20 @@ def _plain_topic_curated_result(query, lang):
     return None
 
 
+def _explain_card(term, lang):  # the same card /api/search shows, for topics outside the glossary
+    with app.test_request_context("/api/search", query_string={"q": term, "lang": lang}):
+        return (__import__("routes.assistant", fromlist=["x"]).api_search().get_json(silent=True) or {}).get("result")
+
+
 @app.route("/api/explain")
 def api_explain():
     try:
         lang = "en" if request.args.get("lang") == "en" else "ar"
         term = (request.args.get("term") or "").strip()[:120]
-        return jsonify({"ok": True, "result": health_search.explain_term(term, lang) if term else None})
+        result = health_search.explain_term(term, lang) if term else None
+        if result is None and term:
+            result = health_search.explain_from_card(term, _explain_card(term, lang), lang)
+        return jsonify({"ok": True, "result": result})
     except Exception as e:
         return _mk_error(e, 500)
 
@@ -5788,8 +5797,8 @@ pagelib_pages_html.bind(globals())
 
 services_search_answers.bind(globals())
 
-import live_demo  # public 3-minute demo on the real engine (V285)
-live_demo.register_routes(app, page=_page, lang_getter=_lang, request_allowed=_request_allowed)
+import live_demo, doctor_summary, knowledge_graph  # V285 public demo; V292 bilingual doctor summary + knowledge graph
+for _feature in (live_demo, doctor_summary, knowledge_graph): _feature.register_routes(app, page=_page, lang_getter=_lang, request_allowed=_request_allowed, **({"consent_ok": _service_consent_ok} if _feature is doctor_summary else {}))
 
 if __name__ == "__main__":
     run_webapp()

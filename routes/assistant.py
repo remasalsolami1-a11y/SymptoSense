@@ -819,7 +819,7 @@ def api_assistant():
         msgs = [{"role": "system", "content": sys}] + hist
         try:
             r = _groq_chat_completion_with_retry(
-                msgs, temperature=0.5, max_completion_tokens=240, timeout=6,
+                msgs, temperature=0.5, max_completion_tokens=320, timeout=6,
             )
             answer = r.choices[0].message.content.strip()
             if not answer:

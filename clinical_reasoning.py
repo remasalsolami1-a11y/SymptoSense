@@ -37,6 +37,24 @@ _Q = {
     "age": ("كم عمرك؟", "How old are you?"),
 }
 _PRIOR = {"very_common", "common"}
+_STRENGTH = {"strong": ("أدلة قوية", "Strong evidence"), "moderate": ("أدلة متوسطة", "Moderate evidence"),
+             "weak": ("أدلة ضعيفة", "Weak evidence")}
+
+
+def _symptom_name(sym, lang):
+    """Show a symptom id (``stiff-neck``) as the name the visitor reads, never the raw id."""
+    sid = str(sym or "").strip()
+    try:
+        import medical_knowledge
+        names = getattr(_symptom_name, "_names", None)
+        if names is None:
+            names = {row[0]: (row[1], row[2]) for row in medical_knowledge.SYMPTOMS}
+            _symptom_name._names = names
+        if sid in names:
+            return names[sid][1 if lang == "en" else 0]
+    except (ImportError, AttributeError, IndexError, TypeError):
+        pass
+    return sid.replace("-", " ").replace("_", " ")
 
 
 def _t(ar, en, lang):
@@ -56,7 +74,7 @@ def _possibilities(matches, lang):
     for m in (matches or [])[:3]:
         matched = [_name(s, lang) for s in m.get("matched_symptoms") or []]
         matched_slugs = {s.get("slug") for s in m.get("matched_symptoms") or []}
-        against = [str(x) for x in (m.get("negative_evidence") or [])][:3]
+        against = [str(x) for x in (m.get("negative_evidence_names") or [_symptom_name(x, lang) for x in (m.get("negative_evidence") or [])])][:3]
         unreported = []
         try:
             ent = medical_knowledge.get_entity("disease", m.get("disease_id"), public=True) or {}
@@ -65,11 +83,18 @@ def _possibilities(matches, lang):
                     unreported.append(_name(s, lang))
         except (KeyError, TypeError, ValueError) as exc:
             ops_metrics.event_error("reasoning_entity", type(exc).__name__)
+        # V292: only what the user actually denied counts against a possibility. A common symptom the
+        # user simply did not mention is unknown, not absent, so it goes to "would help to know".
+        level = m.get("match_level") or "weak"
         out.append({
-            "name": _name(m, lang), "match_level": m.get("match_level"),
+            "name": _name(m, lang), "match_level": level,
+            "strength": _STRENGTH.get(level, _STRENGTH["weak"])[0 if lang != "en" else 1],
+            "strength_note": _t("طابق %d من أعراضك", "Matched %d of your symptoms", lang) % len(matched),
             "why": matched,
-            "against": ([_t("غياب: ", "Denied: ", lang) + x for x in against]
-                        + [_t("لم تذكر عرضًا شائعًا في هذا النمط: ", "Not reported, though common in this pattern: ", lang) + x for x in unreported[:2]])[:4],
+            "why_source": _t("قلتها أنت", "You said this", lang),
+            "against": [_t("نفيتَ: ", "You denied: ", lang) + x for x in against][:3],
+            "unknown": unreported[:2],
+            "kind": _t("احتمال يستنتجه النظام من المطابقة، وليس تشخيصًا", "A possibility the system infers from matching, not a diagnosis", lang),
         })
     return out
 
@@ -159,7 +184,7 @@ def analyze(result, d, user_id=None, previous=None, lang="ar"):
         not_supported.append(_t("لا توجد في ما أدخلتَه علامات خطر تستدعي الطوارئ الآن.", "Nothing you entered points to an emergency right now.", lang))
     negs = list(d.get("negative_symptoms") or d.get("negatives") or [])
     if negs:
-        not_supported.append(_t("ذكرتَ غياب: ", "You reported no: ", lang) + "، ".join(map(str, negs[:5])))
+        not_supported.append(_t("ذكرتَ غياب: ", "You reported no: ", lang) + ("، " if lang != "en" else ", ").join(_symptom_name(n, lang) for n in negs[:5]))
 
     gaps = [k for k in _GAPS if k in set(decision_card.missing_keys(d))]
     missing_top2 = [{"key": k, "question": _t(*_Q[k], lang)} for k in gaps[:2]]

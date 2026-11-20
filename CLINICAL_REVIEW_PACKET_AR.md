@@ -1,22 +1,25 @@
 # حزمة المراجعة السريرية — SymptoSense
 
 > **مولَّدة تلقائيًا من الكود** بـ `python tools/clinical_packet.py` — لا تعدّلها يدويًا. تصف **ما يفعله المنتج الآن** ولا تقترح قيمًا طبية.
-> لا يوجد أي اعتماد حتى الآن. الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه:
-> `python tools/signoff.py approve <area> --reviewer "الاسم" --credentials "الترخيص" --date YYYY-MM-DD --notes "..."`
+> لا يوجد أي اعتماد حتى الآن. الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه وبتاريخ مراجعة حدثت فعلًا (لا يُقبل تاريخ مستقبلي):
+> `python tools/signoff.py start-review <area> --reviewer "الاسم" --organization "الجهة" --scope "ما سيُراجَع"`
+> `python tools/signoff.py approve <area> --reviewer "الاسم" --credentials "الترخيص" --organization "الجهة" --scope "ما رُوجع" --date YYYY-MM-DD --notes "..."`
+> أو `reject` بالبيانات نفسها إذا لم يُعتمد المحتوى. المؤهلات كما ذكرها المراجِع، ولا يتحقق SymptoSense من الترخيص لدى أي جهة.
 > كل ملف CSV في `clinical_review/` فيه عمودان فارغان للقرار والملاحظات.
 
 ## حالة المجالات
 | المجال | الاسم | الحالة | ملف المراجعة |
 |---|---|---|---|
-| emergency_rules | قواعد الطوارئ وشاشة التوقف | … بانتظار الاعتماد | `clinical_review/emergency_rules.csv` |
-| redflag_screens | أسئلة فحص علامات الخطر | … بانتظار الاعتماد | `clinical_review/redflag_screens.csv` |
-| search_new_v251 | مواضيع البحث الجديدة (الحساسية، عرق النسا، الهلع، انخفاض الضغط، زغللة، اكتئاب) | … بانتظار الاعتماد | `clinical_review/search_new_v251.csv` |
-| search_base | مكتبة مواضيع البحث | … بانتظار الاعتماد | `clinical_review/search_base.csv` |
-| lab_cards | بطاقات التحاليل | … بانتظار الاعتماد | `clinical_review/lab_cards.csv` |
-| library_core | مكتبة الأعراض والأمراض | … بانتظار الاعتماد | `clinical_review/library_core.csv` |
-| vitals_thresholds | حدود تنبيهات القياسات المنزلية (ضغط، سكر، حرارة، نبض، SpO₂) | … بانتظار الاعتماد | `clinical_review/vitals_thresholds.csv` |
-| medication_context | ربط الأدوية بالأعراض والحالات (من نصوص الكتالوج) | … بانتظار الاعتماد | القسم 8 |
-| clinical_reasoning | منطق الصورة السريرية وقواعد رفع مستوى المتابعة | … بانتظار الاعتماد | `clinical_review/clinical_reasoning.csv` |
+| emergency_rules | قواعد الطوارئ وشاشة التوقف | بانتظار المراجعة السريرية | `clinical_review/emergency_rules.csv` |
+| redflag_screens | أسئلة فحص علامات الخطر | بانتظار المراجعة السريرية | `clinical_review/redflag_screens.csv` |
+| search_new_v251 | مواضيع البحث الجديدة (الحساسية، عرق النسا، الهلع، انخفاض الضغط، زغللة، اكتئاب) | بانتظار المراجعة السريرية | `clinical_review/search_new_v251.csv` |
+| search_base | مكتبة مواضيع البحث | بانتظار المراجعة السريرية | `clinical_review/search_base.csv` |
+| lab_cards | بطاقات التحاليل | بانتظار المراجعة السريرية | `clinical_review/lab_cards.csv` |
+| library_core | مكتبة الأعراض والأمراض | بانتظار المراجعة السريرية | `clinical_review/library_core.csv` |
+| vitals_thresholds | حدود تنبيهات القياسات المنزلية (ضغط، سكر، حرارة، نبض، SpO₂) | بانتظار المراجعة السريرية | `clinical_review/vitals_thresholds.csv` |
+| medication_context | ربط الأدوية بالأعراض والحالات (من نصوص الكتالوج) | بانتظار المراجعة السريرية | القسم 8 |
+| clinical_reasoning | منطق الصورة السريرية وقواعد رفع مستوى المتابعة | بانتظار المراجعة السريرية | `clinical_review/clinical_reasoning.csv` |
+| knowledge_base | قاعدة المعرفة: الحالات الصحية والأعراض وروابطها | بانتظار المراجعة السريرية | `clinical_review/knowledge_base.csv` |
 
 ## 1) emergency_rules — قواعد الطوارئ وشاشة التوقف
 مجموعة ذهبية من **293** عبارة (لهجات وأخطاء إملائية وضوابط سلبية). الفرق بين المتوقع والفعلي: **0**. القواعد نفسها تعبيرات نمطية في `emergency_lexicon.py` و`safety_engine.py`؛ المراجعة الفعلية: هل **المتوقع** في كل صف صحيح سريريًا؟ وما العبارات المفقودة؟
@@ -241,3 +244,6 @@
 نافذة «دواء بدأ حديثًا»: **21 يومًا**.
 
 > **لا تُكتب تداخلات دوائية أو شدّتها من الذاكرة.** مصدرها الوحيد كتالوج مرخّص يراجعه صيدلاني. انظر `MEDICAL_REVIEW_NEEDED.md` للبنود المفتوحة.
+
+## 9) knowledge_base — روابط الحالات بالأعراض
+158 حالة، ولكل حالة الأعراض المرتبطة بها ومصادرها. المطلوب: التأكد أن كل عرض مرتبط بالحالة فعلًا وأن لا رابط ناقصًا مهمًا. الملف: `clinical_review/knowledge_base.csv`. تعديل السجل لا يُحسب مراجعة سريرية؛ تاريخ المراجعة يأتي فقط من اعتماد المراجِع هنا.

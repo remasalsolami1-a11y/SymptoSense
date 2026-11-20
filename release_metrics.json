@@ -1,7 +1,7 @@
 {
-  "delivery_revision": "V291",
-  "test_files": 265,
+  "delivery_revision": "V292",
+  "test_files": 270,
   "safety_regression_cases": 11,
-  "note": "V291: interface review — one line-icon set, readable text sizes, start button first on phones, four clear home figures, assistant button off key pages, Arabic footer, English wording, versioned shared stylesheet. Clinical sign-off remains pending.",
+  "note": "V292: clinical review dates come only from a named clinician's sign-off (with history and review intervals); follow-up questions say which possibilities they separate; results show evidence strength and what the user said vs what the system inferred, and an unmentioned symptom is never counted against a possibility; doctor summary in Arabic and English; a health knowledge graph built from the engine's own links. Clinical sign-off remains pending.",
   "deployment_fix": "Arabic medication pages no longer dump long English label text; source-grounded summaries are cached, with an Arabic-only safe fallback if translation is unavailable."
 }

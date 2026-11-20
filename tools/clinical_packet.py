@@ -77,13 +77,16 @@ def build() -> tuple[str, dict[str, str]]:
     A("# حزمة المراجعة السريرية — SymptoSense")
     A("")
     A("> **مولَّدة تلقائيًا من الكود** بـ `python tools/clinical_packet.py` — لا تعدّلها يدويًا. تصف **ما يفعله المنتج الآن** ولا تقترح قيمًا طبية.")
-    A("> لا يوجد أي اعتماد حتى الآن. الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه:")
-    A("> `python tools/signoff.py approve <area> --reviewer \"الاسم\" --credentials \"الترخيص\" --date YYYY-MM-DD --notes \"...\"`")
+    n_ok = sum(1 for v in signoff.values() if cs.state(v) == "approved")
+    A(("> لا يوجد أي اعتماد حتى الآن." if not n_ok else f"> المجالات المعتمدة حاليًا: {n_ok} من {len(signoff)}.") + " الاعتماد يُسجَّل فقط ببيانات المراجِع نفسه وبتاريخ مراجعة حدثت فعلًا (لا يُقبل تاريخ مستقبلي):")
+    A("> `python tools/signoff.py start-review <area> --reviewer \"الاسم\" --organization \"الجهة\" --scope \"ما سيُراجَع\"`")
+    A("> `python tools/signoff.py approve <area> --reviewer \"الاسم\" --credentials \"الترخيص\" --organization \"الجهة\" --scope \"ما رُوجع\" --date YYYY-MM-DD --notes \"...\"`")
+    A("> أو `reject` بالبيانات نفسها إذا لم يُعتمد المحتوى. " + cs.CREDENTIALS_NOTE[0])
     A("> كل ملف CSV في `clinical_review/` فيه عمودان فارغان للقرار والملاحظات.")
     A("")
     A("## حالة المجالات")
     A(_md_table(["المجال", "الاسم", "الحالة", "ملف المراجعة"], [
-        [k, v["title_ar"], "✔ معتمد" if cs.is_reviewed(v) else "… بانتظار الاعتماد", f"`clinical_review/{k}.csv`" if k != "medication_context" else "القسم 8"]
+        [k, v["title_ar"], cs.STATE_LABELS[cs.state(v)][0], f"`clinical_review/{k}.csv`" if k != "medication_context" else "القسم 8"]
         for k, v in signoff.items()]))
     A("")
 
@@ -259,6 +262,18 @@ def build() -> tuple[str, dict[str, str]]:
     A(f"\nنافذة «دواء بدأ حديثًا»: **{mc.RECENT_DAYS} يومًا**.")
     A("")
     A("> **لا تُكتب تداخلات دوائية أو شدّتها من الذاكرة.** مصدرها الوحيد كتالوج مرخّص يراجعه صيدلاني. انظر `MEDICAL_REVIEW_NEEDED.md` للبنود المفتوحة.")
+    A("")
+    # 9 knowledge base links (V292) -----------------------------------------
+    import medical_knowledge as _mk
+    _names = {row[0]: row[1] for row in _mk.SYMPTOMS}
+    kb_rows = []
+    for dz in _mk.DISEASES:
+        syms = [x if isinstance(x, str) else (x.get("slug") or x.get("id") or "") for x in (dz.get("symptoms") or [])]
+        srcs = "; ".join(f"{x[1]} ({x[3]})" if isinstance(x, (list, tuple)) and len(x) >= 4 else str(x) for x in (dz.get("sources") or []))
+        kb_rows.append([dz.get("slug"), dz.get("name_ar"), dz.get("severity"), "، ".join(_names.get(x, x) for x in syms), srcs, ""])
+    files["knowledge_base.csv"] = _csv(kb_rows, ["slug", "name_ar", "severity", "linked_symptoms_ar", "sources", "decision"])
+    A("## 9) knowledge_base — روابط الحالات بالأعراض")
+    A(f"{len(kb_rows)} حالة، ولكل حالة الأعراض المرتبطة بها ومصادرها. المطلوب: التأكد أن كل عرض مرتبط بالحالة فعلًا وأن لا رابط ناقصًا مهمًا. الملف: `clinical_review/knowledge_base.csv`. تعديل السجل لا يُحسب مراجعة سريرية؛ تاريخ المراجعة يأتي فقط من اعتماد المراجِع هنا.")
     A("")
     # one standalone, short file per section so a reviewer can take a single area at a time
     import re as _re
