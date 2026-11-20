@@ -1,0 +1,7 @@
+{
+  "delivery_revision": "V291",
+  "test_files": 265,
+  "safety_regression_cases": 11,
+  "note": "V291: interface review — one line-icon set, readable text sizes, start button first on phones, four clear home figures, assistant button off key pages, Arabic footer, English wording, versioned shared stylesheet. Clinical sign-off remains pending.",
+  "deployment_fix": "Arabic medication pages no longer dump long English label text; source-grounded summaries are cached, with an Arabic-only safe fallback if translation is unavailable."
+}

@@ -1,0 +1,121 @@
+
+/* ===== Symptom selection — organized inline body-map layout 2026-09-19 ===== */
+body.ss-chat-page[data-chat-step="symptoms"] #chatBody .step-focus-card{
+  border:1px solid #D7E7F1!important;border-radius:20px!important;
+  padding:18px!important;background:#fff!important;
+  box-shadow:0 8px 24px rgba(24,78,116,.06)!important;
+}
+body.ss-chat-page[data-chat-step="symptoms"] .step-focus-question{margin-bottom:2px!important}
+body.ss-chat-page .symptom-selected-bar{
+  display:grid;gap:3px;margin-top:12px;padding:10px 12px;border-radius:13px;
+  background:#EEF7FD;border:1px solid #D4E8F4;color:#123B70;
+}
+body.ss-chat-page .symptom-selected-bar b{font-size:11px;color:#1f6fae}
+body.ss-chat-page .symptom-selected-bar span{font-size:12.5px;line-height:1.65;font-weight:700}
+body.ss-chat-page .symptom-entry-card{
+  margin-top:14px;padding:14px;border:1px solid #DCEAF3;border-radius:16px;
+  background:#F9FCFE;box-shadow:none;
+}
+body.ss-chat-page .symptom-section-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+body.ss-chat-page .symptom-section-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:#EAF5FC;font-size:17px}
+body.ss-chat-page .symptom-section-head b{display:block;color:#123B70;font-size:14px;line-height:1.4}
+body.ss-chat-page .symptom-section-head small{display:block;margin-top:3px;color:#6B7F90;font-size:11.5px;line-height:1.6}
+body.ss-chat-page .symptom-main-text{width:100%!important;min-height:86px!important;resize:vertical!important;border-radius:13px!important;background:#fff!important}
+body.ss-chat-page .symptom-text-row{display:flex;gap:8px;align-items:flex-start}
+body.ss-chat-page .symptom-text-row .symptom-main-text{flex:1}
+body.ss-chat-page .symptom-mic-btn{flex:0 0 auto;width:44px;height:44px;min-height:44px;border-radius:12px;border:1px solid var(--border-card,#DCEBFA);background:var(--primary-light,#EAF4FF);font-size:18px;cursor:pointer;display:grid;place-items:center;color:var(--primary,#1F6FAE);transition:background .15s,color .15s}
+body.ss-chat-page .symptom-mic-btn:hover{background:var(--primary,#1F6FAE);color:#fff}
+body.ss-chat-page .symptom-mic-btn.is-recording{background:#c81e1e;color:#fff;border-color:#c81e1e;animation:symptomMicPulse 1.2s ease-in-out infinite}
+@keyframes symptomMicPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
+body.ss-chat-page .symptom-understand-btn{width:100%!important;min-height:44px!important;margin-top:8px!important;border-radius:12px!important}
+body.ss-chat-page .symptom-mini-label{margin:12px 0 7px;color:#566a7d;font-size:11px;font-weight:900}
+body.ss-chat-page .quick-symptom-chips{gap:7px!important}
+body.ss-chat-page .quick-symptom-chip{min-height:44px!important;padding:7px 11px!important;background:#fff!important}
+
+body.ss-chat-page .symptom-bodymap-disclosure{
+  margin-top:12px;border:1px solid #D8E8F2;border-radius:16px;background:#fff;overflow:hidden;
+}
+body.ss-chat-page .symptom-bodymap-header{min-height:58px;padding:10px 12px;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;background:#F8FCFF;color:#123B70}
+body.ss-chat-page .body-region-conflict-note{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}body.ss-chat-page .body-region-conflict-note span{padding:7px 10px;border:1px solid #D8E8F2;border-radius:999px;background:#F8FCFF;color:#123B70;font-size:11px;font-weight:800}
+body.ss-chat-page .symptom-bodymap-summary-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#EAF5FC;font-size:18px}
+body.ss-chat-page .symptom-bodymap-summary-copy b{display:block;font-size:13.5px;line-height:1.4}
+body.ss-chat-page .symptom-bodymap-summary-copy small{display:block;margin-top:2px;font-size:11px;line-height:1.5;color:#6A7D8E;font-weight:600}
+body.ss-chat-page .smart-body-selected-badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#EAF7F0;color:#1E6846;font-size:10px;font-weight:900}
+body.ss-chat-page .body-region-specific-reminder{margin:0 12px 12px;padding:9px 10px;border-radius:11px;background:#FFF8E7;border:1px solid #F3E1A8;color:#7B5A18;font-size:11px;font-weight:800}
+body.ss-chat-page .symptom-bodymap-inline{margin:0!important;padding:0 12px 12px;border-top:1px solid #E6EFF5}
+body.ss-chat-page .step-focus-card .smart-body-card{margin:0!important;padding:12px 0 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+body.ss-chat-page .smart-body-shell{margin-top:0!important;grid-template-columns:minmax(230px,300px) minmax(0,1fr)!important;gap:12px!important}
+body.ss-chat-page .smart-body-stage{min-height:340px!important;border-radius:15px!important}
+body.ss-chat-page .smart-body-results{min-height:340px!important;border-radius:15px!important}
+body.ss-chat-page .smart-body-region-head{gap:6px!important}
+
+body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker{
+  margin-top:12px!important;border:1px solid #D7E7F1!important;border-radius:20px!important;
+  padding:14px!important;background:#fff!important;box-shadow:0 8px 24px rgba(24,78,116,.05)!important;
+}
+body.ss-chat-page .symptom-picker-heading{grid-column:1/-1;display:grid;gap:2px;padding:0 2px 7px;border-bottom:1px solid #EDF3F7;margin-bottom:2px}
+body.ss-chat-page .symptom-picker-heading b{font-size:13px;color:#123B70}
+body.ss-chat-page .symptom-picker-heading small{font-size:11px;color:#6A7D8E}
+body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker .start-btn{
+  order:999!important;grid-column:1/-1!important;margin:8px 0 0!important;min-height:50px!important;border-radius:13px!important;
+}
+body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker #relBlock{grid-column:1/-1!important;order:998!important;margin-top:6px!important}
+
+@media(max-width:900px){
+  body.ss-chat-page[data-chat-step="symptoms"] #chatBody:not(.result-mode){padding:14px 12px 0!important}
+  body.ss-chat-page[data-chat-step="symptoms"] #chatBody .step-focus-card{margin:0!important;padding:15px!important;border:1px solid #D7E7F1!important;border-radius:18px!important}
+  body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker{margin:12px 12px 14px!important;padding:11px!important;border:1px solid #D7E7F1!important;border-radius:18px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.ss-chat-page .smart-body-shell{grid-template-columns:1fr!important}
+  body.ss-chat-page .smart-body-results{min-height:0!important}
+}
+@media(max-width:540px){
+  body.ss-chat-page[data-chat-step="symptoms"] #chatBody:not(.result-mode){padding:10px 8px 0!important}
+  body.ss-chat-page[data-chat-step="symptoms"] #chatBody .step-focus-card{padding:12px!important;border-radius:16px!important}
+  body.ss-chat-page .symptom-entry-card{padding:12px!important;border-radius:14px!important;margin-top:10px!important}
+  body.ss-chat-page .symptom-section-head{margin-bottom:8px!important}
+  body.ss-chat-page .symptom-main-text{min-height:78px!important}
+  body.ss-chat-page .symptom-bodymap-disclosure{border-radius:14px!important;margin-top:10px!important}
+  body.ss-chat-page .symptom-bodymap-header{grid-template-columns:32px minmax(0,1fr);min-height:52px;padding:9px 10px;gap:8px}
+  body.ss-chat-page .symptom-bodymap-summary-icon{width:30px;height:30px;font-size:15px}
+  body.ss-chat-page .symptom-bodymap-summary-copy b{font-size:12.5px}
+  body.ss-chat-page .symptom-bodymap-summary-copy small{font-size:10.25px;line-height:1.45}
+  body.ss-chat-page .symptom-bodymap-inline{padding:0 8px 9px!important}
+  body.ss-chat-page .smart-body-card{padding-top:9px!important}
+  body.ss-chat-page .smart-body-copy{padding:0 2px 8px!important}
+  body.ss-chat-page .smart-body-copy b{font-size:13.5px!important}
+  body.ss-chat-page .smart-body-copy p{font-size:11px!important;line-height:1.55!important;margin-top:3px!important}
+  body.ss-chat-page .smart-body-stage{min-height:0!important;padding:10px!important;overflow:visible!important}
+  body.ss-chat-page .smart-body-toolbar{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin-bottom:10px!important}
+  body.ss-chat-page .smart-body-hint{text-align:center!important;font-size:10.5px!important;line-height:1.45!important}
+  body.ss-chat-page .smart-body-toggle{justify-self:center!important;width:min(220px,100%)!important;display:grid!important;grid-template-columns:1fr 1fr!important}
+  body.ss-chat-page .smart-toggle-btn{min-height:38px!important;padding:6px 8px!important}
+  body.ss-chat-page .smart-body-figure-wrap{height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding-top:178px!important;align-items:stretch!important}
+  body.ss-chat-page .smart-body-figure{top:4px!important;width:76px!important;height:168px!important;transform:translateX(-50%) scale(.92)!important;transform-origin:top center!important}
+  body.ss-chat-page .smart-body-figure .body-head{width:34px!important;height:34px!important}
+  body.ss-chat-page .smart-body-figure .body-torso{top:36px!important;width:52px!important;height:70px!important;border-radius:18px!important}
+  body.ss-chat-page .smart-body-figure .body-arm{top:42px!important;width:15px!important;height:80px!important}
+  body.ss-chat-page .smart-body-figure .body-arm.left{left:5px!important}
+  body.ss-chat-page .smart-body-figure .body-arm.right{right:5px!important}
+  body.ss-chat-page .smart-body-figure .body-leg{top:104px!important;width:18px!important;height:72px!important}
+  body.ss-chat-page .smart-body-figure .body-leg.left{left:20px!important}
+  body.ss-chat-page .smart-body-figure .body-leg.right{right:20px!important}
+  body.ss-chat-page .smart-body-part{position:static!important;transform:none!important;width:100%!important;min-height:42px!important;padding:8px 9px!important;border-radius:12px!important;font-size:11px!important;line-height:1.35!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;box-shadow:none!important}
+  body.ss-chat-page .smart-body-part.head,body.ss-chat-page .smart-body-part.throat,body.ss-chat-page .smart-body-part.chest,body.ss-chat-page .smart-body-part.abdomen,body.ss-chat-page .smart-body-part.arms,body.ss-chat-page .smart-body-part.legs,body.ss-chat-page .smart-body-part.skin,body.ss-chat-page .smart-body-part.back{left:auto!important;right:auto!important;top:auto!important;bottom:auto!important}
+  body.ss-chat-page .smart-body-results{min-height:0!important;padding:10px!important;margin-top:8px!important;border-radius:13px!important}
+  body.ss-chat-page .smart-body-results:has(.smart-body-empty){display:none!important}
+  body.ss-chat-page .smart-body-region-head b{font-size:13px!important}
+  body.ss-chat-page .smart-body-region-head small,body.ss-chat-page .smart-body-region-head span{font-size:10.5px!important}
+  body.ss-chat-page .smart-body-symptom-chips{gap:6px!important}
+  body.ss-chat-page .smart-body-symptom{padding:7px 9px!important;font-size:11px!important}
+  body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker{margin:10px 8px 12px!important;padding:9px!important;gap:7px!important;border-radius:16px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker .opt{min-height:44px!important;font-size:12px!important;border-radius:11px!important;padding:8px!important}
+  body.ss-chat-page .symptom-more-toggle{grid-column:1/-1!important;min-height:42px!important;border:1px dashed #BFD9EA!important;background:#F8FCFF!important;color:#1F6FAE!important;border-radius:11px!important;font-weight:900!important}
+  body.ss-chat-page .quick-symptom-chips{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
+  body.ss-chat-page .quick-symptom-chip{font-size:10.5px!important;min-height:40px!important;padding:6px 5px!important}
+  body.ss-chat-page .chat-wrap{margin-bottom:calc(86px + env(safe-area-inset-bottom))!important}
+}
+@media(max-width:360px){
+  body.ss-chat-page[data-chat-step="symptoms"] #chatOptions.symptom-picker{grid-template-columns:1fr!important}
+  body.ss-chat-page .smart-body-part{font-size:10px!important;padding:6px 8px!important}
+}
+/* V82 motion hierarchy: ECG stays the signature motion; decorative entrance/float/body-map animations are intentionally quiet. */.smart-body-stage.flash,.smart-body-part.pulse,.smart-body-region-card,.res-card,.v2-info-page>section,.card,.float-ic,.au-reveal,.au-portrait-abstract,.au-story-flow,.au-idea-visual{animation:none!important}

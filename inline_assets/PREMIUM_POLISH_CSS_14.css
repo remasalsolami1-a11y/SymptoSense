@@ -1,0 +1,55 @@
+
+/* ===== V191 professional mobile + accessibility hardening ===== */
+:focus-visible{outline:3px solid #0b5f96!important;outline-offset:3px!important}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{border-radius:6px}
+button,a,.btn,[role="button"],input,select,textarea{touch-action:manipulation}
+.em-alert{color:#742020!important;background:#fff6f6!important;border-color:#e8b9b9!important;font-weight:700}
+.em-num.red{color:#8a1f1f!important}.em-call{min-height:48px!important;font-weight:850!important}
+.drop{min-height:180px!important;cursor:pointer!important}.drop:focus-visible{outline:3px solid #0b5f96!important;outline-offset:4px!important}
+#bloodReadBtn{min-height:50px!important}
+#bloodRes,#bloodReadStatus{overflow-wrap:anywhere}
+.chat-wrap,.chat-body,.chat-input,.ss-flow{min-width:0!important;max-width:100%!important}
+.chat-body{overflow-wrap:anywhere}
+@media(max-width:767px){
+  html{font-size:16px!important}
+  body{overflow-x:hidden!important;-webkit-text-size-adjust:100%}
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-size:16px!important;max-width:100%!important}
+  .container,.wrap,.card,.chat-wrap,.labdash,.labx-section{max-width:100%!important;min-width:0!important}
+  img,svg,canvas,video{max-width:100%;height:auto}
+  .chat-wrap{width:100%!important;margin-inline:auto!important}
+  .chat-body{padding-inline:clamp(10px,3.5vw,16px)!important}
+  .chat-input{gap:7px!important;padding-inline:8px!important}
+  .chat-input textarea,.chat-input input{min-width:0!important;width:100%!important}
+  .drop{min-height:150px!important;padding:20px 14px!important}
+  .d-text,.d-note,.d-file{overflow-wrap:anywhere;word-break:break-word}
+  .grid2{grid-template-columns:1fr!important}
+  .blood-consent-card{align-items:flex-start!important}
+  .labx-table-wrap,.table-wrap{max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .labx-results,.labx-source-grid,.labx-flag-list,.labx-trend{grid-template-columns:1fr!important}
+  .labdash-meta .file{max-width:70vw!important}
+  .labdash-meta-btn{margin-inline-start:0!important;width:100%!important;justify-content:center!important}
+  .em-grid3{grid-template-columns:1fr!important}
+  .em-call{width:100%!important;justify-content:center!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* V206 — isolate native binary controls from text-field geometry.
+   Checkboxes/radios must never inherit the 48px text-input min-height/padding. */
+input[type="checkbox"],input[type="radio"]{
+  min-height:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+}
+.ss-feedback-public input[type="checkbox"],
+input[type="checkbox"][data-share],
+input[type="checkbox"][data-prev],
+.delivery-option input[type="radio"]{
+  width:18px!important;
+  height:18px!important;
+  min-width:18px!important;
+  min-height:18px!important;
+  max-width:18px!important;
+  padding:0!important;
+  flex:0 0 18px;
+  accent-color:var(--v2-blue);
+}

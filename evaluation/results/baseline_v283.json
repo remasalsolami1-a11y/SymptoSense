@@ -1,0 +1,2667 @@
+{
+ "conditions": {
+  "en_dev": {
+   "rules": {
+    "n": 60,
+    "accuracy": {
+     "k": 28,
+     "n": 60,
+     "value": 0.4666666666666667,
+     "ci95": [
+      0.3463,
+      0.5911
+     ]
+    },
+    "kappa": 0.2,
+    "high_sensitivity": {
+     "k": 8,
+     "n": 20,
+     "value": 0.4,
+     "ci95": [
+      0.2188,
+      0.6134
+     ]
+    },
+    "high_specificity": {
+     "k": 39,
+     "n": 40,
+     "value": 0.975,
+     "ci95": [
+      0.8712,
+      0.9956
+     ]
+    },
+    "critical_under_triage": {
+     "k": 12,
+     "n": 20,
+     "value": 0.6,
+     "ci95": [
+      0.3866,
+      0.7812
+     ]
+    },
+    "under_triage": {
+     "k": 31,
+     "n": 60,
+     "value": 0.5166666666666667,
+     "ci95": [
+      0.3931,
+      0.6382
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 60,
+     "value": 0.016666666666666666,
+     "ci95": [
+      0.0029,
+      0.0886
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 20,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 19,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 12,
+      "medium": 0,
+      "high": 8
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 60,
+    "accuracy": {
+     "k": 28,
+     "n": 60,
+     "value": 0.4666666666666667,
+     "ci95": [
+      0.3463,
+      0.5911
+     ]
+    },
+    "kappa": 0.2,
+    "high_sensitivity": {
+     "k": 8,
+     "n": 20,
+     "value": 0.4,
+     "ci95": [
+      0.2188,
+      0.6134
+     ]
+    },
+    "high_specificity": {
+     "k": 39,
+     "n": 40,
+     "value": 0.975,
+     "ci95": [
+      0.8712,
+      0.9956
+     ]
+    },
+    "critical_under_triage": {
+     "k": 7,
+     "n": 20,
+     "value": 0.35,
+     "ci95": [
+      0.1812,
+      0.5671
+     ]
+    },
+    "under_triage": {
+     "k": 30,
+     "n": 60,
+     "value": 0.5,
+     "ci95": [
+      0.3774,
+      0.6226
+     ]
+    },
+    "over_triage": {
+     "k": 2,
+     "n": 60,
+     "value": 0.03333333333333333,
+     "ci95": [
+      0.0092,
+      0.1136
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 19,
+      "medium": 1,
+      "high": 0
+     },
+     "medium": {
+      "low": 18,
+      "medium": 1,
+      "high": 1
+     },
+     "high": {
+      "low": 7,
+      "medium": 5,
+      "high": 8
+     }
+    }
+   },
+   "hybrid": {
+    "n": 60,
+    "accuracy": {
+     "k": 31,
+     "n": 60,
+     "value": 0.5166666666666667,
+     "ci95": [
+      0.3931,
+      0.6382
+     ]
+    },
+    "kappa": 0.275,
+    "high_sensitivity": {
+     "k": 11,
+     "n": 20,
+     "value": 0.55,
+     "ci95": [
+      0.3421,
+      0.7418
+     ]
+    },
+    "high_specificity": {
+     "k": 39,
+     "n": 40,
+     "value": 0.975,
+     "ci95": [
+      0.8712,
+      0.9956
+     ]
+    },
+    "critical_under_triage": {
+     "k": 5,
+     "n": 20,
+     "value": 0.25,
+     "ci95": [
+      0.1119,
+      0.4687
+     ]
+    },
+    "under_triage": {
+     "k": 27,
+     "n": 60,
+     "value": 0.45,
+     "ci95": [
+      0.3309,
+      0.5751
+     ]
+    },
+    "over_triage": {
+     "k": 2,
+     "n": 60,
+     "value": 0.03333333333333333,
+     "ci95": [
+      0.0092,
+      0.1136
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 19,
+      "medium": 1,
+      "high": 0
+     },
+     "medium": {
+      "low": 18,
+      "medium": 1,
+      "high": 1
+     },
+     "high": {
+      "low": 5,
+      "medium": 4,
+      "high": 11
+     }
+    }
+   }
+  },
+  "en_test": {
+   "rules": {
+    "n": 120,
+    "accuracy": {
+     "k": 52,
+     "n": 120,
+     "value": 0.43333333333333335,
+     "ci95": [
+      0.3481,
+      0.5227
+     ]
+    },
+    "kappa": 0.15,
+    "high_sensitivity": {
+     "k": 12,
+     "n": 40,
+     "value": 0.3,
+     "ci95": [
+      0.1807,
+      0.4543
+     ]
+    },
+    "high_specificity": {
+     "k": 79,
+     "n": 80,
+     "value": 0.9875,
+     "ci95": [
+      0.9325,
+      0.9978
+     ]
+    },
+    "critical_under_triage": {
+     "k": 28,
+     "n": 40,
+     "value": 0.7,
+     "ci95": [
+      0.5457,
+      0.8193
+     ]
+    },
+    "under_triage": {
+     "k": 67,
+     "n": 120,
+     "value": 0.5583333333333333,
+     "ci95": [
+      0.469,
+      0.644
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 120,
+     "value": 0.008333333333333333,
+     "ci95": [
+      0.0015,
+      0.0457
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 40,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 39,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 28,
+      "medium": 0,
+      "high": 12
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 120,
+    "accuracy": {
+     "k": 54,
+     "n": 120,
+     "value": 0.45,
+     "ci95": [
+      0.3639,
+      0.5392
+     ]
+    },
+    "kappa": 0.175,
+    "high_sensitivity": {
+     "k": 12,
+     "n": 40,
+     "value": 0.3,
+     "ci95": [
+      0.1807,
+      0.4543
+     ]
+    },
+    "high_specificity": {
+     "k": 79,
+     "n": 80,
+     "value": 0.9875,
+     "ci95": [
+      0.9325,
+      0.9978
+     ]
+    },
+    "critical_under_triage": {
+     "k": 14,
+     "n": 40,
+     "value": 0.35,
+     "ci95": [
+      0.2213,
+      0.5049
+     ]
+    },
+    "under_triage": {
+     "k": 62,
+     "n": 120,
+     "value": 0.5166666666666667,
+     "ci95": [
+      0.4281,
+      0.6042
+     ]
+    },
+    "over_triage": {
+     "k": 4,
+     "n": 120,
+     "value": 0.03333333333333333,
+     "ci95": [
+      0.013,
+      0.0826
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 37,
+      "medium": 3,
+      "high": 0
+     },
+     "medium": {
+      "low": 34,
+      "medium": 5,
+      "high": 1
+     },
+     "high": {
+      "low": 14,
+      "medium": 14,
+      "high": 12
+     }
+    }
+   },
+   "hybrid": {
+    "n": 120,
+    "accuracy": {
+     "k": 59,
+     "n": 120,
+     "value": 0.49166666666666664,
+     "ci95": [
+      0.4039,
+      0.58
+     ]
+    },
+    "kappa": 0.2375,
+    "high_sensitivity": {
+     "k": 17,
+     "n": 40,
+     "value": 0.425,
+     "ci95": [
+      0.2851,
+      0.578
+     ]
+    },
+    "high_specificity": {
+     "k": 79,
+     "n": 80,
+     "value": 0.9875,
+     "ci95": [
+      0.9325,
+      0.9978
+     ]
+    },
+    "critical_under_triage": {
+     "k": 13,
+     "n": 40,
+     "value": 0.325,
+     "ci95": [
+      0.2008,
+      0.4798
+     ]
+    },
+    "under_triage": {
+     "k": 57,
+     "n": 120,
+     "value": 0.475,
+     "ci95": [
+      0.3878,
+      0.5637
+     ]
+    },
+    "over_triage": {
+     "k": 4,
+     "n": 120,
+     "value": 0.03333333333333333,
+     "ci95": [
+      0.013,
+      0.0826
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 37,
+      "medium": 3,
+      "high": 0
+     },
+     "medium": {
+      "low": 34,
+      "medium": 5,
+      "high": 1
+     },
+     "high": {
+      "low": 13,
+      "medium": 10,
+      "high": 17
+     }
+    }
+   }
+  },
+  "ar_msa": {
+   "rules": {
+    "n": 40,
+    "accuracy": {
+     "k": 18,
+     "n": 40,
+     "value": 0.45,
+     "ci95": [
+      0.3071,
+      0.6017
+     ]
+    },
+    "kappa": 0.2143,
+    "high_sensitivity": {
+     "k": 8,
+     "n": 20,
+     "value": 0.4,
+     "ci95": [
+      0.2188,
+      0.6134
+     ]
+    },
+    "high_specificity": {
+     "k": 20,
+     "n": 20,
+     "value": 1.0,
+     "ci95": [
+      0.8389,
+      1.0
+     ]
+    },
+    "critical_under_triage": {
+     "k": 12,
+     "n": 20,
+     "value": 0.6,
+     "ci95": [
+      0.3866,
+      0.7812
+     ]
+    },
+    "under_triage": {
+     "k": 22,
+     "n": 40,
+     "value": 0.55,
+     "ci95": [
+      0.3983,
+      0.6929
+     ]
+    },
+    "over_triage": {
+     "k": 0,
+     "n": 40,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.0876
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "high": {
+      "low": 12,
+      "medium": 0,
+      "high": 8
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 40,
+    "accuracy": {
+     "k": 18,
+     "n": 40,
+     "value": 0.45,
+     "ci95": [
+      0.3071,
+      0.6017
+     ]
+    },
+    "kappa": 0.2143,
+    "high_sensitivity": {
+     "k": 8,
+     "n": 20,
+     "value": 0.4,
+     "ci95": [
+      0.2188,
+      0.6134
+     ]
+    },
+    "high_specificity": {
+     "k": 20,
+     "n": 20,
+     "value": 1.0,
+     "ci95": [
+      0.8389,
+      1.0
+     ]
+    },
+    "critical_under_triage": {
+     "k": 6,
+     "n": 20,
+     "value": 0.3,
+     "ci95": [
+      0.1455,
+      0.519
+     ]
+    },
+    "under_triage": {
+     "k": 22,
+     "n": 40,
+     "value": 0.55,
+     "ci95": [
+      0.3983,
+      0.6929
+     ]
+    },
+    "over_triage": {
+     "k": 0,
+     "n": 40,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.0876
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "high": {
+      "low": 6,
+      "medium": 6,
+      "high": 8
+     }
+    }
+   },
+   "hybrid": {
+    "n": 40,
+    "accuracy": {
+     "k": 20,
+     "n": 40,
+     "value": 0.5,
+     "ci95": [
+      0.352,
+      0.648
+     ]
+    },
+    "kappa": 0.2727,
+    "high_sensitivity": {
+     "k": 10,
+     "n": 20,
+     "value": 0.5,
+     "ci95": [
+      0.2993,
+      0.7007
+     ]
+    },
+    "high_specificity": {
+     "k": 20,
+     "n": 20,
+     "value": 1.0,
+     "ci95": [
+      0.8389,
+      1.0
+     ]
+    },
+    "critical_under_triage": {
+     "k": 5,
+     "n": 20,
+     "value": 0.25,
+     "ci95": [
+      0.1119,
+      0.4687
+     ]
+    },
+    "under_triage": {
+     "k": 20,
+     "n": 40,
+     "value": 0.5,
+     "ci95": [
+      0.352,
+      0.648
+     ]
+    },
+    "over_triage": {
+     "k": 0,
+     "n": 40,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.0876
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "high": {
+      "low": 5,
+      "medium": 5,
+      "high": 10
+     }
+    }
+   }
+  },
+  "ar_dialect": {
+   "rules": {
+    "n": 40,
+    "accuracy": {
+     "k": 19,
+     "n": 40,
+     "value": 0.475,
+     "ci95": [
+      0.3294,
+      0.625
+     ]
+    },
+    "kappa": 0.2364,
+    "high_sensitivity": {
+     "k": 9,
+     "n": 20,
+     "value": 0.45,
+     "ci95": [
+      0.2582,
+      0.6579
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 11,
+     "n": 20,
+     "value": 0.55,
+     "ci95": [
+      0.3421,
+      0.7418
+     ]
+    },
+    "under_triage": {
+     "k": 20,
+     "n": 40,
+     "value": 0.5,
+     "ci95": [
+      0.352,
+      0.648
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 11,
+      "medium": 0,
+      "high": 9
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 40,
+    "accuracy": {
+     "k": 19,
+     "n": 40,
+     "value": 0.475,
+     "ci95": [
+      0.3294,
+      0.625
+     ]
+    },
+    "kappa": 0.2364,
+    "high_sensitivity": {
+     "k": 9,
+     "n": 20,
+     "value": 0.45,
+     "ci95": [
+      0.2582,
+      0.6579
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 11,
+     "n": 20,
+     "value": 0.55,
+     "ci95": [
+      0.3421,
+      0.7418
+     ]
+    },
+    "under_triage": {
+     "k": 20,
+     "n": 40,
+     "value": 0.5,
+     "ci95": [
+      0.352,
+      0.648
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 11,
+      "medium": 0,
+      "high": 9
+     }
+    }
+   },
+   "hybrid": {
+    "n": 40,
+    "accuracy": {
+     "k": 19,
+     "n": 40,
+     "value": 0.475,
+     "ci95": [
+      0.3294,
+      0.625
+     ]
+    },
+    "kappa": 0.2364,
+    "high_sensitivity": {
+     "k": 9,
+     "n": 20,
+     "value": 0.45,
+     "ci95": [
+      0.2582,
+      0.6579
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 11,
+     "n": 20,
+     "value": 0.55,
+     "ci95": [
+      0.3421,
+      0.7418
+     ]
+    },
+    "under_triage": {
+     "k": 20,
+     "n": 40,
+     "value": 0.5,
+     "ci95": [
+      0.352,
+      0.648
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 11,
+      "medium": 0,
+      "high": 9
+     }
+    }
+   }
+  },
+  "ar_dialect_typos": {
+   "rules": {
+    "n": 40,
+    "accuracy": {
+     "k": 16,
+     "n": 40,
+     "value": 0.4,
+     "ci95": [
+      0.2635,
+      0.554
+     ]
+    },
+    "kappa": 0.1504,
+    "high_sensitivity": {
+     "k": 6,
+     "n": 20,
+     "value": 0.3,
+     "ci95": [
+      0.1455,
+      0.519
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 14,
+     "n": 20,
+     "value": 0.7,
+     "ci95": [
+      0.481,
+      0.8545
+     ]
+    },
+    "under_triage": {
+     "k": 23,
+     "n": 40,
+     "value": 0.575,
+     "ci95": [
+      0.422,
+      0.7149
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 14,
+      "medium": 0,
+      "high": 6
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 40,
+    "accuracy": {
+     "k": 16,
+     "n": 40,
+     "value": 0.4,
+     "ci95": [
+      0.2635,
+      0.554
+     ]
+    },
+    "kappa": 0.1504,
+    "high_sensitivity": {
+     "k": 6,
+     "n": 20,
+     "value": 0.3,
+     "ci95": [
+      0.1455,
+      0.519
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 13,
+     "n": 20,
+     "value": 0.65,
+     "ci95": [
+      0.4329,
+      0.8188
+     ]
+    },
+    "under_triage": {
+     "k": 23,
+     "n": 40,
+     "value": 0.575,
+     "ci95": [
+      0.422,
+      0.7149
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 13,
+      "medium": 1,
+      "high": 6
+     }
+    }
+   },
+   "hybrid": {
+    "n": 40,
+    "accuracy": {
+     "k": 16,
+     "n": 40,
+     "value": 0.4,
+     "ci95": [
+      0.2635,
+      0.554
+     ]
+    },
+    "kappa": 0.1504,
+    "high_sensitivity": {
+     "k": 6,
+     "n": 20,
+     "value": 0.3,
+     "ci95": [
+      0.1455,
+      0.519
+     ]
+    },
+    "high_specificity": {
+     "k": 19,
+     "n": 20,
+     "value": 0.95,
+     "ci95": [
+      0.7639,
+      0.9911
+     ]
+    },
+    "critical_under_triage": {
+     "k": 13,
+     "n": 20,
+     "value": 0.65,
+     "ci95": [
+      0.4329,
+      0.8188
+     ]
+    },
+    "under_triage": {
+     "k": 23,
+     "n": 40,
+     "value": 0.575,
+     "ci95": [
+      0.422,
+      0.7149
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 40,
+     "value": 0.025,
+     "ci95": [
+      0.0044,
+      0.1288
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 10,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 9,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 13,
+      "medium": 1,
+      "high": 6
+     }
+    }
+   }
+  },
+  "negation": {
+   "rules": {
+    "n": 10,
+    "accuracy": {
+     "k": 9,
+     "n": 10,
+     "value": 0.9,
+     "ci95": [
+      0.5958,
+      0.9821
+     ]
+    },
+    "kappa": 0.4737,
+    "high_sensitivity": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "high_specificity": {
+     "k": 9,
+     "n": 10,
+     "value": 0.9,
+     "ci95": [
+      0.5958,
+      0.9821
+     ]
+    },
+    "critical_under_triage": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "under_triage": {
+     "k": 0,
+     "n": 10,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.2775
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 10,
+     "value": 0.1,
+     "ci95": [
+      0.0179,
+      0.4042
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 9,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 0,
+      "medium": 0,
+      "high": 1
+     },
+     "high": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+     }
+    }
+   },
+   "rules_triage": {
+    "n": 10,
+    "accuracy": {
+     "k": 9,
+     "n": 10,
+     "value": 0.9,
+     "ci95": [
+      0.5958,
+      0.9821
+     ]
+    },
+    "kappa": 0.7778,
+    "high_sensitivity": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "high_specificity": {
+     "k": 9,
+     "n": 10,
+     "value": 0.9,
+     "ci95": [
+      0.5958,
+      0.9821
+     ]
+    },
+    "critical_under_triage": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "under_triage": {
+     "k": 0,
+     "n": 10,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.2775
+     ]
+    },
+    "over_triage": {
+     "k": 1,
+     "n": 10,
+     "value": 0.1,
+     "ci95": [
+      0.0179,
+      0.4042
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 7,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 0,
+      "medium": 2,
+      "high": 1
+     },
+     "high": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+     }
+    }
+   },
+   "hybrid": {
+    "n": 10,
+    "accuracy": {
+     "k": 8,
+     "n": 10,
+     "value": 0.8,
+     "ci95": [
+      0.4902,
+      0.9433
+     ]
+    },
+    "kappa": 0.6429,
+    "high_sensitivity": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "high_specificity": {
+     "k": 8,
+     "n": 10,
+     "value": 0.8,
+     "ci95": [
+      0.4902,
+      0.9433
+     ]
+    },
+    "critical_under_triage": {
+     "k": 0,
+     "n": 0,
+     "value": null,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "under_triage": {
+     "k": 0,
+     "n": 10,
+     "value": 0.0,
+     "ci95": [
+      0.0,
+      0.2775
+     ]
+    },
+    "over_triage": {
+     "k": 2,
+     "n": 10,
+     "value": 0.2,
+     "ci95": [
+      0.0567,
+      0.5098
+     ]
+    },
+    "confusion": {
+     "low": {
+      "low": 6,
+      "medium": 0,
+      "high": 0
+     },
+     "medium": {
+      "low": 0,
+      "medium": 2,
+      "high": 2
+     },
+     "high": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+     }
+    }
+   }
+  }
+ },
+ "misses": [
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H07",
+   "text": "Rapid swelling of lips and tongue with breathing difficulty after food exposure.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H09",
+   "text": "Black tarry stool with faintness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Black tarry stool"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H10",
+   "text": "Head injury followed by repeated vomiting and increasing drowsiness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H12",
+   "text": "Severe abdominal pain with a rigid abdomen and persistent vomiting.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H15",
+   "text": "Sudden severe testicular pain with swelling.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H16",
+   "text": "Heavy vaginal bleeding with fainting or severe weakness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H17",
+   "text": "Diabetic person with confusion, deep rapid breathing, and repeated vomiting.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H18",
+   "text": "Severe asthma symptoms not improving with usual reliever medicine.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-H20",
+   "text": "Severe allergic reaction with widespread hives, wheeze, and dizziness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M01",
+   "text": "Fever lasting four days with worsening fatigue but no emergency red flags.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M02",
+   "text": "Cough lasting more than three weeks without severe breathing difficulty.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M03",
+   "text": "Burning urination with fever and pain in the side or back.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M04",
+   "text": "New recurrent headaches increasing in frequency over several weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M05",
+   "text": "Persistent abdominal pain for several days with reduced appetite.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M06",
+   "text": "Red painful eye with light sensitivity but no sudden vision loss.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M07",
+   "text": "Unexplained weight loss over several weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M08",
+   "text": "New ankle swelling on both sides persisting for a week.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M09",
+   "text": "Palpitations occurring repeatedly with light-headedness but no fainting.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M10",
+   "text": "Diarrhea lasting five days with signs of mild dehydration.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M11",
+   "text": "Constipation lasting more than two weeks with abdominal discomfort.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M13",
+   "text": "New tremor with unexplained weight loss and fast heartbeat.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M14",
+   "text": "Repeated episodes of dizziness affecting walking but no focal neurologic deficit.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M15",
+   "text": "Sore throat with fever lasting several days and difficulty swallowing solids.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M16",
+   "text": "Tooth pain with facial swelling and fever.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M17",
+   "text": "Persistent low mood for several weeks without immediate self-harm danger.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "Red flag"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M18",
+   "text": "Frequent thirst and urination with unexplained fatigue over weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M19",
+   "text": "Knee pain and swelling after a minor injury, still unable to bear weight normally the next day.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-M20",
+   "text": "Persistent rash with fever but no breathing difficulty or facial swelling.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_dev",
+   "id": "BENCH-L09",
+   "text": "Minor bruise after bumping the leg, not enlarging and no unusual bleeding.",
+   "expected": "low",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H03",
+   "text": "Severe wheeze with inability to finish sentences and rapidly worsening breathlessness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H05",
+   "text": "Repeated fainting with an irregular heartbeat and ongoing dizziness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H06",
+   "text": "Heavy rectal bleeding with weakness and near-fainting.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H07",
+   "text": "Severe abdominal pain with repeated vomiting and inability to keep fluids down.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H08",
+   "text": "Fever, confusion, very rapid breathing, and marked weakness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H11",
+   "text": "Red painful eye with sudden major loss of vision.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H13",
+   "text": "Very high fever, stiff neck, light sensitivity, and drowsiness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H15",
+   "text": "Persistent vomiting with severe dehydration, minimal urine, and increasing drowsiness.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H16",
+   "text": "Chest pain with collapse during physical exertion.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Chest pain"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-H20",
+   "text": "New severe confusion in an older adult with fever and reduced responsiveness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M01",
+   "text": "Sore throat, fever, swollen neck glands, and difficulty swallowing for four days.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M02",
+   "text": "Recurrent spinning dizziness with tinnitus and balance difficulty.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M03",
+   "text": "Burning urination, frequent urination, fever, and new back pain.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M04",
+   "text": "Repeated upper abdominal pain after meals with nausea lasting about an hour.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M05",
+   "text": "Persistent upper abdominal discomfort, nausea, bloating, and reduced appetite for ten days.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M07",
+   "text": "Dry itchy scaly rash recurring on elbows and knees.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M08",
+   "text": "Painful one-sided blistering rash with burning skin pain.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M09",
+   "text": "Widespread muscle pain, poor sleep, fatigue, and concentration difficulty for months.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M10",
+   "text": "Persistent joint pain and swelling affecting both wrists and knees with morning stiffness.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M12",
+   "text": "Severe fatigue lasting months with sleep problems and worsening after activity.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M13",
+   "text": "Anxiety most days for months with insomnia, irritability, and difficulty concentrating.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M14",
+   "text": "Painful swollen knee without major injury that has not improved after ten days.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M15",
+   "text": "Flank and back pain coming in waves with nausea and painful urination.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M16",
+   "text": "Red itchy dry skin that repeatedly cracks and interferes with sleep.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M17",
+   "text": "Blurred vision and persistent red sore eyes despite several weeks of self-care.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M18",
+   "text": "Recurrent bloating, gas, abdominal cramps, and diarrhoea after dairy foods.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M19",
+   "text": "Shoulder pain with swelling and restricted movement persisting for two weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-M20",
+   "text": "Unexplained palpitations, tremor, sweating, anxiety, and weight loss.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-L09",
+   "text": "Mild constipation for three days after travel with no vomiting, bleeding, or severe pain.",
+   "expected": "low",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH2-L20",
+   "text": "Small bruise after a known bump with no unusual bleeding elsewhere.",
+   "expected": "low",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H03",
+   "text": "Sudden severe breathlessness with blue lips and inability to speak full sentences.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H04",
+   "text": "Collapse with no normal response after a severe headache.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H05",
+   "text": "Severe abdominal pain with repeated vomiting and a swollen rigid abdomen.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H07",
+   "text": "High fever, rapidly spreading purple rash, confusion, and extreme weakness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H08",
+   "text": "Severe wheezing and breathing difficulty after an insect sting with facial swelling.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H09",
+   "text": "Head injury followed by unequal pupils, worsening drowsiness, and repeated vomiting.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H10",
+   "text": "Sudden severe eye pain with vomiting and marked reduction in vision.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H11",
+   "text": "New severe back pain with leg weakness and loss of bladder control.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H13",
+   "text": "Severe dehydration with confusion, very little urine, and inability to keep fluids down.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Severe dehydration signs"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H14",
+   "text": "Sudden painful cold pale leg with loss of normal sensation.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H18",
+   "text": "Diabetic person with sweating, confusion, shakiness, and reduced consciousness.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H19",
+   "text": "Sudden severe scrotal pain with nausea and a high-riding testicle.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-H20",
+   "text": "Severe neck swelling with drooling, muffled voice, and breathing difficulty.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M01",
+   "text": "Persistent cough, fever, and chest discomfort for a week without severe breathlessness.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M02",
+   "text": "Repeated migraines becoming more frequent over the last month without neurologic deficit.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M04",
+   "text": "New neck swelling and ongoing hoarseness for several weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M05",
+   "text": "Recurrent right upper abdominal pain after fatty meals with nausea.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M06",
+   "text": "Burning urination and pelvic discomfort recurring several times this month.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M07",
+   "text": "Persistent thirst, frequent urination, blurred vision, and tiredness.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M08",
+   "text": "Irregular periods with new excessive hair growth and weight gain over months.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M10",
+   "text": "Joint swelling, morning stiffness, and pain in several small joints for six weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M11",
+   "text": "A skin mole has changed shape and colour over several months.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M12",
+   "text": "Persistent mouth ulcer for more than three weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M13",
+   "text": "Intermittent blood in the stool with a change in bowel habit for several weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M14",
+   "text": "Repeated episodes of ringing in one ear with reduced hearing and spinning dizziness.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M15",
+   "text": "Low mood, loss of interest, and sleep difficulty lasting several weeks without immediate self-harm risk.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "Red flag"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M16",
+   "text": "Anxiety with recurrent panic-like episodes interfering with study or work.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M17",
+   "text": "Persistent lower back pain for six weeks that limits normal activity but has no emergency red flags.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M18",
+   "text": "Unilateral breast lump noticed recently without acute infection symptoms.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-M20",
+   "text": "Progressive difficulty swallowing solid food over several weeks.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "en_test",
+   "id": "BENCH3-L10",
+   "text": "Brief muscle twitch after exercise with no weakness or persistent numbness.",
+   "expected": "low",
+   "predicted": "medium",
+   "engine_reason": "Medical review"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H07-MSA",
+   "text": "تورم سريع في الشفتين واللسان مع صعوبة في التنفس بعد تناول طعام.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "تقييم طبي"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H09-MSA",
+   "text": "براز أسود قطراني مع شعور بالإغماء.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "براز أسود قطراني"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H10-MSA",
+   "text": "إصابة في الرأس تبعها قيء متكرر ونعاس متزايد.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H12-MSA",
+   "text": "ألم شديد في البطن مع تيبّس البطن وقيء مستمر.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H13-MSA",
+   "text": "حمى مرتفعة مع تيبّس في الرقبة وتشوّش وصداع شديد.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "تقييم طبي"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H15-MSA",
+   "text": "ألم مفاجئ شديد في الخصية مع تورم.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H17-MSA",
+   "text": "مريض سكري مع تشوّش وتنفس عميق سريع وقيء متكرر.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "تقييم طبي"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H18-MSA",
+   "text": "أعراض ربو شديدة لا تتحسن مع البخاخ المعتاد.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H19-MSA",
+   "text": "ميلان مفاجئ في الوجه مع ضعف في الذراع حتى لو بدأت الأعراض تتحسن.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "تقييم طبي"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-H20-MSA",
+   "text": "تحسس شديد مع طفح منتشر وأزيز ودوخة.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M01-MSA",
+   "text": "حمى مستمرة منذ أربعة أيام مع إرهاق متزايد دون علامات خطر طارئة.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M02-MSA",
+   "text": "سعال مستمر لأكثر من ثلاثة أسابيع دون صعوبة شديدة في التنفس.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M03-MSA",
+   "text": "حرقة في التبول مع حمى وألم في الجنب أو الظهر.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M04-MSA",
+   "text": "صداع متكرر جديد يزداد تكراره خلال عدة أسابيع.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M05-MSA",
+   "text": "ألم مستمر في البطن منذ عدة أيام مع قلة الشهية.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M06-MSA",
+   "text": "عين حمراء مؤلمة مع حساسية من الضوء دون فقدان مفاجئ للرؤية.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M07-MSA",
+   "text": "نقص وزن غير مبرر خلال عدة أسابيع.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M09-MSA",
+   "text": "خفقان متكرر مع دوار خفيف دون إغماء.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M15-MSA",
+   "text": "التهاب حلق مع حمى منذ عدة أيام وصعوبة في بلع الطعام الصلب.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_msa",
+   "id": "BENCH-M18-MSA",
+   "text": "عطش وتبول متكرران مع إرهاق غير مبرر منذ أسابيع.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H03-DIA",
+   "text": "فجأة ما صرت أشوف بعيني اليمين.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H07-DIA",
+   "text": "بعد ما أكلت انتفخت شفايفي ولساني بسرعة وصار نفسي ضيق.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H09-DIA",
+   "text": "البراز صاير أسود مثل القار وأحس إني بيغمى علي.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H10-DIA",
+   "text": "ولدي انضرب على راسه وبعدها صار يستفرغ أكثر من مرة ونعسان مرة.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H12-DIA",
+   "text": "بطني يوجعني بقوة ومشدود مثل الخشبة وما وقفت أستفرغ.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H13-DIA",
+   "text": "حرارتي عالية ورقبتي متيبسة وراسي يعورني مرة وصاير متلخبط.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H15-DIA",
+   "text": "فجأة جاني ألم قوي في الخصية وفيها انتفاخ.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H17-DIA",
+   "text": "أمي عندها سكر وصارت متلخبطة وتتنفس بسرعة وبعمق وتستفرغ.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H18-DIA",
+   "text": "الربو عندي قوي وأخذت البخاخ وما تحسنت.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H19-DIA",
+   "text": "فجأة فمي مال وما أقدر أرفع يدي، وبعدين شوي تحسنت.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-H20-DIA",
+   "text": "طلع فيني طفح بكل جسمي وصدري يصفر وأحس بدوخة.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M01-DIA",
+   "text": "لي أربعة أيام والحرارة ما نزلت وتعبي يزيد.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M02-DIA",
+   "text": "عندي كحة من أكثر من ثلاث أسابيع بس نفسي عادي.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M03-DIA",
+   "text": "يحرقني البول وعندي حرارة وجنبي يعورني.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M04-DIA",
+   "text": "صار يجيني صداع كثير هالأسابيع وكل مرة يزيد.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M05-DIA",
+   "text": "بطني يعورني من كم يوم وما لي نفس آكل.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M06-DIA",
+   "text": "عيني حمرا وتعورني والنور يضايقني، بس أشوف عادي.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M07-DIA",
+   "text": "نزل وزني كثير هالأسابيع وأنا ما سويت رجيم.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M09-DIA",
+   "text": "قلبي يدق بسرعة كل شوي وأحس بدوخة خفيفة بس ما أغمى علي.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "علامة خطر"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M15-DIA",
+   "text": "حلقي ملتهب وعندي حرارة من كم يوم وما أقدر أبلع الأكل.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect",
+   "id": "BENCH-M18-DIA",
+   "text": "صاير أعطش وأروح الحمام كثير وتعبان من أسابيع.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H02-TYP",
+   "text": "فجاه صار عندي ضعف وتنميل بجهه وحده من جسمي وكامي صار ثقيل.",
+   "expected": "high",
+   "predicted": "medium",
+   "engine_reason": "تقييم طبي"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H03-TYP",
+   "text": "فجاه ما صرت اشوف بعيني اليمي.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H04-TYP",
+   "text": "نفسي مطوع وانا جالس وشفايفي صارت زرقا.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H07-TYP",
+   "text": "بعد ما اكلت انتفت شفايفي ولساني بسرعه وصار نفسي ضيق.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H09-TYP",
+   "text": "البراز صاير اسود مثل القار واحس اني بيمي علي.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H10-TYP",
+   "text": "ولدي انضرب علي راسه وبعدها صار يتفرغ اكثر من مره ونعسان مرة.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H11-TYP",
+   "text": "جاني صداع فجاة، اسوا صداع في حاتي.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H12-TYP",
+   "text": "بطني يوجعني بقوه وشدود مثل الخشبه وما وقفت استفرغ.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H13-TYP",
+   "text": "حرارتي عايه ورقبتي متيبسه وراسي يعورني مره وصاير متلخبط.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H15-TYP",
+   "text": "فجاه جاني الم قوي في الخصيه وفيها انتفا.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H17-TYP",
+   "text": "امي عندا سكر وصارت متلخبطه وتتنفس بسرعه وبعمق وتستفرغ.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H18-TYP",
+   "text": "الربو عندي قوي واخذت البخاخ وما تحست.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H19-TYP",
+   "text": "فجاه فمي مال وما اقدر ارفع يدي، وبعدن شوي تحسنت.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-H20-TYP",
+   "text": "طلع فيني طفح بكل جسمي وصري يصفر واحس بدوخة.",
+   "expected": "high",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M01-TYP",
+   "text": "لي اربعه ايام والحراره ما نزلت وتعي يزيد.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M02-TYP",
+   "text": "عندي كحه من اكثر من ثلاث اسابع بس نفسي عادي.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M03-TYP",
+   "text": "يحرقني البول وعندي حراره وجنبي يورني.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M04-TYP",
+   "text": "صار يجيي صداع كثير هالاسابيع وكل مره يزيد.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M05-TYP",
+   "text": "بطني يعوري من كم يوم وما لي نفس اكل.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M06-TYP",
+   "text": "عيني حمرا وتعورني وانور يضايقني، بس اشوف عادي.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M07-TYP",
+   "text": "نزل وزني كثير هالاابيع وانا ما سويت رجيم.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M09-TYP",
+   "text": "قلبي يدق بسرعه كل شوي واحس بدوخه خففه بس ما اغمي علي.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "علامة خطر"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M15-TYP",
+   "text": "حلقي ملهب وعندي حراره من كم يوم وما اقدر ابلع الاكل.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "ar_dialect_typos",
+   "id": "BENCH-M18-TYP",
+   "text": "صاير اعطش واروح الحمام كثير وتعبان من اابيع.",
+   "expected": "medium",
+   "predicted": "low",
+   "engine_reason": "insufficient"
+  },
+  {
+   "condition": "negation",
+   "id": "NEG-02",
+   "text": "ما أغمى علي وما عندي تشنج، بس دايخ شوي.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "علامة خطر"
+  },
+  {
+   "condition": "negation",
+   "id": "NEG-07",
+   "text": "ما ابي اموت، بس متضايق من الدوام.",
+   "expected": "medium",
+   "predicted": "high",
+   "engine_reason": "خطر إيذاء النفس"
+  }
+ ],
+ "safety_suite": {
+  "n": 47,
+  "passed": {
+   "k": 47,
+   "n": 47,
+   "value": 1.0,
+   "ci95": [
+    0.9244,
+    1.0
+   ]
+  },
+  "red_flag_sensitivity": {
+   "k": 31,
+   "n": 31,
+   "value": 1.0,
+   "ci95": [
+    0.8897,
+    1.0
+   ]
+  },
+  "false_alarm_rate": {
+   "k": 0,
+   "n": 16,
+   "value": 0.0,
+   "ci95": [
+    0.0,
+    0.1936
+   ]
+  },
+  "failed_ids": []
+ },
+ "meta": {
+  "generated_at": "2026-11-12T10:40:38+00:00",
+  "controlled": {
+   "severity": 2,
+   "age": 35,
+   "ai_provider": "disabled",
+   "duration": null
+  },
+  "reference": "starter benchmark labels (not clinician-verified)",
+  "app_version": "281.0.0",
+  "safety_engine": "deterministic-red-flag-v4-precision"
+ }
+}
