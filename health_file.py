@@ -60,6 +60,13 @@ def trend_verdict(prev, last):
     return "toward_reference" if toward_normal else "away_from_reference"
 
 
+def _lab_ref(key):
+    """(Arabic, English) test names from blood_test.REFS, or (None, None)."""
+    import blood_test
+    r = blood_test.REFS.get(str(key))
+    return (r[0], r[1]) if r else (None, None)
+
+
 def lab_trends(tests):
     """Per-analyte series (oldest first) with direction and out-of-range streak."""
     series = OrderedDict()
@@ -73,8 +80,9 @@ def lab_trends(tests):
             except (TypeError, ValueError):
                 continue
             k = (str(ind["key"]), str(ind.get("unit") or ""))
-            row = series.setdefault(k, {"key": k[0], "unit": k[1], "name_ar": ind.get("name_ar") or ind.get("name"),
-                                        "name_en": ind.get("name_en") or ind.get("name"), "points": []})
+            ref = _lab_ref(k[0])
+            row = series.setdefault(k, {"key": k[0], "unit": k[1], "name_ar": ind.get("name_ar") or ref[0] or ind.get("name"),
+                                        "name_en": ind.get("name_en") or ref[1] or ind.get("name"), "points": []})
             row["points"].append({"date": when.date().isoformat() if when else "", "value": value,
                                   "status": str(ind.get("status") or "")})
     out = []
@@ -351,21 +359,31 @@ def render_doctor(d, lang="ar"):
     row = lambda k, v: '<tr><th style="text-align:start;width:32%%;padding:6px;border-bottom:1px solid #ddd">%s</th><td style="padding:6px;border-bottom:1px solid #ddd">%s</td></tr>' % (e(k), v)
     sep = "، " if ar else ", "
     rows = []
-    rows.append(row("الأعراض والمدة والشدة" if ar else "Symptoms, duration, severity",
-                    e(sep.join(symptom_label(x, lang) for x in (ld.get("symptoms") or [])) or "-") + "<br>" + e("المدة: " if ar else "Duration: ") + iso(duration_label(ld.get("duration"), lang) or "-") + e(" · الشدة: " if ar else " · Severity: ") + iso("%s/5" % (ld.get("severity") or "-"))))
-    urg = urgency_label(ld.get("urgency"), lang) if ld.get("urgency") else "-"
-    flags = ", ".join(d.get("high_urgency_dates") or []) or ("لا يوجد" if ar else "none recorded")
-    rows.append(row("القرار/الاستعجال المسجّل" if ar else "Recorded urgency / decision", e(urg) + " — " + e("تنبيهات عالية بتاريخ: " if ar else "High alerts on: ") + iso(flags)))
+    none = "لا يوجد تحليل أعراض محفوظ" if ar else "No saved symptom analysis"
+    if ld.get("symptoms"):
+        parts = [e(sep.join(symptom_label(x, lang) for x in ld["symptoms"]))]
+        if ld.get("duration"):
+            parts.append(e("المدة: " if ar else "Duration: ") + iso(duration_label(ld["duration"], lang)))
+        if ld.get("severity"):
+            parts.append(e("الشدة: " if ar else "Severity: ") + iso("%s/5" % ld["severity"]))
+        sym_cell = parts[0] + ("<br>" + " · ".join(parts[1:]) if parts[1:] else "")
+    else:
+        sym_cell = e(none)
+    rows.append(row("الأعراض والمدة والشدة" if ar else "Symptoms, duration, severity", sym_cell))
+    flags = ", ".join(d.get("high_urgency_dates") or [])
+    urg_cell = e(urgency_label(ld["urgency"], lang)) if ld.get("urgency") else e("لا يوجد مستوى مسجّل" if ar else "No recorded level")
+    urg_cell += "<br>" + (e("تنبيهات عالية بتاريخ: " if ar else "High alerts on: ") + iso(flags) if flags else e("لا توجد تنبيهات عالية" if ar else "No high alerts recorded"))
+    rows.append(row("القرار/الاستعجال المسجّل" if ar else "Recorded urgency / decision", urg_cell))
     rec = [s for s in d.get("recurring") or []]
     if rec:
         rows.append(row("أعراض متكررة" if ar else "Recurring symptoms", e(sep.join("%s ×%d" % (symptom_label(s["symptom"], lang), s["count"]) for s in rec[:5]))))
     meds = d.get("medicines") or []
-    rows.append(row("الأدوية الحالية" if ar else "Current medicines", e(sep.join(("%s %s" % (m["name"], m["dose"] or "")).strip() for m in meds) or "-")))
+    rows.append(row("الأدوية الحالية" if ar else "Current medicines", e(sep.join(("%s %s" % (m["name"], m["dose"] or "")).strip() for m in meds) or e("لا توجد أدوية حالية مسجّلة" if ar else "No current medicines recorded"))))
     names = _DIR_VERDICT["ar" if ar else "en"]
     labs = [r for r in d.get("labs") or [] if r.get("persistent") or r.get("verdict") in ("away_from_reference", "toward_reference")][:8]
     iso = lambda x: '<bdi dir="ltr">%s</bdi>' % e(x)
     lab_lines = ["%s: %s — %s" % (e((r["name_ar"] if ar else r["name_en"]) or r["key"]), iso("%s %s" % (r["latest"]["value"], r["unit"])), e(names.get(r.get("verdict"), ""))) for r in labs]
-    rows.append(row("التحاليل المهمة" if ar else "Key lab results", "<br>".join(lab_lines) or "-"))
+    rows.append(row("التحاليل المهمة" if ar else "Key lab results", "<br>".join(lab_lines) or e("لا توجد تحاليل تحتاج انتباهًا" if ar else "No lab results needing attention")))
     vit = d.get("vitals_rows") or []
     if vit:
         flag = {"ok": "", "attention": " ⚠️", "urgent": " ⚠️", "emergency": " 🚨"}

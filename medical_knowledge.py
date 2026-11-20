@@ -1636,10 +1636,11 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
     conn = conn or db._conn()
     try:
         c = conn.cursor()
-        neg_ids = set()
+        neg_ids, neg_slug_by_id = set(), {}
         if negative_slugs:
             c.execute("SELECT id,slug FROM mk_symptoms WHERE status='active'")
-            neg_ids = {int(row[0]) for row in c.fetchall() if str(row[1]) in negative_slugs}
+            neg_slug_by_id = {int(row[0]): str(row[1]) for row in c.fetchall() if str(row[1]) in negative_slugs}
+            neg_ids = set(neg_slug_by_id)
         c.execute("SELECT id,slug,name_ar,name_en,description_ar,description_en,severity,red_flags_ar,red_flags_en,recommended_next_step_ar,recommended_next_step_en,last_updated,sex_applicability,min_age,max_age,pregnancy_relevant FROM mk_diseases WHERE status='active'")
         diseases = c.fetchall()
         # One query for all relations instead of one per disease (was ~160 round
@@ -1710,7 +1711,9 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
             sources=_source_rows_for_disease(c,did)
             if not sources:
                 continue
-            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":sorted(negative_slugs),"negative_evidence_names":[_symptom_display_name(x,lang) for x in sorted(negative_slugs)],"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
+            # V292.1: a denied symptom is evidence against this condition only when the knowledge base links them
+            own_neg=sorted({neg_slug_by_id[int(r[0])] for r in neg_rels if int(r[0]) in neg_slug_by_id})
+            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":own_neg,"negative_evidence_names":[_symptom_display_name(x,lang) for x in own_neg],"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
         out.sort(key=lambda x:(x["_score"],len(x["matched_symptoms"])),reverse=True)
         for item in out:
             item.pop("_score",None)

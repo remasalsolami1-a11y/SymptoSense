@@ -186,3 +186,15 @@ def test_health_file_page_offers_the_doctor_page_in_english(monkeypatch):
 def test_chat_card_links_to_the_full_page_only_for_the_health_file_url():
     js = (ROOT / "static" / "js" / "chat" / "doctor-summary.js").read_text(encoding="utf-8")
     assert "j.full_page" in js and "health-file\\?view=doctor" in js
+
+
+def test_denied_symptom_counts_against_only_the_conditions_it_is_linked_to():
+    canonical = mk.normalize_symptoms(["حمى", "صداع"], "ar")["canonical"]
+    matches = mk.match_diseases(canonical, negatives=["light-sensitivity", "neck-pain", "vomiting"], lang="ar", limit=10)
+    assert matches
+    weights = {d["slug"]: (d.get("symptoms") or {}) for d in mk.DISEASES}
+    for m in matches:
+        for slug in m["negative_evidence"]:
+            assert float(weights.get(m["slug"], {}).get(slug, 0) or 0) > 0, (m["slug"], slug)
+    flu = [m for m in matches if m["slug"] == "influenza"]
+    assert flu and "light-sensitivity" not in flu[0]["negative_evidence"]

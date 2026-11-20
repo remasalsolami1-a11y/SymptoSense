@@ -1,0 +1,34 @@
+
+
+/* ===== V239 reference-matched clinical body map ===== */
+body.ss-chat-page .smart-body-static-wrap{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+body.ss-chat-page .smart-body-static-art{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(26,86,126,.08))}
+body.ss-chat-page .smart-body-svg.v239{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 20px rgba(26,86,126,.08))}
+body.ss-chat-page .smart-body-svg.v239 .body-zone-glow{fill:#1676e5;opacity:.24}
+body.ss-chat-page .smart-body-svg.v239 .body-zone-ring{fill:rgba(22,118,229,.10);stroke:#1676e5;stroke-width:3;opacity:.88}
+body.ss-chat-page .smart-body-svg.v239 .anatomy-soft{pointer-events:none}
+body.ss-chat-page .smart-body-svg.v239 .muscle-lines{pointer-events:none}
+body.ss-chat-page .smart-body-visual{background:radial-gradient(circle at 50% 43%,rgba(225,242,253,.52),rgba(255,255,255,0) 48%)}
+body.ss-chat-page .smart-body-zone>span{background:#eaf4ff!important;border-color:#3f8fe5!important;box-shadow:0 0 0 4px rgba(255,255,255,.96),0 2px 8px rgba(27,103,171,.15)!important}
+body.ss-chat-page .smart-body-zone>b{border-color:#c8dff2!important;background:rgba(255,255,255,.97)!important;color:#123b70!important;box-shadow:0 5px 15px rgba(21,70,108,.08)!important}
+body.ss-chat-page .smart-body-zone>b::before{background:#4c91df!important;height:1.7px!important}
+body.ss-chat-page .smart-body-zone.on>span{background:#1474df!important;border-color:#fff!important;box-shadow:0 0 0 4px #1474df,0 0 0 9px rgba(20,116,223,.14)!important}
+body.ss-chat-page .smart-body-zone.on>b{background:linear-gradient(135deg,#1479e5,#0868d2)!important;border-color:#1479e5!important;color:#fff!important;box-shadow:0 8px 18px rgba(12,102,209,.24)!important}
+body.ss-chat-page .smart-body-card.v221 .smart-body-toggle{background:#eef5fb!important;border:1px solid #d9e8f3!important}
+body.ss-chat-page .smart-body-card.v221 .smart-toggle-btn{color:#536f87!important;font-weight:900!important}
+body.ss-chat-page .smart-body-card.v221 .smart-toggle-btn.on{color:#0d6bce!important;background:#fff!important;border:1.5px solid #1676df!important;box-shadow:0 0 0 2px rgba(22,118,223,.08),0 5px 14px rgba(18,83,132,.08)!important}
+body.ss-chat-page .smart-body-card.v221 .smart-body-stage{background:linear-gradient(180deg,#ffffff 0%,#fafdff 100%)!important}
+@media screen{
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-visual{height:clamp(445px,68dvh,575px)!important;width:min(382px,100%)!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone>b{min-width:76px!important;max-width:108px!important;font-size:10.2px!important;padding:6px 8px!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone.left>b{right:38px!important;left:auto!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone.right>b{left:38px!important;right:auto!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone>b::before{width:27px!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone.left>b::before{right:-27px!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone.right>b::before{left:-27px!important}
+}
+@media(max-width:380px){
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-visual{height:clamp(420px,65dvh,520px)!important;width:min(350px,100%)!important}
+  body.ss-chat-page[data-chat-step="symptoms"] .symptom-method-pane-body .smart-body-zone>b{min-width:68px!important;max-width:94px!important;font-size:9.4px!important;padding:5px 6px!important}
+}
+
