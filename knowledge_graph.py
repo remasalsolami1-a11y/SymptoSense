@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import hashlib
 import html
+import json
+import logging
 import threading
+from pathlib import Path
 
 _LOCK = threading.Lock()
 _GRAPH: dict | None = None
@@ -51,7 +54,25 @@ def build() -> dict:
     import medical_knowledge as mk
     import medication_context as mc
 
+    import db
+    # V292.1: one database connection for the whole build (was one per phrase: ~70 round trips,
+    # which made the first page load time out on the hosted PostgreSQL).
+    conn = db._conn()
+    try:
+        return _build(conn, mk, blood_test, mc)
+    finally:
+        conn.close()
+
+
+def _build(conn, mk, blood_test, mc) -> dict:
     nodes, edges, index = {}, [], {}
+    norm_cache = {}
+
+    def canonical(words):
+        key = tuple(words)
+        if key not in norm_cache:
+            norm_cache[key] = mk.normalize_symptoms(list(words), "ar", conn=conn).get("canonical") or []
+        return norm_cache[key]
 
     def node(nid, ntype, ar, en, **extra):
         nodes.setdefault(nid, {"id": nid, "type": ntype, "ar": ar, "en": en, **extra})
@@ -104,14 +125,14 @@ def build() -> dict:
         edge(lid, sid, "indicator_source", "مرجع هذا المؤشر", "Reference for this indicator", None, src.get("url"))
         for direction in ("low", "high"):
             for phrase in links.get(direction + "_ar") or []:
-                for c in mk.normalize_symptoms([phrase], "ar").get("canonical") or []:
+                for c in canonical([phrase]):
                     if c["slug"] in sym:
                         edge(lid, "symptom:" + c["slug"], "lab_symptom", "", "", None, src.get("url"), "indicator", directions={direction})
 
     for cat, (user_words, _catalog_words) in mc.SYMPTOM_CATS.items():
         ar, en = mc.CAT_LABEL[cat]
         mid = node("medicine:" + cat, "medicine", "أدوية قد تسبب " + ar, "Medicines that may cause " + en)
-        for c in mk.normalize_symptoms(list(user_words), "ar").get("canonical") or []:
+        for c in canonical(user_words):
             if c["slug"] in sym:
                 edge(mid, "symptom:" + c["slug"], "medicine_group",
                      "ضمن مجموعة " + ar + " في تحذيرات كتالوج الأدوية الموثّق",
@@ -126,6 +147,13 @@ def build() -> dict:
 
     linked = {e["a"] for e in edges} | {e["b"] for e in edges}
     nodes = {k: v for k, v in nodes.items() if k in linked}
+    return _index(nodes, edges)
+
+
+DATA_PATH = Path(__file__).with_name("knowledge_graph_data.json")
+
+
+def _index(nodes: dict, edges: list) -> dict:
     adj: dict[str, list[int]] = {}
     for i, e in enumerate(edges):
         adj.setdefault(e["a"], []).append(i)
@@ -134,12 +162,35 @@ def build() -> dict:
     return {"nodes": nodes, "edges": edges, "adj": adj, "counts": counts}
 
 
+def snapshot() -> dict:
+    """What tools/build_knowledge_graph.py writes: nodes and edges only (adjacency is rebuilt on load)."""
+    g = build()
+    return {"nodes": g["nodes"], "edges": g["edges"]}
+
+
+def write_snapshot(path: Path | None = None) -> Path:
+    path = Path(path or DATA_PATH)
+    path.write_text(json.dumps(snapshot(), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+    return path
+
+
 def graph() -> dict:
+    """V292.1: read the pre-built graph shipped with the code (milliseconds, no database, no matching).
+
+    Building it inside a request took seconds of CPU and, if anything failed, was retried by every
+    request while holding the lock; on the hosted server that tied up all request threads. A test
+    checks that the file equals build(), so it cannot drift from the knowledge base.
+    """
     global _GRAPH
     if _GRAPH is None:
         with _LOCK:
             if _GRAPH is None:
-                _GRAPH = build()
+                try:
+                    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+                    _GRAPH = _index(data["nodes"], data["edges"])
+                except (OSError, ValueError, KeyError) as exc:
+                    logging.getLogger(__name__).error("knowledge graph data unavailable: %s", type(exc).__name__)
+                    _GRAPH = _index({}, [])  # an empty page, never a rebuild storm
     return _GRAPH
 
 

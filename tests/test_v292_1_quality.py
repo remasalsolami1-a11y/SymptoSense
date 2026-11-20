@@ -198,3 +198,19 @@ def test_denied_symptom_counts_against_only_the_conditions_it_is_linked_to():
             assert float(weights.get(m["slug"], {}).get(slug, 0) or 0) > 0, (m["slug"], slug)
     flu = [m for m in matches if m["slug"] == "influenza"]
     assert flu and "light-sensitivity" not in flu[0]["negative_evidence"]
+
+
+def test_shipped_graph_file_matches_the_knowledge_base_and_loads_without_building(monkeypatch):
+    on_disk = json.loads(kg.DATA_PATH.read_text(encoding="utf-8"))
+    assert on_disk == json.loads(json.dumps(kg.snapshot(), ensure_ascii=False)), "run: python tools/build_knowledge_graph.py"
+    monkeypatch.setattr(kg, "_GRAPH", None)
+    monkeypatch.setattr(kg, "build", lambda: (_ for _ in ()).throw(AssertionError("graph() must not build at request time")))
+    g = kg.graph()
+    assert len(g["nodes"]) == len(on_disk["nodes"]) and g["adj"]
+
+
+def test_missing_graph_file_gives_an_empty_page_not_a_rebuild(monkeypatch, tmp_path):
+    monkeypatch.setattr(kg, "_GRAPH", None)
+    monkeypatch.setattr(kg, "DATA_PATH", tmp_path / "missing.json")
+    assert kg.graph()["nodes"] == {} and kg.neighborhood("symptom:dizziness") is None
+    monkeypatch.setattr(kg, "_GRAPH", None)
