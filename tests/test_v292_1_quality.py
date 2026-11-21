@@ -228,3 +228,12 @@ def test_stale_csrf_token_is_refreshed_and_the_request_retried_once():
         s["user_csrf"] = "current-token"
     tok = c.get("/api/session/csrf").get_json()["token"]
     assert tok in ("current-token", "")  # empty only if the test user does not exist in this database
+
+
+def test_css_and_static_urls_change_whenever_their_content_changes():
+    import hashlib
+    import webapp
+    html = webapp.app.test_client().get("/ar/privacy").get_data(as_text=True)
+    assert "/assets/app-shell-v112.css?v=" + webapp.APP_SHELL_VERSION in html and "__SHELL_V__" not in html
+    assert webapp.APP_SHELL_VERSION.endswith(hashlib.sha1(webapp._APP_SHELL_CSS.encode("utf-8")).hexdigest()[:10])
+    assert webapp.STATIC_ASSET_VERSION.endswith("-" + webapp._static_fingerprint()) and "?v=" + webapp.STATIC_ASSET_VERSION in html

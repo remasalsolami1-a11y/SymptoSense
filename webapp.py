@@ -153,7 +153,13 @@ def _configure_error_monitoring():
         return False
 _sentry_enabled = _configure_error_monitoring()
 app = Flask(__name__)
-STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-194"
+def _static_fingerprint():  # V292.1: ?v= changes whenever any static CSS/JS changes, so immutable caching never serves an old file
+    h = hashlib.sha1()
+    import pathlib
+    for f in sorted(pathlib.Path(os.path.dirname(os.path.abspath(__file__)), "static").rglob("*")):
+        if f.is_file() and f.suffix in (".css", ".js"): h.update(f.name.encode()); h.update(f.read_bytes())
+    return h.hexdigest()[:8]
+STATIC_ASSET_VERSION = f"{release_candidate.APP_VERSION}-{_static_fingerprint()}"
 app.wsgi_app = railway_runtime.RailwayHealthcheckMiddleware(app.wsgi_app)
 if os.environ.get("SENTRY_DSN", "").strip() and not _sentry_enabled:
     app.logger.warning("Sentry was requested but could not be initialized")
@@ -2050,6 +2056,8 @@ import polish_css_v249
 PREMIUM_POLISH_CSS += polish_css_v249.CSS
 PREMIUM_POLISH_CSS += inline_assets.text("V291_SHARED_CSS.css")  # V291 icons and readable text
 
+_APP_SHELL_CSS = BASE_CSS + V2_CSS + PREMIUM_POLISH_CSS
+APP_SHELL_VERSION = "292-" + hashlib.sha1(_APP_SHELL_CSS.encode("utf-8")).hexdigest()[:10]  # content fingerprint for ?v=
 @app.route("/assets/app-shell-v112.css")
 def app_shell_v112_css():
     """Serve shared UI CSS from application memory.
@@ -2057,11 +2065,10 @@ def app_shell_v112_css():
     This keeps the V111 caching/performance benefit without depending on a
     newly-added static file being copied by every deployment path.
     """
-    css = BASE_CSS + V2_CSS + PREMIUM_POLISH_CSS
-    response = Response(css, mimetype="text/css")
+    response = Response(_APP_SHELL_CSS, mimetype="text/css")
     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.set_etag("symptosense-app-shell-v112-v292")
+    response.set_etag("symptosense-app-shell-v112-v292-" + APP_SHELL_VERSION)
     return response
 
 def _page(title, body, desc=None, bare=False, extra_css=""):
@@ -2288,7 +2295,7 @@ def _page(title, body, desc=None, bare=False, extra_css=""):
         .replace("__MAIN_ROLE__", "" if re.search(r'<main\b|role="main"', body) else ' role="main"')
         .replace("__MAIN_H1__", "" if re.search(r"<h1\b", body) else '<h1 class="sr-only">%s</h1>' % re.sub(r"\s*[|\-–—]\s*SymptoSense\s*$", "", safe_title))
         .replace("__BODY__", body)
-        .replace("__ASSET_VERSION__", html_lib.escape(STATIC_ASSET_VERSION, quote=True))
+        .replace("__ASSET_VERSION__", html_lib.escape(STATIC_ASSET_VERSION, quote=True)).replace("__SHELL_V__", APP_SHELL_VERSION)
     )
     if lang == "en": rendered = rendered.replace("✨ استخدام معلوماتي المحفوظة؟", "✨ Use your saved information?").replace("لديك معلومات محفوظة قد تساعد في جعل النتيجة أكثر تخصيصًا.", "You have saved information that may make the result more personalized.").replace("✨ استخدام معلوماتي<", "✨ Use my information<").replace(">إدخال المعلومات يدويًا<", ">Enter information manually<").replace(">تخطي<", ">Skip<")
     return _localize_html_links(rendered, lang)

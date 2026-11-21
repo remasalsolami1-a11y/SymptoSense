@@ -18,7 +18,7 @@ def test_v239_reference_css_present():
     assert ".smart-body-svg.v239" in CSS
 
 def test_v239_cache_bust():
-    assert "/assets/app-shell-v112.css?v=292" in WEB
+    assert "/assets/app-shell-v112.css?v=__SHELL_V__" in WEB  # V292.1: content fingerprint
     assert "symptosense-app-shell-v112-v292" in WEB
     assert versioning.SW_CACHE in SW
 

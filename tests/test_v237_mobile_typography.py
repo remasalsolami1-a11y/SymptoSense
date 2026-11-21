@@ -8,7 +8,7 @@ SW = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 CSS = (ROOT / "app-shell-v111.css").read_text(encoding="utf-8")
 
 def test_v237_cache_bust_is_consistent():
-    assert "/assets/app-shell-v112.css?v=292" in WEB
+    assert "/assets/app-shell-v112.css?v=__SHELL_V__" in WEB  # V292.1: content fingerprint
     assert "symptosense-app-shell-v112-v292" in WEB
     assert versioning.SW_CACHE in SW
     assert "'/assets/app-shell-v112.css?v=292'" in SW

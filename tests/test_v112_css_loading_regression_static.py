@@ -7,13 +7,13 @@ WEB = source_bundle.webapp_text()
 SW = (ROOT / "service-worker.js").read_text(encoding="utf-8")
 
 def test_page_frame_uses_app_served_css():
-    assert '<link rel="stylesheet" href="/assets/app-shell-v112.css?v=292">' in WEB
+    assert '<link rel="stylesheet" href="/assets/app-shell-v112.css?v=__SHELL_V__">' in WEB  # V292.1: content fingerprint
     assert '/static/css/app-shell-v111.css' not in WEB
 
 def test_app_shell_route_is_public_and_cacheable():
     assert '@app.route("/assets/app-shell-v112.css")' in WEB
-    assert 'css = BASE_CSS + V2_CSS + PREMIUM_POLISH_CSS' in WEB
-    assert 'response = Response(css, mimetype="text/css")' in WEB
+    assert '_APP_SHELL_CSS = BASE_CSS + V2_CSS + PREMIUM_POLISH_CSS' in WEB  # V292.1: built once, fingerprinted
+    assert 'response = Response(_APP_SHELL_CSS, mimetype="text/css")' in WEB
     assert 'path.startswith("/assets/")' in WEB
     assert 'public, max-age=31536000, immutable' in WEB
 
