@@ -107,8 +107,11 @@ def test_phone_layout_is_decluttered_without_touching_larger_screens():
     assert block.split("{", 1)[0].endswith("@media (max-width:767px)")
     # V292.1: nothing on the home page is hidden on phones any more; the phone layout gets more room instead
     import re
-    for sel in (".ss-hero-demo", ".ss-trust-links", ".ss-knowledge-sources", ".ss-core-open", ".ss-hero-kicker"):
+    for sel in (".ss-trust-links", ".ss-knowledge-sources", ".ss-core-open", ".ss-hero-kicker"):
         assert not re.search(re.escape(sel) + r"[^{}]*\{display:none", home), sel
+    # V292.1 (owner's choice): on phones the body drawing sits under the title; only the example result card is left out
+    assert not re.search(r"\.ss-hero-demo\{display:none", home)
+    assert ".ss-hero-demo{grid-row:3!important" in home and ".ss-hero-demo .ss-result-card," in home
     assert "nothing hidden" in home and ".ss-core-grid{gap:14px!important}" in home
     assert "f-sec:not([data-sec=\"contact\"])" not in shared and ".chat-start .cs-logo" not in shared
     sblock = shared[shared.index("V291.2 phones only: one layer"):]
