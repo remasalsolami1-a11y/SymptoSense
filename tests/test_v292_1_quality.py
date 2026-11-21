@@ -237,3 +237,30 @@ def test_css_and_static_urls_change_whenever_their_content_changes():
     assert "/assets/app-shell-v112.css?v=" + webapp.APP_SHELL_VERSION in html and "__SHELL_V__" not in html
     assert webapp.APP_SHELL_VERSION.endswith(hashlib.sha1(webapp._APP_SHELL_CSS.encode("utf-8")).hexdigest()[:10])
     assert webapp.STATIC_ASSET_VERSION.endswith("-" + webapp._static_fingerprint()) and "?v=" + webapp.STATIC_ASSET_VERSION in html
+
+
+def test_common_negation_forms_and_the_word_taqayyu():
+    cases = {
+        "ما عندي تقيؤ": ([], ["vomiting"]),
+        "ما عندي حرارة ولا تقيؤ": ([], ["fever", "vomiting"]),
+        "ما فيني صداع ولا دوخة": ([], ["dizziness", "headache"]),
+        "مافيني حرارة": ([], ["fever"]),
+        "ما بي دوخة": ([], ["dizziness"]),
+        "عندي تقيؤ وصداع": (["headache", "vomiting"], []),
+        "عندي صداع وما عندي تقيؤ": (["headache"], ["vomiting"]),
+    }
+    for text, (present, denied) in cases.items():
+        r = mk.normalize_symptoms([text], "ar")
+        assert sorted(c["slug"] for c in r["canonical"]) == present, text
+        assert sorted(x["slug"] for x in r["negated"]) == denied, text
+
+
+def test_live_demo_shows_ordinary_symptoms_and_every_denial_once():
+    import live_demo
+    mild = live_demo.run("mild", "ar")
+    assert mild["symptoms"] == ["صداع"]
+    assert {c["label"] for c in mild["denied"]} | set(mild["symptoms_denied"]) == {"حمى", "قيء"}
+    neg = live_demo.run("negation", "ar")
+    assert "ضيق التنفس" not in neg["symptoms_denied"]  # already shown as the safety concept
+    js = live_demo._JS
+    assert "r.symptoms" in js and "T.sym" in js and "innerHTML" not in js

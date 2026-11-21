@@ -317,7 +317,7 @@ SYMPTOMS = [
     ("headache", "صداع", "Headache", "pain", ["الصداع", "الم في الراس", "ألم في الرأس", "راسي يعورني", "راسي يوجعني"], ["head pain", "head ache"]),
     ("severe-headache", "صداع شديد مفاجئ", "Sudden severe headache", "neurological", ["اسوأ صداع", "أسوأ صداع", "صداع مفاجئ شديد"], ["worst headache", "thunderclap headache"]),
     ("nausea", "غثيان", "Nausea", "digestive", ["لوعه", "لوعه بالمعده", "أشعر بالغثيان"], ["feeling sick", "queasy"]),
-    ("vomiting", "قيء", "Vomiting", "digestive", ["استفراغ", "ترجيع"], ["being sick", "throwing up"]),
+    ("vomiting", "قيء", "Vomiting", "digestive", ["استفراغ", "ترجيع", "تقيؤ", "تقيء", "يتقيأ", "اتقيأ", "قيئ"], ["being sick", "throwing up"]),
     ("light-sensitivity", "حساسية للضوء", "Sensitivity to light", "neurological", ["الضوء يزعجني", "حساسيه من الضوء"], ["photophobia", "light sensitivity"]),
     ("sound-sensitivity", "حساسية للصوت", "Sensitivity to sound", "neurological", ["الصوت يزعجني", "حساسيه من الاصوات"], ["phonophobia", "sound sensitivity"]),
     ("fever", "حمى", "Fever", "general", ["حرارة", "سخونه", "ارتفاع الحراره"], ["high temperature", "feverish"]),

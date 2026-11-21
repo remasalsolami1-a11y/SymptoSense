@@ -77,6 +77,26 @@ def _corrections(text: str) -> list[dict]:
     return out
 
 
+# knowledge-base symptoms already shown as a safety concept (same meaning, different wording)
+_SAME_AS_CONCEPT = {"shortness-of-breath": "breathing", "difficulty-breathing": "breathing", "fever": "fever",
+                    "chest-pain": "chest_pain", "dizziness": "dizzy", "wheezing": "wheeze", "fainting": "faint",
+                    "swelling": "mouth_swelling", "confusion": "confusion", "stiff-neck": "stiff_neck"}
+
+
+def _kb_symptoms(text: str, ar: bool, concepts=frozenset()) -> dict:
+    import medical_knowledge
+    info = medical_knowledge.normalize_symptoms([text], "ar")
+    name = lambda x: x["name_ar"] if ar else x["name_en"]  # noqa: E731
+    seen, present, denied = set(), [], []
+    for x in info.get("canonical") or []:
+        if x["slug"] not in seen and _SAME_AS_CONCEPT.get(x["slug"]) not in concepts:
+            seen.add(x["slug"]); present.append(name(x))
+    for x in info.get("negated") or []:
+        if x["slug"] not in seen and _SAME_AS_CONCEPT.get(x["slug"]) not in concepts:
+            seen.add(x["slug"]); denied.append(name(x))
+    return {"symptoms": present, "symptoms_denied": denied}
+
+
 def run(scenario_id: str, lang: str = "ar") -> dict:
     """Trace one scenario through the engine. Raises KeyError for an unknown id."""
     sc = _BY_ID[scenario_id]
@@ -111,6 +131,9 @@ def run(scenario_id: str, lang: str = "ar") -> dict:
         "corrections": _corrections(sc["text"]),
         "concepts": [concept(c) for c in sorted(red_flag_concepts.matched_concepts(sc["text"]))],
         "denied": [concept(c) for c in sorted(red_flag_concepts.denied_concepts(sc["text"]))],
+        # V292.1: ordinary symptoms the knowledge base understood, present and denied, so a calm case
+        # does not look as if nothing was understood.
+        **_kb_symptoms(sc["text"], ar, red_flag_concepts.denied_concepts(sc["text"]) | red_flag_concepts.matched_concepts(sc["text"])),
         "rules": rules,
         "decision": {"level": level, "label": _LEVEL.get(level, _LEVEL["low"])[0 if ar else 1], "layer": layer,
                      "reason": str(result.get("triage_reason") or result.get("why_result") or "")[:400]},
@@ -209,7 +232,7 @@ _T = {
     "ar": {"title": "عرض مباشر في 3 دقائق", "lead": "أربع حالات ثابتة تمر على المحرك الحقيقي نفسه الذي يحلل أعراض المستخدمين. لا شيء محفوظ مسبقًا، ولا يُحفظ شيء.",
            "facts": ["المحرك الحقيقي — ليس نتائج جاهزة", "لا ذكاء اصطناعي في قرار الطوارئ", "لا يُحفظ أي شيء", "يعمل دون إنترنت بعد التحميل"],
            "typed": "ما كتبه الشخص", "s1": "تنظيف النص وتصحيح الإملاء", "s2": "المفاهيم الطبية التي فهمها", "s3": "قواعد الأمان", "s4": "القرار",
-           "nofix": "لا أخطاء تحتاج تصحيحًا.", "noconcept": "لا مفهوم خطر.", "denied": "منفي — لم يُحتسب:", "norule": "لم تنطبق أي قاعدة طوارئ، فانتقل القرار لطبقة الفرز.",
+           "nofix": "لا أخطاء تحتاج تصحيحًا.", "noconcept": "لا مفهوم خطر.", "sym": "أعراض فهمها:", "denied": "منفي — لم يُحتسب:", "norule": "لم تنطبق أي قاعدة طوارئ، فانتقل القرار لطبقة الفرز.",
            "layer_safety": "قررته: قواعد الأمان الثابتة", "layer_triage": "قرّرته: طبقة الفرز (العمر والشدة والمدة)",
            "time": "الزمن", "ms": "ملي ثانية", "engine": "قواعد أمان ثابتة", "ai": "ذكاء اصطناعي: لا", "saved": "محفوظ: لا", "again": "شغّل مرة أخرى مباشرة",
            "live": "حُسبت الآن من الخادم", "offline": "بدون اتصال — المعروض محسوب عند تحميل الصفحة", "script": "نص العرض (3 دقائق)",
@@ -218,7 +241,7 @@ _T = {
     "en": {"title": "A 3-minute live demo", "lead": "Four fixed cases go through the same real engine that analyses users' symptoms. Nothing is pre-recorded and nothing is saved.",
            "facts": ["The real engine — not canned output", "No AI in the emergency decision", "Nothing is saved", "Works offline once loaded"],
            "typed": "What the person typed", "s1": "Clean the text and fix typos", "s2": "Medical concepts understood", "s3": "Safety rules", "s4": "Decision",
-           "nofix": "No typos needed fixing.", "noconcept": "No danger concept.", "denied": "Denied — not counted:", "norule": "No emergency rule applied, so the decision passed to the triage layer.",
+           "nofix": "No typos needed fixing.", "noconcept": "No danger concept.", "sym": "Symptoms understood:", "denied": "Denied — not counted:", "norule": "No emergency rule applied, so the decision passed to the triage layer.",
            "layer_safety": "Decided by: fixed safety rules", "layer_triage": "Decided by: triage layer (age, severity, duration)",
            "time": "Time", "ms": "ms", "engine": "Fixed safety rules", "ai": "AI: no", "saved": "Saved: no", "again": "Run again live",
            "live": "just computed by the server", "offline": "offline — showing the result computed at page load", "script": "Presenter script (3 minutes)",
@@ -284,8 +307,12 @@ _JS = r"""
   function render(id, r, status){
     var m = D.meta[id], d = r.decision;
     var fixes = r.corrections.length ? [chips(r.corrections.map(function(c){ return c.typed + arrow + c.corrected; }), 'fix')] : [none(T.nofix)];
-    var concepts = r.concepts.length ? [chips(r.concepts.map(function(c){ return c.label; }), 'ok')] : [none(T.noconcept)];
-    if (r.denied.length) concepts.push(h('p', {style: 'margin-top:8px'}, [T.denied]), chips(r.denied.map(function(c){ return c.label; }), 'deny'));
+    var concepts = [];
+    if ((r.symptoms || []).length) concepts.push(h('p', {}, [T.sym]), chips(r.symptoms, 'ok'));
+    concepts.push(r.concepts.length ? chips(r.concepts.map(function(c){ return c.label; }), 'ok') : none(T.noconcept));
+    var denied = r.denied.map(function(c){ return c.label; });
+    (r.symptoms_denied || []).forEach(function(x){ if (denied.indexOf(x) < 0) denied.push(x); });
+    if (denied.length) concepts.push(h('p', {style: 'margin-top:8px'}, [T.denied]), chips(denied, 'deny'));
     var rules = [];
     r.rules.forEach(function(x){
       rules.push(h('p', {}, [h('span', {'class': 'ld-chip ld-rule'}, [x.label])]));
