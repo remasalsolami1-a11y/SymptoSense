@@ -214,3 +214,17 @@ def test_missing_graph_file_gives_an_empty_page_not_a_rebuild(monkeypatch, tmp_p
     monkeypatch.setattr(kg, "DATA_PATH", tmp_path / "missing.json")
     assert kg.graph()["nodes"] == {} and kg.neighborhood("symptom:dizziness") is None
     monkeypatch.setattr(kg, "_GRAPH", None)
+
+
+def test_stale_csrf_token_is_refreshed_and_the_request_retried_once():
+    import webapp
+    frame = (ROOT / "inline_assets" / "PAGE_FRAME.html").read_text(encoding="utf-8")
+    assert "j.error !== 'csrf_failed'" in frame and "/api/session/csrf" in frame and "__ssRetried" in frame
+    c = webapp.app.test_client()
+    r = c.get("/api/session/csrf")
+    assert r.status_code == 200 and r.get_json() == {"ok": True, "token": ""} and "no-store" in r.headers["Cache-Control"]
+    with c.session_transaction() as s:
+        s["ss_user_id"] = 424242
+        s["user_csrf"] = "current-token"
+    tok = c.get("/api/session/csrf").get_json()["token"]
+    assert tok in ("current-token", "")  # empty only if the test user does not exist in this database

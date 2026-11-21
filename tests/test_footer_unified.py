@@ -15,10 +15,12 @@ def _footer():
 
 def test_single_footer_component_with_required_order():
     f = _footer()
-    order = ['class="f-inner"', 'class="f-brand"', 'class="f-tag"', 'class="f-grid"', 'class="f-links"', 'class="f-sep"', 'class="f-copy"']
+    # V292.1: three columns (about with brand and tagline · links · contact), then a bottom bar
+    order = ['class="f-inner"', 'class="f-grid"', 'class="f-sec f-about"', 'class="f-brand"', 'class="f-tag"',
+             'class="f-sec f-links"', 'data-sec="contact"', 'class="f-tg"', 'class="f-made"', 'class="f-sep"', 'class="f-bottom"', 'class="f-copy"', 'class="f-note"']
     pos = [f.index(t) for t in order]
     assert pos == sorted(pos), pos
-    assert f.count('class="f-sec"') == 3
+    assert f.count('class="f-sec') == 3
     assert WEB.count('def _footer():') == 1 and WEB.count('class="footer"') == 1
 
 

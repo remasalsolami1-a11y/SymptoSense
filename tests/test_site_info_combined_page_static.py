@@ -9,7 +9,7 @@ COMBINED = WEB + '\n' + SITE
 
 def test_site_info_is_in_footer_not_community_stats():
     assert 'class="home-community-stat home-community-info" href="/site-info"' not in WEB
-    assert '<a href="/about" class="f-owner">%s<br>%s</a>' in WEB
+    assert '<a href="/about" class="f-owner">%s</a>' in WEB
     assert '_PUBLIC_CANONICAL_MAP' in WEB and '"/site-info": "/about"' in WEB
 
 
@@ -37,4 +37,4 @@ def test_site_info_mobile_layout_is_responsive():
 def test_footer_does_not_duplicate_about_link():
     footer = WEB[WEB.index('def _footer():'):WEB.index('def _page(', WEB.index('def _footer():'))]
     assert 'href="/about-us"' not in footer
-    assert '<a href="/about" class="f-owner">%s<br>%s</a>' in footer
+    assert '<a href="/about" class="f-owner">%s</a>' in footer

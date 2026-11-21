@@ -763,6 +763,10 @@ def _user_csrf_valid():
     expected = session.get("user_csrf", "")
     return bool(expected and supplied and hmac.compare_digest(supplied, expected))
 
+@app.route("/api/session/csrf", methods=["GET"])
+def api_session_csrf():  # V292.1: lets a page opened before sign-in (or before a session renewal) refresh its token and retry once
+    r = jsonify({"ok": True, "token": _user_csrf_token() if _ss_user_id() else ""}); r.headers["Cache-Control"] = "no-store"; return r
+
 @app.before_request
 def validate_api_request_size_and_json():
     """Bound request work before Flask parses JSON or multipart bodies.
@@ -1976,37 +1980,18 @@ def _nav():
 def _footer():
     tg = "mailto:" + CONTACT_EMAIL
     return (
-        '<div class="footer" id="contact"><div class="f-inner">'
-        '<a class="f-brand" href="/home" aria-label="SymptoSense"><img class="f-logo" src="/brand-icon.svg" width="40" height="40" alt="" aria-hidden="true" decoding="async" loading="lazy"><span class="ss-brand-gradient">SymptoSense</span></a>'
-        '<p class="f-tag">%s</p>'
-        '<div class="f-grid">'
-        '<div class="f-sec"><h4>%s</h4><p>%s</p></div>'
-        '<div class="f-sec"><h4>%s</h4><a href="/about" class="f-owner">%s<br>%s</a></div>'
-        '<div class="f-sec" data-sec="contact">'
-        '<a class="f-tg" href="%s">' + ui_icons.svg("mail", 18) + ' %s</a>'
-        '</div>'
-        '</div>'
-        '<div class="f-links">'
-        '<a href="/privacy">%s</a>'
-        '<a href="/terms">%s</a>'
-        '<a href="/sources">%s</a>'
-        '<a href="/changelog">%s</a>'
-        '%s'
-        '</div>'
-        '%s'
-        '<hr class="f-sep" aria-hidden="true">'
-        '<p class="f-copy" dir="ltr">%s</p>'
-        '</div></div>'
-    ) % (_t("footer_slogan"),
-         _t("footer_synopsis_t"), _t("footer_synopsis_d"),
-         _t("footer_owner_t"), _t("footer_owner_name"), _t("footer_owner_role"),
-         tg, html_lib.escape(CONTACT_EMAIL),
-         _t("footer_privacy"), _t("footer_terms"),
-         ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
-         ("سجل التحديثات" if _lang() == "ar" else "Changelog"),
+        '<div class="footer" id="contact"><div class="f-inner"><div class="f-grid">'
+        '<div class="f-sec f-about"><a class="f-brand" href="/home" aria-label="SymptoSense"><img class="f-logo" src="/brand-icon.svg" width="40" height="40" alt="" aria-hidden="true" decoding="async" loading="lazy"><span class="ss-brand-gradient">SymptoSense</span></a><p class="f-tag">%s</p><p>%s</p></div>'
+        '<nav class="f-sec f-links" aria-label="%s"><h4>%s</h4><a href="/privacy">%s</a><a href="/terms">%s</a><a href="/sources">%s</a>%s</nav>'
+        '<div class="f-sec" data-sec="contact"><h4>%s</h4><a class="f-tg" href="%s">' + ui_icons.svg("mail", 18) + ' <span dir="ltr">%s</span></a><p class="f-made"><span>%s</span><a href="/about" class="f-owner">%s</a></p></div>'
+        '</div>%s<hr class="f-sep" aria-hidden="true"><div class="f-bottom"><p class="f-copy" dir="ltr">%s</p><p class="f-note">%s</p></div></div></div>'
+    ) % (_t("footer_slogan"), _t("footer_synopsis_d"),
+         *(("روابط", "روابط") if _lang() == "ar" else ("Links", "Links")),
+         _t("footer_privacy"), _t("footer_terms"), ("المصادر الطبية" if _lang() == "ar" else "Medical sources"),
          ('<a href="/admin">%s</a>' % _t("nav_admin")) if (_ss_user() or {}).get("role") == "admin" else "",
-         _accountability_html(_lang() == "ar"),
-         _t("footer_copy_full"))
+         ("تواصل" if _lang() == "ar" else "Contact"), tg, html_lib.escape(CONTACT_EMAIL), _t("footer_owner_t"), _t("footer_owner_name"),
+         _accountability_html(_lang() == "ar"), _t("footer_copy_full"),
+         ("أداة توعوية، وليست بديلًا عن الطبيب" if _lang() == "ar" else "An awareness tool, not a substitute for a doctor"))
 
 
 PREMIUM_POLISH_CSS += inline_assets.text("PREMIUM_POLISH_CSS_12.css")

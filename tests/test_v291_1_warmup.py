@@ -105,8 +105,12 @@ def test_phone_layout_is_decluttered_without_touching_larger_screens():
     shared = (root / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
     block = home[home.index("V291.2 phones only: calmer home"):]
     assert block.split("{", 1)[0].endswith("@media (max-width:767px)")
-    for sel in (".ss-hero-demo", ".ss-trust-links", ".ss-knowledge-sources", ".ss-core-open"):
-        assert sel in block
+    # V292.1: nothing on the home page is hidden on phones any more; the phone layout gets more room instead
+    import re
+    for sel in (".ss-hero-demo", ".ss-trust-links", ".ss-knowledge-sources", ".ss-core-open", ".ss-hero-kicker"):
+        assert not re.search(re.escape(sel) + r"[^{}]*\{display:none", home), sel
+    assert "nothing hidden" in home and ".ss-core-grid{gap:14px!important}" in home
+    assert "f-sec:not([data-sec=\"contact\"])" not in shared and ".chat-start .cs-logo" not in shared
     sblock = shared[shared.index("V291.2 phones only: one layer"):]
     assert "@media (max-width:767px){html body #main-content>.card{border:0!important" in sblock
     assert "html body .em-card{display:grid!important" in sblock
@@ -190,3 +194,14 @@ def test_unticking_blood_research_box_withdraws_the_stored_consent():
     assert db.has_blood_collection_consent(owner, "v-test")
     db.withdraw_blood_collection_consent(owner)
     assert not db.has_blood_collection_consent(owner, "v-test")
+
+
+def test_footer_columns_layout_on_every_screen():
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[1] / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
+    block = css[css.index("V292.1 footer: three tidy columns"):]
+    P = "html body:not(#ss-f292) .footer"
+    assert P + " .f-grid{display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr)!important" in block
+    assert "@media (max-width:600px){" + P + " .f-inner{padding:32px 16px 16px!important}" + P + " .f-grid{grid-template-columns:1fr!important" in block
+    assert P + " .f-bottom{display:flex!important;justify-content:space-between!important" in block
+

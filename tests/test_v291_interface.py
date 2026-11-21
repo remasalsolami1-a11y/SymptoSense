@@ -97,12 +97,13 @@ def test_footer_wording_is_short_and_states_each_fact_once(client):
     ar = _get(client, "/ar/")
     foot = ar[ar.index('<div class="footer"'):]
     foot = foot[:foot.index('<p class="f-copy"') + 200]
-    assert "افهم أعراضك واعرف خطوتك التالية" in foot and "صمّمتها وبنيتها" in foot
-    assert "لا تشخّص ولا تغني عن الطبيب" in foot
-    assert foot.count("ريماس حميد السلمي") == 1 and "صاحبة" not in foot and "منصة صحية ذكية" not in foot
-    assert "Designed" not in foot
+    # V292.1: wording chosen by the project owner
+    assert "افهم أعراضك واعرف خطوتك التالية" in foot and "فكرة وتطوير" in foot
+    assert "منصة صحية ذكية تساعدك تفهم أعراضك بالاعتماد على مصادر طبية موثوقة" in foot and "بدون تشخيص" in foot
+    assert foot.count("ريماس حميد السلمي") == 1 and "صاحبة" not in foot and "طالبة علوم البيانات" not in foot
+    assert "سجل التحديثات" not in foot and "Idea" not in foot
     en = _get(client, "/en/")
-    assert "Designed and built by" in en and "does not replace a doctor" in en
+    assert "Idea and development" in en and "without a diagnosis" in en
 
 
 def test_english_wording_fixes():

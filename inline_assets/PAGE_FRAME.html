@@ -26,7 +26,11 @@
         }
       }
     } catch (_) {}
-    return originalFetch(input, init);
+    // V292.1: a page opened before sign-in or a session renewal carries an old token; refresh it and retry once.
+    return originalFetch(input, init).then(function(res){ if (res.status !== 403 || init.__ssRetried) return res;
+      return res.clone().json().then(function(j){ if (!j || j.error !== 'csrf_failed') return res;
+        return originalFetch('/api/session/csrf', {credentials: 'same-origin', cache: 'no-store'}).then(function(r){ return r.json(); }).then(function(t){ if (!t || !t.token) return res; var meta = document.querySelector('meta[name="symptosense-csrf"]'); if (meta) meta.content = t.token; var again = Object.assign({}, init, {__ssRetried: true}); var h = new Headers(init.headers || {}); h.set('X-CSRF-Token', t.token); again.headers = h; return originalFetch(input, again); });
+      }).catch(function(){ return res; }); });
   };
 })();
 </script>

@@ -30,7 +30,9 @@ def test_changelog_pages_exist_and_are_linked_and_in_sitemap():
         body = r.get_data(as_text=True)
         assert word in body and "V76" in body and "V75" in body
     assert "/changelog" in c.get("/sitemap.xml").get_data(as_text=True)
-    assert 'href="/ar/changelog"' in c.get("/ar/about").get_data(as_text=True)
+    # V292.1: the page stays (and in the sitemap) but is no longer linked from the footer, by the owner's choice
+    about = c.get("/ar/about").get_data(as_text=True)
+    assert 'href="/changelog"' not in about[about.index('<div class="footer"'):]
     sources = c.get("/ar/how-we-work").get_data(as_text=True)
     assert "مراجعة V76" not in sources
 
