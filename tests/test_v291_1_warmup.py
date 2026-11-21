@@ -208,3 +208,13 @@ def test_footer_columns_layout_on_every_screen():
     assert "@media (max-width:600px){" + P + " .f-inner{padding:32px 16px 16px!important}" + P + " .f-grid{grid-template-columns:1fr!important" in block
     assert P + " .f-bottom{display:flex!important;justify-content:space-between!important" in block
 
+
+
+def test_tools_strip_starts_on_the_left_and_scrolls_right():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    home = (root / "inline_assets" / "V291_HOME_CSS.css").read_text(encoding="utf-8")
+    P = "html body.ss-home-page:not(#ss-v291):not(#ss-v292):not(#ss-v293)"
+    assert P + " .ss-tools-scroll," + P + " .ss-tools-dots{direction:ltr!important}" in home
+    assert P + " .ss-tools-scroll>.ss-tool{direction:rtl!important}" in home
+    assert "__ALL_TOOLS__ →" in (root / "pagelib" / "pages_html.py").read_text(encoding="utf-8")

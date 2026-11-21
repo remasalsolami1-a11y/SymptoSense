@@ -422,7 +422,7 @@ def home_page():
       </section>
 
       <section class="ss-tools-panel" aria-labelledby="toolsTitle">
-        <div class="ss-tools-head"><div><h2 id="toolsTitle">__TOOLS_TITLE__</h2><p>__TOOLS_SUB__</p></div><span class="ss-tools-all" aria-hidden="true">__ALL_TOOLS__ ←</span></div>
+        <div class="ss-tools-head"><div><h2 id="toolsTitle">__TOOLS_TITLE__</h2><p>__TOOLS_SUB__</p></div><span class="ss-tools-all" aria-hidden="true">__ALL_TOOLS__ →</span></div>
         <div class="ss-tools-scroll" role="region" aria-label="__TOOLS_TITLE__" tabindex="0">
           <a class="ss-tool" href="/search"><span class="ic">🔎</span><b>__SEARCH__</b><small>__SEARCH_S__</small></a>
           <a class="ss-tool" href="/health-library"><span class="ic">📚</span><b>__HEALTH_LIBRARY__</b><small>__HEALTH_LIBRARY_S__</small></a>
