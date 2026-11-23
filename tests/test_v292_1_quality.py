@@ -425,3 +425,51 @@ def test_denied_very_common_symptom_is_reported_as_an_important_conflict():
     from pathlib import Path
     js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
     assert "m.evidence_conflicts" in js and "تعارض مهم" in js and "ss-conflict" in js
+
+
+def test_pain_quality_and_symptom_path_are_read_from_text_and_never_change_triage():
+    import text_context as t
+    d = t.describe("عندي ألم حرقان ونغزات في رجلي، ما فيه خدر")
+    assert [p["key"] for p in d["pain"]] == ["burning", "stabbing"]          # «ما فيه خدر» is negated
+    d = t.describe("بدأ الألم حول السرة وبعدين انتقل الى اسفل البطن يمين")
+    assert d["course"] == [{"kind": "moved", "from": "السرة", "to": "اسفل البطن يمين"}]
+    d = t.describe("the pain started around my belly button and then moved to the lower right side")
+    assert d["course"][0]["kind"] == "moved" and d["course"][0]["to"] == "lower right side"
+    assert t.describe("الضغط عالي وضغطي مرتفع")["pain"] == []                # blood pressure is not a pain quality
+    assert t.describe("انتقل الى البيت")["course"] == []                     # a path needs a body part
+    # record only: the triage reader ignores these words
+    assert t.triage_signal("ألم حرقان ونغزات", "ar") == t.triage_signal("ألم", "ar")
+
+
+def test_description_reaches_the_result_and_the_doctor_summary():
+    import webapp
+    import health_file
+    c = webapp.app.test_client()
+    assert c.post("/api/consent/preferences", json={"service_usage": True}).status_code == 200
+    d = c.post("/api/analyze", json={"lang": "ar", "age": 30, "gender": "female", "duration": "يوم", "severity": 3, "symptoms": ["ألم في البطن"],
+                                     "raw_description": "بدأ الألم حول السرة وبعدين انتقل الى اسفل البطن يمين، وفيه مغص"},
+               environ_overrides={"REMOTE_ADDR": "198.18.42.1"}).get_json()
+    assert d["ok"] and d["symptom_description"]["course"] and d["symptom_description"]["pain"][0]["key"] == "cramping"
+    s = health_file.visit_summary({"symptoms": ["ألم في البطن"], "description": d["symptom_description"]})
+    assert "وصف الألم كما ذكره: مغص أو تقلص" in s["ar"] and "Pain described as: cramping" in s["en"]
+    assert "مسار العرض كما وصفه: بدأ في «السرة» ثم انتقل إلى «اسفل البطن يمين»" in s["ar"]
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
+    assert "ss-described" in js and "هذا الوصف لا يغيّر النتيجة" in js
+
+
+def test_blood_pattern_that_does_not_fit_iron_deficiency_is_said_without_naming_a_cause():
+    import blood_test
+    import blood_advice
+    def entries(d):
+        return [{"key": k, "value": v[0], "unit": v[1], "reference_low": v[2], "reference_high": v[3]} for k, v in d.items()]
+    res, *_ = blood_test.analyze_blood(entries({"hgb": (10.0, "g/dL", 12, 15.5), "mcv": (70, "fL", 80, 100), "ferritin": (120, "ng/mL", 15, 150)}), "female", 30)
+    first = blood_test.build_pattern_insights(res, "ar")[0]
+    assert first["kind"] == "mismatch" and "لا يتفق مع النمط المعتاد لنقص الحديد" in first["text"] and first["source"].startswith("https://")
+    assert "ثلاسيميا" not in first["text"] and "thalass" not in blood_test.build_pattern_insights(res, "en")[0]["text"].lower()
+    by = {r["key"]: r for r in res}
+    card = blood_advice.advice_for("hgb", by["hgb"], by, age=30, lang="ar")
+    assert card and "لا يتفق مع النمط المعتاد لنقص الحديد" in str(card) and "يُطلب من الطبيب: الفيريتين" not in str(card)
+    # low ferritin keeps the usual iron-deficiency reading, with no mismatch
+    res2, *_ = blood_test.analyze_blood(entries({"hgb": (10.0, "g/dL", 12, 15.5), "mcv": (70, "fL", 80, 100), "ferritin": (5, "ng/mL", 15, 150)}), "female", 30)
+    assert all(x.get("kind") != "mismatch" for x in blood_test.build_pattern_insights(res2, "ar"))

@@ -430,3 +430,71 @@ def triage_signal(text: str, lang: str = "ar") -> tuple[str, str] | None:
         return "soon", (f"وصفتَ الأعراض بأنها متوسطة ({q(f['severity'])})" if ar
                         else f"You described the symptoms as moderate ({q(f['severity'])})")
     return None
+
+
+# ----------------------------------------------------------------------------- V292.1 description (display only)
+# How the person describes the symptom — what the pain feels like and where it started and moved to. This is
+# RECORD-ONLY: it never changes triage, scores or the possibilities shown. It is shown back to the person
+# ("how we understood your description") and passed to the doctor summary, because the quality of a pain and
+# its path are things a clinician asks about. Negated phrases ("ما فيه حرقان") are ignored.
+_PAIN_QUALITY = (
+    ("burning", "حرقان", "burning", ("حرقان", "حرقه", "يحرق", "يحرقني", "تحرق", "لسع", "يلسع", "burning", "burns")),
+    ("tingling", "وخز أو تنميل", "tingling / pins and needles", ("وخز", "نمنمه", "تنميل", "دبابيس", "tingling", "pins and needles")),
+    ("numbness", "خدر", "numbness", ("خدر", "مخدر", "numb", "numbness")),
+    ("pressure", "ضغط أو ثقل", "pressure / heaviness", ("ثقل", "كاتم", "يضغط", "ضاغط", "فيه ضغط", "ضغط على", "ضغط في", "pressure", "heaviness", "squeezing", "tightness")),
+    ("throbbing", "نابض", "throbbing", ("نابض", "ينبض", "throbbing", "pounding", "pulsating")),
+    ("stabbing", "طعن أو نغزات", "stabbing / sharp", ("طعن", "يطعن", "نغزات", "نغزه", "ينغز", "سكاكين", "stabbing", "sharp pain")),
+    ("electric", "مثل الكهرباء", "electric / shooting", ("كهربا", "كهرباء", "كهربه", "shooting", "electric")),
+    ("cramping", "مغص أو تقلص", "cramping", ("مغص", "تقلص", "يلوي", "يعصر", "cramping", "cramps", "colicky")),
+    ("dull", "مكتوم", "dull ache", ("مكتوم", "dull")),
+)
+_BODY_WORDS = ("راس", "رقب", "حلق", "صدر", "بطن", "سر", "معد", "ظهر", "كتف", "ذراع", "يد", "رجل", "ساق", "فخذ", "ركب", "جنب",
+               "خصر", "فك", "سن", "اذن", "عين", "حوض", "يمين", "يسار", "head", "neck", "throat", "chest", "belly", "stomach",
+               "abdomen", "navel", "back", "shoulder", "arm", "hand", "leg", "thigh", "knee", "side", "jaw", "ear", "eye", "pelvis",
+               "groin", "right", "left", "lower", "upper")
+_AR_TO = r"(?:الى|إلى|لل|ل|عند|في|على)\s*"
+_END = r"(?=\s+و\S|\s+بس|\s+لكن|[،,.؛\n]|$)"
+_PATH = (
+    ("moved", re.compile(r"(?:بد[اأ]|كان)(?:\s+(?:الالم|الألم|الوجع|العرض|المغص))?\s+(?:في|من|عند|حول)\s+(?P<a>[^،,.؛\n]{2,40}?)\s+(?:و|ثم|بعدين|وبعدين|وبعدها|بعدها)\s*(?:انتقل|راح|نزل|صار|تحول|تحوّل)\s+" + _AR_TO + r"(?P<b>[^،,.؛\n]{2,40}?)" + _END)),
+    ("moved", re.compile(r"(?:started|began)\s+(?:in|at|around)\s+(?:the\s+|my\s+)?(?P<a>[^,.;\n]{2,40}?)\s+(?:and|then)\s+(?:then\s+)?(?:moved|went|shifted)\s+(?:to|into)\s+(?:the\s+|my\s+)?(?P<b>[^,.;\n]{2,40})", re.IGNORECASE)),
+    ("spread", re.compile(r"(?:امتد|انتشر|ينتشر|يمتد|وصل|يوصل)\s+" + _AR_TO + r"(?P<b>[^،,.؛\n]{2,40}?)" + _END)),
+    ("spread", re.compile(r"(?:spread|spreads|spreading|radiates|radiating|goes)\s+(?:down\s+|up\s+)?(?:to|into)\s+(?:the\s+|my\s+)?(?P<b>[^,.;\n]{2,40})", re.IGNORECASE)),
+)
+
+
+def _body_part(piece: str) -> bool:
+    norm = clinical_text.normalize_clinical_text(piece)
+    return any(w in norm for w in _BODY_WORDS)
+
+
+def _short(piece: str) -> str:
+    return " ".join(str(piece or "").split()[:5]).strip(" .،,؛")
+
+
+def describe(text: str, lang: str = "ar") -> dict:
+    """{"pain": [{key, label, words}], "course": [{kind, from, to}]} read from the person's text. Display only."""
+    raw = str(text or "")[:2000]
+    i = 1 if lang == "en" else 0
+    norm = clinical_text.normalize_clinical_text(raw)
+    pain, seen = [], set()
+    for key, ar, en, words in _PAIN_QUALITY:
+        for w in words:
+            wn = clinical_text.normalize_clinical_text(w)
+            m = re.search(r"(?<![\w؀-ۿ])(?:[وبفلك])?(?:ال)?" + re.escape(wn) + _E, norm) if wn else None
+            if not m or key in seen:
+                continue
+            if clinical_text.has_negation_cue(norm[max(0, m.start() - 14):m.start()]):
+                continue
+            seen.add(key)
+            pain.append({"key": key, "label": (ar, en)[i], "words": w})
+            break
+    course = []
+    for kind, rx in _PATH:
+        for m in rx.finditer(raw):
+            a, b = _short(m.groupdict().get("a") or ""), _short(m.group("b"))
+            if not _body_part(b) or (a and not _body_part(a)):
+                continue
+            item = {"kind": kind, "from": a, "to": b}
+            if item not in course:
+                course.append(item)
+    return {"pain": pain[:4], "course": course[:2]}

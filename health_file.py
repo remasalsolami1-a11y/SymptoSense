@@ -219,6 +219,18 @@ def visit_summary(data: dict) -> dict:
     if urg:
         line("مستوى الاستعجال في التقييم", "Assessment urgency", urg[0], urg[1])
     line("احتمالات غير تشخيصية ظهرت", "Non-diagnostic possibilities shown", "، ".join(cond_ar), ", ".join(cond_en))
+    desc = d.get("description") if isinstance(d.get("description"), dict) else {}
+    labels = {k: (a, e) for k, a, e, _w in __import__("text_context")._PAIN_QUALITY}
+    pain = [labels[p["key"]] for p in (desc.get("pain") or [])[:4] if isinstance(p, dict) and p.get("key") in labels]
+    line("وصف الألم كما ذكره", "Pain described as", "، ".join(x[0] for x in pain), ", ".join(x[1] for x in pain))
+    for c in (desc.get("course") or [])[:2]:
+        if not isinstance(c, dict) or not _clean(c.get("to"), 60):
+            continue
+        a, b = _clean(c.get("from"), 60), _clean(c.get("to"), 60)
+        if c.get("kind") == "moved" and a:
+            line("مسار العرض كما وصفه", "Symptom path (patient's words)", f"بدأ في «{a}» ثم انتقل إلى «{b}»", f"started in “{a}”, then moved to “{b}”")
+        else:
+            line("مسار العرض كما وصفه", "Symptom path (patient's words)", f"يمتد إلى «{b}»", f"spreads to “{b}”")
     meds = _clean(d.get("medications"), 160)
     line("أدوية ذكرها", "Medicines mentioned", meds, f"{meds} (patient's words)")
     ar += ["", "ملخص توعوي من SymptoSense وليس تشخيصًا طبيًا. ما كتبه المريض بنفسه منقول كما هو."]

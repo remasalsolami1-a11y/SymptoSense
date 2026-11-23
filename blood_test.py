@@ -1514,6 +1514,29 @@ def build_pattern_insights(results, lang="ar"):
             "title":"الهيموغلوبين وMCV يُقرآن معًا" if ar else "Hemoglobin and MCV are interpreted together",
             "text":"انخفاض الهيموغلوبين مع تغيّر حجم الكريات يعطي نمطًا أكثر فائدة للطبيب من كل قيمة وحدها، لكنه لا يحدد السبب دون تاريخ مرضي وفحوص إضافية." if ar else "Low hemoglobin together with a change in red-cell size is more informative than either value alone, but it does not identify a cause without history and additional testing."
         })
+    # V292.1: say when markers do NOT fit the pattern one would usually expect. No cause is named: that
+    # needs a clinician (and, later, a clinically reviewed rule with its own source).
+    st = lambda k: (by.get(k) or {}).get("status")
+    if st("hgb") == "low" and st("mcv") == "low" and st("ferritin") in {"normal", "high"}:
+        out.insert(0, {
+            "group": "red_cells", "label": GROUP_LABELS["red_cells"][0 if ar else 1], "keys": ["hgb", "mcv", "ferritin"], "kind": "mismatch",
+            "title": "نمط لا يتفق مع المتوقع" if ar else "A pattern that does not fit the usual one",
+            "text": ("الهيموغلوبين منخفض والكريات صغيرة (MCV منخفض)، لكن مخزون الحديد (الفيريتين) ليس منخفضًا. هذا لا يتفق مع النمط المعتاد لنقص الحديد، "
+                     "فلا يُؤخذ حديد قبل أن يحدد الطبيب السبب ويقرر الفحوصات المناسبة." if ar else
+                     "Haemoglobin is low and the red cells are small (low MCV), but iron stores (ferritin) are not low. This does not fit the usual "
+                     "iron-deficiency pattern, so do not take iron before a doctor finds the cause and decides which tests are needed."),
+            "source": DIRECT_SOURCES["ferritin"]["url"],
+        })
+    if st("hgb") == "low" and st("mcv") == "high" and st("b12") == "normal" and st("folate") == "normal":
+        out.insert(0, {
+            "group": "red_cells", "label": GROUP_LABELS["red_cells"][0 if ar else 1], "keys": ["hgb", "mcv", "b12", "folate"], "kind": "mismatch",
+            "title": "نمط لا يتفق مع المتوقع" if ar else "A pattern that does not fit the usual one",
+            "text": ("الهيموغلوبين منخفض والكريات كبيرة (MCV مرتفع)، لكن B12 والفولات طبيعيان. هذا لا يتفق مع النمط المعتاد لنقصهما، "
+                     "والطبيب هو من يحدد السبب والفحوصات التالية." if ar else
+                     "Haemoglobin is low and the red cells are large (high MCV), but B12 and folate are normal. This does not fit the usual "
+                     "pattern of their deficiency; a doctor finds the cause and the next tests."),
+            "source": DIRECT_SOURCES["b12"]["url"],
+        })
     return out[:6]
 
 def build_relationships(results, lang="ar"):

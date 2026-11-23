@@ -428,6 +428,15 @@
         h += '<section class="ss-report-card ss-pattern-summary-v151"><div class="ss-report-heading"><h3>🔗 '+esc(d.symptom_pattern_summary.title|| (LANG==='ar'?'ملخص نمط الأعراض':'Symptom pattern summary'))+'</h3><span class="ss-count">'+esc(LANG==='ar'?'عدة أعراض معًا':'Combined context')+'</span></div><p>'+esc(d.symptom_pattern_summary.text)+'</p><small>'+esc(d.symptom_pattern_summary.note||'')+'</small></section>';
       }
 
+      // V292.1: how the person described the symptom (pain quality, where it started and moved). Record only.
+      const sd=d.symptom_description||{}, sdPain=(sd.pain||[]).filter(function(x){return x&&x.label;}), sdCourse=(sd.course||[]).filter(function(x){return x&&x.to;});
+      if (u !== 'high' && (sdPain.length || sdCourse.length)) {
+        h += '<section class="ss-report-card ss-described"><div class="ss-report-heading"><h3>🗣️ '+esc(LANG==='ar'?'كيف وصفتَ العرض':'How you described it')+'</h3></div>';
+        if (sdPain.length) h += '<p><b>'+esc(LANG==='ar'?'نوع الألم: ':'What it feels like: ')+'</b>'+esc(sdPain.map(function(x){return x.label;}).join(LANG==='ar'?'، ':', '))+'</p>';
+        sdCourse.forEach(function(c){ h += '<p><b>'+esc(LANG==='ar'?'المسار: ':'Path: ')+'</b>'+esc(c.kind==='moved'?(LANG==='ar'?('بدأ في «'+c.from+'» ثم انتقل إلى «'+c.to+'»'):('started in “'+c.from+'”, then moved to “'+c.to+'”')):(LANG==='ar'?('يمتد إلى «'+c.to+'»'):('spreads to “'+c.to+'”')))+'</p>'; });
+        h += '<small>'+esc(LANG==='ar'?'نحفظ وصفك كما فهمناه ليصل إلى الطبيب في الملخص. هذا الوصف لا يغيّر النتيجة.':'We keep your description as we understood it, for the doctor summary. It does not change the result.')+'</small></section>';
+      }
+
       // Context pattern summarizes the user's own timing/trigger context; never shown ahead of urgent care.
       if (u !== 'high') h += contextualSymptomPatternHtml(input);
 

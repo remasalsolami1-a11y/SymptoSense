@@ -76,7 +76,7 @@
       let bilingual=null; const sumEl=overlay.querySelector('#doctorCardSummary'), tabs=overlay.querySelector('.ss-lang-tabs');
       const showLang=function(k){ if(!bilingual)return; sumEl.textContent=k==='both'?bilingual.ar+'\n\n— — —\n\n'+bilingual.en:bilingual[k]; sumEl.setAttribute('dir',k==='en'?'ltr':'rtl'); tabs.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.sumLang===k));}); combined=(LANG==='ar'?'نص التواصل\n':'Contact script\n')+clinic+'\n\n'+sumEl.textContent; };
       (async function(){ try{ const d=lastResult||{}, inp=lastAnalysisInput||state||{};
-        const r=await fetch('/api/doctor-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({age:inp.age,gender:inp.gender,symptoms:inp.symptoms,duration:inp.duration,severity:inp.severity,medications:inp.medications,
+        const r=await fetch('/api/doctor-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:d.symptom_description||null,age:inp.age,gender:inp.gender,symptoms:inp.symptoms,duration:inp.duration,severity:inp.severity,medications:inp.medications,
           yes:(differentialAnswers||[]).filter(function(x){return x.answer==='yes';}).map(function(x){return x.slug;}),no:(differentialAnswers||[]).filter(function(x){return x.answer==='no';}).map(function(x){return x.slug;}),
           matches:(Array.isArray(d.knowledge_matches)?d.knowledge_matches:[]).map(function(m){return m.slug;}),urgency:(d.decision&&d.decision.level)||d.urgency})});
         const j=await r.json(); if(j&&j.ok&&j.ar&&j.en){bilingual=j;tabs.hidden=false;tabs.querySelectorAll('[aria-pressed]').length||showLang(LANG==='en'?'en':'ar');}

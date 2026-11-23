@@ -299,6 +299,10 @@ def advice_for(key: str, result: dict, results_by_key: dict, *, age=None, pregna
             return _message("pattern", "مع انخفاض B12 أو الفولات في نفس التقرير، قد يكون هذا سبب فقر الدم — النصائح في بطاقتهما.",
                             "With low B12 or folate in the same report, that may explain the anaemia — see the advice on those cards.", lang)
         mcv_low = _status(results_by_key, "mcv") == "low"
+        if ferritin in {"normal", "high"}:  # V292.1: ferritin is in the report and not low; do not call it iron deficiency
+            return _message("cause_first",
+                            "الفيريتين (مخزون الحديد) في نفس التقرير ليس منخفضًا، فهذا لا يتفق مع النمط المعتاد لنقص الحديد. لا يُؤخذ حديد دون سبب؛ الطبيب يحدد السبب والفحوصات التالية.",
+                            "Ferritin (iron stores) in the same report is not low, so this does not fit the usual iron-deficiency pattern. Do not take iron without a cause; a doctor finds the cause and the next tests.", lang)
         return _message("cause_first",
                         ("فقر الدم له أسباب كثيرة، و«تناول الحديد» ليس دائمًا الحل الصحيح؛ تناول الحديد دون سبب قد يُخفي نزيفًا. "
                          + ("صِغر حجم الكريات (MCV منخفض) يجعل نقص الحديد محتملًا، لكن يلزم تأكيده. " if mcv_low else "")
