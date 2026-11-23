@@ -3612,7 +3612,7 @@ def admin_blood_collection_rows():
             return 'Female | أنثى'
         if raw in {'m', 'male', 'ذكر'}:
             return 'Male | ذكر'
-        return ''
+        return 'Unknown | غير محدد'  # V292.1: same wording as the symptom workbook, never a blank cell
 
     rows = []
     for raw_row in raw_rows:
