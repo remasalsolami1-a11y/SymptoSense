@@ -264,3 +264,16 @@ def test_live_demo_shows_ordinary_symptoms_and_every_denial_once():
     assert "ضيق التنفس" not in neg["symptoms_denied"]  # already shown as the safety concept
     js = live_demo._JS
     assert "r.symptoms" in js and "T.sym" in js and "innerHTML" not in js
+
+
+def test_services_menu_finds_its_button_through_the_page_wide_click_listener():
+    frame = (ROOT / "inline_assets" / "PAGE_FRAME.html").read_text(encoding="utf-8")
+    body = frame[frame.index("function toggleDD(ev)"):frame.index("document.addEventListener('click', function(ev) {", frame.index("function toggleDD(ev)"))]
+    assert "ev.target.closest('[data-ss-click=\"toggleDD\"]" in body
+    assert "ev.currentTarget" not in body.split("\n", 1)[1]  # the delegated listener's currentTarget is the document
+
+
+def test_body_map_glow_never_covers_the_symptom_buttons():
+    css = (ROOT / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
+    assert ".smart-body-stage::before,.smart-body-stage::after{pointer-events:none!important}" in css
+    assert ".smart-body-results{position:relative!important;z-index:1!important}" in css

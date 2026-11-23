@@ -229,9 +229,10 @@ function setLang(l) {
   try { localStorage.setItem('ss_lang', l); } catch(e) {}
   location.href = (l === 'ar') ? '/home' : '/home';
 }
-function toggleDD(ev) {
+function toggleDD(ev) {  // via the page-wide data-ss-click listener: currentTarget is the document, so use the clicked element
   ev.stopPropagation();
-  const current = ev.currentTarget ? ev.currentTarget.closest('.dd') : null;
+  const trigger = (ev.target && ev.target.closest) ? ev.target.closest('[data-ss-click="toggleDD"],button[aria-haspopup="menu"]') : null;
+  const current = trigger ? trigger.closest('.dd') : null;
   const menu = current ? current.querySelector('.dd-menu') : null;
   if (!menu) return;
   const willOpen = !menu.classList.contains('open');
@@ -241,7 +242,7 @@ function toggleDD(ev) {
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
   });
   menu.classList.toggle('open', willOpen);
-  ev.currentTarget.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 }
 document.addEventListener('click', function(ev) {
   if (ev.target.closest('.dd')) return;
