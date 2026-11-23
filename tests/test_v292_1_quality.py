@@ -277,3 +277,53 @@ def test_body_map_glow_never_covers_the_symptom_buttons():
     css = (ROOT / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
     assert ".smart-body-stage::before,.smart-body-stage::after{pointer-events:none!important}" in css
     assert ".smart-body-results{position:relative!important;z-index:1!important}" in css
+
+
+# ---- Symptom-trial Excel: chip symptoms must reach the workbook as catalog names ----
+def _ui_symptom_chips():
+    import json as _json, re as _re
+    from pathlib import Path as _P
+    import webapp
+    out = {"ar": set(), "en": set()}
+    for f in ("static/js/chat/symptom-flow.js", "static/js/chat/body-map.js"):
+        for arr in _re.findall(r"symptoms:\[([^\]]*)\]", (_P(__file__).resolve().parents[1] / f).read_text(encoding="utf-8")):
+            for x in _re.findall(r"'([^']+)'", arr):
+                out["ar" if _re.search("[؀-ۿ]", x) else "en"].add(x)
+    c = webapp.app.test_client()
+    assert c.post("/api/consent/preferences", json={"service_usage": True}).status_code == 200
+    for lang in ("ar", "en"):
+        c.set_cookie("lang", lang)
+        page = c.get("/chat").get_data(as_text=True)
+        out[lang] |= set(_json.loads(_re.search(r"const SYMS = (.*?);\n", page).group(1)))
+    return out
+
+
+def test_every_symptom_chip_is_understood_by_the_engine():
+    import medical_knowledge as mk
+    chips = _ui_symptom_chips()
+    assert len(chips["ar"]) >= 20 and len(chips["en"]) >= 20
+    for lang, items in chips.items():
+        missing = [x for x in sorted(items) if not mk.normalize_symptoms([x], lang)["canonical"]]
+        assert not missing, (lang, missing)
+
+
+def test_symptom_trial_export_names_chip_and_described_symptoms_but_withholds_free_text():
+    import research_projection as rp
+    proj = rp.ResearchProjection()
+    assert proj.symptom_terms(["😖 ألم في البطن", "🦵 ألم في الرجل"], "ar") == ["ألم البطن", "ألم الرجل أو الساق"]
+    assert proj.symptom_terms(["🔥 Pain or burning when urinating"], "en") == ["Painful urination"]
+    assert proj.symptom_terms(["😵 إغماء أو فقدان وعي"], "ar") == ["فقدان الوعي"]
+    # A name or other prose never crosses the export boundary.
+    assert proj.symptom_terms(["اسمي سارة"], "ar") == [rp.WITHHELD]
+    assert proj.symptom_terms(["صداع", "اسمي سارة"], "ar") == ["صداع", rp.WITHHELD]
+
+
+def test_guest_trial_row_carries_the_chip_symptoms():
+    import db, webapp
+    c = webapp.app.test_client()
+    assert c.post("/api/consent/preferences", json={"service_usage": True, "analytics_research": True, "research_participation": False}).status_code == 200
+    r = c.post("/api/analyze", json={"lang": "ar", "age": 27, "gender": "female", "symptoms": ["😖 ألم في البطن", "🤢 غثيان"], "duration": "يوم", "severity": 3},
+               environ_overrides={"REMOTE_ADDR": "198.18.30.7"})
+    assert r.status_code == 200 and r.get_json()["ok"]
+    newest = db.admin_symptom_trial_rows()[0]
+    assert newest["age"] == 27 and newest["symptoms"] == "ألم البطن • غثيان"

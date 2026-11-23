@@ -71,6 +71,32 @@ class ResearchProjection:
                 labels.append(label)
         return labels
 
+    def symptom_terms(self, value, lang):
+        """Catalog symptom names for what the person reported.
+
+        Exact catalog names/aliases map directly; anything else (body-map chips,
+        a described sentence) goes through the same normaliser the analysis
+        uses, and only the catalog names it finds cross the export boundary.
+        Text that matches nothing stays withheld.
+        """
+        cache = self.__dict__.setdefault("_sym_cache", {})
+        labels = []
+        field = "name_en" if lang == "en" else "name_ar"
+        for item in _parts(value):
+            if item not in cache:
+                row = self.symptoms.get(clinical_text.normalize_clinical_text(item))
+                if row:
+                    cache[item] = [row.get(field)]
+                else:
+                    found = medical_knowledge.normalize_symptoms([item], lang=lang).get("canonical") or []
+                    cache[item] = [m.get(field) for m in found if m.get(field)] or [WITHHELD]
+            for label in cache[item]:
+                if label and label not in labels:
+                    labels.append(label)
+        if WITHHELD in labels and len(labels) > 1:  # a known symptom first, the withheld note last
+            labels = [x for x in labels if x != WITHHELD] + [WITHHELD]
+        return labels
+
     def result(self, raw, lang):
         if isinstance(raw, str):
             try:
@@ -131,7 +157,7 @@ class ResearchProjection:
         values = list(row)
         lang = _choice(values[3], {"ar", "en"})
         values[3] = lang
-        values[6] = ", ".join(self.terms(values[6], self.symptoms, lang))
+        values[6] = ", ".join(self.symptom_terms(values[6], lang))
         values[7] = ", ".join(self.terms(values[7], self.conditions, lang))
         # Medication narratives (dose, prescriber, contacts) are not research text.
         values[8] = WITHHELD if values[8] else ""

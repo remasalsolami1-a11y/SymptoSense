@@ -93,12 +93,13 @@ def test_runtime_excel_contains_symptoms_and_legacy_recovery(monkeypatch):
         conn.commit(); conn.close(); _analytics_consent_all(db)
         rows=db.admin_symptom_trial_rows()
         assert any('صداع' in x['symptoms'] and 'غثيان' in x['symptoms'] for x in rows)
-        assert any('نص حر محجوب' in x['symptoms'] and 'دوخة' in x['symptoms'] for x in rows)
+        # recovered from the saved result; everyday wording maps to catalog names (V292.1)
+        assert any('ألم البطن' in x['symptoms'] and 'دوخة' in x['symptoms'] for x in rows)
         wb=load_workbook(db.admin_export_symptom_trials_xlsx(), data_only=True)
         ws=wb['Symptom Trials']
         exported=[ws.cell(r,3).value or '' for r in range(5,ws.max_row+1)]
         assert any('صداع' in x and 'غثيان' in x for x in exported)
-        assert any('نص حر محجوب' in x and 'دوخة' in x for x in exported)
+        assert any('ألم البطن' in x and 'دوخة' in x for x in exported)
     finally:
         try: os.unlink(tmp.name)
         except OSError: pass

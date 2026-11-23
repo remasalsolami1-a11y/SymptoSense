@@ -3396,7 +3396,7 @@ def admin_symptom_trial_rows():
         rows.append({
             'age': parse_age_years(row[0]) if parse_age_years(row[0]) is not None else '',
             'gender': _gender(row[1]),
-            'symptoms': ' • '.join(projection.terms(symptoms, projection.symptoms, 'ar' if row[5] == 'ar' else 'en')),
+            'symptoms': ' • '.join(projection.symptom_terms(symptoms, 'ar' if row[5] == 'ar' else 'en')),
             'duration': projection.duration(row[3]),
         })
     return rows

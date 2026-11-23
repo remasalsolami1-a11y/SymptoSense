@@ -328,7 +328,7 @@ SYMPTOMS = [
     ("body-aches", "آلام الجسم", "Body aches", "pain", ["الم عضلات", "ألم العضلات", "جسمي يعورني"], ["muscle aches", "muscle pain"]),
     ("chills", "قشعريرة", "Chills", "general", ["قشعريره", "رجفة برد", "برد شديد"], ["chills", "shivering with cold"]),
     ("diarrhea", "إسهال", "Diarrhea", "digestive", ["اسهال", "براز مائي"], ["diarrhoea", "loose stools"]),
-    ("abdominal-pain", "ألم البطن", "Abdominal pain", "digestive", ["الم المعده", "ألم المعدة", "بطني يعورني"], ["stomach pain", "belly pain"]),
+    ("abdominal-pain", "ألم البطن", "Abdominal pain", "digestive", ["الم المعده", "ألم المعدة", "بطني يعورني", "ألم في البطن", "الم في البطن", "ألم بطني", "وجع بطن", "ألم في بطني"], ["stomach pain", "belly pain", "tummy pain"]),
     ("dizziness", "دوخة", "Dizziness", "neurological", ["دوار", "عدم توازن"], ["dizzy", "lightheaded"]),
     ("numbness", "تنميل أو خدر", "Numbness or tingling", "neurological", ["تنميل", "تنمل", "خدر", "وخز", "نمنمة", "تنميل المفاصل", "تنميل في المفاصل", "تنميل الاطراف", "تنميل الأطراف", "خدر الاطراف", "خدر الأطراف"], ["numbness", "tingling", "pins and needles", "numb joints", "numb limbs"]),
     ("hand-numbness", "تنميل اليدين أو الأصابع", "Hand or finger numbness", "neurological", ["تنميل اليد", "تنميل اليدين", "تنميل الاصابع", "تنميل الأصابع", "خدر اليد", "وخز الاصابع"], ["hand numbness", "finger numbness", "tingling fingers"]),
@@ -337,7 +337,7 @@ SYMPTOMS = [
     ("one-sided-numbness", "تنميل مفاجئ في جهة واحدة", "Sudden one-sided numbness", "neurological", ["تنميل جهة واحدة", "تنميل في جانب واحد", "خدر جهة واحدة", "نصف جسمي منمل"], ["one sided numbness", "sudden numbness on one side"]),
     ("widespread-numbness", "تنميل في أكثر من مكان", "Numbness in multiple areas", "neurological", ["تنميل منتشر", "تنميل في الجسم", "تنميل بعدة اماكن", "تنميل عدة أماكن"], ["widespread numbness", "numbness in several areas"]),
     ("joint-pain", "ألم المفاصل", "Joint pain", "pain", ["الم المفاصل", "ألم المفاصل", "مفاصلي تعورني", "وجع المفاصل", "مفاصلي توجعني", "توجعني مفاصلي"], ["joint pain", "aching joints"]),
-    ("leg-pain", "ألم الرجل أو الساق", "Leg pain", "pain", ["الم الرجل", "ألم الساق", "وجع الرجل", "رجلي تعورني"], ["leg pain", "painful leg"]),
+    ("leg-pain", "ألم الرجل أو الساق", "Leg pain", "pain", ["الم الرجل", "ألم الساق", "وجع الرجل", "رجلي تعورني", "ألم في الرجل", "الم في الرجل", "ألم في الساق"], ["leg pain", "painful leg"]),
     ("itching", "حكة", "Itching", "skin", ["حكه", "هرش", "حكة الجلد"], ["itching", "itchy skin"]),
     ("eye-redness", "احمرار العين", "Eye redness", "general", ["احمرار العيون", "العين حمراء", "عيوني حمراء"], ["red eye", "eye redness"]),
     ("dehydration", "جفاف", "Dehydration", "general", ["جفاف", "جفاف شديد", "احس اني جاف"], ["dehydration", "dehydrated"]),
@@ -414,7 +414,7 @@ SYMPTOMS = [
     ("general-weakness", "ضعف عام", "General weakness", "general", ["ضعف عام", "جسمي ضعيف"], ["general weakness", "feeling weak"]),
     ("increased-thirst", "زيادة العطش", "Increased thirst", "general", ["عطش شديد", "اعطش كثير", "أعطش كثير"], ["increased thirst", "excessive thirst"]),
     ("frequent-urination", "كثرة التبول", "Frequent urination", "general", ["تبول متكرر", "اروح الحمام كثير"], ["frequent urination"]),
-    ("painful-urination", "ألم عند التبول", "Painful urination", "general", ["حرقان عند التبول", "الم بالتبول", "ألم بالتبول"], ["painful urination", "burning urination"]),
+    ("painful-urination", "ألم عند التبول", "Painful urination", "general", ["حرقان عند التبول", "الم بالتبول", "ألم بالتبول"], ["painful urination", "burning urination", "pain or burning when urinating", "pain when urinating", "burning when urinating"]),
     ("joint-clicking", "طقطقة المفاصل", "Joint clicking (without pain)", "pain", ["تطقطق", "طقطقة الركبه", "طقطقة الركبة", "فرقعة المفصل", "صوت طقطقة بالمفصل", "ركبتي تطقطق"], ["joint clicking", "joint popping", "cracking joint"]),
 ]
 

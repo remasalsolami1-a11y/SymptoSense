@@ -92,13 +92,13 @@ def test_admin_preview_matches_excel_source():
         )
         _analytics_consent_all(db)
         rows=db.admin_symptom_trial_rows()
-        assert rows and 'غثيان' in rows[0]['symptoms'] and 'نص حر محجوب' in rows[0]['symptoms']
+        assert rows and rows[0]['symptoms'] == 'غثيان • ألم البطن'  # «ألم بطن» is a catalog symptom, not free text
         wb=load_workbook(db.admin_export_symptom_trials_xlsx(),data_only=True)
         ws=wb['Symptom Trials']
         assert ws['C4'].value=='Symptoms | الأعراض'
         exported='\n'.join(str(ws.cell(r,3).value or '') for r in range(5,ws.max_row+1))
         assert exported == rows[0]['symptoms']
-        assert 'نص حر محجوب' in exported
+        assert 'غثيان • ألم البطن' in exported
         assert 'معاينة بيانات تحليل الأعراض' in WEB
         assert '__SYMPTOM_PREVIEW__' in WEB
     finally:
