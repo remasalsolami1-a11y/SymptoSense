@@ -423,10 +423,9 @@
       h += '</div><div class="ss-inline-edit-actions"><button type="button" data-quick-edit="symptoms">✏️ '+esc(LANG==='ar'?'تعديل العرض':'Edit symptom')+'</button><button type="button" data-quick-edit="location">📍 '+esc(LANG==='ar'?'تعديل المكان':'Edit area')+'</button><button type="button" data-quick-edit="duration">⏱️ '+esc(LANG==='ar'?'تعديل المدة':'Edit duration')+'</button><button type="button" data-quick-edit="severity">⚡ '+esc(LANG==='ar'?'تعديل الشدة':'Edit severity')+'</button></div></section>';
 
       // Live symptom path — the same four-part pattern collected during the questionnaire.
-      h += '<section class="ss-report-card ss-result-path"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'مسار الأعراض':'Symptom path')+'</h3><span class="ss-count">'+esc(LANG==='ar'?'نمط بصري':'Visual pattern')+'</span></div>'+symptomPathRailHtml(true)+'</section>';
-      if(d.symptom_pattern_summary && d.symptom_pattern_summary.text && u !== 'high'){
-        h += '<section class="ss-report-card ss-pattern-summary-v151"><div class="ss-report-heading"><h3>🔗 '+esc(d.symptom_pattern_summary.title|| (LANG==='ar'?'ملخص نمط الأعراض':'Symptom pattern summary'))+'</h3><span class="ss-count">'+esc(LANG==='ar'?'عدة أعراض معًا':'Combined context')+'</span></div><p>'+esc(d.symptom_pattern_summary.text)+'</p><small>'+esc(d.symptom_pattern_summary.note||'')+'</small></section>';
-      }
+      // One card: the visual path plus, when present, the combined-pattern sentence (not shown ahead of urgent care).
+      var sps = (d.symptom_pattern_summary && d.symptom_pattern_summary.text && u !== 'high') ? d.symptom_pattern_summary : null;
+      h += '<section class="ss-report-card ss-result-path'+(sps?' ss-pattern-summary-v151':'')+'"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'مسار الأعراض ونمطها':'Symptom path & pattern')+'</h3><span class="ss-count">'+esc(LANG==='ar'?'نمط بصري':'Visual pattern')+'</span></div>'+symptomPathRailHtml(true)+(sps?'<p>'+esc(sps.text)+'</p><small>'+esc(sps.note||'')+'</small>':'')+'</section>';
 
       // Context pattern summarizes the user's own timing/trigger context; never shown ahead of urgent care.
       if (u !== 'high') h += contextualSymptomPatternHtml(input);

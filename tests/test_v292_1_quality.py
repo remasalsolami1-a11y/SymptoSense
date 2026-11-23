@@ -486,3 +486,11 @@ def test_emergency_cards_read_cleanly_on_phone_and_desktop():
     assert "html body .em-card .em-desc{grid-column:1/-1!important" in css
     assert "html body .em-card .em-ic{grid-column:1!important;grid-row:1!important" in css
     assert "@media (min-width:768px){html body .em-grid3 .em-card{display:flex!important;flex-direction:column!important" in css
+
+
+def test_symptom_path_and_pattern_summary_share_one_card():
+    """The path rail and the combined-pattern sentence are one card, and the sentence stays hidden for urgent results."""
+    js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
+    assert "مسار الأعراض ونمطها" in js
+    assert js.count("ss-pattern-summary-v151") == 1 and "<section class=\"ss-report-card ss-pattern-summary-v151\"" not in js
+    assert "d.symptom_pattern_summary.text && u !== 'high'" in js
