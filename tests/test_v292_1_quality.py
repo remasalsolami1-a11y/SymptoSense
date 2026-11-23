@@ -339,3 +339,10 @@ def test_phone_language_page_shows_the_whole_services_preview_in_one_language():
     # tiles show the page language only, not Arabic and English glued together
     assert '.first-lang--ar .fl-preview [data-copy="en"]' in css and '.first-lang--en .fl-preview [data-copy="ar"]' in css
     assert 'ss-welcome-page .fl-preview [data-copy="en"]{display:inline!important}' not in css
+
+
+def test_footer_brand_name_never_breaks_onto_two_lines():
+    """Safari on a phone wrapped the footer name as «SymptoSens / e» (web font swapped in after layout)."""
+    from pathlib import Path
+    css = Path(__file__).resolve().parents[1].joinpath("inline_assets", "V291_SHARED_CSS.css").read_text(encoding="utf-8")
+    assert ".footer .f-brand>span{white-space:nowrap!important" in css
