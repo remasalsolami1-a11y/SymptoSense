@@ -146,7 +146,16 @@ def _build(conn, mk, blood_test, mc) -> dict:
             e["ar"], e["en"] = _DIR[frozenset(e.pop("directions"))]
 
     linked = {e["a"] for e in edges} | {e["b"] for e in edges}
-    nodes = {k: v for k, v in nodes.items() if k in linked}
+    # Every symptom in the knowledge base stays (the count matches the health library). A symptom with
+    # no condition link is one the red-flag rules send straight to emergency care, and the page says so.
+    red = {}
+    for rule in mk.RED_RULES:
+        for slug in rule[3] or ():
+            red.setdefault(slug, (rule[9], rule[10]))
+    for k, v in nodes.items():
+        if v["type"] == "symptom" and k not in linked and k.split(":", 1)[1] in red:
+            v["red_flag"] = red[k.split(":", 1)[1]]
+    nodes = {k: v for k, v in nodes.items() if k in linked or v.get("red_flag")}
     return _index(nodes, edges)
 
 
@@ -199,7 +208,13 @@ def _public(n, lang):
     out = {"id": n["id"], "type": n["type"], "label": n["en" if en else "ar"], "type_label": _TYPE_LABEL[n["type"]][1 if en else 0]}
     if n.get("url"):
         out["url"] = n["url"]
+    if n.get("red_flag"):
+        out["note"] = (_RED_NOTE[1] if en else _RED_NOTE[0]) + " " + n["red_flag"][1 if en else 0]
     return out
+
+
+_RED_NOTE = ("علامة خطر: قواعد الأمان توقف التحليل عند هذا العرض بدل ربطه بحالات.",
+             "Red flag: the safety rules stop the analysis at this symptom instead of matching it to conditions.")
 
 
 def _link(e, n, lang):

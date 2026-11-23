@@ -346,3 +346,24 @@ def test_footer_brand_name_never_breaks_onto_two_lines():
     from pathlib import Path
     css = Path(__file__).resolve().parents[1].joinpath("inline_assets", "V291_SHARED_CSS.css").read_text(encoding="utf-8")
     assert ".footer .f-brand>span{white-space:nowrap!important" in css
+
+
+def test_knowledge_graph_and_health_library_count_the_same_symptoms():
+    """The graph page said 288 symptoms and the library 290: the two red-flag-only symptoms had no condition link."""
+    import knowledge_graph as kg
+    import medical_knowledge as mk
+    mk.init_schema()
+    ready = mk.public_source_ready_ids("symptom")
+    library = [x for x in mk.list_entities("symptoms", False, "") if int(x["id"]) in ready]
+    assert kg.stats()["by_type"]["symptom"] == len(library)
+    for slug in ("severe-bleeding", "suicidal-thoughts"):
+        d = kg.neighborhood("symptom:" + slug, "ar")
+        assert d and d["total_links"] == 0 and "علامة خطر" in d["center"]["note"]
+
+
+def test_home_hero_cards_name_what_the_site_actually_does():
+    import webapp
+    page = webapp.app.test_client().get("/ar/home").get_data(as_text=True)
+    for word in ("يفهم عاميتك", "يوقف عند الخطر", "كل جواب بمصدر", "بياناتك لك"):
+        assert word in page
+    assert "<b>ذكاء اصطناعي</b>" not in page

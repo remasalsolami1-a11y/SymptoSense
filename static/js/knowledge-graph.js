@@ -47,6 +47,7 @@
     var type = el('div', 'kg-center-type kg-t-' + d.center.type, d.center.type_label);
     head.appendChild(type);
     head.appendChild(el('h2', '', d.center.label));
+    if (d.center.note) head.appendChild(el('p', 'kg-limit', d.center.note));
     panel.appendChild(head);
     var groups = {};
     d.links.forEach(function (l) { (groups[l.node.type] = groups[l.node.type] || []).push(l); });

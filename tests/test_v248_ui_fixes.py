@@ -43,7 +43,7 @@ def test_readiness_panel_shows_complete_instead_of_required_for_provided_fields(
 
 def test_home_hero_cards_are_localized_not_hardcoded_english():
     assert "<b>Data Science</b>" not in WEB and "<b>Digital Health</b>" not in WEB
-    assert "__TECH_DATA__" in WEB and '"__TECH_DATA__": bi("بيانات", "Data")' in WEB
+    assert "__TECH_DATA__" in WEB and '"__TECH_DATA__": bi("يفهم عاميتك", "Gets your dialect")' in WEB
 
 
 def test_touch_targets_rule_exists():
