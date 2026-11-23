@@ -116,7 +116,8 @@ def test_phone_layout_is_decluttered_without_touching_larger_screens():
     assert "f-sec:not([data-sec=\"contact\"])" not in shared and ".chat-start .cs-logo" not in shared
     sblock = shared[shared.index("V291.2 phones only: one layer"):]
     assert "@media (max-width:767px){html body #main-content>.card{border:0!important" in sblock
-    assert "html body .em-card{display:grid!important" in sblock
+    # V292.1: scoped to the emergency page cards; the in-analysis emergency popup (also .em-card) keeps its own layout
+    assert "html body .em-grid3 .em-card{display:grid!important" in sblock and "html body .em-card{display:grid" not in sblock
 
 
 def test_phone_pages_use_one_side_margin_and_fluid_text():

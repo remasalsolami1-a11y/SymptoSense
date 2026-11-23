@@ -483,8 +483,8 @@ def test_emergency_cards_read_cleanly_on_phone_and_desktop():
     Desktop: the three cards centre their content and line up the number and call button."""
     from pathlib import Path
     css = (Path(__file__).resolve().parents[1] / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
-    assert "html body .em-card .em-desc{grid-column:1/-1!important" in css
-    assert "html body .em-card .em-ic{grid-column:1!important;grid-row:1!important" in css
+    assert "html body .em-grid3 .em-card .em-desc{grid-column:1/-1!important" in css
+    assert "html body .em-grid3 .em-card .em-ic{grid-column:1!important;grid-row:1!important" in css
     assert "@media (min-width:768px){html body .em-grid3 .em-card{display:flex!important;flex-direction:column!important" in css
 
 

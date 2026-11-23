@@ -39,6 +39,10 @@ def run(base_url: str, lang: str = "ar") -> list[str]:
                 problems.append(f"{cat}: wrong category card")
             if need not in ov.inner_text() and not page.locator(f"#emOverlay a[href='tel:{need}']").count():
                 problems.append(f"{cat}: {need} not shown")
+            # Readable on a phone: the call button spans the card and text is not squeezed into a narrow column.
+            lay = page.evaluate("()=>{const c=document.querySelector('#emOverlay .em-card'),b=document.querySelector('#emOverlay [data-em-callbtn]');return {card:c.getBoundingClientRect().width,btn:b?b.getBoundingClientRect().width:0,disp:getComputedStyle(c).display}}")
+            if lay["disp"] == "grid" or lay["btn"] < lay["card"] * 0.6:
+                problems.append(f"{cat}: emergency card layout squeezed {lay}")
             if cat == "selfharm" and not page.locator("#emOverlay a[href='tel:937']").count():
                 problems.append("selfharm: 937 link missing")
             if page.evaluate("document.activeElement && document.activeElement.hasAttribute('data-em-callbtn')") is not True:
