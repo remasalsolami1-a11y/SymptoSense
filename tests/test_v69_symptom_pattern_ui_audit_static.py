@@ -13,7 +13,6 @@ DS = (ROOT / "static" / "css" / "design-system.css").read_text(encoding="utf-8")
 
 def test_contextual_symptom_pattern_is_real_and_not_diagnostic():
     assert "function contextualSymptomPattern(input)" in CHAT
-    assert "نمط الأعراض الحالي" in CHAT
     assert "يبدو مرتبطًا أكثر" in CHAT
     assert "هذا وصف للسياق الذي أدخلته، وليس تشخيصًا" in CHAT
     for label in ("مع الحركة", "بعد الأكل", "عند الوقوف", "وقت الدورة", "بالليل", "بعد المجهود"):
@@ -21,7 +20,8 @@ def test_contextual_symptom_pattern_is_real_and_not_diagnostic():
 
 
 def test_pattern_card_uses_analysis_input_and_is_suppressed_for_urgent_results():
-    assert "if (u !== 'high') h += contextualSymptomPatternHtml(input);" in CHAT
+    # V292.1: shown inside the one symptom-path card (no separate card), still never for urgent results
+    assert "const ctxPat = u !== 'high' ? contextualSymptomPattern(input) : null;" in CHAT
     assert "نمط الأعراض الملحوظ" in CHAT
 
 

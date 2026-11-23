@@ -200,11 +200,6 @@
       }
       return {id:best.id,icon:best.icon,label:LANG==='ar'?best.ar:best.en,evidence:evidence};
     }
-    function contextualSymptomPatternHtml(input) {
-      const p=contextualSymptomPattern(input);
-      if(!p) return '';
-      return '<section class="ss-report-card ss-context-pattern"><div class="ss-context-pattern-icon">'+esc(p.icon)+'</div><div class="ss-context-pattern-copy"><span>'+esc(LANG==='ar'?'نمط الأعراض الحالي':'Current symptom pattern')+'</span><h3>'+esc((LANG==='ar'?'يبدو مرتبطًا أكثر ':'Appears more related to ')+p.label)+'</h3><p>'+esc(p.evidence)+'</p><small>'+esc(LANG==='ar'?'هذا وصف للسياق الذي أدخلته، وليس تشخيصًا أو سببًا مؤكدًا.':'This describes the context you entered; it is not a diagnosis or a confirmed cause.')+'</small></div></section>';
-    }
     function next24PlanHtml(d, input, dangerLines, homeLines, recs) {
       const urgent=(d.urgency||'low')==='high';
       const symptoms=Array.isArray(input.symptoms)?input.symptoms.filter(Boolean):[];
@@ -229,7 +224,7 @@
       let cls='low', badge='', title='', body='';
       if(u==='high'){
         cls='high'; badge=LANG==='ar'?'لا تنتظر':'Do not wait'; title=LANG==='ar'?'اطلب رعاية عاجلة الآن':'Seek urgent care now';
-        body=d.when_to_seek_care||(LANG==='ar'?'النتيجة الحالية تتضمن علامة خطر. لا تؤخر طلب الرعاية الطارئة بسبب استمرار التحليل أو تحسن مؤقت.':'The current result includes a warning sign. Do not delay urgent care for more analysis or because symptoms briefly improve.');
+        body=(LANG==='ar'?'النتيجة الحالية تتضمن علامة خطر. لا تؤخر طلب الرعاية الطارئة بسبب استمرار التحليل أو تحسن مؤقت.':'The current result includes a warning sign. Do not delay urgent care for more analysis or because symptoms briefly improve.');
       }else if(u==='medium'){
         cls='medium'; badge=LANG==='ar'?'لا تؤجل التقييم':'Do not delay assessment'; title=LANG==='ar'?'رتّب تقييمًا طبيًا وفق التوصية الحالية':'Arrange medical assessment as recommended';
         body=d.when_to_seek_care||(LANG==='ar'?'المعلومات الحالية تستدعي مراجعة طبية. اتبع توقيت المراجعة الظاهر في النتيجة، واطلب مساعدة أسرع إذا ساءت الأعراض أو ظهرت علامة خطر.':'The current information warrants medical review. Follow the timing shown in your result and seek faster care if symptoms worsen or a warning sign appears.');
@@ -237,8 +232,8 @@
         cls='low'; badge=LANG==='ar'?'مراقبة بشروط':'Monitor with safeguards'; title=LANG==='ar'?'يمكن اتباع خطة المراقبة الحالية':'You can follow the current monitoring plan';
         body=LANG==='ar'?'المعلومات التي أدخلتها لا تُظهر حاليًا علامة خطر واضحة. اتبع خطة المراقبة والرعاية المعروضة، لكن لا تعتبر النتيجة ضمانًا للأمان: إذا ساءت الأعراض أو ظهرت علامة خطر فاطلب تقييمًا طبيًا.':'The information you entered does not currently show a clear warning sign. Follow the monitoring and care plan shown, but do not treat this result as a guarantee of safety: seek medical evaluation if symptoms worsen or a warning sign appears.';
       }
-      const flags=(dangerLines||[]).slice(0,4);
-      return '<section class="ss-report-card ss-care-timing '+cls+'"><div class="ss-report-heading"><h3>⏳ '+esc(LANG==='ar'?'هل أقدر أنتظر؟':'Can I wait?')+'</h3><span class="ss-care-badge">'+esc(badge)+'</span></div><div class="ss-care-decision"><b>'+esc(title)+'</b><p>'+esc(body)+'</p></div>'+(flags.length?'<details><summary>'+esc(LANG==='ar'?'ما الذي يغيّر هذه الخطوة؟':'What would change this next step?')+'</summary><div class="ss-care-flags">'+flags.map(function(x){return '<div>• '+esc(x)+'</div>';}).join('')+'</div></details>':'')+'</section>';
+      // V292.1: warning signs are listed once, in «علامات تستدعي الانتباه».
+      return '<section class="ss-report-card ss-care-timing '+cls+'"><div class="ss-report-heading"><h3>⏳ '+esc(LANG==='ar'?'هل أقدر أنتظر؟':'Can I wait?')+'</h3><span class="ss-care-badge">'+esc(badge)+'</span></div><div class="ss-care-decision"><b>'+esc(title)+'</b><p>'+esc(body)+'</p>'+(u==='low'&&d.when_to_seek_care?'<p>'+esc(d.when_to_seek_care)+'</p>':'')+'</div></section>';
     }
     function renderResult(d) {
       lastResult = d;
@@ -277,6 +272,7 @@
       const sources = Array.isArray(d.medical_sources) ? d.medical_sources : [];
       const riskReasons = Array.isArray(d.risk_reasons) ? d.risk_reasons : [];
       const dangerLines = reportLines(d.danger_signs);
+      ((d.reasoning && d.reasoning.escalate_if) || []).forEach(function(x){ const t = String(x||'').trim(); if (t && dangerLines.indexOf(t) < 0) dangerLines.push(t); });
       const homeLines = reportLines(d.home_care);
       const questions = resultQuestionList(d);
 
@@ -287,6 +283,7 @@
       if (dec && dec.level) {
         h += '<section class="ss-report-card ss-decision ss-decision-'+escAttr(dec.level)+'" role="status" aria-label="'+escAttr(dec.headline||'')+'" style="border-inline-start:6px solid '+(dec.level==='emergency'?'#c62828':(dec.level==='today'?'#ef6c00':(dec.level==='soon'?'#f9a825':'#2e7d32')))+'">'
           + '<div class="ss-decision-head"><span aria-hidden="true">'+esc(dec.icon||'')+'</span> <strong>'+esc(dec.headline||'')+'</strong></div>'
+          + '<p class="ss-decision-level"><span class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة: ':'Risk level: ')+'</span><span class="ss-risk-value">'+esc(riskValue)+'</span></p>'
           + (dec.action ? '<p class="ss-decision-action">'+esc(dec.action)+'</p>' : '')
           + (dec.window ? '<p class="ss-decision-window"><small>'+esc(dec.window)+'</small></p>' : '');
         if (dec.why) h += '<p class="ss-decision-why"><b>'+esc(LANG==='ar'?'ليش هذا المستوى؟ ':'Why this level? ')+'</b>'+esc(Array.isArray(dec.why)?dec.why.join(' · '):dec.why)+'</p>';
@@ -304,17 +301,22 @@
 
       // 0b) Comprehensive health picture (reasoning). All text is escaped.
       const rs = d.reasoning;
+      const rsPoss = {};
+      if (rs && Array.isArray(rs.possibilities)) { const cardNames = matches.map(function(m){ return String(NAME(m,'name_ar','name_en')||''); }); rs.possibilities.forEach(function(p){ if (p && p.name && cardNames.indexOf(String(p.name)) >= 0) rsPoss[String(p.name)] = p; }); }
       if (rs) {
         const L = function(a, e){ return LANG==='ar' ? a : e; };
         const ul = function(arr){ return '<ul>'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; };
+        const hBeforeRs = h;
         h += '<section class="ss-report-card ss-reasoning">';
         h += '<div class="ss-report-heading"><h2>🧠 '+esc(L('الصورة الصحية الشاملة','Comprehensive health picture'))+'</h2></div>';
         const ch = rs.what_changed || {};
         if (ch.items && ch.items.length) h += '<div class="ss-rs-block"><b>'+esc(L('ما الذي تغيّر منذ المرة السابقة؟','What changed since last time?'))+'</b>'+ul(ch.items)+'</div>';
         if (rs.contributors && rs.contributors.length) h += '<div class="ss-rs-block"><b>'+esc(L('عوامل مرتبطة ببياناتك','Factors linked to your data'))+'</b> <span class="ss-src-tag">'+esc(L('من ملفك المحفوظ','From your saved file'))+'</span>'+ul(rs.contributors.map(function(c){return c.text;}))+'</div>';
-        if (rs.possibilities && rs.possibilities.length) {
+        // V292.1: a possibility that already has its own card below gets its "what lowers it" there; only the rest stay here.
+        const rsRest = (rs.possibilities||[]).filter(function(p){ return !(p && rsPoss[String(p.name||'')]); });
+        if (rsRest.length) {
           h += '<div class="ss-rs-block"><b>'+esc(L('الاحتمالات: لماذا ظهرت وما الذي يقلل احتمالها','Possibilities: why they appeared and what lowers them'))+'</b>';
-          rs.possibilities.forEach(function(p){
+          rsRest.forEach(function(p){
             h += '<details class="ss-poss" style="margin:6px 0"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(p.name)+(p.strength?' <span class="ss-ev ss-ev-'+esc(p.match_level||'weak')+'">'+esc(p.strength)+'</span>':'')+'</summary>';
             if (p.why && p.why.length) h += '<p><small><b>'+esc(L('ظهر بسبب: ','Appeared because of: '))+'</b>'+p.why.map(esc).join(' + ')+(p.why_source?' <span class="ss-src-tag">'+esc(p.why_source)+'</span>':'')+(p.strength_note?' · '+esc(p.strength_note):'')+'</small></p>';
             if (p.against && p.against.length) h += '<p><small><b>'+esc(L('ما يقلل احتماله:','What lowers it:'))+'</b></small></p>'+ul(p.against);
@@ -325,20 +327,23 @@
           h += '<p><small>'+esc(L('هذه أنماط متوافقة مع ما أدخلته وليست تشخيصًا.','These are patterns that fit what you entered, not a diagnosis.'))+'</small></p></div>';
         }
         if (rs.not_supported && rs.not_supported.length) h += '<div class="ss-rs-block"><b>'+esc(L('ما لا تدعمه بياناتك حاليًا','What your data does not point to'))+'</b>'+ul(rs.not_supported)+'</div>';
-        if (rs.escalate_if && rs.escalate_if.length) h += '<div class="ss-rs-block"><b>'+esc(L('تصعيد فوري إذا ظهر:','Escalate right away if:'))+'</b>'+ul(rs.escalate_if)+'</div>';
+        // V292.1: rs.escalate_if is merged into «علامات تستدعي الانتباه» (one list of warning signs).
         if (rs.missing_top2 && rs.missing_top2.length) h += '<div class="ss-rs-block"><b>'+esc(rs.missing_note||'')+'</b>'+ul(rs.missing_top2.map(function(m){return m.question;}))+'</div>';
         h += '<p><small>'+esc(L('قيد المراجعة السريرية؛ لا يغني عن الطبيب أو الصيدلي.','Pending clinical review; it does not replace your doctor or pharmacist.'))+'</small></p>';
         h += '</section>';
+        if (h.slice(hBeforeRs.length).indexOf('ss-rs-block') < 0) h = hBeforeRs; // nothing left that is not shown elsewhere
       }
 
       // 1) Summary
       h += '<section class="ss-report-card ss-report-summary">'
-        + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>'
-        + '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
+        + '<div class="ss-report-heading"><h2>📋 '+esc(LANG==='ar'?'نتيجة التحليل':'Analysis result')+'</h2></div>';
+      // V292.1: the decision card above states the level (text, with its "why"); the badge here is only the fallback without it.
+      const decShown = !!(dec && dec.level), decWhy = decShown && dec.why ? (Array.isArray(dec.why)?dec.why:[dec.why]).map(String) : [];
+      if (!decShown) h += '<div class="ss-risk-row '+riskClass+'"><div><div class="ss-risk-label">'+esc(LANG==='ar'?'مستوى الخطورة':'Risk level')+'</div><div class="ss-risk-value">'+riskEmoji+' '+esc(riskValue)+'</div></div></div>';
       // Why this risk level — visible right under the badge for every non-low result (server: emergency_explain.py / risk_explain.py).
       if (u !== 'low') {
         const whyMsgs = [];
-        riskReasons.forEach(function(r){ const m = r && (r.message || r.description); if (m && whyMsgs.indexOf(m) < 0) whyMsgs.push(String(m)); });
+        riskReasons.forEach(function(r){ const m = r && (r.message || r.description); if (m && whyMsgs.indexOf(m) < 0 && decWhy.indexOf(String(m)) < 0) whyMsgs.push(String(m)); });
         if (!whyMsgs.length && d.why_result && u === 'high') whyMsgs.push(String(d.why_result));
         if (whyMsgs.length) h += '<div class="ss-risk-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا المستوى؟':'Why this risk level?')+'</b>'+whyMsgs.map(function(m){return '<p>'+esc(m)+'</p>';}).join('')+'</div>';
       }
@@ -357,7 +362,7 @@
       h += '<div class="ss-emergency-strip'+(u==='high'?' urgent':'')+'"><a class="ss-call-btn" href="tel:997">📞 '+esc(LANG==='ar'?'اتصل بالإسعاف 997':'Call ambulance 997')+'</a><p>'+esc(u==='high'
         ? (LANG==='ar'?'لا تنتظر ولا تقد السيارة بنفسك إذا كنت متعبًا. اتصل الآن أو اطلب من شخص قريب أن يتصل.':'Do not wait, and do not drive yourself if you feel unwell. Call now or ask someone nearby to call.')
         : (LANG==='ar'?'اتصل بالإسعاف فورًا إذا ظهر ألم صدر شديد، أو صعوبة في التنفس، أو إغماء، أو ضعف مفاجئ في جانب من الجسم، أو نزيف شديد.':'Call the ambulance immediately for severe chest pain, trouble breathing, fainting, sudden one-sided weakness, or heavy bleeding.'))+'</p></div>';
-      if (summaryRec) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
+      if (summaryRec && !recs.length) h += '<div class="ss-summary-recommendation"><b>'+esc(LANG==='ar'?'التوصية الحالية':'Current recommendation')+'</b>'+esc(summaryRec)+'</div>';
       h += '<p class="ss-disclaimer">'+esc(LANG==='ar'?'هذا التحليل توعوي ولا يغني عن الطبيب أو التقييم الطبي المباشر.':'This analysis is educational and does not replace a doctor or an in-person medical assessment.')+'</p>';
       h += '</section>';
 
@@ -379,6 +384,7 @@
 
       // Keep entered information available, but prioritize the decision dashboard first.
       // 2) What to do now — the immediate action comes before possibilities.
+      const hBeforeTodo = h; // the to-do card is opened only if it has a step (or a non-emergency empty note)
       h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'ماذا أفعل الآن؟':'What should I do now?')+'</h3></div><div class="ss-step-list">';
       let stepNo = 1;
       recs.forEach(function(r){
@@ -390,11 +396,10 @@
       if (d.medication_guidance) {
         h += '<div class="ss-step"><span class="ss-step-no">'+stepNo+'</span><div class="ss-step-body"><b>💊 '+esc(LANG==='ar'?'إرشاد الدواء':'Medication guidance')+'</b><p>'+esc(d.medication_guidance)+'</p></div></div>'; stepNo += 1;
       }
-      if (d.when_to_seek_care) {
-        h += '<div class="ss-step"><span class="ss-step-no">'+stepNo+'</span><div class="ss-step-body"><b>'+esc(LANG==='ar'?'متى أراجع الطبيب؟':'When should I see a doctor?')+'</b><p>'+esc(d.when_to_seek_care)+'</p></div></div>'; stepNo += 1;
-      }
-      if (stepNo === 1) h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لا توجد توصيات إضافية في النتيجة الحالية.':'No additional recommendations are available in the current result.')+'</div>';
-      h += '</div></section>';
+      // V292.1: "when to see a doctor" (d.when_to_seek_care) is the body of «هل أقدر أنتظر؟» right below; not repeated here.
+      if (stepNo === 1 && u === 'high') h = hBeforeTodo; // emergency: the action is the «لا تنتظر 24 ساعة» card right below, not an empty list
+      else if (stepNo === 1) h += '<div class="ss-empty-note">'+esc(LANG==='ar'?'لا توجد توصيات إضافية في النتيجة الحالية.':'No additional recommendations are available in the current result.')+'</div>';
+      if (h !== hBeforeTodo) h += '</div></section>';
 
       // Practical next-24-hours card; urgent results explicitly tell the user not to wait.
       h += next24PlanHtml(d, input, dangerLines, homeLines, recs);
@@ -418,17 +423,29 @@
       // How they described it (pain quality, where it started and moved) is record-only: it never changes the result.
       const sd=d.symptom_description||{}, sdPain=(sd.pain||[]).filter(function(x){return x&&x.label;}), sdCourse=(sd.course||[]).filter(function(x){return x&&x.to;});
       if(sdPain.length) h += '<div class="wide"><b>'+esc(LANG==='ar'?'نوع الألم':'What it feels like')+'</b><span>'+esc(sdPain.map(function(x){return x.label;}).join(LANG==='ar'?'، ':', '))+'</span></div>';
-      sdCourse.forEach(function(c){ h += '<div class="wide"><b>'+esc(LANG==='ar'?'المسار':'Path')+'</b><span>'+esc(c.kind==='moved'?(LANG==='ar'?('بدأ في «'+c.from+'» ثم انتقل إلى «'+c.to+'»'):('started in “'+c.from+'”, then moved to “'+c.to+'”')):(LANG==='ar'?('يمتد إلى «'+c.to+'»'):('spreads to “'+c.to+'”')))+'</span></div>'; });
-      if(sdPain.length||sdCourse.length) h += '<p class="ss-described-note">'+esc(LANG==='ar'?'وصفك لنوع الألم ومساره يُحفظ كما فهمناه ليصل إلى الطبيب، ولا يغيّر النتيجة.':'How you described the pain and its path is kept for the doctor summary; it does not change the result.')+'</p>';
+      if(sdPain.length) h += '<p class="ss-described-note">'+esc(LANG==='ar'?'وصفك لنوع الألم يُحفظ كما فهمناه ليصل إلى الطبيب، ولا يغيّر النتيجة.':'How you described the pain is kept for the doctor summary; it does not change the result.')+'</p>';
       h += '</div><div class="ss-inline-edit-actions"><button type="button" data-quick-edit="symptoms">✏️ '+esc(LANG==='ar'?'تعديل العرض':'Edit symptom')+'</button><button type="button" data-quick-edit="location">📍 '+esc(LANG==='ar'?'تعديل المكان':'Edit area')+'</button><button type="button" data-quick-edit="duration">⏱️ '+esc(LANG==='ar'?'تعديل المدة':'Edit duration')+'</button><button type="button" data-quick-edit="severity">⚡ '+esc(LANG==='ar'?'تعديل الشدة':'Edit severity')+'</button></div></section>';
 
-      // Live symptom path — the same four-part pattern collected during the questionnaire.
-      // One card: the visual path plus, when present, the combined-pattern sentence (not shown ahead of urgent care).
-      var sps = (d.symptom_pattern_summary && d.symptom_pattern_summary.text && u !== 'high') ? d.symptom_pattern_summary : null;
-      h += '<section class="ss-report-card ss-result-path'+(sps?' ss-pattern-summary-v151':'')+'"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'مسار الأعراض ونمطها':'Symptom path & pattern')+'</h3><span class="ss-count">'+esc(LANG==='ar'?'نمط بصري':'Visual pattern')+'</span></div>'+symptomPathRailHtml(true)+(sps?'<p>'+esc(sps.text)+'</p><small>'+esc(sps.note||'')+'</small>':'')+'</section>';
+      // V292.1: one path card, built from the answers sent for THIS analysis; only filled items (duration and
+      // other symptoms are already in «وش فهمنا»), where the pain moved (as described), and the pattern sentence.
+      const sps = (d.symptom_pattern_summary && d.symptom_pattern_summary.text && u !== 'high') ? d.symptom_pattern_summary : null;
+      const vague = /^(غير واضح|غير محدد|not clear|not specified)$/i;
+      const pathRows = [['⚡',LANG==='ar'?'طريقة البداية':'Onset',input.onset],['〰️',LANG==='ar'?'تطوّر العرض':'Course',input.course],['↗️',LANG==='ar'?'متى يزيد':'Worsens with',input.pattern_worse],['↘️',LANG==='ar'?'ما يخففه':'Relieved by',input.pattern_relief]].filter(function(r){ const v=String(r[2]||'').trim(); return v && !vague.test(v); });
+      const answeredRows = pathRows.length; // the server's pattern sentence restates these same answers; show it only when they are missing
+      const ctxPat = u !== 'high' ? contextualSymptomPattern(input) : null;
+      sdCourse.forEach(function(c){ pathRows.push(['📍',LANG==='ar'?'انتقال الألم':'Where it moved',c.kind==='moved'?(LANG==='ar'?('بدأ في «'+c.from+'» ثم انتقل إلى «'+c.to+'»'):('started in “'+c.from+'”, then moved to “'+c.to+'”')):(LANG==='ar'?('يمتد إلى «'+c.to+'»'):('spreads to “'+c.to+'”'))]); });
+      if (pathRows.length || sps || ctxPat) {
+        h += '<section class="ss-report-card ss-result-path'+(sps?' ss-pattern-summary-v151':'')+'"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'مسار الأعراض ونمطها':'Symptom path & pattern')+'</h3></div>';
+        if (pathRows.length) h += '<div class="symptom-path-rail compact">'+pathRows.map(function(r){ return '<div class="symptom-path-node done"><span class="symptom-path-dot">'+esc(r[0])+'</span><div><b>'+esc(r[1])+'</b><small>'+esc(String(r[2]))+'</small></div></div>'; }).join('')+'</div>';
+        if (sdCourse.length) h += '<p class="ss-described-note">'+esc(LANG==='ar'?'انتقال الألم كما وصفته يُحفظ ليصل إلى الطبيب، ولا يغيّر النتيجة.':'Where the pain moved, as you described it, is kept for the doctor summary; it does not change the result.')+'</p>';
+        if (ctxPat) h += '<div class="ss-context-pattern-copy"><b>'+esc(ctxPat.icon+' '+(LANG==='ar'?'يبدو مرتبطًا أكثر ':'Appears more related to ')+ctxPat.label)+'</b><p>'+esc(ctxPat.evidence)+'</p></div>';
+        if (sps && !answeredRows) h += '<p>'+esc(sps.text)+'</p>';
+        if ((sps && !answeredRows) || ctxPat) h += '<small>'+esc(LANG==='ar'?'هذا وصف للسياق الذي أدخلته، وليس تشخيصًا أو سببًا مؤكدًا.':'This describes the context you entered; it is not a diagnosis or a confirmed cause.')+'</small>';
+        h += '</section>';
+      }
 
       // Context pattern summarizes the user's own timing/trigger context; never shown ahead of urgent care.
-      if (u !== 'high') h += contextualSymptomPatternHtml(input);
+      // V292.1: the context pattern («نمط الأعراض الحالي») now sits inside the path card above.
 
       // 3) Symptom assessment. In emergencies, show the matched red-flag
       // assessment as the result instead of an empty "no possibilities" box.
@@ -472,7 +489,8 @@
           // V292.1: an important conflict (a denied symptom that is very common in this condition) is said out loud
           const conf=(m.evidence_conflicts||[]).filter(function(x){return x&&x.name;});
           if (conf.length) h += '<div class="ss-conflict" role="note"><b>'+esc(LANG==='ar'?'⚠️ تعارض مهم:':'⚠️ Important conflict:')+'</b> '+esc(conf.map(function(x){return LANG==='ar'?('«'+x.name+'» '+x.strength+' في هذه الحالة، وذكرتَ أنه غير موجود.'):('“'+x.name+'” is '+x.strength+' in this condition, and you said you do not have it.');}).join(' '))+' '+esc(LANG==='ar'?'إذا لم تكن متأكدًا، عدّل إجاباتك قبل الاعتماد على هذا الاحتمال.':'If you are not sure, edit your answers before relying on this possibility.')+'</div>';
-          const simpleId='simpleCondition'+idx;
+          const rp = rsPoss[String(name)];
+          if (rp && ((rp.against&&rp.against.length)||(rp.unknown&&rp.unknown.length))) h += '<details class="ss-poss"><summary style="min-height:44px;padding:10px 0;cursor:pointer">'+esc(LANG==='ar'?'ما الذي يقلل احتماله؟':'What lowers it?')+'</summary>'+(rp.against&&rp.against.length?'<ul>'+rp.against.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+(rp.unknown&&rp.unknown.length?'<p><small><b>'+esc(LANG==='ar'?'يفيد لو تذكره (لم يُسأل عنه، فلا يُحسب ضده):':'Would help to know (not asked, so not counted against it):')+'</b> '+rp.unknown.map(esc).join('، ')+'</small></p>':'')+'</details>';
           h += '</article>';
         });
       } else if (u === 'high') {
@@ -555,9 +573,11 @@
       h += '</div></div></details>';
 
       // 7) Home care — only if the API already provides it.
-      if (homeLines.length) {
+      // V292.1: the first home-care line is already step 1 («الآن») of the 24-hour plan; not repeated here.
+      const homeRest = u === 'high' ? homeLines : homeLines.slice(1);
+      if (homeRest.length) {
         h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🏠 '+esc(LANG==='ar'?'الرعاية المنزلية':'Home care')+'</h3></div><div class="ss-care-list">';
-        homeLines.forEach(function(line){ h += '<div class="ss-care"><span>•</span><span>'+esc(line)+'</span></div>'; });
+        homeRest.forEach(function(line){ h += '<div class="ss-care"><span>•</span><span>'+esc(line)+'</span></div>'; });
         h += '</div></section>';
       }
       h += reliefTrackerHtml(d,input);

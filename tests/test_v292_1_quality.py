@@ -494,3 +494,26 @@ def test_symptom_path_and_pattern_summary_share_one_card():
     assert "مسار الأعراض ونمطها" in js
     assert js.count("ss-pattern-summary-v151") == 1 and "<section class=\"ss-report-card ss-pattern-summary-v151\"" not in js
     assert "d.symptom_pattern_summary.text && u !== 'high'" in js
+
+
+def test_result_page_says_each_thing_once():
+    """Each piece of the result appears in one place only; nothing is dropped, it is merged."""
+    js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
+    # level: the decision card states it; the summary repeats the badge only without it or in an emergency
+    assert "if (!decShown) h += '<div class=\"ss-risk-row" in js and '<p class="ss-decision-level"><span class="ss-risk-label">' in js and "decWhy.indexOf(String(m)) < 0" in js
+    # "when to see a doctor" lives in «هل أقدر أنتظر؟» only (low level adds it there)
+    assert "'متى أراجع الطبيب؟':'When should I see a doctor?'" not in js and "u==='low'&&d.when_to_seek_care" in js
+    # the current recommendation is step 1 of «ماذا أفعل الآن؟»
+    assert "if (summaryRec && !recs.length)" in js
+    # escalation list merged into the one warning-signs card; care-timing no longer re-lists them
+    assert "d.reasoning.escalate_if" in js and "'تصعيد فوري إذا ظهر:'" not in js and "ss-care-flags" not in js
+    # "what lowers it" moves into the matching possibility card
+    assert "const rsRest" in js and "rsPoss[String(name)]" in js
+    # path card: built from this analysis' answers, vague answers hidden, no restated sentence, empty card hidden
+    assert "const vague = /^(غير واضح|غير محدد|not clear|not specified)$/i;" in js
+    assert "if (sps && !answeredRows)" in js and "if (pathRows.length || sps || ctxPat)" in js
+    # the first home-care line is already step 1 of the 24-hour plan
+    assert "homeLines.slice(1)" in js
+    # emergency: no empty to-do card, and «هل أقدر أنتظر؟» does not repeat the urgent 24h card's action
+    assert "if (stepNo === 1 && u === 'high') h = hBeforeTodo;" in js
+    assert "body=d.when_to_seek_care||(LANG==='ar'?'النتيجة الحالية تتضمن علامة خطر." not in js
