@@ -473,3 +473,13 @@ def test_blood_pattern_that_does_not_fit_iron_deficiency_is_said_without_naming_
     # low ferritin keeps the usual iron-deficiency reading, with no mismatch
     res2, *_ = blood_test.analyze_blood(entries({"hgb": (10.0, "g/dL", 12, 15.5), "mcv": (70, "fL", 80, 100), "ferritin": (5, "ng/mL", 15, 150)}), "female", 30)
     assert all(x.get("kind") != "mismatch" for x in blood_test.build_pattern_insights(res2, "ar"))
+
+
+def test_emergency_cards_read_cleanly_on_phone_and_desktop():
+    """Phone: the description spans the whole card under icon+title+number (it was squeezed into one column).
+    Desktop: the three cards centre their content and line up the number and call button."""
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[1] / "inline_assets" / "V291_SHARED_CSS.css").read_text(encoding="utf-8")
+    assert "html body .em-card .em-desc{grid-column:1/-1!important" in css
+    assert "html body .em-card .em-ic{grid-column:1!important;grid-row:1!important" in css
+    assert "@media (min-width:768px){html body .em-grid3 .em-card{display:flex!important;flex-direction:column!important" in css
