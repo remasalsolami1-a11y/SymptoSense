@@ -470,6 +470,9 @@
           if (matched.length) { const neg=(m.negative_evidence_names||m.negative_evidence||[]).filter(Boolean); h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(LANG==='ar'?'يتوافق مع: ':'Matches: ')+esc(matched.join(LANG==='ar'?'، ':', '))+(neg.length?'<div style="margin-top:6px">'+esc(LANG==='ar'?'والأعراض المنفية خفّضت التوافق عند ارتباطها بهذه الحالة: ':'Denied symptoms reduced the match when relevant: ')+esc(neg.join(LANG==='ar'?'، ':', '))+'</div>':'')+(m.description?'<div style="margin-top:6px">'+esc(m.description)+'</div>':'')+directSource+'</div>'; }
           else if (m.description) h += '<div class="ss-condition-why"><b>'+esc(LANG==='ar'?'لماذا ظهر هذا الاحتمال؟':'Why did this appear?')+'</b><br>'+esc(m.description)+directSource+'</div>';
           else if (directSource) h += '<div class="ss-condition-why">'+directSource+'</div>';
+          // V292.1: an important conflict (a denied symptom that is very common in this condition) is said out loud
+          const conf=(m.evidence_conflicts||[]).filter(function(x){return x&&x.name;});
+          if (conf.length) h += '<div class="ss-conflict" role="note"><b>'+esc(LANG==='ar'?'⚠️ تعارض مهم:':'⚠️ Important conflict:')+'</b> '+esc(conf.map(function(x){return LANG==='ar'?('«'+x.name+'» '+x.strength+' في هذه الحالة، وذكرتَ أنه غير موجود.'):('“'+x.name+'” is '+x.strength+' in this condition, and you said you do not have it.');}).join(' '))+' '+esc(LANG==='ar'?'إذا لم تكن متأكدًا، عدّل إجاباتك قبل الاعتماد على هذا الاحتمال.':'If you are not sure, edit your answers before relying on this possibility.')+'</div>';
           const simpleId='simpleCondition'+idx;
           h += '</article>';
         });

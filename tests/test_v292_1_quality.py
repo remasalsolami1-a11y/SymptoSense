@@ -405,3 +405,23 @@ def test_why_am_i_asked_is_a_button_with_what_the_answer_changes():
     assert "ss-why-btn" in core and "aria-expanded" in core and "ليش أسألك هذا؟" in core
     follow = (root / "followup.js").read_text(encoding="utf-8")
     assert "«نعم»: تتقدّم الاحتمالات" in follow and "«لا»: تتراجع الاحتمالات" in follow
+
+
+def test_denied_very_common_symptom_is_reported_as_an_important_conflict():
+    """Display only: a condition still listed after the person denied one of its very common symptoms says so."""
+    import webapp
+    c = webapp.app.test_client()
+    assert c.post("/api/consent/preferences", json={"service_usage": True}).status_code == 200
+    d = c.post("/api/analyze", json={"lang": "ar", "age": 30, "gender": "female", "duration": "يومين", "severity": 2,
+                                     "symptoms": ["سيلان الأنف", "احتقان الأنف", "حكة داخل الأنف"], "negative_symptoms": ["sneezing"]},
+               environ_overrides={"REMOTE_ADDR": "198.18.41.1"}).get_json()
+    hit = [m for m in d["knowledge_matches"] if m["slug"] == "allergic-rhinitis"]
+    assert hit and hit[0]["evidence_conflicts"] == [{"slug": "sneezing", "name": "عطس", "strength": "شائع جدًا"}]
+    # without the denial there is no conflict, and only very common links count as important
+    d2 = c.post("/api/analyze", json={"lang": "ar", "age": 30, "gender": "female", "duration": "يومين", "severity": 2,
+                                      "symptoms": ["سيلان الأنف", "احتقان الأنف", "حكة داخل الأنف"]},
+                environ_overrides={"REMOTE_ADDR": "198.18.41.2"}).get_json()
+    assert all(not m.get("evidence_conflicts") for m in d2["knowledge_matches"])
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
+    assert "m.evidence_conflicts" in js and "تعارض مهم" in js and "ss-conflict" in js
