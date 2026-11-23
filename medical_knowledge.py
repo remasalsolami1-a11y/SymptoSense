@@ -1713,7 +1713,14 @@ def match_diseases(canonical, lang="ar", limit=5, negatives=None, conn=None, pat
                 continue
             # V292.1: a denied symptom is evidence against this condition only when the knowledge base links them
             own_neg=sorted({neg_slug_by_id[int(r[0])] for r in neg_rels if int(r[0]) in neg_slug_by_id})
-            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":own_neg,"negative_evidence_names":[_symptom_display_name(x,lang) for x in own_neg],"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
+            # V292.1: an important conflict = the person denied a symptom the knowledge base lists as very common
+            # for this condition. Shown to the person (display only); the score above already accounts for it.
+            conflicts=[]
+            for r in sorted(neg_rels,key=lambda r:-float(r[1] or 0)):
+                cslug=neg_slug_by_id.get(int(r[0]))
+                if cslug and float(r[1] or 0)>=SYMPTOM_LINK_BANDS[0][0] and cslug not in [x["slug"] for x in conflicts]:
+                    conflicts.append({"slug":cslug,"name":_symptom_display_name(cslug,lang),"strength":symptom_link_band(r[1])[2 if lang=="en" else 1]})
+            out.append({"disease_id":did,"slug":row[1],"name_ar":row[2],"name_en":row[3],"description":row[4] if lang=="ar" else row[5],"severity":row[6],"red_flags":row[7] if lang=="ar" else row[8],"recommended_next_step":row[9] if lang=="ar" else row[10],"last_updated":row[11],"sex_applicability":row[12] or "any","min_age":row[13],"max_age":row[14],"pregnancy_relevant":bool(row[15]),"match_level":level,"matched_symptoms":matched_symptoms,"negative_evidence":own_neg,"negative_evidence_names":[_symptom_display_name(x,lang) for x in own_neg],"evidence_conflicts":conflicts,"pattern_bonus":round(pattern_bonus,4),"sources":sources,"explanation_source":sources[0],"_score":score})
         out.sort(key=lambda x:(x["_score"],len(x["matched_symptoms"])),reverse=True)
         for item in out:
             item.pop("_score",None)
