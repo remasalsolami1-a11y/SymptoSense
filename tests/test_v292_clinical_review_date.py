@@ -64,7 +64,7 @@ def test_why_we_ask_is_shown_inside_the_question_card():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1] / "static" / "js" / "chat"
     core = (root / "chat-core.js").read_text(encoding="utf-8")
-    assert "function stepNote(stepText, whyText)" in core and "ss-why-q" in core
+    assert "function stepNote(stepText, whyText" in core and "ss-why-q" in core
     for name, focus in (("followup.js", "focusStepQuestion('🩺 ' + d.question);"), ("red-flags.js", "focusStepQuestion('⚠️ ' + sc.question);")):
         js = (root / name).read_text(encoding="utf-8")
         assert js.index(focus) < js.index("stepNote(") and "ss-why-q" not in js

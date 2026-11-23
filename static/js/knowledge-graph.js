@@ -162,4 +162,79 @@
   open(startId || root.getAttribute('data-start'), false);
   var lastWide = window.innerWidth >= 768;
   window.addEventListener('resize', function () { var wide = window.innerWidth >= 768; if (wide !== lastWide) { lastWide = wide; if (current) open(current, false); } });
+
+  // V292.1: compare several symptoms — the conditions they share in the knowledge base.
+  var X = T.x || {};
+  var xIn = document.getElementById('kgXInput'), xSugg = document.getElementById('kgXSugg');
+  var xChosen = document.getElementById('kgXChosen'), xOut = document.getElementById('kgXOut');
+  var chosen = [], xTimer = null;
+  if (!xIn || !xOut) return;
+
+  function xAdd(r) {
+    if (chosen.length >= 5 || chosen.some(function (c) { return c.id === r.id; })) return;
+    chosen.push({ id: r.id, label: r.label });
+    xIn.value = ''; xSugg.hidden = true; xRun();
+  }
+  function xTags() {
+    xChosen.textContent = '';
+    chosen.forEach(function (c, i) {
+      var tag = el('span', 'kg-x-tag', c.label);
+      var rm = el('button', '', '×'); rm.type = 'button';
+      rm.setAttribute('aria-label', (X.remove || 'Remove') + ' ' + c.label);
+      rm.addEventListener('click', function () { chosen.splice(i, 1); xRun(); });
+      tag.appendChild(rm); xChosen.appendChild(tag);
+    });
+  }
+  function xRun() {
+    xTags();
+    if (!chosen.length) { xOut.textContent = ''; xOut.appendChild(el('p', 'kg-x-hint', X.pick || '')); return; }
+    api({ explore: chosen.map(function (c) { return c.id; }).join(',') }).then(function (d) {
+      if (!d || !d.ok) return;
+      xOut.textContent = '';
+      (d.alarms || []).forEach(function (a) { xOut.appendChild(el('p', 'kg-x-alarm', (X.alarm || '') + ': ' + a.label + ' — ' + a.advice)); });
+      if (!d.results.length) { xOut.appendChild(el('p', 'kg-x-hint', X.none || '')); return; }
+      var ul = el('ul', 'kg-x-list'), m = d.chosen.length;
+      d.results.forEach(function (r) {
+        var li = el('li', 'kg-x-item'), head = el('div', 'kg-x-head');
+        var b = el('button', '', r.condition.label); b.type = 'button'; b.title = X.open || '';
+        b.addEventListener('click', function () { open(r.condition.id); var st = document.querySelector('.kg-stage'); if (st) st.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        head.appendChild(b);
+        if (m > 1) head.appendChild(el('span', 'kg-x-count', String(X.match || '').replace('{n}', r.count).replace('{m}', m)));
+        li.appendChild(head);
+        var ms = el('div', 'kg-x-m');
+        r.matched.forEach(function (x) { ms.appendChild(el('span', '', x.symptom.label + ' · ' + x.strength)); });
+        li.appendChild(ms);
+        if (r.source) { var a = el('a', 'kg-x-src', r.source_label || T.source || 'Source'); a.href = r.source; a.target = '_blank'; a.rel = 'noopener noreferrer'; li.appendChild(a); }
+        ul.appendChild(li);
+      });
+      xOut.appendChild(ul);
+      if (d.total > d.results.length) xOut.appendChild(el('p', 'kg-more', '+' + (d.total - d.results.length) + ' ' + (X.more || '')));
+    }).catch(function () {});
+  }
+  xIn.addEventListener('input', function () {
+    clearTimeout(xTimer);
+    var q = xIn.value.trim();
+    if (!q) { xSugg.hidden = true; return; }
+    xTimer = setTimeout(function () {
+      api({ q: q, type: 'symptom' }).then(function (d) {
+        xSugg.textContent = '';
+        var res = (d && d.results) || [];
+        if (!res.length) { xSugg.appendChild(el('button', '', T.empty || '')); }
+        res.forEach(function (r) {
+          var b = el('button'); b.type = 'button';
+          b.appendChild(el('span', '', r.label));
+          b.addEventListener('click', function () { xAdd(r); });
+          xSugg.appendChild(b);
+        });
+        xSugg.hidden = false;
+      }).catch(function () {});
+    }, 180);
+  });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.kg-x-search')) xSugg.hidden = true; });
+  var tryBtn = document.getElementById('kgXTry');
+  if (tryBtn) tryBtn.addEventListener('click', function () {
+    chosen = [];
+    xAdd({ id: 'symptom:headache', label: lang === 'en' ? 'Headache' : 'صداع' });
+    xAdd({ id: 'symptom:fever', label: lang === 'en' ? 'Fever' : 'حمى' });
+  });
 })();

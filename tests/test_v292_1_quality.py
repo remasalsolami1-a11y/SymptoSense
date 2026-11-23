@@ -367,3 +367,41 @@ def test_home_hero_cards_name_what_the_site_actually_does():
     for word in ("يفهم عاميتك", "يوقف عند الخطر", "كل جواب بمصدر", "بياناتك لك"):
         assert word in page
     assert "<b>ذكاء اصطناعي</b>" not in page
+
+
+def test_symptom_explorer_lists_shared_conditions_from_existing_links_only():
+    import knowledge_graph as kg
+    r = kg.explore(["symptom:headache", "symptom:fever", "symptom:stiff-neck", "symptom:not-a-symptom", "condition:influenza"], "en")
+    assert [c["id"] for c in r["chosen"]] == ["symptom:headache", "symptom:fever", "symptom:stiff-neck"]
+    assert 0 < len(r["results"]) <= 6 and r["total"] >= len(r["results"])
+    counts = [x["count"] for x in r["results"]]
+    assert counts == sorted(counts, reverse=True) and counts[0] == 3   # conditions sharing more symptoms come first
+    g = kg.graph()
+    for row in r["results"]:   # every match is an existing condition-symptom link, never a new claim
+        for m in row["matched"]:
+            assert any(g["edges"][i]["kind"] == "typical_symptom" and row["condition"]["id"] in (g["edges"][i]["a"], g["edges"][i]["b"])
+                       for i in g["adj"][m["symptom"]["id"]])
+    # a red-flag combination from the safety rules is reported, with the rule's own advice
+    alarm = kg.explore(["symptom:chest-pain", "symptom:shortness-of-breath"], "ar")["alarms"]
+    assert any(a["label"] == "ألم الصدر مع ضيق التنفس" for a in alarm)
+
+
+def test_symptom_explorer_api_and_page():
+    import webapp
+    c = webapp.app.test_client()
+    d = c.get("/api/knowledge-graph?explore=symptom:headache,symptom:fever&lang=ar").get_json()
+    assert d["ok"] and d["results"] and d["results"][0]["count"] == 2
+    s = c.get("/api/knowledge-graph?q=%D8%B5%D8%AF%D8%A7%D8%B9&type=symptom&lang=ar").get_json()
+    assert s["ok"] and s["results"] and all(x["type"] == "symptom" for x in s["results"])
+    page = c.get("/ar/knowledge-graph").get_data(as_text=True)
+    assert 'id="kgX"' in page and "قارن عدة أعراض" in page and "وليست تشخيصًا" in page
+    assert "/static/js/knowledge-graph.js?v=" in page and "__ASSET_VERSION__" not in page
+
+
+def test_why_am_i_asked_is_a_button_with_what_the_answer_changes():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / "static" / "js" / "chat"
+    core = (root / "chat-core.js").read_text(encoding="utf-8")
+    assert "ss-why-btn" in core and "aria-expanded" in core and "ليش أسألك هذا؟" in core
+    follow = (root / "followup.js").read_text(encoding="utf-8")
+    assert "«نعم»: تتقدّم الاحتمالات" in follow and "«لا»: تتراجع الاحتمالات" in follow

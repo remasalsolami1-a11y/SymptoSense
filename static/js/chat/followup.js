@@ -92,7 +92,9 @@
         const qNo = Number(d.question_number || differentialCount);
         const qMax = Number(d.max_questions || SMART_FOLLOWUP_MAX);
         focusStepQuestion('🩺 ' + d.question);
-        stepNote((LANG==='ar'?'ساعدنا نفهم أكثر · سؤال ':'Help us understand better · Question ')+qNo+(LANG==='ar'?' من ':' of ')+qMax, d.question_reason || '');
+        stepNote((LANG==='ar'?'ساعدنا نفهم أكثر · سؤال ':'Help us understand better · Question ')+qNo+(LANG==='ar'?' من ':' of ')+qMax, d.question_reason || '', LANG==='ar'
+          ? ['«نعم»: تتقدّم الاحتمالات التي يكثر فيها هذا العرض.', '«لا»: تتراجع الاحتمالات التي يكثر فيها، وتبقى الأخرى كما هي.']
+          : ['“Yes” moves up the possibilities where this symptom is common.', '“No” moves those possibilities down; the others stay as they are.']);
         const answerOpts=[
           {label:TT('clar_yes'), fn:function(){
             add(TT('clar_yes'),'user');

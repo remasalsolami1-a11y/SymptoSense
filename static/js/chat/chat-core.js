@@ -137,14 +137,23 @@
     }
     // V292: notes shown inside the current question card ("question 2 of 5", "why we ask").
     // focusStepQuestion clears the chat body, so anything added before it was never visible.
-    function stepNote(stepText, whyText) {
+    // V292.1: "Why are you asking me this?" is a clear button; it opens the reason and, for follow-up
+    // questions, what a yes or a no changes. Nothing here is a diagnosis.
+    function stepNote(stepText, whyText, effects) {
       const card = bodyEl.querySelector('.step-focus-card');
       const n = document.createElement('div'); n.className = 'step-focus-note';
       if (stepText) { const st = document.createElement('div'); st.className = 'adaptive-step'; st.textContent = stepText; n.appendChild(st); }
       if (whyText) {
         const w = document.createElement('div'); w.className = 'ss-why-q';
-        const b = document.createElement('b'); b.textContent = LANG === 'ar' ? 'ليش نسأل؟' : 'Why we ask';
-        w.appendChild(b); w.appendChild(document.createTextNode(' ' + whyText)); n.appendChild(w);
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'ss-why-btn';
+        b.textContent = LANG === 'ar' ? 'ليش أسألك هذا؟' : 'Why am I asked this?';
+        b.setAttribute('aria-expanded', 'false');
+        const p = document.createElement('div'); p.className = 'ss-why-panel'; p.hidden = true;
+        p.id = 'ssWhy' + Date.now().toString(36); b.setAttribute('aria-controls', p.id);
+        const r = document.createElement('p'); r.textContent = whyText; p.appendChild(r);
+        (effects || []).forEach(function (line) { const e = document.createElement('p'); e.className = 'ss-why-eff'; e.textContent = line; p.appendChild(e); });
+        b.addEventListener('click', function () { const open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+        w.appendChild(b); w.appendChild(p); n.appendChild(w);
       }
       if (!card) { bodyEl.appendChild(n); return n; }
       const q = card.querySelector('.step-focus-question');
