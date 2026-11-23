@@ -327,3 +327,15 @@ def test_guest_trial_row_carries_the_chip_symptoms():
     assert r.status_code == 200 and r.get_json()["ok"]
     newest = db.admin_symptom_trial_rows()[0]
     assert newest["age"] == 27 and newest["symptoms"] == "ألم البطن • غثيان"
+
+
+def test_phone_language_page_shows_the_whole_services_preview_in_one_language():
+    import welcome_phone
+    css = welcome_phone.CSS
+    assert css.startswith("@media (max-width:600px)")
+    # sidebar and shield badge come back on phones; only the small heart card stays hidden (it would sit under the card)
+    assert ".fl-preview .fl-pv-side{display:flex!important" in css and ".fl-preview .fl-pv-badge{display:grid!important" in css
+    assert ".fl-preview .fl-pv-pulse{display:none!important}" in css
+    # tiles show the page language only, not Arabic and English glued together
+    assert '.first-lang--ar .fl-preview [data-copy="en"]' in css and '.first-lang--en .fl-preview [data-copy="ar"]' in css
+    assert 'ss-welcome-page .fl-preview [data-copy="en"]{display:inline!important}' not in css

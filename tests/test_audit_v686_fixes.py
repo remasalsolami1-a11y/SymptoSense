@@ -146,7 +146,9 @@ def test_research_signature_detects_changed_added_and_removed_request_and_kb_fil
 def test_welcome_preview_card_is_not_rotated_on_phones():
     """The decorative card behind the language chooser used to be tilted -5deg, so its text looked slanted on phones."""
     import welcome_phone
-    assert "rotate(" not in welcome_phone.CSS and "translate(-50%,-50%)!important" in welcome_phone.CSS
+    # V292.1: the preview sits in the page flow (no centring transform, no tilt)
+    assert "rotate(" not in welcome_phone.CSS and ".fl-pv-window{position:relative!important" in welcome_phone.CSS
+    assert "transform:none!important" in welcome_phone.CSS
 
 
 def test_trial_export_excludes_identifiers_and_formulas_through_analysis_api():
@@ -205,10 +207,11 @@ def test_welcome_phone_drops_description_and_keeps_search_visible_v6814():
     import welcome_phone
     css = welcome_phone.CSS
     assert "first-lang-copy{display:none!important}" in css
-    assert "first-lang-panel{margin-top:clamp(86px,10svh,104px)!important}" in css
-    # short phones: the preview keeps 52px, the card is pushed lower than the preview search bar
-    assert "first-lang-card>.fl-preview{margin-top:52px!important}" in css
-    assert "first-lang-panel{margin-top:77px!important}" in css
+    # V292.1: the whole preview shows (search + four tiles) and the language card only overlaps its lower edge
+    assert "first-lang-panel{grid-row:8!important" in css and "first-lang-panel{margin-top:-30px!important}" in css
+    # short phones keep the same arrangement, slightly tighter
+    assert "first-lang-card>.fl-preview{margin-top:8px!important}" in css
+    assert "first-lang-panel{margin-top:-34px!important}" in css
     # the phone rule lives inside the <=600px media query only
     assert css.index("first-lang-copy{display:none!important}") < css.index("@media (max-width:600px) and (max-height:700px)")
     import webapp
