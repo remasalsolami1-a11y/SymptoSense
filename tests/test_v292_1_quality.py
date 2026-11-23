@@ -455,7 +455,10 @@ def test_description_reaches_the_result_and_the_doctor_summary():
     assert "مسار العرض كما وصفه: بدأ في «السرة» ثم انتقل إلى «اسفل البطن يمين»" in s["ar"]
     from pathlib import Path
     js = (Path(__file__).resolve().parents[1] / "static" / "js" / "chat" / "analysis-result.js").read_text(encoding="utf-8")
-    assert "ss-described" in js and "هذا الوصف لا يغيّر النتيجة" in js
+    assert "ss-described-note" in js and "ولا يغيّر النتيجة" in js
+    # one card for what the person told us: the old separate "entered information" card is gone
+    assert "'المعلومات المدخلة':'Entered information'" not in js and "وش فهمنا من حالتك؟" in js
+    assert "'ملخص الأعراض المفهومة':'Understood symptom summary'" not in js
 
 
 def test_blood_pattern_that_does_not_fit_iron_deficiency_is_said_without_naming_a_cause():

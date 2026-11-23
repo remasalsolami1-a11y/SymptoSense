@@ -88,8 +88,9 @@ def test_seizure_fainting_stroke_bleeding_regressions():
 
 
 def test_result_ui_shows_positive_negative_summary_and_resets_context_on_sex_change():
-    assert 'ملخص الأعراض المفهومة' in CHAT
-    assert 'أعراض غير موجودة حسب إجابتك' in CHAT
+    # V292.1: present and denied symptoms are shown once, in «وش فهمنا من حالتك؟»
+    assert 'وش فهمنا من حالتك؟' in CHAT
+    assert 'أعراض نفيتها' in CHAT
     assert 'oldGender!==newGender' in CHAT
 
 

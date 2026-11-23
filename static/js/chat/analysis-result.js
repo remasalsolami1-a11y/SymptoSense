@@ -378,14 +378,6 @@
       }
 
       // Keep entered information available, but prioritize the decision dashboard first.
-      const inputRows = [
-        [LANG==='ar'?'الأعراض':'Symptoms', Array.isArray(input.symptoms) ? input.symptoms.join(LANG==='ar'?'، ':', ') : input.symptoms],
-        [LANG==='ar'?'المدة':'Duration', input.duration],
-        [LANG==='ar'?'شدة الأعراض':'Symptom severity', input.severity ? String(input.severity)+'/5' : ''],
-        [LANG==='ar'?'العمر':'Age', input.age ? String(input.age) : ''],
-        [LANG==='ar'?'الجنس':'Sex', displayGender(input.gender)]
-      ].filter(function(x){ return x[1] !== null && x[1] !== undefined && String(x[1]).trim() !== ''; });
-
       // 2) What to do now — the immediate action comes before possibilities.
       h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'ماذا أفعل الآن؟':'What should I do now?')+'</h3></div><div class="ss-step-list">';
       let stepNo = 1;
@@ -419,22 +411,21 @@
       if(preciseArea) h += '<div><b>'+esc(LANG==='ar'?'المكان':'Area')+'</b><span>'+esc(preciseArea)+'</span></div>';
       if(input.duration) h += '<div><b>'+esc(LANG==='ar'?'المدة':'Duration')+'</b><span>'+esc(input.duration)+'</span></div>';
       if(input.severity) h += '<div><b>'+esc(LANG==='ar'?'الشدة':'Severity')+'</b><span>'+esc(String(input.severity))+'/5</span></div>';
+      if(input.age) h += '<div><b>'+esc(LANG==='ar'?'العمر':'Age')+'</b><span>'+esc(String(input.age))+'</span></div>';
+      if(displayGender(input.gender)) h += '<div><b>'+esc(LANG==='ar'?'الجنس':'Sex')+'</b><span>'+esc(displayGender(input.gender))+'</span></div>';
       if(understoodAbsent.length) h += '<div class="wide"><b>'+esc(LANG==='ar'?'أعراض نفيتها':'Symptoms reported absent')+'</b><span>'+esc(understoodAbsent.join(LANG==='ar'?'، ':', '))+'</span></div>';
+      // V292.1: one card for everything the person told us (the separate "entered information" card repeated it).
+      // How they described it (pain quality, where it started and moved) is record-only: it never changes the result.
+      const sd=d.symptom_description||{}, sdPain=(sd.pain||[]).filter(function(x){return x&&x.label;}), sdCourse=(sd.course||[]).filter(function(x){return x&&x.to;});
+      if(sdPain.length) h += '<div class="wide"><b>'+esc(LANG==='ar'?'نوع الألم':'What it feels like')+'</b><span>'+esc(sdPain.map(function(x){return x.label;}).join(LANG==='ar'?'، ':', '))+'</span></div>';
+      sdCourse.forEach(function(c){ h += '<div class="wide"><b>'+esc(LANG==='ar'?'المسار':'Path')+'</b><span>'+esc(c.kind==='moved'?(LANG==='ar'?('بدأ في «'+c.from+'» ثم انتقل إلى «'+c.to+'»'):('started in “'+c.from+'”, then moved to “'+c.to+'”')):(LANG==='ar'?('يمتد إلى «'+c.to+'»'):('spreads to “'+c.to+'”')))+'</span></div>'; });
+      if(sdPain.length||sdCourse.length) h += '<p class="ss-described-note">'+esc(LANG==='ar'?'وصفك لنوع الألم ومساره يُحفظ كما فهمناه ليصل إلى الطبيب، ولا يغيّر النتيجة.':'How you described the pain and its path is kept for the doctor summary; it does not change the result.')+'</p>';
       h += '</div><div class="ss-inline-edit-actions"><button type="button" data-quick-edit="symptoms">✏️ '+esc(LANG==='ar'?'تعديل العرض':'Edit symptom')+'</button><button type="button" data-quick-edit="location">📍 '+esc(LANG==='ar'?'تعديل المكان':'Edit area')+'</button><button type="button" data-quick-edit="duration">⏱️ '+esc(LANG==='ar'?'تعديل المدة':'Edit duration')+'</button><button type="button" data-quick-edit="severity">⚡ '+esc(LANG==='ar'?'تعديل الشدة':'Edit severity')+'</button></div></section>';
 
       // Live symptom path — the same four-part pattern collected during the questionnaire.
       h += '<section class="ss-report-card ss-result-path"><div class="ss-report-heading"><h3>🧭 '+esc(LANG==='ar'?'مسار الأعراض':'Symptom path')+'</h3><span class="ss-count">'+esc(LANG==='ar'?'نمط بصري':'Visual pattern')+'</span></div>'+symptomPathRailHtml(true)+'</section>';
       if(d.symptom_pattern_summary && d.symptom_pattern_summary.text && u !== 'high'){
         h += '<section class="ss-report-card ss-pattern-summary-v151"><div class="ss-report-heading"><h3>🔗 '+esc(d.symptom_pattern_summary.title|| (LANG==='ar'?'ملخص نمط الأعراض':'Symptom pattern summary'))+'</h3><span class="ss-count">'+esc(LANG==='ar'?'عدة أعراض معًا':'Combined context')+'</span></div><p>'+esc(d.symptom_pattern_summary.text)+'</p><small>'+esc(d.symptom_pattern_summary.note||'')+'</small></section>';
-      }
-
-      // V292.1: how the person described the symptom (pain quality, where it started and moved). Record only.
-      const sd=d.symptom_description||{}, sdPain=(sd.pain||[]).filter(function(x){return x&&x.label;}), sdCourse=(sd.course||[]).filter(function(x){return x&&x.to;});
-      if (u !== 'high' && (sdPain.length || sdCourse.length)) {
-        h += '<section class="ss-report-card ss-described"><div class="ss-report-heading"><h3>🗣️ '+esc(LANG==='ar'?'كيف وصفتَ العرض':'How you described it')+'</h3></div>';
-        if (sdPain.length) h += '<p><b>'+esc(LANG==='ar'?'نوع الألم: ':'What it feels like: ')+'</b>'+esc(sdPain.map(function(x){return x.label;}).join(LANG==='ar'?'، ':', '))+'</p>';
-        sdCourse.forEach(function(c){ h += '<p><b>'+esc(LANG==='ar'?'المسار: ':'Path: ')+'</b>'+esc(c.kind==='moved'?(LANG==='ar'?('بدأ في «'+c.from+'» ثم انتقل إلى «'+c.to+'»'):('started in “'+c.from+'”, then moved to “'+c.to+'”')):(LANG==='ar'?('يمتد إلى «'+c.to+'»'):('spreads to “'+c.to+'”')))+'</p>'; });
-        h += '<small>'+esc(LANG==='ar'?'نحفظ وصفك كما فهمناه ليصل إلى الطبيب في الملخص. هذا الوصف لا يغيّر النتيجة.':'We keep your description as we understood it, for the doctor summary. It does not change the result.')+'</small></section>';
       }
 
       // Context pattern summarizes the user's own timing/trigger context; never shown ahead of urgent care.
@@ -505,15 +496,7 @@
       }
       h += '</div></section>';
 
-      const normSummary=d.symptom_normalization||{};
-      const presentSymptoms=(normSummary.canonical||[]).map(function(x){return LANG==='ar'?(x.name_ar||x.slug):(x.name_en||x.slug);}).filter(Boolean);
-      const absentSymptoms=(normSummary.negated||[]).map(function(x){return LANG==='ar'?(x.name_ar||x.slug):(x.name_en||x.slug);}).filter(Boolean);
-      if(presentSymptoms.length||absentSymptoms.length){
-        h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>🧾 '+esc(LANG==='ar'?'ملخص الأعراض المفهومة':'Understood symptom summary')+'</h3></div>';
-        if(presentSymptoms.length) h += '<div class="ss-details-block"><b>'+esc(LANG==='ar'?'الأعراض الموجودة:':'Present symptoms:')+'</b> '+esc(presentSymptoms.join(LANG==='ar'?'، ':', '))+'</div>';
-        if(absentSymptoms.length) h += '<div class="ss-details-block"><b>'+esc(LANG==='ar'?'أعراض غير موجودة حسب إجابتك:':'Symptoms you reported as absent:')+'</b> '+esc(absentSymptoms.join(LANG==='ar'?'، ':', '))+'</div>';
-        h += '</section>';
-      }
+      // V292.1: the old «ملخص الأعراض المفهومة» card repeated «وش فهمنا من حالتك؟» (same present/absent lists); removed.
 
       // 3.5) Multi-symptom pattern intelligence — deterministic KB interaction data only.
       const patterns = Array.isArray(d.pattern_insights) ? d.pattern_insights : [];
@@ -584,10 +567,6 @@
       h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>💡 '+esc(TT('questions_title'))+'</h3></div><div class="ss-question-chips">';
       questions.filter(Boolean).forEach(function(question){ h += '<button type="button" class="ss-question-chip" data-question="'+escAttr(question)+'">'+esc(question)+'</button>'; });
       h += '</div><div class="ss-question-answer" id="reportQuestionAnswer" aria-live="polite" hidden></div></section>';
-
-      h += '<section class="ss-report-card"><div class="ss-report-heading"><h3>👤 '+esc(LANG==='ar'?'المعلومات المدخلة':'Entered information')+'</h3></div><div class="ss-input-grid">';
-      inputRows.forEach(function(row){ h += '<div class="ss-input-item"><span class="ss-input-label">'+esc(row[0])+'</span><span class="ss-input-value">'+esc(String(row[1]))+'</span></div>'; });
-      h += '</div></section>';
 
       // Existing actions only.
       h += '<section class="ss-report-card ss-user-actions"><div class="ss-report-heading"><h3>'+esc(LANG==='ar'?'أدوات المتابعة':'Follow-up tools')+'</h3></div><div class="ss-report-actions">';
